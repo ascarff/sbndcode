@@ -22,7 +22,7 @@ art_file_catalog_data.fileType:  "data"
 # Standard configurations for FileCatalogMetadataExtras service.
 # Both fields and values are microboone-specific.
 
-microboone_file_catalog:
+LAr1ND_file_catalog:
 {
   Metadata: [ "group",          "lar1nd",   # This field should move to FileCatalogMetadata. 
               "fileFormat",     "root",     # This field should move to FileCatalogMetadata.
