@@ -111,8 +111,8 @@ gen_wireplane();
 #}
 
 gen_cathode();		# physical volumes defined in gen_tpc()
-gen_tpc();
 if ( $reflectorFoils_switch eq "on" ) {  gen_reflectorFoils();}
+gen_tpc();
 if ( $pmt_switch eq "on" ) {  gen_pmt();	}	# physical volumes defined in gen_cryostat()
 if ( $enclosureExtras eq "on" ) {  gen_enclosureExtras(); } #generation of insulation, etc. will happen if specified
 gen_cryostat();
@@ -575,10 +575,10 @@ sub gen_reflectorFoils()
   <materialref ref="vm2000"/>
   <solidref ref="ReflectorLayerYZ"/>
  </volume>
-<volume name="volReflectorLayerYZ2">
+<!--volume name="volReflectorLayerYZ2">
   <materialref ref="vm2000"/>
   <solidref ref="ReflectorLayerYZ"/>
- </volume>
+ </volume-->
       <!--covering with TPB the reflerctor foils-->
       <volume name="volTPBLayerXY1">
         <materialref ref="TPB"/>
@@ -628,14 +628,14 @@ sub gen_reflectorFoils()
       <position name="posReflYZ1" unit="cm" x="0" y="0" z="0"/>
       </physvol>
      </volume>
-   <volume name="volTPBLayerYZ2">
+   <!--volume name="volTPBLayerYZ2">
       <materialref ref="TPB"/>
       <solidref ref="TPBLayerYZ"/>
       <physvol>
       <volumeref ref="volReflectorLayerYZ2"/>
       <position name="posReflYZ2" unit="cm" x="0" y="0" z="0"/>
       </physvol>
-     </volume>
+     </volume-->
 </structure>
 </gdml>
 EOF
@@ -703,8 +703,16 @@ sub gen_tpc()
 	 	 <volumeref ref="volTPCActive"/>
 	     <position name="posTPCActive1" unit="cm" x="0" y="0" z="0"/>
 	</physvol>
-EOF
 
+EOF
+ if ( $reflectorFoils_switch eq "on" ) {
+      print GDML <<EOF;
+        <physvol>
+                 <volumeref ref="volTPBLayerYZ1"/>
+                 <position name="posRLYZ1" unit="cm" x="-$TPCWidth/2 + $CathodeWidthX/2 + 1.1" y="0" z="0"/>     
+        </physvol>
+EOF
+    }
     # Closes TPC volume definition space
     print GDML <<EOF;
  </volume> 
@@ -1143,14 +1151,14 @@ EOF
                         <volumeref ref="volTPBCathode"/>
                         <position name="posCathodePlate2" unit="cm" x="0" y="0" z="0"/>     
                </physvol-->
-               <physvol>
+               <!--physvol>
                         <volumeref ref="volTPBLayerYZ1"/>
-                        <position name="posRLYZ1" unit="cm" x="-CathodeWidthX/2 - 1." y="0" z="0"/>     
+                        <position name="posRLYZ1" unit="cm" x="-$CathodeWidthX/2 - 1.1" y="0" z="0"/>     
                </physvol>
                <physvol>
                         <volumeref ref="volTPBLayerYZ2"/>
-                        <position name="posRLYZ2" unit="cm" x="CathodeWidthX/2 + 1." y="0" z="0"/>     
-               </physvol>
+                        <position name="posRLYZ2" unit="cm" x="$CathodeWidthX/2 + 1.1" y="0" z="0"/>     
+               </physvol-->
  
 EOF
   }
