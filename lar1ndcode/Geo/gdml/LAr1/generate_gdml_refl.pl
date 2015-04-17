@@ -1133,19 +1133,19 @@ EOF
                                                  the PMT-window of all the PMTs, including the ones on the extremes-->
                <physvol>
                         <volumeref ref="volTPBLayerXY1"/>
-                        <position name="posRLXY1" unit="cm" x="0" y="0" z="-1.*$TPCLength/2. - 1.1 - (2.54*4.0*3/6.1)"/>     
+                        <position name="posRLXY1" unit="cm" x="0" y="0" z="-1.*$TPCLength/2. - 3.1 - (2.54*4.0*3/6.1)"/>     
                </physvol>
                <physvol>
                         <volumeref ref="volTPBLayerXY2"/>
-                        <position name="posRLXY2" unit="cm" x="0" y="0" z="1.*$TPCLength/2. + 1.1 + (2.54*4.0*3/6.1)"/>     
+                        <position name="posRLXY2" unit="cm" x="0" y="0" z="1.*$TPCLength/2. + 3.1 + (2.54*4.0*3/6.1)"/>     
                </physvol>
 	       <physvol>
                         <volumeref ref="volTPBLayerXZ1"/>
-                        <position name="posRLXZ1" unit="cm" x="0" y="-1.*$TPCHeight/2. - 1.1 - (2.54*4.0*3/6.1)" z="0"/>     
+                        <position name="posRLXZ1" unit="cm" x="0" y="-1.*$TPCHeight/2. - 3.1 - (2.54*4.0*3/6.1)" z="0"/>     
                </physvol>
 	       <physvol>
                         <volumeref ref="volTPBLayerXZ2"/>
-                        <position name="posRLXZ2" unit="cm" x="0" y="1.*$TPCHeight/2. + 1.1 + (2.54*4.0*3/6.1)" z="0"/>     
+                        <position name="posRLXZ2" unit="cm" x="0" y="1.*$TPCHeight/2. + 3.1 + (2.54*4.0*3/6.1)" z="0"/>     
                </physvol>
                 <!--physvol>
                         <volumeref ref="volTPBCathode"/>
