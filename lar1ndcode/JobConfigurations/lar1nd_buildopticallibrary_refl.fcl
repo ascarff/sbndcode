@@ -38,7 +38,7 @@ services.user.PhotonVisibilityService.NX: 3
 services.user.PhotonVisibilityService.NY: 3
 services.user.PhotonVisibilityService.NZ: 3 
 
-services.user.Geometry.GDML: "lar1nd_refl.gdml"
+services.user.Geometry.GDML: "lar1nd_nowires_refl.gdml"
 
 #services.user.BackTracker: ""
 #services.user.LArFFT: ""
