@@ -38,6 +38,7 @@ services.user.PhotonVisibilityService.NX: 3
 services.user.PhotonVisibilityService.NY: 3
 services.user.PhotonVisibilityService.NZ: 3 
 
+services.user.PhotonVisibilityService.StoreReflected: true
 services.user.Geometry.GDML: "lar1nd_refl.gdml"
 services.user.Geometry.DisableWiresInG4:   true
 
