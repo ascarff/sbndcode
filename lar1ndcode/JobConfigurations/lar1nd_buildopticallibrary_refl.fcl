@@ -22,7 +22,7 @@ services:
   user:         @local::lar1nd_opsimulation_services
 }
 
-
+services.user.PhotonVisibilityService.ExtendedLibraryInfo: true
 services.user.PhotonVisibilityService: @local::standard_photonvisibilityservice_buildlib
 services.user.PhotonVisibilityService.DoNotLoadLibrary: true
 services.user.PhotonVisibilityService.LibraryBuildJob: true
@@ -55,7 +55,9 @@ services.user.PhotonVisibilityService.NX: 3
 services.user.PhotonVisibilityService.NY: 3
 services.user.PhotonVisibilityService.NZ: 3 
 
+services.user.PhotonVisibilityService.StoreReflected: true
 services.user.Geometry.GDML: "lar1nd_refl.gdml"
+services.user.Geometry.DisableWiresInG4:   true
 
 #services.user.BackTracker: ""
 #services.user.LArFFT: ""
@@ -65,7 +67,7 @@ services.user.Geometry.GDML: "lar1nd_refl.gdml"
 source:
 {
   module_type: EmptyEvent
-  maxEvents:   27           # Number of events to create
+  maxEvents:   2           # Number of events to create
   firstRun:    1           # Run number to use for this file
   firstEvent:  1           # number of first event in the file
 }
@@ -125,6 +127,11 @@ services.user.LArG4Parameters.EnabledPhysics: [ "Em",
 
 # enable this custom physics list
 services.user.LArG4Parameters.UseCustomPhysics: true
+
+#enable extra materialproperties (including tpb WLS)
+services.user.LArProperties.LoadExtraMatProperties: true
+services.user.LArProperties.SimpleBoundaryProcess: false
+services.user.LArProperties.SimpleScintillation: false
 
 # do not allow lightsource to write output into root file
 physics.producers.generator.FillTree: true #false
