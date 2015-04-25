@@ -19,7 +19,7 @@ services:
   TFileService: { fileName: "PhotonLibraryFile.root" }
   Timing:       {}
   RandomNumberGenerator: {} #ART native random number generator
-  user:         @local::lar1nd_simulation_services
+  user:         @local::lar1nd_opsimulation_services
 }
 
 
@@ -28,17 +28,34 @@ services.user.PhotonVisibilityService.DoNotLoadLibrary: true
 services.user.PhotonVisibilityService.LibraryBuildJob: true
 services.user.PhotonVisibilityService.UseCryoBoundary: false
 services.user.PhotonVisibilityService.XMin: 0
-services.user.PhotonVisibilityService.XMax: 200
+ervices.user.PhotonVisibilityService.XMax: 200
 services.user.PhotonVisibilityService.YMin: -200 
 services.user.PhotonVisibilityService.YMax: 200
 services.user.PhotonVisibilityService.ZMin: 0
-services.user.PhotonVisibilityService.ZMax: 365
+services.user.PhotonVisibilityService.ZMax: 500
 
+services.user.PhotonVisibilityService.StoreReflected: true
+services.user.PhotonVisibilityService.ExtendedLibraryInfo: false
+#services.user.PhotonVisibilityService.XMin: 1 
+#services.user.PhotonVisibilityService.XMax: 199
+#services.user.PhotonVisibilityService.YMin: -199 
+#services.user.PhotonVisibilityService.YMax: 199
+#services.user.PhotonVisibilityService.ZMin: 1
+#services.user.PhotonVisibilityService.ZMax: 499
+
+
+
+
+# configruation for 2.5 cm voxels: 80 x 160 x 200
+
+#services.user.PhotonVisibilityService.NX: 80 
 services.user.PhotonVisibilityService.NX: 3 
+#services.user.PhotonVisibilityService.NY: 160
+#services.user.PhotonVisibilityService.NZ: 200 
 services.user.PhotonVisibilityService.NY: 3
 services.user.PhotonVisibilityService.NZ: 3 
 
-services.user.Geometry.GDML: "lar1nd.gdml"
+services.user.Geometry.GDML: "lar1nd_rf.gdml"
 
 #services.user.BackTracker: ""
 #services.user.LArFFT: ""
@@ -83,20 +100,12 @@ physics:
 
  #end_paths is a keyword and contains the paths that do not modify the art::Event, 
  #ie analyzers and output streams.  these all run simultaneously
- end_paths:     [analyzeIt, stream1]  
+ end_paths:     [analyzeIt ]  
 }
 
 #block to define where the output goes.  if you defined a filter in the physics
 #block and put it in the trigger_paths then you need to put a SelectEvents: {SelectEvents: [XXX]}
 #entry in the output stream you want those to go to, where XXX is the label of the filter module(s)
-outputs:
-{
- out1:
- {
-   module_type: RootOutput
-   fileName:    "single_gen_lar1nd.root" #default file name, can override from command line with -o or --output
- }
-}
 
 # Begin optical specific parts:
 
@@ -119,7 +128,7 @@ services.user.LArG4Parameters.UseCustomPhysics: true
 
 # do not allow lightsource to write output into root file
 physics.producers.generator.FillTree: true #false
-physics.analyzers.pmtresponse.MakeAllPhotonsTree: true #false
+physics.analyzers.pmtresponse.MakeAllPhotonsTree: false
 
 #physics.analyzers.pmtresponse.UsePMTEff: true
 #physics.analyzers.pmtresponse.WavelengthCutLow: 300
@@ -128,3 +137,8 @@ physics.analyzers.pmtresponse.MakeAllPhotonsTree: true #false
 physics.analyzers.pmtresponse.MakeDetectedPhotonsTree: true
 physics.analyzers.pmtresponse.MakeSimPhotonssTree: true
 #physics.analyzers.pmtresponse.MakeEventsTree: false
+
+
+physics.producers.generator.FirstVoxel: 0
+physics.producers.generator.LastVoxel: 26
+physics.producers.generator.N: 100000
