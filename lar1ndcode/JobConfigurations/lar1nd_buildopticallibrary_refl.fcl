@@ -55,7 +55,7 @@ services.user.PhotonVisibilityService.NX: 3
 services.user.PhotonVisibilityService.NY: 3
 services.user.PhotonVisibilityService.NZ: 3 
 
-services.user.Geometry.GDML: "lar1nd_rf.gdml"
+services.user.Geometry.GDML: "lar1nd_refl.gdml"
 
 #services.user.BackTracker: ""
 #services.user.LArFFT: ""
@@ -142,3 +142,12 @@ physics.analyzers.pmtresponse.MakeSimPhotonssTree: true
 physics.producers.generator.FirstVoxel: 0
 physics.producers.generator.LastVoxel: 26
 physics.producers.generator.N: 100000
+
+
+#enable extra materialproperties (including tpb WLS)
+services.user.LArProperties.LoadExtraMatProperties: true
+services.user.LArProperties.SimpleBoundaryProcess: false
+services.user.LArProperties.SimpleScintillation: false
+
+
+

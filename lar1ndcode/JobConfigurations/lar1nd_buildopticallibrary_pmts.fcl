@@ -32,11 +32,23 @@ services.user.PhotonVisibilityService.XMax: 200
 services.user.PhotonVisibilityService.YMin: -200 
 services.user.PhotonVisibilityService.YMax: 200
 services.user.PhotonVisibilityService.ZMin: 0
-services.user.PhotonVisibilityService.ZMax: 365
+services.user.PhotonVisibilityService.ZMax: 500
 
-services.user.PhotonVisibilityService.NX: 3 
-services.user.PhotonVisibilityService.NY: 3
-services.user.PhotonVisibilityService.NZ: 3 
+#services.user.PhotonVisibilityService.XMin: 1 
+#services.user.PhotonVisibilityService.XMax: 199
+#services.user.PhotonVisibilityService.YMin: -199 
+#services.user.PhotonVisibilityService.YMax: 199
+#services.user.PhotonVisibilityService.ZMin: 1
+#services.user.PhotonVisibilityService.ZMax: 499
+
+
+
+
+# configruation for 2.5 cm voxels: 80 x 160 x 200
+
+services.user.PhotonVisibilityService.NX: 80 
+services.user.PhotonVisibilityService.NY: 160
+services.user.PhotonVisibilityService.NZ: 200 
 
 services.user.Geometry.GDML: "lar1nd.gdml"
 
@@ -111,7 +123,7 @@ services.user.LArG4Parameters.UseCustomPhysics: true
 
 # do not allow lightsource to write output into root file
 physics.producers.generator.FillTree: true #false
-physics.analyzers.pmtresponse.MakeAllPhotonsTree: true #false
+physics.analyzers.pmtresponse.MakeAllPhotonsTree: false
 
 #physics.analyzers.pmtresponse.UsePMTEff: true
 #physics.analyzers.pmtresponse.WavelengthCutLow: 300
@@ -120,3 +132,9 @@ physics.analyzers.pmtresponse.MakeAllPhotonsTree: true #false
 physics.analyzers.pmtresponse.MakeDetectedPhotonsTree: true
 physics.analyzers.pmtresponse.MakeSimPhotonssTree: true
 #physics.analyzers.pmtresponse.MakeEventsTree: false
+
+
+#physics.producers.generator.FirstVoxel: 0
+#physics.producers.generator.LastVoxel: 26
+
+#physics.producers.generator.N: 100
