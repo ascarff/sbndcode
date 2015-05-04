@@ -1,0 +1,102 @@
+  <?xml version='1.0'?>
+  <gdml>
+    <solids>
+<!-- radius of the PMT = (2.54*4.0*3/6.1) => I add this 2 x this size to the dimensions of the foils  -->
+ <box name="ReflectorLayerXY" lunit="cm" x="2*200 + 5" y="400  + 2*(2.54*4.0*3/6.1)" z="0.025"/>
+ <box name="TPBLayerXY"       lunit="cm" x="2*200 + 5" y="400  + 2*(2.54*4.0*3/6.1)" z="0.02844"/>
+ <box name="ReflectorLayerXZ" lunit="cm" x="2*200 + 5" y="0.025" z="500  + 2*(2.54*4.0*3/6.1)"/>
+ <box name="TPBLayerXZ"       lunit="cm" x="2*200 + 5" y="0.02844" z="500  + 2*(2.54*4.0*3/6.1)"/>  
+ <!--box name="CathodePlate2" lunit="cm" x="5 - (0.02844 - 0.025)" y="400 " z="500 "/>
+ <box name="TPBLayerCathode" lunit="cm"  x="5" y="400 " z="500 "/-->  
+ <box name="ReflectorLayerYZ" lunit="cm" x="0.025" y="400 " z="500 "/>
+ <box name="TPBLayerYZ" lunit="cm" x="0.02844" y="400 " z="500 "/>
+
+ </solids>      
+<structure>      
+<volume name="volReflectorLayerXY1">
+  <materialref ref="vm2000"/>
+  <solidref ref="ReflectorLayerXY"/>
+ </volume>
+<volume name="volReflectorLayerXY2">
+  <materialref ref="vm2000"/>
+  <solidref ref="ReflectorLayerXY"/>
+ </volume>
+<volume name="volReflectorLayerXZ1">
+  <materialref ref="vm2000"/>
+  <solidref ref="ReflectorLayerXZ"/>
+ </volume>
+<volume name="volReflectorLayerXZ2">
+  <materialref ref="vm2000"/>
+  <solidref ref="ReflectorLayerXZ"/>
+ </volume>
+ <!--volume name="volCathodePlate2">
+    <materialref ref="STEEL_STAINLESS_Fe7Cr2Ni"/>
+    <solidref ref="CathodePlate2"/>
+ </volume-->
+<volume name="volReflectorLayerYZ1">
+  <materialref ref="vm2000"/>
+  <solidref ref="ReflectorLayerYZ"/>
+ </volume>
+<!--volume name="volReflectorLayerYZ2">
+  <materialref ref="vm2000"/>
+  <solidref ref="ReflectorLayerYZ"/>
+ </volume-->
+      <!--covering with TPB the reflerctor foils-->
+      <volume name="volTPBLayerXY1">
+        <materialref ref="TPB"/>
+        <solidref ref="TPBLayerXY"/>
+       <physvol>
+       <volumeref ref="volReflectorLayerXY1"/>
+       <position name="posReflXY1" unit="cm" x="0" y="0" z="0"/>
+       </physvol>
+     </volume>
+     <volume name="volTPBLayerXY2">
+       <materialref ref="TPB"/>
+       <solidref ref="TPBLayerXY"/>
+       <physvol>
+       <volumeref ref="volReflectorLayerXY2"/>
+       <position name="posReflXY2" unit="cm" x="0" y="0" z="0"/>
+       </physvol>
+      </volume>
+     <volume name="volTPBLayerXZ1">
+      <materialref ref="TPB"/>
+      <solidref ref="TPBLayerXZ"/>
+      <physvol>
+      <volumeref ref="volReflectorLayerXZ1"/>
+      <position name="posReflXZ1" unit="cm" x="0" y="0" z="0"/>
+      </physvol>
+     </volume>
+     <volume name="volTPBLayerXZ2">
+      <materialref ref="TPB"/>
+      <solidref ref="TPBLayerXZ"/>
+      <physvol>
+      <volumeref ref="volReflectorLayerXZ2"/>
+      <position name="posReflXZ2" unit="cm" x="0" y="0" z="0"/>
+      </physvol>
+     </volume>
+    <!--volume name="volTPBCathode">
+     <materialref ref="TPB"/>
+     <solidref ref="TPBLayerCathode"/>
+     <physvol>
+     <volumeref ref="volCathodePlate2"/>
+     <position name="posCathP2" unit="cm" x="0" y="0" z="0"/>
+     </physvol>
+   </volume-->
+    <volume name="volTPBLayerYZ1">
+      <materialref ref="TPB"/>
+      <solidref ref="TPBLayerYZ"/>
+      <physvol>
+      <volumeref ref="volReflectorLayerYZ1"/>
+      <position name="posReflYZ1" unit="cm" x="0" y="0" z="0"/>
+      </physvol>
+     </volume>
+   <!--volume name="volTPBLayerYZ2">
+      <materialref ref="TPB"/>
+      <solidref ref="TPBLayerYZ"/>
+      <physvol>
+      <volumeref ref="volReflectorLayerYZ2"/>
+      <position name="posReflYZ2" unit="cm" x="0" y="0" z="0"/>
+      </physvol>
+     </volume-->
+</structure>
+</gdml>
