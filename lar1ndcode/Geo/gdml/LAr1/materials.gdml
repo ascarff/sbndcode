@@ -1,5 +1,6 @@
 <?xml version='1.0'?>
 <materials>
+  <element name="copper" formula="Cu" Z="29"> <atom value="63.54"/> </element>
   <element name="bromine" formula="Br" Z="35"> <atom value="79.904"/> </element>
   <element name="hydrogen" formula="H" Z="1">  <atom value="1.0079"/> </element>
   <element name="nitrogen" formula="N" Z="7">  <atom value="14.0067"/> </element>
@@ -221,6 +222,17 @@
    <D value="1.06" unit="g/cm3"/>
    <fraction n="0.077418" ref="hydrogen"/>
    <fraction n="0.922582" ref="carbon"/>
+  </material>
+
+  <material name="vm2000" formula="vm2000">
+   <D value="1.2" unit="g/cm3"/>
+   <composite n="2" ref="carbon"/>
+   <composite n="4" ref="hydrogen"/>
+  </material>
+
+  <material name="Copper" formula="Cu">
+   <D value="8.96" unit="g/cm3"/>
+   <fraction n="1." ref="copper"/>
   </material>
 
 </materials>
