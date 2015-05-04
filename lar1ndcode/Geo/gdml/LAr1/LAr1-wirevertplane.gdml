@@ -15,7 +15,7 @@
 </solids>
 <structure>
   <volume name="volTPCWireVert">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWireVert"/>
   </volume>
   <volume name="volTPCPlaneVert">
