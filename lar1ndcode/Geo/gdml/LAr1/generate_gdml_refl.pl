@@ -164,6 +164,10 @@ sub gen_defs()
     $AnodeLengthZ   =   $TPCLength;
     $AnodeWidthX    =   20;
     $AnodeHeightY   =   $TPCHeight;
+    #we locate the array of pmts is a surface without overlapping with the APAFrame,
+    #so we reduce each size (y-z) by the APAframe size 2*10 + 2*pmt_radius + 5cm from the border
+    $PMTArrayLengthZ = $TPCLength - 20 - 10 - 5;
+    $PMTArrayHeightY = $TPCHeight - 20 - 10 - 5;
 
 }
 
@@ -284,7 +288,7 @@ EOF
     {
     print GDML <<EOF;
     <volume name="volTPCWire$i">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire$i"/>
     </volume>
 EOF
@@ -293,7 +297,7 @@ EOF
     # Center wires and plane
    print GDML <<EOF;
     <volume name="volTPCWireCommon">
-      <materialref ref="Titanium"/>
+      <materialref ref="Copper"/>
       <solidref ref="TPCWireCommon"/>
     </volume>
     <volume name="volTPCPlane">
@@ -454,7 +458,7 @@ sub gen_wirevertplane()
 </solids>
 <structure>
   <volume name="volTPCWireVert">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWireVert"/>
   </volume>
   <volume name="volTPCPlaneVert">
@@ -761,11 +765,11 @@ sub make_APA()
 	print CRYOSTAT <<EOF;
  	 <physvol>
    		 <volumeref ref="volAPAFrame"/>
-    	 <position name="posAPAFrame" unit="cm" x="$TPCWidth +10" y="0" z="0"/>
+    	 <position name="posAPAFrame" unit="cm" x="$TPCWidth + 10 + $CathodeWidthX/2" y="0" z="0"/>
    	 </physvol>
    	 <physvol>
     	 <volumeref ref="volAPAFrame"/>
-         <position name="posAPAFrame1" unit="cm" x="-$TPCWidth - 10" y="0" z="0"/>
+         <position name="posAPAFrame1" unit="cm" x="-$TPCWidth - 10 - $CathodeWidthX/2" y="0" z="0"/>
    	 </physvol>
    	 <physvol>
     	<volumeref ref="volHorizontalBeam"/>
@@ -1163,7 +1167,6 @@ EOF
 EOF
   }
  
-
 	make_APA();
 
 if ( $pmt_switch eq "on" ) {
@@ -1179,12 +1182,12 @@ if ( $pmt_switch eq "on" ) {
 			print CRYOSTAT<<EOF;
 			<physvol>
 				<volumeref ref="volPMT"/>
-				<position name="posPMT$k0" unit="cm" x="220" y="$TPCHeight/4*($j+0.5) - $TPCHeight/2" z="$TPCLength/5*($i+0.5) - $TPCLength/2"/>
+				<position name="posPMT$k0" unit="cm" x="220" y="$PMTArrayHeightY/4*($j+0.5) - $PMTArrayHeightY/2" z="$PMTArrayLengthZ/5*($i+0.5) - $PMTArrayLengthZ/2"/>
 				<rotationref ref="rPMTRotation1"/>
 			</physvol> 
 			<physvol>
 				<volumeref ref="volPMT"/>
-				<position name="posPMT$l0" unit="cm" x="-220" y="$TPCHeight/4*($j+0.5) - $TPCHeight/2" z="$TPCLength/5*($i+0.5) - $TPCLength/2"/>
+				<position name="posPMT$l0" unit="cm" x="-220" y="$PMTArrayHeightY/4*($j+0.5) - $PMTArrayHeightY/2" z="$PMTArrayLengthZ/5*($i+0.5) - $PMTArrayLengthZ/2"/>
 				<rotationref ref="rPMTRotation"/>
 			</physvol> 
 EOF
@@ -1193,22 +1196,22 @@ EOF
 		print CRYOSTAT<<EOF;	
 			<physvol>
 				<volumeref ref="volPMT"/>
-				<position name="posPMT$k3" unit="cm" x="220" y="$i*$TPCHeight/4 - $TPCHeight/2" z="-1*$TPCLength/2"/>
+				<position name="posPMT$k3" unit="cm" x="220" y="$i*$PMTArrayHeightY/4 - $PMTArrayHeightY/2" z="-1*$PMTArrayLengthZ/2"/>
 				<rotationref ref="rPMTRotation1"/>
 			</physvol> 
 			<physvol>
 				<volumeref ref="volPMT"/>
-				<position name="posPMT$l3" unit="cm" x="-220" y="$i*$TPCHeight/4 - $TPCHeight/2" z="-1*$TPCLength/2"/>
+				<position name="posPMT$l3" unit="cm" x="-220" y="$i*$PMTArrayHeightY/4 - $PMTArrayHeightY/2" z="-1*$PMTArrayLengthZ/2"/>
 				<rotationref ref="rPMTRotation"/>
 			</physvol> 
 			<physvol>
 				<volumeref ref="volPMT"/>
-				<position name="posPMT$k4" unit="cm" x="220" y="$TPCHeight/2" z="($i+1)*$TPCLength/5 - $TPCLength/2"/>
+				<position name="posPMT$k4" unit="cm" x="220" y="$PMTArrayHeightY/2" z="($i+1)*$PMTArrayLengthZ/5 - $PMTArrayLengthZ/2"/>
 				<rotationref ref="rPMTRotation1"/>
 			</physvol> 
 			<physvol>
 				<volumeref ref="volPMT"/>
-				<position name="posPMT$l4" unit="cm" x="-220" y="$TPCHeight/2" z="($i+1)*$TPCLength/5 - $TPCLength/2"/>
+				<position name="posPMT$l4" unit="cm" x="-220" y="$PMTArrayHeightY/2" z="($i+1)*$PMTArrayLengthZ/5 - $PMTArrayLengthZ/2"/>
 				<rotationref ref="rPMTRotation"/>
 			</physvol> 
 EOF
@@ -1224,22 +1227,22 @@ EOF
 	  print CRYOSTAT<<EOF;
 			<physvol>
 				<volumeref ref="volPMT"/>
-				<position name="posPMT$k1" unit="cm" x="220" y="$TPCHeight/2 - $TPCHeight/4*($j+1)" z="$TPCLength/2"/>
+				<position name="posPMT$k1" unit="cm" x="220" y="$PMTArrayHeightY/2 - $PMTArrayHeightY/4*($j+1)" z="$PMTArrayLengthZ/2"/>
 				<rotationref ref="rPMTRotation1"/>
 			</physvol> 
 			<physvol>
 				<volumeref ref="volPMT"/>
-				<position name="posPMT$l1" unit="cm" x="-220" y="$TPCHeight/2 - $TPCHeight/4*($j+1)" z="$TPCLength/2"/>
+				<position name="posPMT$l1" unit="cm" x="-220" y="$PMTArrayHeightY/2 - $PMTArrayHeightY/4*($j+1)" z="$PMTArrayLengthZ/2"/>
 				<rotationref ref="rPMTRotation"/>
 			</physvol> 
 			<physvol>
 				<volumeref ref="volPMT"/>
-				<position name="posPMT$k2" unit="cm" x="220" y="-1*$TPCHeight/2" z="$TPCLength/2 - ($j+1)*$TPCLength/5"/>
+				<position name="posPMT$k2" unit="cm" x="220" y="-1*$PMTArrayHeightY/2" z="$PMTArrayLengthZ/2 - ($j+1)*$PMTArrayLengthZ/5"/>
 				<rotationref ref="rPMTRotation1"/>
 			</physvol> 
 			<physvol>
 				<volumeref ref="volPMT"/>
-				<position name="posPMT$l2" unit="cm" x="-220" y="-1*$TPCHeight/2" z="$TPCLength/2 - ($j+1)*$TPCLength/5"/>
+				<position name="posPMT$l2" unit="cm" x="-220" y="-1*$PMTArrayHeightY/2" z="$PMTArrayLengthZ/2 - ($j+1)*$PMTArrayLengthZ/5"/>
 				<rotationref ref="rPMTRotation"/>
 			</physvol> 
 EOF
