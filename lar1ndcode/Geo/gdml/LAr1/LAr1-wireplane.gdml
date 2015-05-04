@@ -5013,3339 +5013,3339 @@
 </solids>
 <structure>
     <volume name="volTPCWire0">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire0"/>
     </volume>
     <volume name="volTPCWire1">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire1"/>
     </volume>
     <volume name="volTPCWire2">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire2"/>
     </volume>
     <volume name="volTPCWire3">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire3"/>
     </volume>
     <volume name="volTPCWire4">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire4"/>
     </volume>
     <volume name="volTPCWire5">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire5"/>
     </volume>
     <volume name="volTPCWire6">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire6"/>
     </volume>
     <volume name="volTPCWire7">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire7"/>
     </volume>
     <volume name="volTPCWire8">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire8"/>
     </volume>
     <volume name="volTPCWire9">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire9"/>
     </volume>
     <volume name="volTPCWire10">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire10"/>
     </volume>
     <volume name="volTPCWire11">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire11"/>
     </volume>
     <volume name="volTPCWire12">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire12"/>
     </volume>
     <volume name="volTPCWire13">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire13"/>
     </volume>
     <volume name="volTPCWire14">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire14"/>
     </volume>
     <volume name="volTPCWire15">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire15"/>
     </volume>
     <volume name="volTPCWire16">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire16"/>
     </volume>
     <volume name="volTPCWire17">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire17"/>
     </volume>
     <volume name="volTPCWire18">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire18"/>
     </volume>
     <volume name="volTPCWire19">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire19"/>
     </volume>
     <volume name="volTPCWire20">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire20"/>
     </volume>
     <volume name="volTPCWire21">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire21"/>
     </volume>
     <volume name="volTPCWire22">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire22"/>
     </volume>
     <volume name="volTPCWire23">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire23"/>
     </volume>
     <volume name="volTPCWire24">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire24"/>
     </volume>
     <volume name="volTPCWire25">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire25"/>
     </volume>
     <volume name="volTPCWire26">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire26"/>
     </volume>
     <volume name="volTPCWire27">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire27"/>
     </volume>
     <volume name="volTPCWire28">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire28"/>
     </volume>
     <volume name="volTPCWire29">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire29"/>
     </volume>
     <volume name="volTPCWire30">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire30"/>
     </volume>
     <volume name="volTPCWire31">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire31"/>
     </volume>
     <volume name="volTPCWire32">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire32"/>
     </volume>
     <volume name="volTPCWire33">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire33"/>
     </volume>
     <volume name="volTPCWire34">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire34"/>
     </volume>
     <volume name="volTPCWire35">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire35"/>
     </volume>
     <volume name="volTPCWire36">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire36"/>
     </volume>
     <volume name="volTPCWire37">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire37"/>
     </volume>
     <volume name="volTPCWire38">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire38"/>
     </volume>
     <volume name="volTPCWire39">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire39"/>
     </volume>
     <volume name="volTPCWire40">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire40"/>
     </volume>
     <volume name="volTPCWire41">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire41"/>
     </volume>
     <volume name="volTPCWire42">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire42"/>
     </volume>
     <volume name="volTPCWire43">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire43"/>
     </volume>
     <volume name="volTPCWire44">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire44"/>
     </volume>
     <volume name="volTPCWire45">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire45"/>
     </volume>
     <volume name="volTPCWire46">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire46"/>
     </volume>
     <volume name="volTPCWire47">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire47"/>
     </volume>
     <volume name="volTPCWire48">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire48"/>
     </volume>
     <volume name="volTPCWire49">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire49"/>
     </volume>
     <volume name="volTPCWire50">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire50"/>
     </volume>
     <volume name="volTPCWire51">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire51"/>
     </volume>
     <volume name="volTPCWire52">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire52"/>
     </volume>
     <volume name="volTPCWire53">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire53"/>
     </volume>
     <volume name="volTPCWire54">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire54"/>
     </volume>
     <volume name="volTPCWire55">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire55"/>
     </volume>
     <volume name="volTPCWire56">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire56"/>
     </volume>
     <volume name="volTPCWire57">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire57"/>
     </volume>
     <volume name="volTPCWire58">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire58"/>
     </volume>
     <volume name="volTPCWire59">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire59"/>
     </volume>
     <volume name="volTPCWire60">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire60"/>
     </volume>
     <volume name="volTPCWire61">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire61"/>
     </volume>
     <volume name="volTPCWire62">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire62"/>
     </volume>
     <volume name="volTPCWire63">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire63"/>
     </volume>
     <volume name="volTPCWire64">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire64"/>
     </volume>
     <volume name="volTPCWire65">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire65"/>
     </volume>
     <volume name="volTPCWire66">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire66"/>
     </volume>
     <volume name="volTPCWire67">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire67"/>
     </volume>
     <volume name="volTPCWire68">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire68"/>
     </volume>
     <volume name="volTPCWire69">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire69"/>
     </volume>
     <volume name="volTPCWire70">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire70"/>
     </volume>
     <volume name="volTPCWire71">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire71"/>
     </volume>
     <volume name="volTPCWire72">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire72"/>
     </volume>
     <volume name="volTPCWire73">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire73"/>
     </volume>
     <volume name="volTPCWire74">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire74"/>
     </volume>
     <volume name="volTPCWire75">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire75"/>
     </volume>
     <volume name="volTPCWire76">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire76"/>
     </volume>
     <volume name="volTPCWire77">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire77"/>
     </volume>
     <volume name="volTPCWire78">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire78"/>
     </volume>
     <volume name="volTPCWire79">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire79"/>
     </volume>
     <volume name="volTPCWire80">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire80"/>
     </volume>
     <volume name="volTPCWire81">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire81"/>
     </volume>
     <volume name="volTPCWire82">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire82"/>
     </volume>
     <volume name="volTPCWire83">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire83"/>
     </volume>
     <volume name="volTPCWire84">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire84"/>
     </volume>
     <volume name="volTPCWire85">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire85"/>
     </volume>
     <volume name="volTPCWire86">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire86"/>
     </volume>
     <volume name="volTPCWire87">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire87"/>
     </volume>
     <volume name="volTPCWire88">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire88"/>
     </volume>
     <volume name="volTPCWire89">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire89"/>
     </volume>
     <volume name="volTPCWire90">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire90"/>
     </volume>
     <volume name="volTPCWire91">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire91"/>
     </volume>
     <volume name="volTPCWire92">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire92"/>
     </volume>
     <volume name="volTPCWire93">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire93"/>
     </volume>
     <volume name="volTPCWire94">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire94"/>
     </volume>
     <volume name="volTPCWire95">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire95"/>
     </volume>
     <volume name="volTPCWire96">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire96"/>
     </volume>
     <volume name="volTPCWire97">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire97"/>
     </volume>
     <volume name="volTPCWire98">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire98"/>
     </volume>
     <volume name="volTPCWire99">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire99"/>
     </volume>
     <volume name="volTPCWire100">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire100"/>
     </volume>
     <volume name="volTPCWire101">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire101"/>
     </volume>
     <volume name="volTPCWire102">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire102"/>
     </volume>
     <volume name="volTPCWire103">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire103"/>
     </volume>
     <volume name="volTPCWire104">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire104"/>
     </volume>
     <volume name="volTPCWire105">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire105"/>
     </volume>
     <volume name="volTPCWire106">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire106"/>
     </volume>
     <volume name="volTPCWire107">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire107"/>
     </volume>
     <volume name="volTPCWire108">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire108"/>
     </volume>
     <volume name="volTPCWire109">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire109"/>
     </volume>
     <volume name="volTPCWire110">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire110"/>
     </volume>
     <volume name="volTPCWire111">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire111"/>
     </volume>
     <volume name="volTPCWire112">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire112"/>
     </volume>
     <volume name="volTPCWire113">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire113"/>
     </volume>
     <volume name="volTPCWire114">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire114"/>
     </volume>
     <volume name="volTPCWire115">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire115"/>
     </volume>
     <volume name="volTPCWire116">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire116"/>
     </volume>
     <volume name="volTPCWire117">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire117"/>
     </volume>
     <volume name="volTPCWire118">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire118"/>
     </volume>
     <volume name="volTPCWire119">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire119"/>
     </volume>
     <volume name="volTPCWire120">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire120"/>
     </volume>
     <volume name="volTPCWire121">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire121"/>
     </volume>
     <volume name="volTPCWire122">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire122"/>
     </volume>
     <volume name="volTPCWire123">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire123"/>
     </volume>
     <volume name="volTPCWire124">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire124"/>
     </volume>
     <volume name="volTPCWire125">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire125"/>
     </volume>
     <volume name="volTPCWire126">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire126"/>
     </volume>
     <volume name="volTPCWire127">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire127"/>
     </volume>
     <volume name="volTPCWire128">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire128"/>
     </volume>
     <volume name="volTPCWire129">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire129"/>
     </volume>
     <volume name="volTPCWire130">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire130"/>
     </volume>
     <volume name="volTPCWire131">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire131"/>
     </volume>
     <volume name="volTPCWire132">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire132"/>
     </volume>
     <volume name="volTPCWire133">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire133"/>
     </volume>
     <volume name="volTPCWire134">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire134"/>
     </volume>
     <volume name="volTPCWire135">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire135"/>
     </volume>
     <volume name="volTPCWire136">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire136"/>
     </volume>
     <volume name="volTPCWire137">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire137"/>
     </volume>
     <volume name="volTPCWire138">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire138"/>
     </volume>
     <volume name="volTPCWire139">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire139"/>
     </volume>
     <volume name="volTPCWire140">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire140"/>
     </volume>
     <volume name="volTPCWire141">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire141"/>
     </volume>
     <volume name="volTPCWire142">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire142"/>
     </volume>
     <volume name="volTPCWire143">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire143"/>
     </volume>
     <volume name="volTPCWire144">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire144"/>
     </volume>
     <volume name="volTPCWire145">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire145"/>
     </volume>
     <volume name="volTPCWire146">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire146"/>
     </volume>
     <volume name="volTPCWire147">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire147"/>
     </volume>
     <volume name="volTPCWire148">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire148"/>
     </volume>
     <volume name="volTPCWire149">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire149"/>
     </volume>
     <volume name="volTPCWire150">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire150"/>
     </volume>
     <volume name="volTPCWire151">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire151"/>
     </volume>
     <volume name="volTPCWire152">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire152"/>
     </volume>
     <volume name="volTPCWire153">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire153"/>
     </volume>
     <volume name="volTPCWire154">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire154"/>
     </volume>
     <volume name="volTPCWire155">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire155"/>
     </volume>
     <volume name="volTPCWire156">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire156"/>
     </volume>
     <volume name="volTPCWire157">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire157"/>
     </volume>
     <volume name="volTPCWire158">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire158"/>
     </volume>
     <volume name="volTPCWire159">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire159"/>
     </volume>
     <volume name="volTPCWire160">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire160"/>
     </volume>
     <volume name="volTPCWire161">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire161"/>
     </volume>
     <volume name="volTPCWire162">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire162"/>
     </volume>
     <volume name="volTPCWire163">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire163"/>
     </volume>
     <volume name="volTPCWire164">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire164"/>
     </volume>
     <volume name="volTPCWire165">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire165"/>
     </volume>
     <volume name="volTPCWire166">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire166"/>
     </volume>
     <volume name="volTPCWire167">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire167"/>
     </volume>
     <volume name="volTPCWire168">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire168"/>
     </volume>
     <volume name="volTPCWire169">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire169"/>
     </volume>
     <volume name="volTPCWire170">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire170"/>
     </volume>
     <volume name="volTPCWire171">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire171"/>
     </volume>
     <volume name="volTPCWire172">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire172"/>
     </volume>
     <volume name="volTPCWire173">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire173"/>
     </volume>
     <volume name="volTPCWire174">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire174"/>
     </volume>
     <volume name="volTPCWire175">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire175"/>
     </volume>
     <volume name="volTPCWire176">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire176"/>
     </volume>
     <volume name="volTPCWire177">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire177"/>
     </volume>
     <volume name="volTPCWire178">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire178"/>
     </volume>
     <volume name="volTPCWire179">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire179"/>
     </volume>
     <volume name="volTPCWire180">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire180"/>
     </volume>
     <volume name="volTPCWire181">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire181"/>
     </volume>
     <volume name="volTPCWire182">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire182"/>
     </volume>
     <volume name="volTPCWire183">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire183"/>
     </volume>
     <volume name="volTPCWire184">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire184"/>
     </volume>
     <volume name="volTPCWire185">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire185"/>
     </volume>
     <volume name="volTPCWire186">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire186"/>
     </volume>
     <volume name="volTPCWire187">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire187"/>
     </volume>
     <volume name="volTPCWire188">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire188"/>
     </volume>
     <volume name="volTPCWire189">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire189"/>
     </volume>
     <volume name="volTPCWire190">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire190"/>
     </volume>
     <volume name="volTPCWire191">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire191"/>
     </volume>
     <volume name="volTPCWire192">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire192"/>
     </volume>
     <volume name="volTPCWire193">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire193"/>
     </volume>
     <volume name="volTPCWire194">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire194"/>
     </volume>
     <volume name="volTPCWire195">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire195"/>
     </volume>
     <volume name="volTPCWire196">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire196"/>
     </volume>
     <volume name="volTPCWire197">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire197"/>
     </volume>
     <volume name="volTPCWire198">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire198"/>
     </volume>
     <volume name="volTPCWire199">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire199"/>
     </volume>
     <volume name="volTPCWire200">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire200"/>
     </volume>
     <volume name="volTPCWire201">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire201"/>
     </volume>
     <volume name="volTPCWire202">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire202"/>
     </volume>
     <volume name="volTPCWire203">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire203"/>
     </volume>
     <volume name="volTPCWire204">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire204"/>
     </volume>
     <volume name="volTPCWire205">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire205"/>
     </volume>
     <volume name="volTPCWire206">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire206"/>
     </volume>
     <volume name="volTPCWire207">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire207"/>
     </volume>
     <volume name="volTPCWire208">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire208"/>
     </volume>
     <volume name="volTPCWire209">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire209"/>
     </volume>
     <volume name="volTPCWire210">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire210"/>
     </volume>
     <volume name="volTPCWire211">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire211"/>
     </volume>
     <volume name="volTPCWire212">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire212"/>
     </volume>
     <volume name="volTPCWire213">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire213"/>
     </volume>
     <volume name="volTPCWire214">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire214"/>
     </volume>
     <volume name="volTPCWire215">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire215"/>
     </volume>
     <volume name="volTPCWire216">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire216"/>
     </volume>
     <volume name="volTPCWire217">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire217"/>
     </volume>
     <volume name="volTPCWire218">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire218"/>
     </volume>
     <volume name="volTPCWire219">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire219"/>
     </volume>
     <volume name="volTPCWire220">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire220"/>
     </volume>
     <volume name="volTPCWire221">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire221"/>
     </volume>
     <volume name="volTPCWire222">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire222"/>
     </volume>
     <volume name="volTPCWire223">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire223"/>
     </volume>
     <volume name="volTPCWire224">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire224"/>
     </volume>
     <volume name="volTPCWire225">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire225"/>
     </volume>
     <volume name="volTPCWire226">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire226"/>
     </volume>
     <volume name="volTPCWire227">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire227"/>
     </volume>
     <volume name="volTPCWire228">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire228"/>
     </volume>
     <volume name="volTPCWire229">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire229"/>
     </volume>
     <volume name="volTPCWire230">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire230"/>
     </volume>
     <volume name="volTPCWire231">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire231"/>
     </volume>
     <volume name="volTPCWire232">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire232"/>
     </volume>
     <volume name="volTPCWire233">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire233"/>
     </volume>
     <volume name="volTPCWire234">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire234"/>
     </volume>
     <volume name="volTPCWire235">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire235"/>
     </volume>
     <volume name="volTPCWire236">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire236"/>
     </volume>
     <volume name="volTPCWire237">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire237"/>
     </volume>
     <volume name="volTPCWire238">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire238"/>
     </volume>
     <volume name="volTPCWire239">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire239"/>
     </volume>
     <volume name="volTPCWire240">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire240"/>
     </volume>
     <volume name="volTPCWire241">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire241"/>
     </volume>
     <volume name="volTPCWire242">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire242"/>
     </volume>
     <volume name="volTPCWire243">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire243"/>
     </volume>
     <volume name="volTPCWire244">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire244"/>
     </volume>
     <volume name="volTPCWire245">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire245"/>
     </volume>
     <volume name="volTPCWire246">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire246"/>
     </volume>
     <volume name="volTPCWire247">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire247"/>
     </volume>
     <volume name="volTPCWire248">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire248"/>
     </volume>
     <volume name="volTPCWire249">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire249"/>
     </volume>
     <volume name="volTPCWire250">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire250"/>
     </volume>
     <volume name="volTPCWire251">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire251"/>
     </volume>
     <volume name="volTPCWire252">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire252"/>
     </volume>
     <volume name="volTPCWire253">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire253"/>
     </volume>
     <volume name="volTPCWire254">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire254"/>
     </volume>
     <volume name="volTPCWire255">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire255"/>
     </volume>
     <volume name="volTPCWire256">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire256"/>
     </volume>
     <volume name="volTPCWire257">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire257"/>
     </volume>
     <volume name="volTPCWire258">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire258"/>
     </volume>
     <volume name="volTPCWire259">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire259"/>
     </volume>
     <volume name="volTPCWire260">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire260"/>
     </volume>
     <volume name="volTPCWire261">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire261"/>
     </volume>
     <volume name="volTPCWire262">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire262"/>
     </volume>
     <volume name="volTPCWire263">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire263"/>
     </volume>
     <volume name="volTPCWire264">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire264"/>
     </volume>
     <volume name="volTPCWire265">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire265"/>
     </volume>
     <volume name="volTPCWire266">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire266"/>
     </volume>
     <volume name="volTPCWire267">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire267"/>
     </volume>
     <volume name="volTPCWire268">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire268"/>
     </volume>
     <volume name="volTPCWire269">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire269"/>
     </volume>
     <volume name="volTPCWire270">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire270"/>
     </volume>
     <volume name="volTPCWire271">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire271"/>
     </volume>
     <volume name="volTPCWire272">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire272"/>
     </volume>
     <volume name="volTPCWire273">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire273"/>
     </volume>
     <volume name="volTPCWire274">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire274"/>
     </volume>
     <volume name="volTPCWire275">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire275"/>
     </volume>
     <volume name="volTPCWire276">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire276"/>
     </volume>
     <volume name="volTPCWire277">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire277"/>
     </volume>
     <volume name="volTPCWire278">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire278"/>
     </volume>
     <volume name="volTPCWire279">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire279"/>
     </volume>
     <volume name="volTPCWire280">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire280"/>
     </volume>
     <volume name="volTPCWire281">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire281"/>
     </volume>
     <volume name="volTPCWire282">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire282"/>
     </volume>
     <volume name="volTPCWire283">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire283"/>
     </volume>
     <volume name="volTPCWire284">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire284"/>
     </volume>
     <volume name="volTPCWire285">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire285"/>
     </volume>
     <volume name="volTPCWire286">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire286"/>
     </volume>
     <volume name="volTPCWire287">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire287"/>
     </volume>
     <volume name="volTPCWire288">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire288"/>
     </volume>
     <volume name="volTPCWire289">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire289"/>
     </volume>
     <volume name="volTPCWire290">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire290"/>
     </volume>
     <volume name="volTPCWire291">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire291"/>
     </volume>
     <volume name="volTPCWire292">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire292"/>
     </volume>
     <volume name="volTPCWire293">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire293"/>
     </volume>
     <volume name="volTPCWire294">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire294"/>
     </volume>
     <volume name="volTPCWire295">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire295"/>
     </volume>
     <volume name="volTPCWire296">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire296"/>
     </volume>
     <volume name="volTPCWire297">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire297"/>
     </volume>
     <volume name="volTPCWire298">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire298"/>
     </volume>
     <volume name="volTPCWire299">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire299"/>
     </volume>
     <volume name="volTPCWire300">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire300"/>
     </volume>
     <volume name="volTPCWire301">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire301"/>
     </volume>
     <volume name="volTPCWire302">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire302"/>
     </volume>
     <volume name="volTPCWire303">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire303"/>
     </volume>
     <volume name="volTPCWire304">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire304"/>
     </volume>
     <volume name="volTPCWire305">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire305"/>
     </volume>
     <volume name="volTPCWire306">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire306"/>
     </volume>
     <volume name="volTPCWire307">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire307"/>
     </volume>
     <volume name="volTPCWire308">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire308"/>
     </volume>
     <volume name="volTPCWire309">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire309"/>
     </volume>
     <volume name="volTPCWire310">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire310"/>
     </volume>
     <volume name="volTPCWire311">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire311"/>
     </volume>
     <volume name="volTPCWire312">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire312"/>
     </volume>
     <volume name="volTPCWire313">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire313"/>
     </volume>
     <volume name="volTPCWire314">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire314"/>
     </volume>
     <volume name="volTPCWire315">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire315"/>
     </volume>
     <volume name="volTPCWire316">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire316"/>
     </volume>
     <volume name="volTPCWire317">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire317"/>
     </volume>
     <volume name="volTPCWire318">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire318"/>
     </volume>
     <volume name="volTPCWire319">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire319"/>
     </volume>
     <volume name="volTPCWire320">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire320"/>
     </volume>
     <volume name="volTPCWire321">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire321"/>
     </volume>
     <volume name="volTPCWire322">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire322"/>
     </volume>
     <volume name="volTPCWire323">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire323"/>
     </volume>
     <volume name="volTPCWire324">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire324"/>
     </volume>
     <volume name="volTPCWire325">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire325"/>
     </volume>
     <volume name="volTPCWire326">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire326"/>
     </volume>
     <volume name="volTPCWire327">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire327"/>
     </volume>
     <volume name="volTPCWire328">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire328"/>
     </volume>
     <volume name="volTPCWire329">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire329"/>
     </volume>
     <volume name="volTPCWire330">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire330"/>
     </volume>
     <volume name="volTPCWire331">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire331"/>
     </volume>
     <volume name="volTPCWire332">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire332"/>
     </volume>
     <volume name="volTPCWire333">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire333"/>
     </volume>
     <volume name="volTPCWire334">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire334"/>
     </volume>
     <volume name="volTPCWire335">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire335"/>
     </volume>
     <volume name="volTPCWire336">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire336"/>
     </volume>
     <volume name="volTPCWire337">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire337"/>
     </volume>
     <volume name="volTPCWire338">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire338"/>
     </volume>
     <volume name="volTPCWire339">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire339"/>
     </volume>
     <volume name="volTPCWire340">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire340"/>
     </volume>
     <volume name="volTPCWire341">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire341"/>
     </volume>
     <volume name="volTPCWire342">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire342"/>
     </volume>
     <volume name="volTPCWire343">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire343"/>
     </volume>
     <volume name="volTPCWire344">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire344"/>
     </volume>
     <volume name="volTPCWire345">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire345"/>
     </volume>
     <volume name="volTPCWire346">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire346"/>
     </volume>
     <volume name="volTPCWire347">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire347"/>
     </volume>
     <volume name="volTPCWire348">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire348"/>
     </volume>
     <volume name="volTPCWire349">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire349"/>
     </volume>
     <volume name="volTPCWire350">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire350"/>
     </volume>
     <volume name="volTPCWire351">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire351"/>
     </volume>
     <volume name="volTPCWire352">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire352"/>
     </volume>
     <volume name="volTPCWire353">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire353"/>
     </volume>
     <volume name="volTPCWire354">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire354"/>
     </volume>
     <volume name="volTPCWire355">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire355"/>
     </volume>
     <volume name="volTPCWire356">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire356"/>
     </volume>
     <volume name="volTPCWire357">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire357"/>
     </volume>
     <volume name="volTPCWire358">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire358"/>
     </volume>
     <volume name="volTPCWire359">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire359"/>
     </volume>
     <volume name="volTPCWire360">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire360"/>
     </volume>
     <volume name="volTPCWire361">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire361"/>
     </volume>
     <volume name="volTPCWire362">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire362"/>
     </volume>
     <volume name="volTPCWire363">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire363"/>
     </volume>
     <volume name="volTPCWire364">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire364"/>
     </volume>
     <volume name="volTPCWire365">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire365"/>
     </volume>
     <volume name="volTPCWire366">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire366"/>
     </volume>
     <volume name="volTPCWire367">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire367"/>
     </volume>
     <volume name="volTPCWire368">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire368"/>
     </volume>
     <volume name="volTPCWire369">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire369"/>
     </volume>
     <volume name="volTPCWire370">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire370"/>
     </volume>
     <volume name="volTPCWire371">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire371"/>
     </volume>
     <volume name="volTPCWire372">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire372"/>
     </volume>
     <volume name="volTPCWire373">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire373"/>
     </volume>
     <volume name="volTPCWire374">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire374"/>
     </volume>
     <volume name="volTPCWire375">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire375"/>
     </volume>
     <volume name="volTPCWire376">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire376"/>
     </volume>
     <volume name="volTPCWire377">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire377"/>
     </volume>
     <volume name="volTPCWire378">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire378"/>
     </volume>
     <volume name="volTPCWire379">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire379"/>
     </volume>
     <volume name="volTPCWire380">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire380"/>
     </volume>
     <volume name="volTPCWire381">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire381"/>
     </volume>
     <volume name="volTPCWire382">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire382"/>
     </volume>
     <volume name="volTPCWire383">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire383"/>
     </volume>
     <volume name="volTPCWire384">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire384"/>
     </volume>
     <volume name="volTPCWire385">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire385"/>
     </volume>
     <volume name="volTPCWire386">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire386"/>
     </volume>
     <volume name="volTPCWire387">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire387"/>
     </volume>
     <volume name="volTPCWire388">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire388"/>
     </volume>
     <volume name="volTPCWire389">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire389"/>
     </volume>
     <volume name="volTPCWire390">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire390"/>
     </volume>
     <volume name="volTPCWire391">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire391"/>
     </volume>
     <volume name="volTPCWire392">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire392"/>
     </volume>
     <volume name="volTPCWire393">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire393"/>
     </volume>
     <volume name="volTPCWire394">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire394"/>
     </volume>
     <volume name="volTPCWire395">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire395"/>
     </volume>
     <volume name="volTPCWire396">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire396"/>
     </volume>
     <volume name="volTPCWire397">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire397"/>
     </volume>
     <volume name="volTPCWire398">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire398"/>
     </volume>
     <volume name="volTPCWire399">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire399"/>
     </volume>
     <volume name="volTPCWire400">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire400"/>
     </volume>
     <volume name="volTPCWire401">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire401"/>
     </volume>
     <volume name="volTPCWire402">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire402"/>
     </volume>
     <volume name="volTPCWire403">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire403"/>
     </volume>
     <volume name="volTPCWire404">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire404"/>
     </volume>
     <volume name="volTPCWire405">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire405"/>
     </volume>
     <volume name="volTPCWire406">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire406"/>
     </volume>
     <volume name="volTPCWire407">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire407"/>
     </volume>
     <volume name="volTPCWire408">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire408"/>
     </volume>
     <volume name="volTPCWire409">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire409"/>
     </volume>
     <volume name="volTPCWire410">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire410"/>
     </volume>
     <volume name="volTPCWire411">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire411"/>
     </volume>
     <volume name="volTPCWire412">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire412"/>
     </volume>
     <volume name="volTPCWire413">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire413"/>
     </volume>
     <volume name="volTPCWire414">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire414"/>
     </volume>
     <volume name="volTPCWire415">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire415"/>
     </volume>
     <volume name="volTPCWire416">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire416"/>
     </volume>
     <volume name="volTPCWire417">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire417"/>
     </volume>
     <volume name="volTPCWire418">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire418"/>
     </volume>
     <volume name="volTPCWire419">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire419"/>
     </volume>
     <volume name="volTPCWire420">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire420"/>
     </volume>
     <volume name="volTPCWire421">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire421"/>
     </volume>
     <volume name="volTPCWire422">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire422"/>
     </volume>
     <volume name="volTPCWire423">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire423"/>
     </volume>
     <volume name="volTPCWire424">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire424"/>
     </volume>
     <volume name="volTPCWire425">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire425"/>
     </volume>
     <volume name="volTPCWire426">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire426"/>
     </volume>
     <volume name="volTPCWire427">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire427"/>
     </volume>
     <volume name="volTPCWire428">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire428"/>
     </volume>
     <volume name="volTPCWire429">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire429"/>
     </volume>
     <volume name="volTPCWire430">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire430"/>
     </volume>
     <volume name="volTPCWire431">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire431"/>
     </volume>
     <volume name="volTPCWire432">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire432"/>
     </volume>
     <volume name="volTPCWire433">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire433"/>
     </volume>
     <volume name="volTPCWire434">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire434"/>
     </volume>
     <volume name="volTPCWire435">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire435"/>
     </volume>
     <volume name="volTPCWire436">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire436"/>
     </volume>
     <volume name="volTPCWire437">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire437"/>
     </volume>
     <volume name="volTPCWire438">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire438"/>
     </volume>
     <volume name="volTPCWire439">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire439"/>
     </volume>
     <volume name="volTPCWire440">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire440"/>
     </volume>
     <volume name="volTPCWire441">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire441"/>
     </volume>
     <volume name="volTPCWire442">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire442"/>
     </volume>
     <volume name="volTPCWire443">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire443"/>
     </volume>
     <volume name="volTPCWire444">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire444"/>
     </volume>
     <volume name="volTPCWire445">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire445"/>
     </volume>
     <volume name="volTPCWire446">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire446"/>
     </volume>
     <volume name="volTPCWire447">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire447"/>
     </volume>
     <volume name="volTPCWire448">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire448"/>
     </volume>
     <volume name="volTPCWire449">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire449"/>
     </volume>
     <volume name="volTPCWire450">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire450"/>
     </volume>
     <volume name="volTPCWire451">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire451"/>
     </volume>
     <volume name="volTPCWire452">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire452"/>
     </volume>
     <volume name="volTPCWire453">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire453"/>
     </volume>
     <volume name="volTPCWire454">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire454"/>
     </volume>
     <volume name="volTPCWire455">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire455"/>
     </volume>
     <volume name="volTPCWire456">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire456"/>
     </volume>
     <volume name="volTPCWire457">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire457"/>
     </volume>
     <volume name="volTPCWire458">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire458"/>
     </volume>
     <volume name="volTPCWire459">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire459"/>
     </volume>
     <volume name="volTPCWire460">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire460"/>
     </volume>
     <volume name="volTPCWire461">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire461"/>
     </volume>
     <volume name="volTPCWire462">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire462"/>
     </volume>
     <volume name="volTPCWire463">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire463"/>
     </volume>
     <volume name="volTPCWire464">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire464"/>
     </volume>
     <volume name="volTPCWire465">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire465"/>
     </volume>
     <volume name="volTPCWire466">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire466"/>
     </volume>
     <volume name="volTPCWire467">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire467"/>
     </volume>
     <volume name="volTPCWire468">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire468"/>
     </volume>
     <volume name="volTPCWire469">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire469"/>
     </volume>
     <volume name="volTPCWire470">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire470"/>
     </volume>
     <volume name="volTPCWire471">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire471"/>
     </volume>
     <volume name="volTPCWire472">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire472"/>
     </volume>
     <volume name="volTPCWire473">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire473"/>
     </volume>
     <volume name="volTPCWire474">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire474"/>
     </volume>
     <volume name="volTPCWire475">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire475"/>
     </volume>
     <volume name="volTPCWire476">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire476"/>
     </volume>
     <volume name="volTPCWire477">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire477"/>
     </volume>
     <volume name="volTPCWire478">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire478"/>
     </volume>
     <volume name="volTPCWire479">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire479"/>
     </volume>
     <volume name="volTPCWire480">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire480"/>
     </volume>
     <volume name="volTPCWire481">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire481"/>
     </volume>
     <volume name="volTPCWire482">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire482"/>
     </volume>
     <volume name="volTPCWire483">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire483"/>
     </volume>
     <volume name="volTPCWire484">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire484"/>
     </volume>
     <volume name="volTPCWire485">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire485"/>
     </volume>
     <volume name="volTPCWire486">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire486"/>
     </volume>
     <volume name="volTPCWire487">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire487"/>
     </volume>
     <volume name="volTPCWire488">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire488"/>
     </volume>
     <volume name="volTPCWire489">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire489"/>
     </volume>
     <volume name="volTPCWire490">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire490"/>
     </volume>
     <volume name="volTPCWire491">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire491"/>
     </volume>
     <volume name="volTPCWire492">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire492"/>
     </volume>
     <volume name="volTPCWire493">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire493"/>
     </volume>
     <volume name="volTPCWire494">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire494"/>
     </volume>
     <volume name="volTPCWire495">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire495"/>
     </volume>
     <volume name="volTPCWire496">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire496"/>
     </volume>
     <volume name="volTPCWire497">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire497"/>
     </volume>
     <volume name="volTPCWire498">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire498"/>
     </volume>
     <volume name="volTPCWire499">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire499"/>
     </volume>
     <volume name="volTPCWire500">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire500"/>
     </volume>
     <volume name="volTPCWire501">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire501"/>
     </volume>
     <volume name="volTPCWire502">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire502"/>
     </volume>
     <volume name="volTPCWire503">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire503"/>
     </volume>
     <volume name="volTPCWire504">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire504"/>
     </volume>
     <volume name="volTPCWire505">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire505"/>
     </volume>
     <volume name="volTPCWire506">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire506"/>
     </volume>
     <volume name="volTPCWire507">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire507"/>
     </volume>
     <volume name="volTPCWire508">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire508"/>
     </volume>
     <volume name="volTPCWire509">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire509"/>
     </volume>
     <volume name="volTPCWire510">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire510"/>
     </volume>
     <volume name="volTPCWire511">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire511"/>
     </volume>
     <volume name="volTPCWire512">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire512"/>
     </volume>
     <volume name="volTPCWire513">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire513"/>
     </volume>
     <volume name="volTPCWire514">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire514"/>
     </volume>
     <volume name="volTPCWire515">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire515"/>
     </volume>
     <volume name="volTPCWire516">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire516"/>
     </volume>
     <volume name="volTPCWire517">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire517"/>
     </volume>
     <volume name="volTPCWire518">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire518"/>
     </volume>
     <volume name="volTPCWire519">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire519"/>
     </volume>
     <volume name="volTPCWire520">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire520"/>
     </volume>
     <volume name="volTPCWire521">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire521"/>
     </volume>
     <volume name="volTPCWire522">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire522"/>
     </volume>
     <volume name="volTPCWire523">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire523"/>
     </volume>
     <volume name="volTPCWire524">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire524"/>
     </volume>
     <volume name="volTPCWire525">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire525"/>
     </volume>
     <volume name="volTPCWire526">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire526"/>
     </volume>
     <volume name="volTPCWire527">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire527"/>
     </volume>
     <volume name="volTPCWire528">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire528"/>
     </volume>
     <volume name="volTPCWire529">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire529"/>
     </volume>
     <volume name="volTPCWire530">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire530"/>
     </volume>
     <volume name="volTPCWire531">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire531"/>
     </volume>
     <volume name="volTPCWire532">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire532"/>
     </volume>
     <volume name="volTPCWire533">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire533"/>
     </volume>
     <volume name="volTPCWire534">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire534"/>
     </volume>
     <volume name="volTPCWire535">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire535"/>
     </volume>
     <volume name="volTPCWire536">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire536"/>
     </volume>
     <volume name="volTPCWire537">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire537"/>
     </volume>
     <volume name="volTPCWire538">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire538"/>
     </volume>
     <volume name="volTPCWire539">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire539"/>
     </volume>
     <volume name="volTPCWire540">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire540"/>
     </volume>
     <volume name="volTPCWire541">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire541"/>
     </volume>
     <volume name="volTPCWire542">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire542"/>
     </volume>
     <volume name="volTPCWire543">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire543"/>
     </volume>
     <volume name="volTPCWire544">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire544"/>
     </volume>
     <volume name="volTPCWire545">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire545"/>
     </volume>
     <volume name="volTPCWire546">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire546"/>
     </volume>
     <volume name="volTPCWire547">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire547"/>
     </volume>
     <volume name="volTPCWire548">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire548"/>
     </volume>
     <volume name="volTPCWire549">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire549"/>
     </volume>
     <volume name="volTPCWire550">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire550"/>
     </volume>
     <volume name="volTPCWire551">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire551"/>
     </volume>
     <volume name="volTPCWire552">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire552"/>
     </volume>
     <volume name="volTPCWire553">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire553"/>
     </volume>
     <volume name="volTPCWire554">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire554"/>
     </volume>
     <volume name="volTPCWire555">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire555"/>
     </volume>
     <volume name="volTPCWire556">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire556"/>
     </volume>
     <volume name="volTPCWire557">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire557"/>
     </volume>
     <volume name="volTPCWire558">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire558"/>
     </volume>
     <volume name="volTPCWire559">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire559"/>
     </volume>
     <volume name="volTPCWire560">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire560"/>
     </volume>
     <volume name="volTPCWire561">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire561"/>
     </volume>
     <volume name="volTPCWire562">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire562"/>
     </volume>
     <volume name="volTPCWire563">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire563"/>
     </volume>
     <volume name="volTPCWire564">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire564"/>
     </volume>
     <volume name="volTPCWire565">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire565"/>
     </volume>
     <volume name="volTPCWire566">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire566"/>
     </volume>
     <volume name="volTPCWire567">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire567"/>
     </volume>
     <volume name="volTPCWire568">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire568"/>
     </volume>
     <volume name="volTPCWire569">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire569"/>
     </volume>
     <volume name="volTPCWire570">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire570"/>
     </volume>
     <volume name="volTPCWire571">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire571"/>
     </volume>
     <volume name="volTPCWire572">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire572"/>
     </volume>
     <volume name="volTPCWire573">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire573"/>
     </volume>
     <volume name="volTPCWire574">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire574"/>
     </volume>
     <volume name="volTPCWire575">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire575"/>
     </volume>
     <volume name="volTPCWire576">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire576"/>
     </volume>
     <volume name="volTPCWire577">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire577"/>
     </volume>
     <volume name="volTPCWire578">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire578"/>
     </volume>
     <volume name="volTPCWire579">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire579"/>
     </volume>
     <volume name="volTPCWire580">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire580"/>
     </volume>
     <volume name="volTPCWire581">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire581"/>
     </volume>
     <volume name="volTPCWire582">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire582"/>
     </volume>
     <volume name="volTPCWire583">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire583"/>
     </volume>
     <volume name="volTPCWire584">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire584"/>
     </volume>
     <volume name="volTPCWire585">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire585"/>
     </volume>
     <volume name="volTPCWire586">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire586"/>
     </volume>
     <volume name="volTPCWire587">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire587"/>
     </volume>
     <volume name="volTPCWire588">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire588"/>
     </volume>
     <volume name="volTPCWire589">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire589"/>
     </volume>
     <volume name="volTPCWire590">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire590"/>
     </volume>
     <volume name="volTPCWire591">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire591"/>
     </volume>
     <volume name="volTPCWire592">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire592"/>
     </volume>
     <volume name="volTPCWire593">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire593"/>
     </volume>
     <volume name="volTPCWire594">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire594"/>
     </volume>
     <volume name="volTPCWire595">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire595"/>
     </volume>
     <volume name="volTPCWire596">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire596"/>
     </volume>
     <volume name="volTPCWire597">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire597"/>
     </volume>
     <volume name="volTPCWire598">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire598"/>
     </volume>
     <volume name="volTPCWire599">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire599"/>
     </volume>
     <volume name="volTPCWire600">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire600"/>
     </volume>
     <volume name="volTPCWire601">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire601"/>
     </volume>
     <volume name="volTPCWire602">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire602"/>
     </volume>
     <volume name="volTPCWire603">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire603"/>
     </volume>
     <volume name="volTPCWire604">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire604"/>
     </volume>
     <volume name="volTPCWire605">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire605"/>
     </volume>
     <volume name="volTPCWire606">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire606"/>
     </volume>
     <volume name="volTPCWire607">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire607"/>
     </volume>
     <volume name="volTPCWire608">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire608"/>
     </volume>
     <volume name="volTPCWire609">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire609"/>
     </volume>
     <volume name="volTPCWire610">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire610"/>
     </volume>
     <volume name="volTPCWire611">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire611"/>
     </volume>
     <volume name="volTPCWire612">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire612"/>
     </volume>
     <volume name="volTPCWire613">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire613"/>
     </volume>
     <volume name="volTPCWire614">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire614"/>
     </volume>
     <volume name="volTPCWire615">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire615"/>
     </volume>
     <volume name="volTPCWire616">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire616"/>
     </volume>
     <volume name="volTPCWire617">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire617"/>
     </volume>
     <volume name="volTPCWire618">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire618"/>
     </volume>
     <volume name="volTPCWire619">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire619"/>
     </volume>
     <volume name="volTPCWire620">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire620"/>
     </volume>
     <volume name="volTPCWire621">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire621"/>
     </volume>
     <volume name="volTPCWire622">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire622"/>
     </volume>
     <volume name="volTPCWire623">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire623"/>
     </volume>
     <volume name="volTPCWire624">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire624"/>
     </volume>
     <volume name="volTPCWire625">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire625"/>
     </volume>
     <volume name="volTPCWire626">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire626"/>
     </volume>
     <volume name="volTPCWire627">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire627"/>
     </volume>
     <volume name="volTPCWire628">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire628"/>
     </volume>
     <volume name="volTPCWire629">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire629"/>
     </volume>
     <volume name="volTPCWire630">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire630"/>
     </volume>
     <volume name="volTPCWire631">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire631"/>
     </volume>
     <volume name="volTPCWire632">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire632"/>
     </volume>
     <volume name="volTPCWire633">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire633"/>
     </volume>
     <volume name="volTPCWire634">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire634"/>
     </volume>
     <volume name="volTPCWire635">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire635"/>
     </volume>
     <volume name="volTPCWire636">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire636"/>
     </volume>
     <volume name="volTPCWire637">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire637"/>
     </volume>
     <volume name="volTPCWire638">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire638"/>
     </volume>
     <volume name="volTPCWire639">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire639"/>
     </volume>
     <volume name="volTPCWire640">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire640"/>
     </volume>
     <volume name="volTPCWire641">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire641"/>
     </volume>
     <volume name="volTPCWire642">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire642"/>
     </volume>
     <volume name="volTPCWire643">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire643"/>
     </volume>
     <volume name="volTPCWire644">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire644"/>
     </volume>
     <volume name="volTPCWire645">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire645"/>
     </volume>
     <volume name="volTPCWire646">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire646"/>
     </volume>
     <volume name="volTPCWire647">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire647"/>
     </volume>
     <volume name="volTPCWire648">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire648"/>
     </volume>
     <volume name="volTPCWire649">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire649"/>
     </volume>
     <volume name="volTPCWire650">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire650"/>
     </volume>
     <volume name="volTPCWire651">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire651"/>
     </volume>
     <volume name="volTPCWire652">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire652"/>
     </volume>
     <volume name="volTPCWire653">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire653"/>
     </volume>
     <volume name="volTPCWire654">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire654"/>
     </volume>
     <volume name="volTPCWire655">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire655"/>
     </volume>
     <volume name="volTPCWire656">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire656"/>
     </volume>
     <volume name="volTPCWire657">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire657"/>
     </volume>
     <volume name="volTPCWire658">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire658"/>
     </volume>
     <volume name="volTPCWire659">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire659"/>
     </volume>
     <volume name="volTPCWire660">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire660"/>
     </volume>
     <volume name="volTPCWire661">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire661"/>
     </volume>
     <volume name="volTPCWire662">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire662"/>
     </volume>
     <volume name="volTPCWire663">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire663"/>
     </volume>
     <volume name="volTPCWire664">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire664"/>
     </volume>
     <volume name="volTPCWire665">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire665"/>
     </volume>
     <volume name="volTPCWire666">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire666"/>
     </volume>
     <volume name="volTPCWire667">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire667"/>
     </volume>
     <volume name="volTPCWire668">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire668"/>
     </volume>
     <volume name="volTPCWire669">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire669"/>
     </volume>
     <volume name="volTPCWire670">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire670"/>
     </volume>
     <volume name="volTPCWire671">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire671"/>
     </volume>
     <volume name="volTPCWire672">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire672"/>
     </volume>
     <volume name="volTPCWire673">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire673"/>
     </volume>
     <volume name="volTPCWire674">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire674"/>
     </volume>
     <volume name="volTPCWire675">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire675"/>
     </volume>
     <volume name="volTPCWire676">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire676"/>
     </volume>
     <volume name="volTPCWire677">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire677"/>
     </volume>
     <volume name="volTPCWire678">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire678"/>
     </volume>
     <volume name="volTPCWire679">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire679"/>
     </volume>
     <volume name="volTPCWire680">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire680"/>
     </volume>
     <volume name="volTPCWire681">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire681"/>
     </volume>
     <volume name="volTPCWire682">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire682"/>
     </volume>
     <volume name="volTPCWire683">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire683"/>
     </volume>
     <volume name="volTPCWire684">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire684"/>
     </volume>
     <volume name="volTPCWire685">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire685"/>
     </volume>
     <volume name="volTPCWire686">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire686"/>
     </volume>
     <volume name="volTPCWire687">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire687"/>
     </volume>
     <volume name="volTPCWire688">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire688"/>
     </volume>
     <volume name="volTPCWire689">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire689"/>
     </volume>
     <volume name="volTPCWire690">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire690"/>
     </volume>
     <volume name="volTPCWire691">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire691"/>
     </volume>
     <volume name="volTPCWire692">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire692"/>
     </volume>
     <volume name="volTPCWire693">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire693"/>
     </volume>
     <volume name="volTPCWire694">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire694"/>
     </volume>
     <volume name="volTPCWire695">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire695"/>
     </volume>
     <volume name="volTPCWire696">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire696"/>
     </volume>
     <volume name="volTPCWire697">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire697"/>
     </volume>
     <volume name="volTPCWire698">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire698"/>
     </volume>
     <volume name="volTPCWire699">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire699"/>
     </volume>
     <volume name="volTPCWire700">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire700"/>
     </volume>
     <volume name="volTPCWire701">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire701"/>
     </volume>
     <volume name="volTPCWire702">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire702"/>
     </volume>
     <volume name="volTPCWire703">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire703"/>
     </volume>
     <volume name="volTPCWire704">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire704"/>
     </volume>
     <volume name="volTPCWire705">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire705"/>
     </volume>
     <volume name="volTPCWire706">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire706"/>
     </volume>
     <volume name="volTPCWire707">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire707"/>
     </volume>
     <volume name="volTPCWire708">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire708"/>
     </volume>
     <volume name="volTPCWire709">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire709"/>
     </volume>
     <volume name="volTPCWire710">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire710"/>
     </volume>
     <volume name="volTPCWire711">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire711"/>
     </volume>
     <volume name="volTPCWire712">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire712"/>
     </volume>
     <volume name="volTPCWire713">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire713"/>
     </volume>
     <volume name="volTPCWire714">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire714"/>
     </volume>
     <volume name="volTPCWire715">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire715"/>
     </volume>
     <volume name="volTPCWire716">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire716"/>
     </volume>
     <volume name="volTPCWire717">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire717"/>
     </volume>
     <volume name="volTPCWire718">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire718"/>
     </volume>
     <volume name="volTPCWire719">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire719"/>
     </volume>
     <volume name="volTPCWire720">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire720"/>
     </volume>
     <volume name="volTPCWire721">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire721"/>
     </volume>
     <volume name="volTPCWire722">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire722"/>
     </volume>
     <volume name="volTPCWire723">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire723"/>
     </volume>
     <volume name="volTPCWire724">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire724"/>
     </volume>
     <volume name="volTPCWire725">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire725"/>
     </volume>
     <volume name="volTPCWire726">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire726"/>
     </volume>
     <volume name="volTPCWire727">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire727"/>
     </volume>
     <volume name="volTPCWire728">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire728"/>
     </volume>
     <volume name="volTPCWire729">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire729"/>
     </volume>
     <volume name="volTPCWire730">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire730"/>
     </volume>
     <volume name="volTPCWire731">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire731"/>
     </volume>
     <volume name="volTPCWire732">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire732"/>
     </volume>
     <volume name="volTPCWire733">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire733"/>
     </volume>
     <volume name="volTPCWire734">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire734"/>
     </volume>
     <volume name="volTPCWire735">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire735"/>
     </volume>
     <volume name="volTPCWire736">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire736"/>
     </volume>
     <volume name="volTPCWire737">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire737"/>
     </volume>
     <volume name="volTPCWire738">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire738"/>
     </volume>
     <volume name="volTPCWire739">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire739"/>
     </volume>
     <volume name="volTPCWire740">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire740"/>
     </volume>
     <volume name="volTPCWire741">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire741"/>
     </volume>
     <volume name="volTPCWire742">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire742"/>
     </volume>
     <volume name="volTPCWire743">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire743"/>
     </volume>
     <volume name="volTPCWire744">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire744"/>
     </volume>
     <volume name="volTPCWire745">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire745"/>
     </volume>
     <volume name="volTPCWire746">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire746"/>
     </volume>
     <volume name="volTPCWire747">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire747"/>
     </volume>
     <volume name="volTPCWire748">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire748"/>
     </volume>
     <volume name="volTPCWire749">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire749"/>
     </volume>
     <volume name="volTPCWire750">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire750"/>
     </volume>
     <volume name="volTPCWire751">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire751"/>
     </volume>
     <volume name="volTPCWire752">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire752"/>
     </volume>
     <volume name="volTPCWire753">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire753"/>
     </volume>
     <volume name="volTPCWire754">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire754"/>
     </volume>
     <volume name="volTPCWire755">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire755"/>
     </volume>
     <volume name="volTPCWire756">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire756"/>
     </volume>
     <volume name="volTPCWire757">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire757"/>
     </volume>
     <volume name="volTPCWire758">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire758"/>
     </volume>
     <volume name="volTPCWire759">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire759"/>
     </volume>
     <volume name="volTPCWire760">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire760"/>
     </volume>
     <volume name="volTPCWire761">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire761"/>
     </volume>
     <volume name="volTPCWire762">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire762"/>
     </volume>
     <volume name="volTPCWire763">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire763"/>
     </volume>
     <volume name="volTPCWire764">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire764"/>
     </volume>
     <volume name="volTPCWire765">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire765"/>
     </volume>
     <volume name="volTPCWire766">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire766"/>
     </volume>
     <volume name="volTPCWire767">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire767"/>
     </volume>
     <volume name="volTPCWire768">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire768"/>
     </volume>
     <volume name="volTPCWire769">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire769"/>
     </volume>
     <volume name="volTPCWire770">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire770"/>
     </volume>
     <volume name="volTPCWire771">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire771"/>
     </volume>
     <volume name="volTPCWire772">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire772"/>
     </volume>
     <volume name="volTPCWire773">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire773"/>
     </volume>
     <volume name="volTPCWire774">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire774"/>
     </volume>
     <volume name="volTPCWire775">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire775"/>
     </volume>
     <volume name="volTPCWire776">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire776"/>
     </volume>
     <volume name="volTPCWire777">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire777"/>
     </volume>
     <volume name="volTPCWire778">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire778"/>
     </volume>
     <volume name="volTPCWire779">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire779"/>
     </volume>
     <volume name="volTPCWire780">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire780"/>
     </volume>
     <volume name="volTPCWire781">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire781"/>
     </volume>
     <volume name="volTPCWire782">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire782"/>
     </volume>
     <volume name="volTPCWire783">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire783"/>
     </volume>
     <volume name="volTPCWire784">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire784"/>
     </volume>
     <volume name="volTPCWire785">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire785"/>
     </volume>
     <volume name="volTPCWire786">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire786"/>
     </volume>
     <volume name="volTPCWire787">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire787"/>
     </volume>
     <volume name="volTPCWire788">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire788"/>
     </volume>
     <volume name="volTPCWire789">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire789"/>
     </volume>
     <volume name="volTPCWire790">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire790"/>
     </volume>
     <volume name="volTPCWire791">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire791"/>
     </volume>
     <volume name="volTPCWire792">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire792"/>
     </volume>
     <volume name="volTPCWire793">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire793"/>
     </volume>
     <volume name="volTPCWire794">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire794"/>
     </volume>
     <volume name="volTPCWire795">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire795"/>
     </volume>
     <volume name="volTPCWire796">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire796"/>
     </volume>
     <volume name="volTPCWire797">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire797"/>
     </volume>
     <volume name="volTPCWire798">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire798"/>
     </volume>
     <volume name="volTPCWire799">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire799"/>
     </volume>
     <volume name="volTPCWire800">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire800"/>
     </volume>
     <volume name="volTPCWire801">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire801"/>
     </volume>
     <volume name="volTPCWire802">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire802"/>
     </volume>
     <volume name="volTPCWire803">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire803"/>
     </volume>
     <volume name="volTPCWire804">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire804"/>
     </volume>
     <volume name="volTPCWire805">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire805"/>
     </volume>
     <volume name="volTPCWire806">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire806"/>
     </volume>
     <volume name="volTPCWire807">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire807"/>
     </volume>
     <volume name="volTPCWire808">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire808"/>
     </volume>
     <volume name="volTPCWire809">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire809"/>
     </volume>
     <volume name="volTPCWire810">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire810"/>
     </volume>
     <volume name="volTPCWire811">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire811"/>
     </volume>
     <volume name="volTPCWire812">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire812"/>
     </volume>
     <volume name="volTPCWire813">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire813"/>
     </volume>
     <volume name="volTPCWire814">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire814"/>
     </volume>
     <volume name="volTPCWire815">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire815"/>
     </volume>
     <volume name="volTPCWire816">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire816"/>
     </volume>
     <volume name="volTPCWire817">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire817"/>
     </volume>
     <volume name="volTPCWire818">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire818"/>
     </volume>
     <volume name="volTPCWire819">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire819"/>
     </volume>
     <volume name="volTPCWire820">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire820"/>
     </volume>
     <volume name="volTPCWire821">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire821"/>
     </volume>
     <volume name="volTPCWire822">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire822"/>
     </volume>
     <volume name="volTPCWire823">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire823"/>
     </volume>
     <volume name="volTPCWire824">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire824"/>
     </volume>
     <volume name="volTPCWire825">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire825"/>
     </volume>
     <volume name="volTPCWire826">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire826"/>
     </volume>
     <volume name="volTPCWire827">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire827"/>
     </volume>
     <volume name="volTPCWire828">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire828"/>
     </volume>
     <volume name="volTPCWire829">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire829"/>
     </volume>
     <volume name="volTPCWire830">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire830"/>
     </volume>
     <volume name="volTPCWire831">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire831"/>
     </volume>
     <volume name="volTPCWire832">
-    <materialref ref="Titanium"/>
+    <materialref ref="Copper"/>
     <solidref ref="TPCWire832"/>
     </volume>
     <volume name="volTPCWireCommon">
-      <materialref ref="Titanium"/>
+      <materialref ref="Copper"/>
       <solidref ref="TPCWireCommon"/>
     </volume>
     <volume name="volTPCPlane">
