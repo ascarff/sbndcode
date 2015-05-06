@@ -34,9 +34,6 @@ services.user.PhotonVisibilityService.YMax: 200
 services.user.PhotonVisibilityService.ZMin: 0
 services.user.PhotonVisibilityService.ZMax: 500
 
-services.user.PhotonVisibilityService.StoreReflected: true
-
-
 # configruation for 2.5 cm voxels: 80 x 160 x 200
 
 services.user.PhotonVisibilityService.NX: 80  
