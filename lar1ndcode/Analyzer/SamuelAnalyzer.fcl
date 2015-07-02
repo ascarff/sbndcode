@@ -101,7 +101,7 @@ physics:
       # unlikely that anyone would change the name of this producer.
 
       GenieGenModuleLabel: "generator"
-      SimulationLabel:     "largeant"
+      LArG4ModuleLabel:     "largeant"
       POTModuleLabel:      "generator"
       # Hits can be created by more than one module in
       # ${LARRECO_DIR}/source/HitFinder. For this example, I picked

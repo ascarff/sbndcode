@@ -314,7 +314,7 @@ void lar1nd::SamuelAnalyzer::reconfigure(fhicl::ParameterSet const & p)
 
    fSimulationProducerLabel = p.get< std::string >("SimulationLabel");
    fGenieModuleLabel        = p.get< std::string >("GenieGenModuleLabel");
-// fLarg4ModuleLabel        = p.get< std::string >("LArG4ModuleLabel");
+   fLarg4ModuleLabel        = p.get< std::string >("LArG4ModuleLabel");
    
 }
 
