@@ -2,6 +2,7 @@
 #include "singles_lar1nd.fcl"
 #include "largeantmodules_lar1nd.fcl"
 #include "detsimmodules_lar1nd.fcl"
+#include "caldata_lar1nd.fcl"
 
 process_name: SinglesGen
 
@@ -35,12 +36,13 @@ physics:
    generator: @local::lar1nd_singlep	  
    largeant:  @local::lar1nd_largeant	  
    daq:       @local::lar1nd_simwire       
+   calwire:       @local::lar1nd_calwire     
    rns:       { module_type: "RandomNumberSaver" }
  }
 
  #define the producer and filter modules for this path, order matters, 
  #filters reject all following items.  see lines starting physics.producers below
- simulate: [ generator, largeant, daq, rns ] 
+ simulate: [ generator, largeant, daq, calwire, rns ] 
  
  #define the output stream, there could be more than one if using filters 
  stream1:  [ out1 ]
@@ -60,6 +62,9 @@ outputs:
    fileName:    "single_gen.root" #default file name, can override from command line with -o or --output
  }
 }
+
+services.user.SignalShapingServiceT1053.ASICGainInMVPerFC: 14
+
 
 physics.producers.generator.X0: [ 100 ]
 physics.producers.generator.Y0: [ 100 ]
