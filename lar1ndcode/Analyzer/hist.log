@@ -1,0 +1,1000 @@
+    9  source setup_lar.csh 
+   10  exit
+   11  ds
+   12  history
+   13  pwd
+   14  ds
+   15  cp larsoft_v03_08_02_v0/ larsoft_v03_08_02/
+   16  cp -rvp larsoft_v03_08_02_v0/ larsoft_v03_08_02/
+   17  ds
+   18  source setup_lar.csh 
+   19  echo $MRB_BUILDDIR
+   20  echo $FHICL_FILE_PATH
+   21  ds
+   22  cd ..
+   23  cd
+   24  ds
+   25  exit
+   26  source setup_lar.csh 
+   27  exit
+   28  ds
+   29  cp -rp larsoft_v03_08_02_v0/ larsoft_v03_08_02/
+   30  ds
+   31  source setup_lar.csh 
+   32  echo $FHICL_FILE_PATH
+   33  echo $SHELL
+   34  pwd
+   35  cd ..
+   36  pwd
+   37  bash
+   38  exit
+   39  ds
+   40  source setup_lar.csh 
+   41  echo $FHICL_FILE_PATH
+   42  cd $MRB_BUILDDIR
+   43  pwd
+   44  ds
+   45  make install
+   46  more Makefile 
+   47  ds
+   48  more install_manifest.txt 
+   49  gedit install_manifest.txt &
+   50  ls
+   51  source setup_lar.csh 
+   52  echo $FHICL_FILE_PATH
+   53  pwd
+   54  ds
+   55  ls -al
+   56  rm TFileService-*
+   57  ds
+   58  rm RootOutput-4902-8d02-4991-4f0e.root 
+   59  ds
+   60  rm test1.log 
+   61  ds
+   62  cd
+   63  ds
+   64  pwd
+   65  cd Samlar1nd/
+   66  ds 
+   67  ds
+   68  cd larsoft_v03_08_02
+   69  ds 
+   70  cd $FHICL_FILE_PATH
+   71  cd $FHICL_FILE
+   72  pwd
+   73  echo $FHICL_FILE
+   74  echo $FHICL_FILE_PATH
+   75  cd /lar1nd/app/users/ssantana/larsoft_v03_08_02/localProducts_larsoft_v03_08_02_e6_prof/lar1ndcode/v00_07_00/fcl
+   76  ds
+   77  more prodsingle_lar1nd.fcl 
+   78  ds
+   79  ds ../../../
+   80  ds ../../../../
+   81  ds ../../../../srcs/
+   82  ds ../../../../srcs/lar1ndcode/lar1ndcode/
+   83  ds ../../../../srcs/lar1ndcode/lar1ndcode/JobConfigurations
+   84  cp -vp ../../../../srcs/lar1ndcode/lar1ndcode/JobConfigurations/* .
+   85  ds
+   86  ds prodsingle_lar1nd.fcl 
+   87  cat prodsingle_lar1nd.fcl 
+   88  cd ../
+   89  pwd
+   90  cd ../../../
+   91  ds
+   92  lar -c prodsingle_lar1nd.fcl -o myfile.root -n15
+   93  ds -h
+   94  root -l single_hist.root 
+   95  root -l myfile.root 
+   96  ds
+   97  lar -c  standard_reco_lar1nd_basic.fcl myfile.root -o myreco_file.root
+   98  lar -c evd_lar1nd.fcl myfile.root
+   99  c
+  100  continue
+  101  jobs
+  102  kill -9 %1
+  103  jobs
+  104  ls
+  105  ds localProducts_larsoft_v03_08_02_e6_prof/lar1ndcode/
+  106  ds localProducts_larsoft_v03_08_02_e6_prof/lar1ndcode/v00_07_00
+  107  ds localProducts_larsoft_v03_08_02_e6_prof/lar1ndcode/v00_07_00f
+  108  ds localProducts_larsoft_v03_08_02_e6_prof/lar1ndcode/v00_07_00/fcl/
+  109  ds localProducts_larsoft_v03_08_02_e6_prof/lar1ndcode/v00_07_00/fcl/evd_lar1nd.fcl 
+  110  nano localProducts_larsoft_v03_08_02_e6_prof/lar1ndcode/v00_07_00/fcl/evd_lar1nd.fcl 
+  111  grep -i RawDrawingOptions localProducts_larsoft_v03_08_02_e6_prof/lar1ndcode/v00_07_00/fcl/evd_lar1nd.fcl 
+  112  grep -i RawDrawingOptions localProducts_larsoft_v03_08_02_e6_prof/lar1ndcode/v00_07_00/fcl/*
+  113  nano localProducts_larsoft_v03_08_02_e6_prof/lar1ndcode/v00_07_00/fcl/evdservices_lar1nd.fcl 
+  114  grep -i TPC localProducts_larsoft_v03_08_02_e6_prof/lar1ndcode/v00_07_00/fcl/*
+  115  grep -i RawDrawingOptions localProducts_larsoft_v03_08_02_e6_prof/lar1ndcode/v00_07_00/fcl/*
+  116  lpq -Pwh10e-dell2375
+  117  flpq -qPwh10e-dell2375
+  118  flpq -qwh10e-dell2375
+  119  exit
+  120  ds
+  121  cd larsoft_v03_08_02
+  122  cd
+  123  ds -a
+  124  more .shrc 
+  125  cd Samlar1nd/
+  126  ds
+  127  clear
+  128  ds
+  129  mv larsoft_v03_08_02 larsoft_v03_08_02_v1
+  130  ds
+  131  nano setup_lar.csh 
+  132  more
+  133  more setup_lar.csh 
+  134  source setup_lar.csh mkNew
+  135  ds
+  136  cd ..
+  137  nano setup_lar.csh 
+  138  ds
+  139  rm -rf larsoft_v03_08_02
+  140  exit
+  141  source setup_lar.csh mkNew
+  142  cd ..
+  143  nano setup_lar.csh 
+  144  ls
+  145  rm -rf larsoft_v03_08_02
+  146  exit
+  147  source setup_lar.csh mkNew
+  148  pwd
+  149  find -name standard_reco_lar1nd.fcl
+  150  clear
+  151  find -name standard_reco_lar1nd.fcl
+  152  rm ./srcs/lar1ndcode/lar1ndcode/Utilities/standard_reco_la
+  153  find -name standard_reco_lar1nd.fcl
+  154  ds
+  155  cd ..
+  156  ds
+  157  gedit setup_lar.csh &
+  158  cd $MRB_BUILDDIR
+  159     mrbsetenv
+  160  mrb i -j10
+  161  ds
+  162  cd ..
+  163  ds
+  164  cd ..
+  165  ds
+  166  history
+  167  clear
+  168  ds
+  169  cd setup_lar.csh
+  170  cd larsoft_v03_08_02
+  171  ds
+  172  clear
+  173  ds
+  174  exit
+  175  ds
+  176  gedit setup_lar.csh&
+  177  ds
+  178  nano setup_lar.csh
+  179  ds
+  180  exit
+  181  ds
+  182  rm setup_lar.csh~
+  183  ds
+  184  nano setup_lar.csh 
+  185  exit
+  186  ds
+  187  source setup_lar.csh 
+  188  ds /lar1nd/app/users/ssantana/larsoft_v03_08_02/localProducts_larsoft_v03_08_02_e6_prof/lar1ndcode/v00_07_00/fcl/detsimmodules_lar1nd.fcl
+  189  touch /lar1nd/app/users/ssantana/larsoft_v03_08_02/localProducts_larsoft_v03_08_02_e6_prof/lar1ndcode/v00_07_00/fcl/detsimmodules_lar1nd.fcl
+  190  ds /lar1nd/app/users/ssantana/larsoft_v03_08_02/localProducts_larsoft_v03_08_02_e6_prof/lar1ndcode/v00_07_00/fcl/detsimmodules_lar1nd.fcl
+  191  clear
+  192  pwd
+  193  ds
+  194  cd../../
+  195  pwd
+  196  cd  ../
+  197  ds
+  198  find -name prodsingle_lar1nd.fcl
+  199  diff /srcs/lar1ndcode/lar1ndcode/JobConfigurations/prodsingle_lar1nd.fcl ./localProducts_larsoft_v03_08_02_e6_prof/lar1ndcode/v00_07_00/fcl/prodsingle_lar1nd.fcl
+  200  pwd
+  201  diff ./srcs/lar1ndcode/lar1ndcode/JobConfigurations/prodsingle_lar1nd.fcl ./localProducts_larsoft_v03_08_02_e6_prof/lar1ndcode/v00_07_00/fcl/prodsingle_lar1nd.fcl
+  202  find -name standard_reco_lar1nd_basic.fcl
+  203  diff ./srcs/lar1ndcode/lar1ndcode/JobConfigurations/standard_reco_lar1nd_basic.fcl
+  204  diff ./srcs/lar1ndcode/lar1ndcode/JobConfigurations/standard_reco_lar1nd_basic.fcl ./localProducts_larsoft_v03_08_02_e6_prof/lar1ndcode/v00_07_00/fcl/standard_reco_lar1nd_basic.fcl
+  205  find -name evd_lar1nd.fcl
+  206  diff ./srcs/lar1ndcode/lar1ndcode/JobConfigurations/evd_lar1nd.fcl ./localProducts_larsoft_v03_08_02_e6_prof/lar1ndcode/v00_07_00/fcl/evd_lar1nd.fcl
+  207  clear
+  208  pwd
+  209  lar -c prodsingle_lar1nd.fcl -o myfile.root -n15
+  210  ds
+  211  pwd
+  212  echo $MRB_BUILDDIR
+  213  pwd
+  214  ds
+  215  cd build_slf6.x86_64/
+  216  ls
+  217  ds
+  218  cd lar
+  219  cd lar1ndcode/
+  220  ds
+  221  git pull
+  222  cd lar1ndcode/
+  223  ds
+  224  git pull
+  225  cd ..
+  226  ds
+  227  cd ..
+  228  ds
+  229  cd ..
+  230  ds
+  231  cd srcs/
+  232  ds
+  233  cd lar1ndcode/
+  234  ds
+  235  git pull
+  236  cd $MRB_BUILDDIR
+  237  ds
+  238  mrb z
+  239  mrbsetenv
+  240  mrb i -j8
+  241  pwd
+  242  cd ..
+  243  pwd
+  244  ds
+  245  lar -c  standard_reco_lar1nd_basic.fcl myfile.root -o myreco_file.root
+  246  ds
+  247  root -l reco_hist.root
+  248  pwd
+  249  ds
+  250  lar -c evd_lar1nd.fcl myfile.root
+  251  ds
+  252  cd localProducts_larsoft_v03_08_02_e6_prof/
+  253  ds
+  254  cd localProducts_larsoft_v03_08_02_e6_prof/la
+  255  ds lar1ndcode/
+  256  ds lar1ndcode/v00_07_00
+  257  ds lar1ndcode/v00_07_00/fcl/
+  258  nano lar1ndcode/v00_07_00/fcl/evd_lar1nd.fcl 
+  259  cd ../../
+  260  pwd
+  261  cd larsoft_v03_08_02
+  262  ds
+  263  lar -c evd_lar1nd.fcl myfile.root
+  264  ds
+  265  gedit setup_lar.csh &
+  266  ds
+  267  cd larsoft_v03_08_02
+  268  ds
+  269  rm TFileService-*
+  270  ds
+  271  root -l myfile.root 
+  272  ds
+  273  cd ..
+  274  ds
+  275  nano setup_lar.csh 
+  276  source setup_lar.csh 
+  277  ds
+  278  root -l myfile.root 
+  279  ds
+  280  ds -h *root
+  281  root -l myreco_file.root 
+  282  cd
+  283  ls -a
+  284  ls -a .root*
+  285  cp ~mendez/.rootrc .
+  286  ls -a .root*
+  287  more .rootrc
+  288  cd Samlar1nd/
+  289  ds
+  290  cd larsoft_v03_08_02
+  291  ds
+  292  root -l reco_hist.root 
+  293  ds srcs/lar1ndcode/lar1ndcode/
+  294  ds srcs/lar1ndcode/lar1ndcode/MCTruthExtractor/
+  295  gedit srcs/lar1ndcode/lar1ndcode/MCTruthExtractor/NuAna_module.cc &
+  296  ds
+  297  root -l myfile.root 
+  298  lar -c evd_lar1nd.fcl myfile.root
+  299  ds
+  300  ds srcs/
+  301  ds srcs/lar1ndcode/
+  302  ds srcs/lar1ndcode/lar1ndcode/
+  303  ds srcs/lar1ndcode/lar1ndcode/MCTruthExtractor/
+  304  gedit srcs/lar1ndcode/lar1ndcode/MCTruthExtractor/NuAna_module.cc &
+  305  ds
+  306  lar -c evd_lar1nd.fcl myfile.root
+  307  pwd
+  308  ds
+  309  rm TFileService-*
+  310  ds
+  311  lar -c evd_lar1nd.fcl myfile.root
+  312  ds
+  313  ds -a
+  314  cd
+  315  ds -a
+  316  gedit .shrc&
+  317  cd Samlar1nd/
+  318  ds
+  319  exit
+  320  source setup_lar.csh 
+  321  ds
+  322  lar -c evd_lar1nd.fcl myreco_file.root
+  323  ds
+  324  gedit mytest.C&
+  325  nano mytest.C
+  326  gedit
+  327  gedit mytest.C&
+  328  exit
+  329  cd larsoft_v03_08_02
+  330  ds
+  331  rm TFileService-4a60-a2e6-c864-25fe.root 
+  332  ds
+  333  lar -c evd_lar1nd.fcl myfile.root
+  334  ds
+  335  cd..
+  336  ds
+  337  cd ..
+  338  ds
+  339  source setup_lar.csh 
+  340  ds
+  341  lar -c evd_lar1nd.fcl myfile.root
+  342  ds
+  343  root -l myfile.root 
+  344  ds
+  345  gedit mytest.* &
+  346  root -l
+  347  ds
+  348  root -l
+  349  root  myfile.root
+  350  root
+  351  owd
+  352  pwd
+  353  root
+  354  ds
+  355  root
+  356  exit
+  357  ds
+  358  cd 
+  359  ds
+  360  ds -a
+  361  nano .rootrc
+  362  cd Samlar1nd/
+  363  lar -c evd_lar1nd.fcl myfile.root
+  364  ds
+  365  gedit mytest.C~&
+  366  nedit
+  367  nedit mytest.C&
+  368  nedit mytest.C~&
+  369  gedit mytest.C~&
+  370  clear
+  371  nedit mytest.C
+  372  ds
+  373  more  mytest.C~
+  374  ds
+  375  nedit
+  376  gedit
+  377  gedit a
+  378  jobs
+  379  top
+  380  nedit mytest&
+  381  ds
+  382  nedit mytest.C&
+  383  ds
+  384  less mytest.C
+  385  cd
+  386  nano rootlogon.C
+  387  root
+  388  more rootlogon.C 
+  389  ds
+  390  cd
+  391  ds
+  392  ds Samlar1nd/
+  393  pwd
+  394  ds
+  395  more rootlogon.C 
+  396  chmode 755 rootlogon.C 
+  397  root
+  398  chmod 755 rootlogon.C 
+  399  ds rootlogon.C 
+  400  root
+  401  nano rootlogon.C 
+  402  root
+  403  root -l
+  404  nano rootlogon.C 
+  405  root
+  406  nano rootlogon.C 
+  407  root
+  408  ds
+  409  cp ~/rootlogon.C Samlar1nd/
+  410  ds
+  411  cp ~/rootlogon.C /lar1nd/app/users/ssantana/
+  412  cd Samlar1nd/
+  413  ds
+  414  pwd
+  415  ds
+  416  root
+  417  ds
+  418  mv rootlogon.C rootlogonnn.C 
+  419  root
+  420  mv rootlogonnn.C rootlogon.C 
+  421  root
+  422  ds
+  423  ds larsoft_v03_08_02
+  424  cd larsoft_v03_08_02
+  425  ds
+  426  root -l reco_hist.root 
+  427  ds
+  428  gedit mygen.*
+  429  root -l
+  430  gedit mygen.*
+  431  ds
+  432  pwd
+  433  cd ..
+  434  ds
+  435  root -l
+  436  pwd
+  437  cd larsoft_v03_08_02
+  438  root -l
+  439  pwd
+  440  cd ..
+  441  ds
+  442  gedit rootlogon.C 
+  443  ds
+  444  pwd
+  445  uname -a
+  446  pwd
+  447  ds
+  448  pwd
+  449  cd
+  450  ds
+  451  pwd
+  452  ds
+  453  cd Mail/
+  454  ds
+  455  exit
+  456  exit
+  457  umane -a
+  458  uname -a
+  459  pwd
+  460  ds
+  461  cp -v ~mendez/TiaAnalyzer.zip .
+  462  ds
+  463  unzip TiaAnalyzer.zip .
+  464  unzip TiaAnalyzer.zip 
+  465  ds
+  466  cd __MACOSX/
+  467  ds
+  468  ls
+  469  cd ..
+  470  rm -rf __MACOSX/
+  471  ds
+  472  gedit TiaAnalyzer_module.cc &
+  473  pwd
+  474  cd ..
+  475  pwd
+  476  ds
+  477  mkdir SamAnalizer
+  478  ds
+  479  cd SamAnalizer/
+  480  ds ..
+  481  ds ../..
+  482  ds ../larsoft_v03_08_02
+  483  mv ../larsoft_v03_08_02/TiaAnalyzer* .
+  484  ds
+  485  ds ../larsoft_v03_08_02
+  486  ds ../larsoft_v03_08_02/CMakeLists.txt 
+  487  ds ../larsoft_v03_08_02/CMakeLists.txt .
+  488  mv ../larsoft_v03_08_02/CMakeLists.txt .
+  489  mv ../larsoft_v03_08_02/GNUmakefile .
+  490  ds
+  491  more TiaAnalyzer
+  492  more TiaAnalyzer_module.cc 
+  493  mv TiaAnalyzer_module.cc TiaAnalyzer.cc
+  494  ds
+  495  nano CMakeLists.txt 
+  496  nano GNUmakefile 
+  497  gmake
+  498  gedit GNUmakefile &
+  499  gmake
+  500  ds
+  501  gmake
+  502  ds
+  503  gedit CMakeLists.txt &
+  504  pwd
+  505  cd ../larsoft_v03_08_02
+  506  pwd
+  507  ds
+  508  rm TFileService-*
+  509  ds
+  510  cd ..
+  511  ds
+  512  root -l cosmics_hist.root 
+  513  ds
+  514  cd ..
+  515  ds
+  516  cd lar1nd
+  517  ds
+  518  cd ..
+  519  ds
+  520  root
+  521  ds
+  522  cd ..
+  523  ds
+  524  cd GNuMINtuple/
+  525  ds
+  526  nano gnumi2simple.C 
+  527  cd
+  528  ds
+  529  cd Samlar1nd/
+  530  ds
+  531  echo ${SIMULATIONBASE}
+  532  echo $SIMULATIONBASE
+  533  cd
+  534  ds
+  535  newrel -t v03_08_02 lardev
+  536  cd Samlar1nd/
+  537  newrel -t v03_08_02 lardev
+  538  ds
+  539  cd
+  540  ds
+  541  newrel -t v03_08_02 lardev
+  542  which newrel
+  543  ds
+  544  pwd
+  545  cd Samlar1nd/
+  546  ds
+  547  newrel -t v03_08_02 lardev
+  548  newrel 
+  549  which newrel
+  550  which cd
+  551  which ls
+  552  which ds
+  553  which gedit
+  554  which google-chrome
+  555  which newrel
+  556  ds
+  557  cd
+  558  ds
+  559  cd Samlar1nd/
+  560  cd
+  561  cd -
+  562  ds
+  563  cd SamAnalizer/
+  564  ds
+  565  gedit TiaAnalyzer.cc&
+  566  mkdir SamAnalyzer
+  567  ds
+  568  cd S
+  569  cd SamAnalyzer/
+  570  ds
+  571  artmod --header-loc MyPackage -e beginJob -e reconfigure analyzer mp::MyAnalyzer
+  572  ds
+  573  gedit ../CMakeLists.txt &
+  574  ds
+  575  more MyAnalyzer_module.cc 
+  576  ds
+  577  cd
+  578  ds
+  579  cd Samlar1nd/
+  580  ds
+  581  cdS
+  582  cd SamAnalizer/
+  583  ds
+  584  cd SamAnalyzer/
+  585  cp ../CMakeLists.txt .
+  586  ds
+  587  make
+  588  cmake
+  589  gmake
+  590  cler
+  591  clear
+  592  ds
+  593  cmake
+  594  ds
+  595  make
+  596  gmake
+  597  cd ../../
+  598  ds
+  599  cd larsoft_v03_08_02/srcs/
+  600  ds
+  601  ds lar1ndcode/
+  602  ds lar1ndcode/lar1ndcode/
+  603  ds lar1ndcode/lar1ndcode/MCTruthExtractor/
+  604  more lar1ndcode/lar1ndcode/MCTruthExtractor/NuAna_module.cc 
+  605  grep -i nuana lar1ndcode/lar1ndcode/MCTruthExtractor/NuAna_module.cc 
+  606  more lar1ndcode/lar1ndcode/MCTruthExtractor/NuAna_module.cc 
+  607                       ls
+  608  cd ~/Samlar1nd/
+  609  ds
+  610  ds larsoft_v03_08_02/srcs/lar1ndcode/lar1ndcode/MCTruthExtractor/
+  611  gedit larsoft_v03_08_02/srcs/lar1ndcode/lar1ndcode/MCTruthExtractor/NuAna_module.cc &
+  612  nedit larsoft_v03_08_02/srcs/lar1ndcode/lar1ndcode/MCTruthExtractor/NuAna_module.cc &
+  613  grep -i nuana larsoft_v03_08_02/srcs/lar1ndcode/lar1ndcode/MCTruthExtractor/NuAna_module.cc 
+  614  ds
+  615  nedit SamAnalizer/SamAnalyzer/MyAnalyzer_module.cc &
+  616  ds
+  617  pwd
+  618  cd ..
+  619  ds
+  620  cd SamAnalizer/SamAnalyzer/
+  621  ds
+  622  exit
+  623  calc 3+3
+  624  ds
+  625  cd ..
+  626  ds
+  627  cd larsoft_v03_08_02
+  628  ds
+  629  cd srcs/
+  630  ds
+  631  mrb build
+  632  pwd
+  633  ds lar1ndcode/lar1ndcode/
+  634  cd lar1ndcode/lar1ndcode/Analyzer/
+  635  ds
+  636  diff CMakeLists.txt CMakeLists.txt~
+  637  rm CMakeLists.txt~
+  638  ds
+  639  nano CMakeLists.txt 
+  640  ds
+  641  gedit CMakeLists.txt &
+  642  ds
+  643  cd ../../
+  644  ds
+  645  cd ..
+  646  ds
+  647  cd ..
+  648  ds
+  649  cd ..
+  650  ds
+  651  nano setup_lar.csh 
+  652  source setup_lar.csh 
+  653  ds
+  654  pwd
+  655  cd ../
+  656  ds
+  657  cd ..
+  658  ds
+  659  ds larsoft_v03_08_02/
+  660  cd larsoft_v03_08_02/
+  661  ds
+  662  exit
+  663  cd
+  664  cd -
+  665  clear
+  666  ds
+  667  exit
+  668  mrbsetenv
+  669  ds
+  670  pwd
+  671  cd ..
+  672  ds
+  673  cd srcs/
+  674  ds
+  675  mrb build
+  676  ds
+  677  ds -a
+  678  cd ../../
+  679  ds
+  680  ds -a
+  681  cd
+  682  ds
+  683  ds -a
+  684  nano .shrc
+  685  cd Samlar1nd/
+  686  ds
+  687  build setup_lar.csh 
+  688  mrb setup_lar.csh 
+  689  mrb build
+  690  ds
+  691  history
+  692  pwd
+  693  ds
+  694  cd larsoft_v03_08_02/srcs/
+  695  pwd
+  696  git status
+  697  cd lar1ndcode/lar1ndcode/
+  698  git status
+  699  bash
+  700  exit
+  701  ds
+  702  pwd
+  703  cd ../srcs/
+  704  pwd
+  705  cd
+  706  ds-a
+  707  ds
+  708  ds -a
+  709  nano .shrc
+  710  exit
+  711  ds
+  712  pwd
+  713  ds
+  714  ds srcs/
+  715  cd srcs/
+  716  ds
+  717  ds lar1ndcode/
+  718  cd ..
+  719  ds
+  720  ds srcs/
+  721  nano srcs/CMakeLists.txt 
+  722  cd ..
+  723  pwd
+  724  more setup_lar.csh 
+  725  ds
+  726  cd SamAnalizer/
+  727  ds
+  728  cd SamAnalyzer/
+  729  ds
+  730  cd ../../
+  731  ds
+  732  cd larsoft_v03_08_02
+  733  cd srcs/
+  734  ds
+  735  cd lar1ndcode/
+  736  ds
+  737  cd lar1ndcode/
+  738  ds
+  739  git status
+  740  git checkout
+  741  git checkout -- Utilities/standard_reco_lar1nd.fcl
+  742  git status
+  743  git flow feature start ss_myanalyzer
+  744  git status
+  745  ds
+  746  mkdir Analyzer
+  747  ds
+  748  nano CMakeLists.txt 
+  749  cd Analyzer/
+  750  cp ../Calibration/CMakeLists.txt .
+  751  nano CMakeLists.txt 
+  752  #artmod --header-loc MyPackage -e beginJob -e reconfigure analyzer mp::MyAnalyzer
+  753  artmod --help
+  754  artmod --header-loc lar1ndcode/Analyzer -e beginJob -e reconfigure analyzer lar1nd::SamuelAnalyzer
+  755  ds ..
+  756  pwd
+  757  grep -R namespace ..
+  758  ds
+  759  more SamuelAnalyzer_module.cc 
+  760    bb
+  761  more SamuelAnalyzer_module.cc 
+  762  nano CMakeLists.txt 
+  763  grep -ri ART_FRAMEWORK .. 
+  764  more ../DetectorSim/CMakeLists.txt
+  765  cp ../DetectorSim/CMakeLists.txt .
+  766  ds
+  767  gedit CMakeLists.txt &
+  768  ds
+  769  gedit SamuelAnalyzer_module.cc &
+  770  ds ../../
+  771  ds ../
+  772  cd ..
+  773  cd-
+  774  pwd
+  775  ds
+  776  ds Analyzer/
+  777  nano CMakeLists.txt 
+  778  gedit&
+  779  gedit CMakeLists.txt &
+  780  history
+  781  ds
+  782  cd Analyzer/
+  783  ds
+  784  gedit CMakeLists.txt &
+  785  art_make build
+  786  make build
+  787  ds
+  788  ds
+  789  git status
+  790  cd lar1ndcode/lar1ndcode/
+  791  git status
+  792  ds
+  793  ds Analyzer/
+  794  mrb build
+  795  pwd
+  796  cd ../../../../
+  797  pwd
+  798  ds
+  799  gedit setup_lar.csh 
+  800  bg
+  801  ds
+  802  cd larsoft_v03_08_02/srcs/lar1ndcode/lar1ndcode/Analyzer/
+  803  ds
+  804  mrb build
+  805  ds
+  806  gedit SamuelAnalyzer_module.cc &
+  807  mrb build
+  808  ds
+  809  nedit SamuelAnalyzer_module.cc&
+  810  ds -a ~
+  811  ds -a ~/.nedit
+  812  more -a ~/.nedit
+  813  more ~/.nedit/nedit.rc
+  814  pwd
+  815  gedit SamuelAnalyzer_module.cc&
+  816  echo $MRB_SRCS
+  817  printenv
+  818  printenv | grep $SETUP
+  819  printenv | grep SETUP
+  820  printenv | grep -i larind
+  821  printenv | grep -i lar1nd
+  822  cd ../../../
+  823  ds
+  824  cd ../
+  825  ds
+  826  cd ../
+  827  ds
+  828  nano setup_lar.csh 
+  829  exit
+  830  ds
+  831  cd ../
+  832  ds
+  833  more setup_lar.csh 
+  834  ds
+  835  cd larsoft_v03_08_02
+  836  ds
+  837  ds ../../mendez/setup_lar.csh 
+  838  cat ../../mendez/setup_lar.csh 
+  839  tail  ../../mendez/setup_lar.csh 
+  840  tail -3  ../../mendez/setup_lar.csh 
+  841  ds 
+  842  lar -c standard_reco_lar1nd_basic.fcl myfile.root -o test_reco.root
+  843  exit
+  844  pwd
+  845  ds
+  846  pwd
+  847  cd srcs/lar1ndcode/
+  848  ds
+  849  cd lar1ndcode/
+  850  ds
+  851  cd Analyzer/
+  852  ds
+  853  mrb build
+  854  echo $MRB_TOP
+  855  echo $MRB_SOURCES
+  856  echo $MRB_SOURCE
+  857  ds
+  858  cd ..
+  859  ds
+  860  more setup_lar.csh 
+  861  ds
+  862  ds -a
+  863  cd
+  864  ds
+  865  ds -a
+  866  nano .shrc
+  867  ds
+  868  cd Samlar1nd/
+  869  ds
+  870  nano setup_lar.csh 
+  871  ds
+  872  cd SamAnalizer/
+  873  ds
+  874  pwd
+  875  cd -
+  876  ds
+  877  cd larsoft_v03_08_02
+  878  ds
+  879  source /grid/fermiapp/products/lar1nd/setup_lar1nd.sh
+  880  echo $MRB_TOP
+  881  source localProducts_larsoft_v03_08_02_e6
+  882  source localProducts_larsoft_v03_08_02_e6_prof/
+  883  source localProducts_larsoft_v03_08_02_e6_prof/setup 
+  884  mrbsetenv
+  885  mrb build
+  886  pwd
+  887  ds
+  888  cd srcs/lar1ndcode/ups/
+  889  ds
+  890  cat product_deps 
+  891  ds
+  892  pwd
+  893  cd ../../../
+  894  ds
+  895  cd ..
+  896  ds
+  897  more setup_lar.csh 
+  898  ds
+  899  cd larsoft_v03_08_02
+  900  ds
+  901  cd srcs/
+  902  ds
+  903  cd lar1ndcode/
+  904  ds
+  905  git status
+  906  git stash
+  907  git status
+  908  mrb build
+  909  ds
+  910  git status
+  911  git rebase
+  912  git rebase develop
+  913  git pull
+  914  git fetch
+  915  git rebase origin/develop
+  916  ds
+  917  cd ../../
+  918  ds
+  919  cd ../
+  920  ds
+  921  gedit setup_lar.csh &
+  922  ds
+  923  ds larsoft_v03_08_02
+  924  ds srcs
+  925  pwd
+  926  ds
+  927  cd larsoft_v03_08_02/srcs/
+  928  ds
+  929  ds lar1ndcode/
+  930  ds
+  931  ds lar1ndcode/lar1ndcode/
+  932  pwd
+  933  ds
+  934  cd lar1ndcode/lar1ndcode/
+  935  ds
+  936  ds Utilities/
+  937  ds JobConfigurations/
+  938  echo $MRB_SOURCE 
+  939  mrb z
+  940  mrbsetenv
+  941  mrb build
+  942  pwd
+  943  cd ../../
+  944  ds
+  945  pwd
+  946  cd lar1ndcode/
+  947  ds
+  948  git stash show
+  949  git stash pop
+  950  mrb build 
+  951  pwd
+  952  ds
+  953  cd lar1ndcode/
+  954  ds
+  955  nano CMakeLists.txt 
+  956  pwd
+  957  ds
+  958  nano CMakeLists.txt 
+  959  cd ..
+  960  ds
+  961  cd ..
+  962  ds
+  963   history
+  964  mrb build 
+  965  ds
+  966  cd lar1ndcode/
+  967  ds
+  968  cd lar1ndcode/
+  969  ds
+  970  cd Analyzer/
+  971  ds
+  972  more SamuelAnalyzer_module.cc
+  973  mrb build
+  974  ds
+  975  nano setup_lar.csh 
+  976  cd larsoft_v03_08_02/srcs/lar1ndcode/lar1ndcode/Analyzer/
+  977  nano SamuelAnalyzer_module.cc
+  978  mrb build
+  979  cd ../../../
+  980  ds
+  981  cd ../
+  982  pwd
+  983  cd ..
+  984  pwd
+  985  ds
+  986  source setup_lar.csh 
+  987  cd ..
+  988  nano setup_lar.csh 
+  989  ds
+  990  mv setup_lar.csh setup_lar.sh 
+  991  ds
+  992  cd
+  993  ds
+  994  nano .shrc
+  995  exit
+  996  ds
+  997  cd
+  998  nano .shrc
+  999  exit
+ 1000  pwd
+ 1001  cd srcs/
+ 1002  mrb build
+ 1003  cd lar1ndcode/lar1ndcode/Analyzer/
+ 1004  nano SamuelAnalyzer_module.cc
+ 1005  mrb build
+ 1006  history
+ 1007  history | more
+ 1008  history > hist.log
