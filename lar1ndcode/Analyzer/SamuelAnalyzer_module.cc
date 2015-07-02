@@ -227,7 +227,44 @@ void lar1nd::SamuelAnalyzer::analyze(art::Event const & e)
 
    //std::cout<<"pHandle:   "<<pHandle->isCC << std::endl;
 
+////Andrzej copying things
+   
+    // loop over all sim::SimChannels in the event and make sure there are no
+    // sim::IDEs with trackID values that are not in the sim::ParticleList
+    std::vector<const sim::SimChannel*> sccol;
+    evt.getView(fG4ModuleLabel, sccol);
 
+    double totalCharge=0.0;
+    double totalEnergy=0.0;
+    fnumChannels->Fill(sccol.size());
+    for(size_t sc = 0; sc < sccol.size(); ++sc){
+      double numIDEs=0.0;
+      double scCharge=0.0;
+      double scEnergy=0.0;
+      const std::map<unsigned short, std::vector<sim::IDE> >& tdcidemap = sccol[sc]->TDCIDEMap();
+      for(auto mapitr = tdcidemap.begin(); mapitr != tdcidemap.end(); mapitr++){
+	const std::vector<sim::IDE> idevec = (*mapitr).second;
+	numIDEs += idevec.size();
+	for(size_t iv = 0; iv < idevec.size(); ++iv){
+	  if(plist.find( idevec[iv].trackID ) == plist.end()
+	     && idevec[iv].trackID != sim::NoParticleId) 
+	  mf::LogWarning("LArG4Ana") << idevec[iv].trackID << " is not in particle list"; 
+	  totalCharge +=idevec[iv].numElectrons;
+	  scCharge += idevec[iv].numElectrons;
+	  totalEnergy +=idevec[iv].energy;
+	  scEnergy += idevec[iv].energy;
+	}
+      }
+      fnumIDEs->Fill(sc,numIDEs);
+      fChannelCharge->Fill(sc,scCharge);
+      fChannelEnergy->Fill(sc,scEnergy);
+    }
+   
+   
+////end Andrzej copying things   
+   
+   
+   
     art::Handle< std::vector<simb::GTruth> > mcgtruth;
     e.getByLabel(fGenieModuleLabel,mcgtruth);
 
