@@ -1,7 +1,7 @@
 
 art_make(MODULE_LIBRARIES 
-			#Geometry
-                        #Geometry_service
+			Geometry
+                        Geometry_service
                         #Simulation
                         #Utilities
                         #TimeService_service
