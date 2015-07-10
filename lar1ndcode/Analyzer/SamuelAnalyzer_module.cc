@@ -186,7 +186,7 @@ private:
     TH2D *chargexy;
     TH1D *Qposx[3];
     TProfile *fratioQoE[3]; ///< Ratio of charge over energy as a function of x
-    TProfile *ChargeX[3], *EnergyX[3];
+    TProfile *ChargeX[3], *EnergyX[3], *ChargeZ, *EnergyZ;
     
   // The parameters from the .fcl file.
  // std::string fSimulationProducerLabel; // The name of the producer that tracked simulated particles through the detector
@@ -319,7 +319,14 @@ void lar1nd::SamuelAnalyzer::analyze(art::Event const & e)
 	  double ratioQoE = idevec[iv].numElectrons/idevec[iv].energy;
 	  fratioQoE[view]->Fill(idevec[iv].x,ratioQoE);
 	  ChargeX[view]->Fill(idevec[iv].x,idevec[iv].numElectrons);
-	  EnergyX[view]->Fill(idevec[iv].x,idevec[iv].energy);
+	  
+          bool cutz = idevec[iv].z >= 20 && idevec[iv].z < 100;
+          if(cutz)
+             EnergyX[view]->Fill(idevec[iv].x,idevec[iv].energy);
+
+          ChargeZ->Fill(idevec[iv].z,idevec[iv].numElectrons);
+	  EnergyZ->Fill(idevec[iv].z,idevec[iv].energy);
+
 	  
 	 // std::cout << "--Sam: ratioQoE =  " << ratioQoE << std::endl;
 	}
@@ -388,10 +395,10 @@ void lar1nd::SamuelAnalyzer::beginJob()
 
     // Some histograms relating to drift electrons, active detector
     // channels and charge/energy on channels
-    fnumChannels = tfs->make<TH1D>("fnumChannels", 
+     fnumChannels = tfs->make<TH1D>("fnumChannels", 
 				   "Active channels;Active channels;# events",
 				   256, 0, geo->Nchannels()); 
-    fnumIDEs = tfs->make<TProfile>("fnumIDEs", 
+     fnumIDEs = tfs->make<TProfile>("fnumIDEs", 
 				   "Drift Electrons per channel;Channel;Drift electrons",
 				   geo->Nchannels()+1, 0, geo->Nchannels(),
 				   0, 1e4); 
@@ -426,10 +433,14 @@ void lar1nd::SamuelAnalyzer::beginJob()
      ChargeX[0] = tfs->make<TProfile>("ChargeX0", "Charge as a function of x0",400, -200, 200,0, 2e4);
      ChargeX[1] = tfs->make<TProfile>("ChargeX1", "Charge as a function of x1",400, -200, 200,0, 2e4);
      ChargeX[2] = tfs->make<TProfile>("ChargeX2", "Charge as a function of x2",400, -200, 200,0, 2e4);
+
+     ChargeZ = tfs->make<TProfile>("ChargeZ", "Charge as a function of z",500, 0, 500,0, 2e4);
      
-     EnergyX[0] = tfs->make<TProfile>("EnergyX0", "Charge as a function of x0",400, -200, 200,0, 2e4);
-     EnergyX[1] = tfs->make<TProfile>("EnergyX1", "Charge as a function of x1",400, -200, 200,0, 2e4);
-     EnergyX[2] = tfs->make<TProfile>("EnergyX2", "Charge as a function of x2",400, -200, 200,0, 2e4);
+     EnergyX[0] = tfs->make<TProfile>("EnergyX0", "Energy as a function of x0",400, -200, 200,0, 2e4);
+     EnergyX[1] = tfs->make<TProfile>("EnergyX1", "Energy as a function of x1",400, -200, 200,0, 2e4);
+     EnergyX[2] = tfs->make<TProfile>("EnergyX2", "Energy as a function of x2",400, -200, 200,0, 2e4);
+
+     EnergyZ = tfs->make<TProfile>("EnergyZ", "Energy as a function of z",500, 0, 500,0, 2e4);
   }
 
 void lar1nd::SamuelAnalyzer::reconfigure(fhicl::ParameterSet const & p)
