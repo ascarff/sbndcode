@@ -185,6 +185,7 @@ private:
     TH1D *chargex, *chargey, *chargez;
     TH2D *chargexy;
     TH1D *Qposx[3];
+    TH1D *ChannelOn, *ViewOn;
     TProfile *fratioQoE[3]; ///< Ratio of charge over energy as a function of x
     TProfile *ChargeX[3], *EnergyX[3], *ChargeZ, *EnergyZ;
     
@@ -284,12 +285,23 @@ void lar1nd::SamuelAnalyzer::analyze(art::Event const & e)
       double scEnergy=0.0;
       
    // we need to distiguish the U and V planes
-      geo::View_t view = geom->View(sc);
+   //   geo::View_t view = geom->View(sc);
       
       
       const std::map<unsigned short, std::vector<sim::IDE> >& tdcidemap = sccol[sc]->TDCIDEMap();
       for(auto mapitr = tdcidemap.begin(); mapitr != tdcidemap.end(); mapitr++){
 	const std::vector<sim::IDE> idevec = (*mapitr).second;
+        
+        double channelN = (*mapitr).first;
+        
+        geo::View_t view = geom->View((*mapitr).first);
+
+        ChannelOn -> Fill(channelN);
+        ViewOn    -> Fill(view);
+
+        if(view == 2) 
+        std::cout << view << "  --Sam: sc:  " << sc << "   --Sam: mapitr.first:     " << (*mapitr).first << std::endl;
+
 	numIDEs += idevec.size(); 
       	for(size_t iv = 0; iv < idevec.size(); ++iv){
 	  if(plist.find( idevec[iv].trackID ) == plist.end()
@@ -321,6 +333,7 @@ void lar1nd::SamuelAnalyzer::analyze(art::Event const & e)
 	  ChargeX[view]->Fill(idevec[iv].x,idevec[iv].numElectrons);
 	  
           bool cutz = idevec[iv].z >= 20 && idevec[iv].z < 100;
+          cutz = true;
           if(cutz)
              EnergyX[view]->Fill(idevec[iv].x,idevec[iv].energy);
 
@@ -441,6 +454,9 @@ void lar1nd::SamuelAnalyzer::beginJob()
      EnergyX[2] = tfs->make<TProfile>("EnergyX2", "Energy as a function of x2",400, -200, 200,0, 2e4);
 
      EnergyZ = tfs->make<TProfile>("EnergyZ", "Energy as a function of z",500, 0, 500,0, 2e4);
+
+     ChannelOn = tfs->make<TH1D>("ChannelOn", "Channel On", geo->Nchannels(), 0, geo->Nchannels());
+     ViewOn    = tfs->make<TH1D>("ViewOn", "View On", 3, 0, 3);
   }
 
 void lar1nd::SamuelAnalyzer::reconfigure(fhicl::ParameterSet const & p)
