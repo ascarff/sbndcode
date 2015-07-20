@@ -1,0 +1,69 @@
+#include "services_lar1nd.fcl"
+#include "singles.fcl"
+#include "largeantmodules.fcl"
+#include "detsimmodules.fcl"
+#include "opticaldetectormodules.fcl"
+#include "photpropservices_sbnd.fcl"
+#include "photpropmodules_sbnd.fcl"
+#include "lightsource.fcl"
+
+
+process_name: LibraryBuild
+
+
+
+
+
+services:
+{
+  # Load the service that manages root files for histograms.
+  TFileService: { fileName: "libanalysis_sbnd_hists.root" }
+  Timing:       {}
+  user:          @local::lar1nd_simulation_services  # defined in services.fcl
+  message:       @local::standard_info
+}
+
+
+physics:
+{
+
+ producers:
+ {
+ }
+
+ analyzers:
+ {
+   libana: @local::sbnd_photonlibraryanalyzer
+ }
+
+ analyzeIt:  [ libana ]
+
+ #trigger_paths is a keyword and contains the paths that modify the art::event, 
+ #ie filters and producers
+ trigger_paths: [] 
+
+ #end_paths is a keyword and contains the paths that do not modify the art::Event, 
+ #ie analyzers and output streams.  these all run simultaneously
+ end_paths:     [analyzeIt]  
+}
+
+
+
+services.user.Geometry.GDML: "lar1nd_lightguides.gdml"
+services.user.Geometry.ROOT: "lar1nd_lightguides.gdml"
+
+
+
+# Begin optical specific parts:
+
+#
+# Examine your own library file - need to customize the visibility service
+#
+
+services.user.PhotonVisibilityService: @local::sbnd_photonvisibilityservice
+services.user.PhotonVisibilityService.LibraryFile: "PhotonLibraryFile_sbnd_test.root"
+
+# Number of voxels
+services.user.PhotonVisibilityService.NX: 5
+services.user.PhotonVisibilityService.NY: 5
+services.user.PhotonVisibilityService.NZ: 5
