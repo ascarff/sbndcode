@@ -1,0 +1,33 @@
+#include "opticaldetectorservices.fcl"
+
+BEGIN_PROLOG
+
+##
+# FD op det response services, nominal and reference
+##
+
+sbnd_opdetresponse:
+{
+   service_provider:        DoubleEndOpDetResponse
+   QuantumEfficiency:       0.0057
+   WavelengthCutLow:        0 
+   WavelengthCutHigh:       10000
+   
+   LightGuideAttenuation:   true
+   Lambda:                  250.0# cm
+   LongAxis:                x
+   
+   # Convert geometry to readout channels
+   # when reading in fast simulation
+   ChannelConversion:       fast
+
+   # QE here includes:
+   #   SiPMQE: 35%
+   #   SiPM Coverage: 71%
+   #   Surface Conversion: 0.92%
+   #   Mesh transmission: 70%
+   #   Attenuation in bars already in library response
+
+}
+
+END_PROLOG
