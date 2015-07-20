@@ -1,0 +1,64 @@
+#include "photpropservices.fcl"
+
+BEGIN_PROLOG
+
+sbnd_photonvisibilityservice:
+{
+
+  NX: 100
+  NY: 100
+  NZ: 100
+  UseCryoBoundary: true
+
+  DoNotLoadLibrary: false
+
+  LibraryBuildJob: false
+
+  LibraryFile: "PhotonPropagation/LibraryData/lib_35ton_v5_20150708.root"
+
+ #These are not used when usecryoboundary=true
+  XMin: -120
+  XMax: 120
+  YMin: -120
+  YMax: 120
+  ZMin: 0
+  ZMax: 1200
+}
+
+sbnd_photonvisibilityservice_buildlib: @local::sbnd_photonvisibilityservice
+sbnd_photonvisibilityservice_buildlib.DoNotLoadLibrary: true
+sbnd_photonvisibilityservice_buildlib.LibraryBuildJob: true
+sbnd_photonvisibilityservice_buildlib.LibraryFile: "PhotonPropagation/LibraryData/Not_A_Library.root"	 
+
+
+
+##
+# FD op det response services, nominal and reference
+##
+
+sbnd_opdetresponse:
+{
+   service_provider:        DoubleEndOpDetResponse
+   QuantumEfficiency:       0.0057
+   WavelengthCutLow:        0 
+   WavelengthCutHigh:       10000
+   
+   LightGuideAttenuation:   true
+   Lambda:                  250.0# cm
+   LongAxis:                x
+   
+   # Convert geometry to readout channels
+   # when reading in fast simulation
+   ChannelConversion:       fast
+
+   # QE here includes:
+   #   SiPMQE: 35%
+   #   SiPM Coverage: 71%
+   #   Surface Conversion: 0.92%
+   #   Mesh transmission: 70%
+   #   Attenuation in bars already in library response
+
+}
+
+
+END_PROLOG

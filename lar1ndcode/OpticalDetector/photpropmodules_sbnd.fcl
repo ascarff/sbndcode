@@ -1,0 +1,9 @@
+#include "photpropmodules.fcl"
+
+BEGIN_PROLOG
+
+sbnd_photonlibraryanalyzer: @local::standard_photonlibraryanalyzer
+sbnd_photonlibraryanalyzer.alt_x_axis: "Z"
+
+
+END_PROLOG

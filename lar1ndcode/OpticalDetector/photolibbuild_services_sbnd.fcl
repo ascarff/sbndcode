@@ -1,0 +1,34 @@
+#include "photpropservices_sbnd.fcl"
+#include "services_lar1nd.fcl"
+
+BEGIN_PROLOG
+
+sbnd_photolibbuild_services:           @local::lar1nd_opsimulation_services
+
+# Set the photon visiblity service to library building mode
+sbnd_photolibbuild_services.PhotonVisibilityService: @local::sbnd_photonvisibilityservice_buildlib
+
+# enable optical physics in LArG4
+sbnd_photolibbuild_services.LArG4Parameters.EnabledPhysics: [ "Em", 
+						"Optical", 
+						"SynchrotronAndGN", 
+						"Ion", 
+						"Hadron", 
+						"Decay", 
+						"HadronElastic", 
+						"Stopping", 
+						"NeutronTrackingCut" ]
+
+# enable this custom physics list
+sbnd_photolibbuild_services.LArG4Parameters.UseCustomPhysics: true
+sbnd_photolibbuild_services.LArG4Parameters.UseLitePhotons: false
+
+# disable cerenkov light
+sbnd_photolibbuild_services.LArProperties.EnableCerenkovLight: false
+
+# Turn off prescaling in opdeteresponse and geant4
+sbnd_photolibbuild_services.OpDetResponseInterface.QuantumEfficiency: 1
+sbnd_photolibbuild_services.LArProperties.ScintPreScale: 1
+
+
+END_PROLOG

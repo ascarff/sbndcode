@@ -6,11 +6,11 @@
 ////////////////////////////////////////////////////////////////////////
 
 
-#include "lbne/OpticalDetector/DoubleEndOpDetResponse.h"
+#include "lar1ndcode/OpticalDetector/DoubleEndOpDetResponse.h"
 #include "TGeoNode.h"
 #include "TGeoBBox.h"
 #include "Geometry/OpDetGeo.h"
-#include "Utilities/LArProperties.h"
+//#include "Utilities/LArProperties.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include "CLHEP/Random/RandFlat.h"
 
@@ -60,9 +60,11 @@ namespace opdet{
         if (fChannelConversion == "fast") fFastSimChannelConvert = true;
 
         // Correct out the prescaling applied during simulation
-        art::ServiceHandle<util::LArProperties>   LarProp;
-        fQE = tempfQE / LarProp->ScintPreScale();
-        
+        //art::ServiceHandle<util::LArProperties>   LarProp;
+        //fQE = tempfQE / LarProp->ScintPreScale();
+        fQE = tempfQE;
+
+        /*
         if (fQE > 1.0001 ) {
             mf::LogError("DoubleEndOpDetResponse_service") << "Quantum efficiency set in OpDetResponse_service, " << tempfQE
                                                       << " is too large.  It is larger than the prescaling applied during simulation, "
@@ -70,7 +72,7 @@ namespace opdet{
                                                       << ".  Final QE must be equalt to or smaller than the QE applied at simulation time.";
             assert(false);
         }
-
+        */
     }
 
 
@@ -78,16 +80,16 @@ namespace opdet{
     int  DoubleEndOpDetResponse::doNOpChannels() const
     {
         art::ServiceHandle<geo::Geometry> geom;
-        if (fFastSimChannelConvert || fFullSimChannelConvert)
-            return geom->NOpChannels();
-        else
-            return geom->NOpDets();
+        //if (fFastSimChannelConvert || fFullSimChannelConvert)
+        return geom->NOpChannels();
+        //else
+        //    return geom->NOpDets();
 
     }
 
 
     //--------------------------------------------------------------------
-    bool DoubleEndOpDetResponse::doDetected(int OpChannel, const sim::OnePhoton& Phot, int &newOpChannel) const
+    bool DoubleEndOpDetResponse::doDetected(int OpDet, const sim::OnePhoton& Phot, int &newOpChannel) const
     {
         
         // Find the Optical Detector using the geometry service
@@ -96,12 +98,14 @@ namespace opdet{
 
         if (fFullSimChannelConvert){
             // Override default number of channels for Fiber and Plank
-            float NOpHardwareChannels = geom->NOpHardwareChannels(OpChannel);
-            int hardwareChannel = (int) ( CLHEP::RandFlat::shoot(1.0) * NOpHardwareChannels );
-            newOpChannel = geom->OpChannel(OpChannel, hardwareChannel);
+            //float NOpHardwareChannels = geom->NOpHardwareChannels(OpDet);
+            //float NOpHardwareChannels = 12;
+            //int hardwareChannel = (int) ( CLHEP::RandFlat::shoot(1.0) * NOpHardwareChannels );
+            //newOpChannel = geom->OpChannel(OpDet, hardwareChannel);
+            newOpChannel = OpDet;
         }
         else{
-            newOpChannel = OpChannel;
+            newOpChannel = OpDet;
         }
         
         // Check QE
@@ -114,7 +118,13 @@ namespace opdet{
 
         if (fLightGuideAttenuation) {
             // Get the length of the photon detector
-            const TGeoNode* node = geom->OpDetGeoFromOpChannel(OpChannel).Node();
+            unsigned int cryostatID=0, opdetID=0;
+            art::ServiceHandle<geo::Geometry> geom;
+            geom->OpChannelToCryoOpDet(OpDet, opdetID, cryostatID);
+            const TGeoNode* node = geom->Cryostat(cryostatID).OpDet(opdetID).Node();
+
+            //const TGeoNode* node = geom->//geom->OpDetGeoFromOpDet(OpDet).Node();
+            
             TGeoBBox *box = (TGeoBBox*)node->GetVolume()->GetShape();
             double opdetLength = 0;
             double sipmDistance = 0;
@@ -145,7 +155,7 @@ namespace opdet{
             double AttenuationProb = frac*exp(-sipmDistance/lambda) + frac*exp(-altDistance/lambda);
 
             
-            //mf::LogVerbatim("DoubleEndOpDetResponse") << "OpChannel: " << OpChannel 
+            //mf::LogVerbatim("DoubleEndOpDetResponse") << "OpDet: " << OpDet 
             //                                     << " has length " << opdetLength << " in detector "
             //                                     << box->GetDX() << " x " << box->GetDY()  << " x " << box->GetDZ();
             //mf::LogVerbatim("DoubleEndOpDetResponse") << "   Local Position = (" << Phot.FinalLocalPosition.x() 
@@ -162,20 +172,21 @@ namespace opdet{
     }
 
     //--------------------------------------------------------------------
-    bool DoubleEndOpDetResponse::doDetectedLite(int OpChannel, int &newOpChannel) const
+    bool DoubleEndOpDetResponse::doDetectedLite(int OpDet, int &newOpChannel) const
     {
         if (fFastSimChannelConvert){
 
             // Find the Optical Detector using the geometry service
-            art::ServiceHandle<geo::Geometry> geom;
-            // Here OpChannel must be opdet since we are introducing
+            //art::ServiceHandle<geo::Geometry> geom;
+            // Here OpDet must be opdet since we are introducing
             // channel mapping here.
-            float NOpHardwareChannels = geom->NOpHardwareChannels(OpChannel);
-            int hardwareChannel = (int) ( CLHEP::RandFlat::shoot(1.0) * NOpHardwareChannels );
-            newOpChannel = geom->OpChannel(OpChannel, hardwareChannel);
+            //float NOpHardwareChannels = geom->NOpHardwareChannels(OpDet);
+            //int hardwareChannel = (int) ( CLHEP::RandFlat::shoot(1.0) * NOpHardwareChannels );
+            //newOpChannel = geom->OpChannel(OpDet, hardwareChannel);
+            newOpChannel = OpDet;
         }
         else{
-            newOpChannel = OpChannel;
+            newOpChannel = OpDet;
         }
         
         // Check QE
