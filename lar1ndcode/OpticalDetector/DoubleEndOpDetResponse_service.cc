@@ -126,20 +126,20 @@ namespace opdet{
             //const TGeoNode* node = geom->//geom->OpDetGeoFromOpDet(OpDet).Node();
             
             TGeoBBox *box = (TGeoBBox*)node->GetVolume()->GetShape();
-            double opdetLength = 0;
+            double opdetHalfLength = 0;
             double sipmDistance = 0;
 
             if (fLongAxis == 0) {
-                opdetLength = box->GetDX();
-                sipmDistance = opdetLength - Phot.FinalLocalPosition.x();
+                opdetHalfLength = box->GetDX();
+                sipmDistance = opdetHalfLength - Phot.FinalLocalPosition.x();
             }
             else if (fLongAxis == 1) {
-                opdetLength = box->GetDY();
-                sipmDistance = opdetLength - Phot.FinalLocalPosition.y();
+                opdetHalfLength = box->GetDY();
+                sipmDistance = opdetHalfLength - Phot.FinalLocalPosition.y();
             }
             else if (fLongAxis == 2) {
-                opdetLength = box->GetDZ();
-                sipmDistance = opdetLength - Phot.FinalLocalPosition.z();
+                opdetHalfLength = box->GetDZ();
+                sipmDistance = opdetHalfLength - Phot.FinalLocalPosition.z();
             }
             else {
                 mf::LogError("DoubleEndOpDetResponse") << "Unknown axis, fLongAxis = " << fLongAxis;
@@ -148,7 +148,7 @@ namespace opdet{
 
 
 
-            double altDistance = opdetLength - sipmDistance;
+            double altDistance = 2*opdetHalfLength - sipmDistance;
             double frac        = 0.5;
 
             // Throw away some photons based on attenuation
@@ -156,7 +156,7 @@ namespace opdet{
 
             
             //mf::LogVerbatim("DoubleEndOpDetResponse") << "OpDet: " << OpDet 
-            //                                     << " has length " << opdetLength << " in detector "
+            //                                     << " has half length " << opdetHalfLength << " in detector "
             //                                     << box->GetDX() << " x " << box->GetDY()  << " x " << box->GetDZ();
             //mf::LogVerbatim("DoubleEndOpDetResponse") << "   Local Position = (" << Phot.FinalLocalPosition.x() 
             //                                     << ", " << Phot.FinalLocalPosition.y() << ", " << Phot.FinalLocalPosition.z() << ")";
