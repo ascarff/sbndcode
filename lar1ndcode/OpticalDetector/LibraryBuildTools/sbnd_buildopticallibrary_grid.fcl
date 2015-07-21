@@ -116,4 +116,4 @@ services.user.PhotonVisibilityService.NX: 100
 services.user.PhotonVisibilityService.NY: 100
 services.user.PhotonVisibilityService.NZ: 100
 
-services.user.PhotonVisibilityService.UseCryoBoundary: false
+services.user.PhotonVisibilityService.UseCryoBoundary: true

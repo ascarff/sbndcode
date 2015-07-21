@@ -129,7 +129,7 @@ services.user.PhotonVisibilityService.NX: 5
 services.user.PhotonVisibilityService.NY: 5
 services.user.PhotonVisibilityService.NZ: 5
 
-services.user.PhotonVisibilityService.UseCryoBoundary: false
+services.user.PhotonVisibilityService.UseCryoBoundary: true
 
 # IF UseCryoBoundary is set to false, so use the following parameters in cm
 #services.user.PhotonVisibilityService.XMin:   -3.
