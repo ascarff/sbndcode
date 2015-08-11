@@ -1,7 +1,7 @@
 cet_enable_asserts()
 
 set( lar1nd_util_lib_list LArFFT_service
-                       LArProperties_service
+                       LArPropertiesOpLib_service
 			Geometry
 			Geometry_service
 			Utilities
@@ -32,6 +32,20 @@ simple_plugin( FileCatalogMetadataLAr1ND  "service"
                ${lar1nd_util_lib_list}
 	       BASENAME_ONLY
         )
+
+simple_plugin(LArPropertiesOpLib "service"
+              DatabaseUtil_service
+              ${ART_UTILITIES}
+              ${MF_MESSAGELOGGER}
+              ${MF_UTILITIES}
+              ${CETLIB}
+              ${ROOT_BASIC_LIB_LIST}
+              ${ROOT_MATHCORE}
+              BASENAME_ONLY
+)
+
+
+
 install_headers()
 install_fhicl()
 install_source()

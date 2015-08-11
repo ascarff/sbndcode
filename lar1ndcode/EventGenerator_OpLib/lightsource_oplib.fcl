@@ -1,0 +1,62 @@
+BEGIN_PROLOG
+
+standard_lightsourceol_filemode:
+{
+ module_type:        "LightSourceOpLib"
+
+ SourceMode:         1          # Indicates file mode
+
+ FillTree:           true       # Whether to make a TTree of photon information
+                                #  in the TFileService
+
+ PosDist:            0          # Flags specifying random distribution
+ PDist:              0          #   0 = Uniform
+ TDist:              0          #   1 = Gaussian
+
+ # Location of file supplying light source configuration per event
+ SteeringFile:       "EventGenerator_OpLib/LightSourceSteering.txt"
+}
+
+
+standard_lightsourceol_scanmode:
+{
+ module_type:        "LightSourceOpLib"
+
+ SourceMode:         1        # Indicates scan mode 
+
+ FillTree:           true     # Whether to make a TTree of photon information
+                              #  in the TFileService
+
+ PosDist:            0        # Flags specifying random distribution 
+ PDist:              1        #  0 = Uniform
+ TDist:              0        #  1 = Gaussian
+
+ P:                  9.69      # Central photon momentum in eV
+ SigmaP:             0.25      # Width of distribution (Heindl et al. Europhys.Lett. 91 (2010) 62002)
+ T0:                 0.0      # Central time for photon production
+ SigmaT:             0.0      # Extent in time
+ N:                  10000    # Number of photons to make per voxel
+
+ FirstVoxel:         0        # First and last voxel IDs to populate
+ LastVoxel:          -1       #  (LastVoxel=-1 means run over all voxels)
+
+ UseCustomRegion:    false    # Use the voxel params from PhotonVisibilityService
+                              #  (false) or those supplied below (true)
+
+
+ # Custom voxelization parameters
+
+ XSteps:             1
+ YSteps:             10
+ ZSteps:             20
+ RegionMin:          [ -120.0,  -120.0,    0.0 ]
+ RegionMax:          [  120.0,   120.0, 1400.0 ]
+}
+
+
+
+standard_lightsourceol:   @local::standard_lightsourceol_scanmode
+microboone_lightsourceol: @local::standard_lightsourceol
+
+
+END_PROLOG

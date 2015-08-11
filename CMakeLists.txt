@@ -52,6 +52,9 @@ find_ups_product( art v1_09_00 )
 find_ups_product( cetbuildtools v3_10_00 )
 find_ups_product( postgresql v9_1_5 )
 
+find_ups_geant4( geant4 v4_9_6 )
+
+
 # macros for dictionary and simple_plugin
 include(ArtDictionary)
 include(ArtMake)

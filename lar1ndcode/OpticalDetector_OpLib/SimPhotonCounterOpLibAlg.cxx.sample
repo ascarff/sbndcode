@@ -1,0 +1,99 @@
+/*!
+ * Title:   SimPhotonCounterOpLibALG Class
+ * Author:  Wes Ketchum (wketchum@lanl.gov)
+ *
+ * Description: Alg class that counts up sim photons, leading towards 
+ *              comparisons with flashes and flash hypotheses.
+*/
+
+#include "SimPhotonCounterOpLibAlg.h"
+
+opdet::SimPhotonCounterOpLibAlg::SimPhotonCounterOpLibAlg(fhicl::ParameterSet const& p)
+{
+  FillAllRanges( p.get< std::vector<fhicl::ParameterSet> >("SimPhotonCounterOpLibParams") );
+}
+
+void opdet::SimPhotonCounterOpLibAlg::FillAllRanges(std::vector<fhicl::ParameterSet> const& pv)
+{
+  fTimeRanges.clear();
+  fWavelengthRanges.clear();
+
+  fTimeRanges.reserve(pv.size());
+  fWavelengthRanges.reserve(pv.size());
+
+  for(auto const& p : pv)
+    FillRanges(p);
+}
+
+void opdet::SimPhotonCounterOpLibAlg::FillRanges(fhicl::ParameterSet const& p)
+{
+  std::vector<float> time_range(4);
+  time_range[0] = p.get<float>("MinPromptTime");
+  time_range[1] = p.get<float>("MaxPromptTime");
+  time_range[2] = p.get<float>("MinLateTime");
+  time_range[3] = p.get<float>("MaxLateTime");
+
+  if( time_range[0]>time_range[1] || time_range[2]>time_range[3] || time_range[1]>time_range[2] )
+    throw std::runtime_error("ERROR in SimPhotonCounterOpLibAlg: Bad time range.");
+
+  fTimeRanges.push_back(time_range);
+
+  std::vector<float> wavelength_range(2);
+  wavelength_range[0] = p.get<float>("MinWavelength");
+  wavelength_range[1] = p.get<float>("MaxWavelength");
+
+  if(wavelength_range[0] >= wavelength_range[1])
+    throw std::runtime_error("ERROR in SimPhotonCounterOpLibAlg: Bad wavelength range.");
+
+  fWavelengthRanges.push_back(wavelength_range);
+
+}
+
+void opdet::SimPhotonCounterOpLibAlg::InitializeCounters(geo::Geometry const& geo,
+						    opdet::OpDigiProperties const& opdigip)
+{
+  fCounters.resize(fTimeRanges.size());
+  for(size_t i=0; i<fCounters.size(); i++)
+    fCounters[i] = SimPhotonCounterOpLib(fTimeRanges[i][0],fTimeRanges[i][1],
+				    fTimeRanges[i][2],fTimeRanges[i][3],
+				    fWavelengthRanges[i][0],fWavelengthRanges[i][1],
+				    std::vector<float>(geo.NOpDet(),opdigip.QE()));
+}
+
+void opdet::SimPhotonCounterOpLibAlg::AddSimPhotonCollection(sim::SimPhotonsCollection const& ph_col)
+{
+  if(ph_col.size() != fCounters.at(0).GetVectorSize())
+    throw std::runtime_error("ERROR in SimPhotonCounterOpLibAlg: Photon collection size and OpDet size not equal.");
+  
+  for(auto const& photons : ph_col)
+    for(auto & counter : fCounters)
+      counter.AddSimPhotons(photons.second);
+}
+
+void opdet::SimPhotonCounterOpLibAlg::AddSimPhotonsVector(std::vector<sim::SimPhotons> const& spv)
+{
+  for(auto const& photons : spv)
+    for(auto & counter : fCounters)
+      counter.AddSimPhotons(photons);
+}
+
+void opdet::SimPhotonCounterOpLibAlg::ClearCounters()
+{
+  for(auto & counter : fCounters)
+    counter.ClearVectors();
+}
+
+std::vector<float> const& opdet::SimPhotonCounterOpLibAlg::PromptPhotonVector(size_t i)
+{
+  return fCounters.at(i).PromptPhotonVector();
+}
+
+std::vector<float> const& opdet::SimPhotonCounterOpLibAlg::LatePhotonVector(size_t i)
+{
+  return fCounters.at(i).LatePhotonVector();
+}
+
+opdet::SimPhotonCounterOpLib const& opdet::SimPhotonCounterOpLibAlg::GetSimPhotonCounterOpLib(size_t i)
+{
+  return fCounters.at(i);
+}

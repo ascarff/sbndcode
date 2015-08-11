@@ -16,5 +16,7 @@ add_subdirectory(Calibration)
 add_subdirectory(DetectorSim)
 add_subdirectory(OpDet)
 #add_subdirectory(MCTruthExtractor)
-
-
+add_subdirectory(LArG4_OpLib)
+add_subdirectory(PhotonPropagation_OpLib)
+add_subdirectory(EventGenerator_OpLib)
+add_subdirectory(OpticalDetector_OpLib)

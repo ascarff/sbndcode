@@ -12,7 +12,7 @@
 #include "Geometry/TPCGeo.h"
 #include "Geometry/PlaneGeo.h"
 #include "Utilities/DetectorProperties.h"
-#include "Utilities/LArProperties.h"
+#include "lar1ndcode/Utilities/LArPropertiesOpLib.h"
 #include "Utilities/LArFFT.h"
 #include "TFile.h"
 
@@ -235,7 +235,7 @@ void util::SignalShapingServiceT1053::SetFieldResponse()
 
   art::ServiceHandle<geo::Geometry> geo;
   art::ServiceHandle<util::DetectorProperties> detprop;
-  art::ServiceHandle<util::LArProperties> larp;
+  art::ServiceHandle<util::LArPropertiesOpLib> larp;
 
   // Get plane pitch.
  

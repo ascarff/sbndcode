@@ -1,0 +1,52 @@
+#ifndef SIMPHOTONCOUNTERALG_H
+#define SIMPHOTONCOUNTERALG_H
+
+/*!
+ * Title:   SimPhotonCounterOpLibALG Class
+ * Author:  Wes Ketchum (wketchum@lanl.gov)
+ *
+ * Description: Alg class that counts up sim photons, leading towards 
+ *              comparisons with flashes and flash hypotheses.
+*/
+
+#include "SimPhotonCounterOpLib.h"
+
+#include "fhiclcpp/ParameterSet.h"
+
+#include "Geometry/Geometry.h"
+#include "OpDigiProperties.h"
+
+namespace opdet{
+
+  class SimPhotonCounterOpLibAlg{
+
+  public:
+    SimPhotonCounterOpLibAlg(fhicl::ParameterSet const&);
+
+    void InitializeCounters(geo::Geometry const&,
+			    opdet::OpDigiProperties const&);
+    
+    void AddSimPhotonCollection(sim::SimPhotonsCollection const&);
+    void AddSimPhotonsVector(std::vector<sim::SimPhotons> const&);
+
+    void ClearCounters();
+
+    SimPhotonCounterOpLib   const& GetSimPhotonCounterOpLib(size_t);
+    std::vector<float> const& PromptPhotonVector(size_t);
+    std::vector<float> const& LatePhotonVector(size_t);
+    
+  private:
+    
+    std::vector< std::vector<float> > fWavelengthRanges;
+    std::vector< std::vector<float> > fTimeRanges;
+    std::vector<SimPhotonCounterOpLib>     fCounters;
+
+    void FillAllRanges(std::vector<fhicl::ParameterSet> const&);
+    void FillRanges(fhicl::ParameterSet const&);
+	
+  };
+  
+}
+
+
+#endif

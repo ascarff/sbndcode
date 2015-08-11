@@ -3,6 +3,7 @@
 BEGIN_PROLOG
 
 lar1nd_lightsource: @local::standard_lightsource
+lar1nd_lightsourceol: @local::standard_lightsourceol
 
 END_PROLOG
 

@@ -28,7 +28,7 @@ libdir	fq_dir		lib
 bindir	fq_dir		bin
 gdmldir product_dir
 fcldir  product_dir
-
+fwdir   product_dir G4
 # With "product  version" table below, we now define depdendencies
 # Add the dependent product and version
 

@@ -1,0 +1,11 @@
+BEGIN_PROLOG
+
+standard_photonlibraryanalyzerol:
+{
+  module_type: "PhotonLibraryAnalyzerOpLib"
+  alt_x_axis:  "Y"
+}
+
+microboone_photonlibraryanalyzerol: @local::standard_photonlibraryanalyzerol
+
+END_PROLOG

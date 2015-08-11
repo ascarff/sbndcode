@@ -1,0 +1,101 @@
+BEGIN_PROLOG
+
+standard_oplibproperties:
+{
+LoadExtraMatProperties: false
+ # Drift properties 
+ Efield:           [0.5,0.66,0.8 ]   #kV/cm
+ Temperature:      91                #Kelvin
+ Electronlifetime: 750               #microseconds
+
+ # For following parameters, see http://pdg.lbl.gov/AtomicNuclearProperties/
+ RadiationLength:  19.55   # g/cm^2
+ AtomicNumber:     18      # Ar atomic number.
+ AtomicMass:       39.948  # Ar atomic mass (g/mol).
+ ExcitationEnergy: 188.0   # Ar mean excitation energy (eV).
+ SternheimerA:     0.1956  # Ar Sternheimer parameter a.
+ SternheimerK:     3.0000  # Ar Sternheimer parameter k.
+ SternheimerX0:    0.2000  # Ar Sternheimer parameter x0.
+ SternheimerX1:    3.0000  # Ar Sternheimer parameter x0.
+ SternheimerCbar:  5.2146  # Ar Sternheimer parameter Cbar.
+
+# realistic Argon 39 decays
+# Argon39DecayRate: 0.00141 # decays per cm^3 per second.  Assumes 1.01 Bq/kg and a density of 1.396 g/cc
+# switch them off for faster simulation
+ Argon39DecayRate: 0.0
+
+ # Optical properties	
+ # Fast and slow scintillation emission spectra, from [J Chem Phys vol 91 (1989) 1469]
+ FastScintEnergies:    [ 6.0,  6.7,  7.1,  7.4,  7.7, 7.9,  8.1,  8.4,  8.5,  8.6,  8.8,  9.0,  9.1,  9.4,  9.8,  10.4,  10.7]
+ SlowScintEnergies:    [ 6.0,  6.7,  7.1,  7.4,  7.7, 7.9,  8.1,  8.4,  8.5,  8.6,  8.8,  9.0,  9.1,  9.4,  9.8,  10.4,  10.7]
+ FastScintSpectrum:    [ 0.0,  0.04, 0.12, 0.27, 0.44, 0.62, 0.80, 0.91, 0.92, 0.85, 0.70, 0.50, 0.31, 0.13, 0.04,  0.01, 0.0]
+ SlowScintSpectrum:    [ 0.0,  0.04, 0.12, 0.27, 0.44, 0.62, 0.80, 0.91, 0.92, 0.85, 0.70, 0.50, 0.31, 0.13, 0.04,  0.01, 0.0]
+ ScintResolutionScale: 1.     # resolution factor used by G4 scintillation
+ ScintFastTimeConst:   6.     # fast scintillation time constant (ns)
+ ScintSlowTimeConst:   1590.  # slow scintillation time constant (ns)
+ ScintBirksConstant:   0.069  # birks constant for LAr (1/MeV cm)
+ ScintYield:           24000. # total scintillation yield (ph/Mev)         
+ ScintYieldRatio:      0.3    # fast / slow scint ratio (needs revisitting)
+ ScintByParticleType:  false  # whether to use different yields and
+                              # quenching per particle in fast op sim
+ EnableCerenkovLight: true    # whether to switch on cerenkov light (slow)
+ SimpleBoundaryProcess: true #enable opticalBoundaryProcessSimple instead of G4 default
+ SimpleScintillation: true #enable OpFastScintillation instead of G4 default
+
+
+ # Scintillation yields and fast/slow ratios per particle type 
+ MuonScintYield:          24000
+ MuonScintYieldRatio:     0.23
+ PionScintYield:          24000
+ PionScintYieldRatio:     0.23 
+ ElectronScintYield:      20000
+ ElectronScintYieldRatio: 0.27
+ KaonScintYield:          24000
+ KaonScintYieldRatio:     0.23
+ ProtonScintYield:        19200
+ ProtonScintYieldRatio:   0.29
+ AlphaScintYield:         16800
+ AlphaScintYieldRatio:    0.56
+
+# TPB - WLS
+
+TpbTimeConstant: 2.5 #wls time constant in s 
+
+ # index of refraction as a function of energy (arXiv:1502.04213v1)
+ RIndexEnergies: [1.9000,2.9340,3.5920,5.5660,6.6940,7.5400,8.5740,9.0440,9.2320,9.4200,9.5140,9.6080,9.7020,9.7960,9.8900,9.9840,10.0780,10.266,10.454,10.736,10.924]
+ RIndexSpectrum: [1.2316,1.2362,1.2403,1.2610,1.2821,1.3060,1.3533,1.3867,1.4035,1.4230,1.4339,1.4457,1.4587,1.4728,1.4883,1.5054, 1.5243,1.5691,1.6265,1.7507,1.8791]
+
+ # absorption length as function of energy
+ AbsLengthEnergies: [ 4,     5,     6,     7,     8,     9,     10,    11   ]       
+ AbsLengthSpectrum: [ 2000., 2000., 2000., 2000., 2000., 2000., 2000., 2000.] 
+
+ # Rayleigh scattering length (cm) as a function of energy (eV) from arXiv:1502.04213v1, scaled up by a factor
+ # of 1.131 such that average over LAr scintillation energies = 66cm (N. Ishida et al, 1997)
+ RayleighEnergies: [  2.95,  3.10,  3.54,  4.13, 4.96, 5.76, 6.53,8.00,8.40,8.80,9.00,9.20,9.40,9.50,9.60,9.70,9.80,9.90,10.0,10.2,10.4,10.6,10.8 ]
+ RayleighSpectrum: [43400.,34900.,20000.,10800.,4800.,2250.,1170.,367.,257.,174.,141.,114.,90.6,80.5,71.1,62.6,54.7,47.4,40.7,29.0,19.4,12.0,6.66 ]
+
+ # Surface reflectivity data - vector of energy spectrum per
+ #   surface type [1.77, 2.0675, 2.481, 2.819, 2.953, 3.1807, 3.54, 4.135, 4.962, 5.39]0.42, 0.43,0.46,0.43,0.41,0.36,0.33,0.2,0.07,0.07
+ ReflectiveSurfaceEnergies:           [ 7, 9, 10 ]             
+ ReflectiveSurfaceNames:            [ "STEEL_STAINLESS_Fe7Cr2Ni"]  
+ ReflectiveSurfaceReflectances:     [ [ 0.25, 0.25, 0.25 ] ]        
+ ReflectiveSurfaceDiffuseFractions: [ [ 0.5,  0.5,  0.5  ]]    
+ 
+
+ ReflectiveSurfaceTpbEnergies:           [ 1.77, 2.0675, 2.481, 2.819, 2.953, 3.1807, 3.54, 4.135, 4.962, 5.39 ]             
+ ReflectiveSurfaceTpbNames:            [ "vm2000" ]  
+  ReflectiveSurfaceTpbReflectances:   [ [0.93, 0.93,0.93,0.93,0.93,0.93, 0.1,0.1,0.7,0.3] ]        
+ ReflectiveSurfaceTpbDiffuseFractions: [ [0.05,  0.05,  0.05,0.05,  0.05,  0.05,0.05,  0.05,  0.05,0.05 ] ]
+
+#WLS - TPB properties original tpb [0.0, 0.0, 0.0, 0.0588,0.235, 0.853, 1.0,1.0,0.9259,0.704,0.0296,0.011, 0.0,0.0, 0.]
+TpbEmmisionEnergies: [0.05,1.0,1.5, 2.25, 2.481, 2.819, 2.952,2.988,3.024, 3.1, 3.14,3.1807, 3.54, 5.5, 50.39]
+TpbEmmisionSpectrum: [0.0, 0.0, 0.0, 0.0588,0.235, 0.853, 1.0,1.0,0.9259,0.704,0.0296,0.011, 0.0,0.0, 0.]
+TpbAbsorptionEnergies: [0.05,1.77,2.0675, 7.42, 7.75, 8.16, 8.73, 9.78,10.69, 50.39]
+TpbAbsorptionSpectrum: [100000.0,100000.0, 100000.0,0.001,0.00000000001,0.00000000001, 0.00000000001, 0.00000000001, 0.00000000001, 0.00000000001]
+
+#copper cathode/foil preliminary
+
+#G10 from measurements 10 points spectrum  
+}
+
+END_PROLOG

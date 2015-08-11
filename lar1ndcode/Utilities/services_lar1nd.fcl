@@ -1,6 +1,7 @@
 #include "geometry_lar1nd.fcl"
 #include "detectorproperties_lar1nd.fcl"
 #include "larproperties_lar1nd.fcl"
+#include "larproperties_oplib.fcl"
 #include "larfft_lar1nd.fcl"
 #include "messageservice.fcl"
 #include "simulationservices_lar1nd.fcl"
@@ -21,7 +22,7 @@ lar1nd_services:
  ExptGeoHelperInterface:         @local::lar1nd_geometry_helper
  Geometry:                       @local::lar1nd_geo 	       
  DetectorProperties:             @local::lar1nd_detproperties 
- LArProperties:                  @local::lar1nd_properties    
+ LArPropertiesOpLib:                  @local::lar1nd_properties    
  LArFFT:                         @local::lar1nd_larfft        
  DatabaseUtil:	                 @local::lar1nd_database      
  SignalShapingServiceT1053: @local::lar1nd_signalshapingservice
@@ -42,7 +43,7 @@ lar1nd_simulation_services:
  ExptGeoHelperInterface:         @local::lar1nd_geometry_helper
  Geometry:                       @local::lar1nd_geo 	           
  DetectorProperties:             @local::lar1nd_detproperties      
- LArProperties:                  @local::lar1nd_properties	   
+ LArPropertiesOpLib:                  @local::lar1nd_properties	   
  LArFFT:                         @local::lar1nd_larfft             
  DatabaseUtil:	                 @local::lar1nd_database           
  SignalShapingServiceT1053: @local::lar1nd_signalshapingservice
@@ -58,7 +59,7 @@ lar1nd_opsimulation_services:
  ExptGeoHelperInterface:         @local::lar1nd_geometry_helper
  Geometry:                       @local::lar1nd_geo 	           
  DetectorProperties:             @local::lar1nd_detproperties      
- LArProperties:                  @local::lar1nd_properties	   
+ LArPropertiesOpLib:             @local::lar1nd_oplibproperties	   
  LArFFT:                         @local::lar1nd_larfft             
  DatabaseUtil:	                 @local::lar1nd_database           
  SignalShapingServiceT1053: @local::lar1nd_signalshapingservice
@@ -73,8 +74,8 @@ lar1nd_opsimulation_services.OpDetResponseInterface: @local::lar1nd_opdetrespons
 #lar1nd_optical_simulation_services:                          @local::lar1nd_simulation_services
 #lar1nd_optical_simulation_services.PhotonVisibilityService:  @local::lar1nd_photonvisibilityservice
 #lar1nd_optical_simulation_services.OpDigiProperties:         @local::lar1nd_opdigiproperties 
-#lar1nd_optical_simulation_services.LArProperties.ScintYield: 24000
-#lar1nd_optical_simulation_services.LArProperties.EnableCerenkovLight: false
+#lar1nd_optical_simulation_services.LArPropertiesOpLib.ScintYield: 24000
+#lar1nd_optical_simulation_services.LArPropertiesOpLib.EnableCerenkovLight: false
 #lar1nd_optical_simulation_services.LArG4Parameters.UseCustomPhysics: true
 #lar1nd_optical_simulation_services.LArG4Parameters.EnabledPhysics: [ "Em",
 #                                                                         "FastOptical",
