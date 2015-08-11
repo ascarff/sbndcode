@@ -279,7 +279,6 @@ namespace phot{
 
   void PhotonLibrary::SetReflCount(size_t Voxel, size_t OpChannel, float Count) 
   { 
-    std::cout << " setting reflected count of: " << Count << std::endl;
     if(/*(Voxel<0)||*/(Voxel>=fNVoxels))
       mf::LogError("PhotonLibrary")<<"Error - attempting to set count in voxel " << Voxel<<" which is out of range"; 
     else

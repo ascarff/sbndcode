@@ -139,9 +139,11 @@ namespace opdet {
       Int_t fCount;
       Int_t fCountOpDetAll;
       Int_t fCountOpDetDetected;
+      Int_t fCountOpDetReflDetected;
 
       Int_t fCountEventAll;
       Int_t fCountEventDetected;
+      Int_t fCountEventDetectedwithRefl;
       
       Int_t fEventID;
       Int_t fOpChannel;
@@ -190,7 +192,8 @@ namespace opdet {
   {
     // Get file service to store trees
     art::ServiceHandle<art::TFileService> tfs;
-
+    art::ServiceHandle<phot::PhotonVisibilityServiceOpLib> pvs;
+    
      // Create and assign branch addresses to required tree
     if(fMakeAllPhotonsTree)
       {
@@ -217,6 +220,8 @@ namespace opdet {
 	fTheOpDetTree->Branch("OpChannel",          &fOpChannel,            "OpChannel/I");
 	fTheOpDetTree->Branch("CountAll",       &fCountOpDetAll,      "CountAll/I");
 	fTheOpDetTree->Branch("CountDetected",  &fCountOpDetDetected, "CountDetected/I");
+	if(pvs->StoreReflected())
+	  fTheOpDetTree->Branch("CountReflDetected",  &fCountOpDetReflDetected, "CountReflDetected/I");
 	fTheOpDetTree->Branch("Time",  			&fTime,				 "Time/F");
       }
     
@@ -226,6 +231,8 @@ namespace opdet {
 	fTheEventTree->Branch("EventID",      &fEventID,            "EventID/I");
 	fTheEventTree->Branch("CountAll",     &fCountEventAll,     "CountAll/I");
 	fTheEventTree->Branch("CountDetected",&fCountEventDetected,"CountDetected/I");
+	if(pvs->StoreReflected())
+	  fTheOpDetTree->Branch("CountReflDetected",  &fCountOpDetReflDetected, "CountReflDetected/I");
       }
 
 	//ahack
@@ -352,7 +359,8 @@ namespace opdet {
 	    //Reset Counters
 	    fCountOpDetAll=0;
 	    fCountOpDetDetected=0;
-
+            fCountOpDetReflDetected=0;
+	    
 	    //Get data from HitCollection entry
 	    fOpChannel=itOpDet->first;
 	    const sim::SimPhotons& TheHit=itOpDet->second;
@@ -399,7 +407,10 @@ namespace opdet {
                     if(odresponse->detected(fOpChannel, Phot))
 		      {
 			if(fMakeDetectedPhotonsTree) fThePhotonTreeDetected->Fill();
-			fCountOpDetDetected++;
+			if(!pvs->StoreReflected() || (pvs->StoreReflected() && fWavelength <200 ))  //only store direct UV light
+			  fCountOpDetDetected++;
+			else if (pvs->StoreReflected() && fWavelength >380 )  // reflected and shifted light is in visible range
+			  fCountOpDetReflDetected++;
 			std::cout<<"OpDetResponseInterface PerPhoton : Event "<<fEventID<<" OpChannel " <<fOpChannel << " Wavelength " << fWavelength << " Detected 1 "<<std::endl;
 		      }
 		    else
@@ -433,7 +444,10 @@ namespace opdet {
                     if(odresponse->detected(fOpChannel, Phot))
 		      {
 			if(fMakeDetectedPhotonsTree) fThePhotonTreeDetected->Fill();
-			fCountOpDetDetected++;
+			if(!pvs->StoreReflected() || (pvs->StoreReflected() && fWavelength <200 ))  //only store direct UV light
+			  fCountOpDetDetected++;
+			else if (pvs->StoreReflected() && fWavelength >380 )  // reflected and shifted light is in visible range
+			  fCountOpDetReflDetected++;
 		      }
 
 //			std::cout<<"Stopping before filling time and dist vecs"<<std::endl;
@@ -488,7 +502,10 @@ namespace opdet {
 	      {
 		//int VoxID; double NProd;
 		pvs->RetrieveLightProd(VoxID, NProd);
+		pvs->SetLibraryEntry(VoxID, fOpChannel, double(fCountOpDetDetected)/NProd);
 		pvs->SetLibraryEntry(VoxID, fOpChannel, double(fCountOpDetDetected)/NProd);		
+		if(pvs->StoreReflected())
+		  pvs->SetLibraryEntry(VoxID, fOpChannel, double(fCountOpDetReflDetected)/NProd,true);  //store relfected light	
 	      }
 
 
@@ -496,7 +513,8 @@ namespace opdet {
 	    if(fMakeOpDetsTree) fTheOpDetTree->Fill();
 	    fCountEventAll+=fCountOpDetAll;
 	    fCountEventDetected+=fCountOpDetDetected;
-
+            fCountEventDetectedwithRefl+=(fCountOpDetDetected+fCountOpDetReflDetected);
+	    
 	    // Give per OpDet output
 	    if(fVerbosity >2) std::cout<<"OpDetResponseInterface PerOpDet : Event "<<fEventID<<" OpDet " << fOpChannel << " All " << fCountOpDetAll << " Det " <<fCountOpDetDetected<<std::endl; 
 	  }
@@ -571,7 +589,8 @@ namespace opdet {
     //Reset counters
     fCountEventAll=0;
     fCountEventDetected=0;
-
+    fCountEventDetectedwithRefl=0;
+    
     if(fVerbosity > 0) std::cout<<"Found OpDet hit collection of size "<< (*photonHandle).size()<<std::endl;
 
     
