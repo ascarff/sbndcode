@@ -23,7 +23,7 @@ argoneut_largeant:   @local::standard_largeant
 
 standard_largeantana:
 {
- module_type:      "LArG4OpLibAna"
+ module_type:      "LArG4AnaOpLib"
  GeantModuleLabel: "largeant"
  TruthModuleLabel: "generator"
  Ndaughters:        20

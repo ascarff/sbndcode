@@ -69,6 +69,7 @@ lar1nd_opsimulation_services:
 }
 
 lar1nd_opsimulation_services.OpDetResponseInterface: @local::lar1nd_opdetresponse
+lar1nd_opsimulation_services.LArProperties: @local::lar1nd_properties
 
 # Define lar1nd_optical_simulation_services
 #lar1nd_optical_simulation_services:                          @local::lar1nd_simulation_services

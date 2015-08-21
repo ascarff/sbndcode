@@ -57,12 +57,12 @@ namespace sim{
 ///Geant4 interface 
 namespace larg4 {  
  
-  class LArG4OpLibAna : public art::EDAnalyzer{
+  class LArG4AnaOpLib : public art::EDAnalyzer{
   public:
  
     /// Standard constructor and destructor for an FMWK module.
-    explicit LArG4OpLibAna(fhicl::ParameterSet const& pset);
-    virtual ~LArG4OpLibAna();
+    explicit LArG4AnaOpLib(fhicl::ParameterSet const& pset);
+    virtual ~LArG4AnaOpLib();
 
     void analyze (const art::Event& evt); 
     void beginJob();
@@ -127,7 +127,7 @@ namespace larg4 {
 
   //-----------------------------------------------------------------------
   // Constructor
-  LArG4OpLibAna::LArG4OpLibAna(fhicl::ParameterSet const& pset)
+  LArG4AnaOpLib::LArG4AnaOpLib(fhicl::ParameterSet const& pset)
     : EDAnalyzer(pset)
   {
     this->reconfigure(pset);
@@ -135,12 +135,12 @@ namespace larg4 {
 
   //-----------------------------------------------------------------------
   // Destructor
-  LArG4OpLibAna::~LArG4OpLibAna() 
+  LArG4AnaOpLib::~LArG4AnaOpLib() 
   {
   }
 
   //-----------------------------------------------------------------------
-  void LArG4OpLibAna::beginJob()
+  void LArG4AnaOpLib::beginJob()
   {
     art::ServiceHandle<art::TFileService> tfs;
     art::ServiceHandle<geo::Geometry> geo;
@@ -223,7 +223,7 @@ fTree->Branch("MCDIST", &fTDIST, "MCDIST/F");
   }
 
   //-----------------------------------------------------------------------
-  void LArG4OpLibAna::reconfigure(fhicl::ParameterSet const& p)
+  void LArG4AnaOpLib::reconfigure(fhicl::ParameterSet const& p)
   {
     fG4ModuleLabel    = p.get< std::string >("GeantModuleLabel");
     fTNdsOriginal     = p.get< int         >("Ndaughters"      );
@@ -234,7 +234,7 @@ fTree->Branch("MCDIST", &fTDIST, "MCDIST/F");
   }
 
   //-----------------------------------------------------------------------
-  void LArG4OpLibAna::analyze(const art::Event& evt) 
+  void LArG4AnaOpLib::analyze(const art::Event& evt) 
   {
 
     //get the list of particles from this event
@@ -481,7 +481,7 @@ fTDIST=float(dist2);
 
 namespace larg4 {
 
-  DEFINE_ART_MODULE(LArG4OpLibAna)
+  DEFINE_ART_MODULE(LArG4AnaOpLib)
 
 } // namespace LArG4OpLib
 

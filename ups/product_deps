@@ -2,7 +2,7 @@
 
 # The *parent* line must the first non-commented line and defines this product and version
 # The version should be of the form vxx_yy_zz (e.g. v01_02_03)
-parent lar1ndcode v00_07_01
+parent lar1ndcode v00_08_00
 defaultqual e6
 
 # These optional lines define the installed directories where headers,
@@ -36,7 +36,7 @@ product          version
 larsoft		v03_08_02
 #lar1ndutil      v01_10_02
 gcc		v4_9_1
-Lar1ndOpticalLib v00_01
+Lar1ndOpticalLib v00_02
 
 
 # list products required ONLY for the build
