@@ -33,7 +33,7 @@ art_make( BASENAME_ONLY
 			MCBase
                         Geometry
                         Geometry_service
-                       PhotonVisibilityServiceOpLib_service
+                        PhotonVisibilityServiceOpLib_service
 #        	        OpDigiProperties_service
 		        Utilities
                        ${SIMULATIONBASE}
@@ -57,11 +57,11 @@ art_make( BASENAME_ONLY
 			BackTracker_service
                         Filters
                         RecoObjects
-                       RecoBase
+                        RecoBase
 			MCBase
-                       RecoAlg
+                        RecoAlg
                         Geometry
-                       Geometry_service
+                        Geometry_service
                         Simulation
 #                        TriggerAlgoMicroBoone_service
                         Utilities

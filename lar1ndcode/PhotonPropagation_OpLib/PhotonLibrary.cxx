@@ -163,7 +163,7 @@ namespace phot{
   void PhotonLibrary::LoadLibraryFromFile(std::string LibraryFile, size_t NVoxels, size_t NOpChannels,bool getReflected)
   {
     fLookupTable.clear();
-    
+    fReflLookupTable.clear();
     mf::LogInfo("PhotonLibrary") << "Reading photon library from input file: " << LibraryFile.c_str()<<std::endl;
 
     fNVoxels     = NVoxels;
@@ -200,13 +200,17 @@ namespace phot{
     Float_t   ReflVisibility; 
     
     fLookupTable.resize(NVoxels);    
-
+    if(getReflected)
+	   fReflLookupTable.resize(NVoxels);
+    
     mf::LogInfo("PhotonLibrary") <<"Photon lookup table size : "<<  NVoxels << " voxels,  " << NOpChannels<<" channels";
 
 
     for(size_t ivox=0; ivox!=NVoxels; ivox++)
       {
 	fLookupTable[ivox].resize(NOpChannels,0);
+	if(getReflected)
+	   fReflLookupTable[ivox].resize(NOpChannels,0);
       }
     
     tt->SetBranchAddress("Voxel",      &Voxel);
