@@ -277,10 +277,10 @@ en_dep=0.;
 entry_test=false;
     for(tt=0;tt<int(plist.Particle(tu)->Trajectory().size());tt++)
     {
-std::cout<<tu<<" "<<plist.Particle(tu)->TrackId()<<" BEFORE ENTERING BOX @@@@@@@@@@@@ POSITION X "<<plist.Particle(tu)->Trajectory().X(tt)<<" @@@@@@@@@@@@ POSITION Y "<<plist.Particle(tu)->Trajectory().Y(tt)<<" @@@@@@@@@@@@ POSITION Z "<<plist.Particle(tu)->Trajectory().Z(tt)<<" ENERGY "<<plist.Particle(tu)->Trajectory().E(tt)<<std::endl;
+//std::cout<<tu<<" "<<plist.Particle(tu)->TrackId()<<" BEFORE ENTERING BOX @@@@@@@@@@@@ POSITION X "<<plist.Particle(tu)->Trajectory().X(tt)<<" @@@@@@@@@@@@ POSITION Y "<<plist.Particle(tu)->Trajectory().Y(tt)<<" @@@@@@@@@@@@ POSITION Z "<<plist.Particle(tu)->Trajectory().Z(tt)<<" ENERGY "<<plist.Particle(tu)->Trajectory().E(tt)<<std::endl;
      if ((TMath::Abs(double(plist.Particle(tu)->Trajectory().X(tt))) <= 7.5) && (TMath::Abs(double(plist.Particle(tu)->Trajectory().Y(tt))) <= 7.5) && (TMath::Abs(double(plist.Particle(tu)->Trajectory().Z(tt))) <= 12.5)){
 
-std::cout<<tu<<"&&&&&&&& IN CHAMBER @@@@@@@@@@@@ POSITION X "<<plist.Particle(tu)->Trajectory().X(tt)<<" @@@@@@@@@@@@ POSITION Y "<<plist.Particle(tu)->Trajectory().Y(tt)<<" @@@@@@@@@@@@ POSITION Z "<<plist.Particle(tu)->Trajectory().Z(tt)<<" ENERGY "<<plist.Particle(tu)->Trajectory().E(tt)<<std::endl;
+//std::cout<<tu<<"&&&&&&&& IN CHAMBER @@@@@@@@@@@@ POSITION X "<<plist.Particle(tu)->Trajectory().X(tt)<<" @@@@@@@@@@@@ POSITION Y "<<plist.Particle(tu)->Trajectory().Y(tt)<<" @@@@@@@@@@@@ POSITION Z "<<plist.Particle(tu)->Trajectory().Z(tt)<<" ENERGY "<<plist.Particle(tu)->Trajectory().E(tt)<<std::endl;
    	  if(entry_test==false){
 			 if(tt>0) tts=tt-1;
 			 else tts=tt;
@@ -292,7 +292,7 @@ std::cout<<tu<<"&&&&&&&& IN CHAMBER @@@@@@@@@@@@ POSITION X "<<plist.Particle(tu
 if (entry_test && ((TMath::Abs(double(plist.Particle(tu)->Trajectory().X(tt))) > 7.5) || (TMath::Abs(double(plist.Particle(tu)->Trajectory().Y(tt))) > 7.5) || (TMath::Abs(double(plist.Particle(tu)->Trajectory().Z(tt))) > 12.5))){
 		en_dep=double(plist.Particle(tu)->Trajectory().E(tts))-double(plist.Particle(tu)->Trajectory().E(tt));
 
-std::cout<<tu<<" LEAVING CHAMBER @@@@@@@@@@@@ POSITION X "<<plist.Particle(tu)->Trajectory().X(tt)<<" @@@@@@@@@@@@ POSITION Y "<<plist.Particle(tu)->Trajectory().Y(tt)<<" @@@@@@@@@@@@ POSITION Z "<<plist.Particle(tu)->Trajectory().Z(tt)<<" ENERGY "<<plist.Particle(tu)->Trajectory().E(tt)<<" starting point "<<tts<<" end "<<tt<<std::endl;
+//std::cout<<tu<<" LEAVING CHAMBER @@@@@@@@@@@@ POSITION X "<<plist.Particle(tu)->Trajectory().X(tt)<<" @@@@@@@@@@@@ POSITION Y "<<plist.Particle(tu)->Trajectory().Y(tt)<<" @@@@@@@@@@@@ POSITION Z "<<plist.Particle(tu)->Trajectory().Z(tt)<<" ENERGY "<<plist.Particle(tu)->Trajectory().E(tt)<<" starting point "<<tts<<" end "<<tt<<std::endl;
  		break;
 		}
  

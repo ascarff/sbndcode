@@ -124,6 +124,8 @@ services.user.LArG4Parameters.UseCustomPhysics: true
 # disable cerenkov light
 services.user.LArPropertiesOpLib.EnableCerenkovLight: false
 
+# enable extra materialproperties (including tpb WLS)
+services.user.LArPropertiesOpLib.LoadExtraMatProperties: true
 
 
 physics.producers.generator.P0: [1. ]

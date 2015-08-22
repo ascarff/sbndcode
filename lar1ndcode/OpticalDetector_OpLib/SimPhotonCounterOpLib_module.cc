@@ -431,7 +431,7 @@ namespace opdet {
                     fWavelength= odresponse->wavelength(Phot.Energy);
 		    fTime= Phot.Time;
                     
-                    std::cout << "Time: "<<fTime << " \n";
+                  //  std::cout << "Time: "<<fTime << " \n";
                     
                     initialPhotonPosition = Phot.InitialPosition;	
                     finalPhotonPosition = Phot.FinalLocalPosition;

@@ -154,6 +154,7 @@ namespace larg4 {
   {
     LOG_DEBUG("lar1ndcode/LArG4_OpLib") << "Debug: LArG4OpLib()";
 
+    fdumpSimChannels=false;
     // get the random number seed, use a random default if not specified
     // in the configuration file.
     unsigned int seed = pset.get< unsigned int >("Seed", sim::GetRandomNumberSeed());

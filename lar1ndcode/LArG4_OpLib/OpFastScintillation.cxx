@@ -378,6 +378,10 @@ bool OpFastScintillation::RecordPhotonsProduced(const G4Step& aStep, double Mean
   const std::vector<float>* Visibilities = nullptr;
   if(!pvs->UseParameterization())Visibilities = pvs->GetAllVisibilities(xyz);
 
+  
+  const std::vector<float>* ReflVisibilities = nullptr;
+  if(!pvs->UseParameterization() && pvs->StoreReflected())ReflVisibilities = pvs->GetAllVisibilities(xyz,true);
+
 
   G4MaterialPropertyVector* Fast_Intensity = 
     aMaterialPropertiesTable->GetProperty("FASTCOMPONENT"); 
@@ -550,6 +554,7 @@ bool OpFastScintillation::RecordPhotonsProduced(const G4Step& aStep, double Mean
 
 
     std::map<int, int> DetectedNum;
+    std::map<int, int> ReflDetectedNum;
     if(!Visibilities && !(pvs->UseParameterization()))
       {
 	// if null pointer, this means no data for this voxel - in 
@@ -660,11 +665,19 @@ bool OpFastScintillation::RecordPhotonsProduced(const G4Step& aStep, double Mean
       {
 		G4int DetThisPMT = G4int(G4Poisson(Visibilities->at(OpChan) * Num));
 		if(DetThisPMT>0) 
-        {
+		{
 		    DetectedNum[OpChan]=DetThisPMT;
-		    //   mf::LogInfo("OpFastScintillation") << "FastScint: " <<
-		    //   //   it->second<<" " << Num << " " << DetThisPMT;  
-        }
+		       std::cout <<("OpFastScintillation") << "FastScint: " <<
+		     OpChan <<" " << Num << " " << DetThisPMT << std::endl;  
+		}
+		G4int ReflDetThisPMT = G4int(G4Poisson(ReflVisibilities->at(OpChan) * Num));
+		if(ReflDetThisPMT>0) 
+		{
+		    ReflDetectedNum[OpChan]=ReflDetThisPMT;
+		       std::cout <<("OpFastScintillation") << "FastScintRefl: " <<
+		     OpChan <<" " << Num << " " << DetThisPMT << std::endl;  
+		}
+		
       }
 	  // Now we run through each PMT figuring out num of detected photons
 	
@@ -726,11 +739,11 @@ bool OpFastScintillation::RecordPhotonsProduced(const G4Step& aStep, double Mean
 		
             // The sim photon in this case stores its production point and time
             TVector3 PhotonPosition(x0[0],x0[1],x0[2]);
-		
-            // We don't know anything about the momentum dir, so set it to be Z		
-            float Energy = 9.7*eV;
+	    
+	  float Energy = 9.7*eV;
             float Time = aSecondaryTime;
-		
+	 std::cout << " saving direct with energy: " << Energy << " "<< std::endl;
+           	
             // Make a photon object for the collection
 	    sim::OnePhoton PhotToAdd;
             PhotToAdd.InitialPosition  = PhotonPosition;
@@ -741,6 +754,74 @@ bool OpFastScintillation::RecordPhotonsProduced(const G4Step& aStep, double Mean
             fst->AddPhoton(itdetphot->first, std::move(PhotToAdd));
         }
       }
+      if(pvs->StoreReflected())
+      {
+	std::cout << "in Store Reflected, nphotons: " << ReflDetectedNum.size() << std::endl;
+        // And then add these to the total collection for the event	    
+      for(std::map<int,int>::const_iterator itdetphot = ReflDetectedNum.begin();
+	    itdetphot!=ReflDetectedNum.end(); ++itdetphot)
+      {
+	    for (G4int i = 0; i < itdetphot->second; ++i) 
+        {
+            G4double deltaTime = aStep.GetStepLength() /
+                ((pPreStepPoint->GetVelocity()+
+                  pPostStepPoint->GetVelocity())/2.);
+		
+            if (ScintillationRiseTime==0.0) 
+            {
+                deltaTime = deltaTime - 
+                    ScintillationTime * std::log( G4UniformRand() );
+            } 
+            else 
+            {
+              deltaTime = deltaTime +
+                  sample_time(ScintillationRiseTime, ScintillationTime);
+            }		
+		
+            G4double aSecondaryTime = t0 + deltaTime;
+		
+            // The sim photon in this case stores its production point and time
+            TVector3 PhotonPosition(x0[0],x0[1],x0[2]);
+		
+            // We don't know anything about the momentum dir, so set it to be Z		
+	    std::map<double,double> tpbemission=art::ServiceHandle<util::LArPropertiesOpLib>()->TpbEm();
+	    const int nbins=tpbemission.size();
+	    
+	    std::cout << " nbins reflected " << nbins << " " << (*tpbemission.begin()).first << " " << (*(--tpbemission.end())).first <<  std::endl;
+	    
+	    double * parent=new double[nbins];
+	   
+            int ii=0;
+	    for( std::map<double, double>::iterator iter = tpbemission.begin(); iter != tpbemission.end(); ++iter)
+	    { parent[ii++]=(*iter).second;
+	     std::cout << " binninf TPB: " << i << " " << (*iter).first << " "  <<  (*iter).second << std::endl;
+	    }
+            
+	    CLHEP::RandGeneral rgen0(parent,nbins);
+             
+            double x0 = rgen0.fire()*((*(--tpbemission.end())).first-(*tpbemission.begin()).first)+(*tpbemission.begin()).first;
+	    
+	    std::cout << "range: " << (*(--tpbemission.end())).first << " " << (*tpbemission.begin()).first << std::endl;
+	    
+            // We don't know anything about the momentum dir, so set it to be Z		
+            float Energy = x0*eV;
+            float Time = aSecondaryTime;
+		
+	    std::cout << " saving with energy: " << Energy << " "<< x0 << "range: " <<  (*(--tpbemission.end())).first-(*tpbemission.begin()).first << " zero level: " <<  (*tpbemission.begin()).first << std::endl;
+            // Make a photon object for the collection
+	    sim::OnePhoton PhotToAdd;
+            PhotToAdd.InitialPosition  = PhotonPosition;
+            PhotToAdd.Energy           = Energy;
+            PhotToAdd.Time             = Time;
+            PhotToAdd.SetInSD          = false;
+			
+            fst->AddPhoton(itdetphot->first, std::move(PhotToAdd));
+	    delete [] parent;
+        }
+      }
+      
+      }// end storing reflected light
+      
       }
     }
     }

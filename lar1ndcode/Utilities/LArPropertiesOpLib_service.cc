@@ -552,6 +552,15 @@ std::map<double, double> util::LArPropertiesOpLib::TpbEm()
       << " " << fTpbEmmisionSpectrum.size();
   }
 //using interpolation for more smooth spectrum of TPB emmision - won't affect anything but the effective size of table passed to G4
+
+if(!fTpbEmmisionSpectrum.size()){
+    throw cet::exception("Incorrect vector sizes in LArPropertiesOpLib")
+      << "The vectors specifying the TpbEmmision spectrum are "
+      << " different sizes - has not been loaded.";
+  }
+
+//std::cout << "++++++ In LArProperties, returning TpbEM " << std::endl;
+
 Int_t tablesize=100;
 std::vector<double> new_x;
 double xrange=0.0;
@@ -577,7 +586,7 @@ new_x.clear();
   for(int jj=0; jj<int(tablesize); jj++){
 
  new_x.push_back(jj*(xrange/double(tablesize)));
-//std::cout<<"position "<<jj<<" "<<new_x[jj]<<" size of table "<<tablesize<<" range x "<<xrange<<std::endl;
+std::cout<<"position "<<jj<<" "<<new_x[jj]<<" size of table "<<tablesize<<" range x "<<xrange<<std::endl;
 }
   std::map<double, double> ToReturn;
   //for(size_t i=0; i!=fTpbEmmisionSpectrum.size(); ++i)
