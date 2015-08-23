@@ -399,7 +399,7 @@ namespace opdet {
 		    //Get arrival time from phot
 		    fTime = Phot.Time;
 
-		    std::cout<<"Arrival time: " << fTime<<std::endl;
+		//    std::cout<<"Arrival time: " << fTime<<std::endl;
 		    
 		    // Increment per OpDet counters and fill per phot trees
 		    fCountOpDetAll++;
@@ -431,7 +431,7 @@ namespace opdet {
                     fWavelength= odresponse->wavelength(Phot.Energy);
 		    fTime= Phot.Time;
                     
-                  //  std::cout << "Time: "<<fTime << " \n";
+                  //  std::cout << "Time: "<<fTime << " wvl " << fWavelength << " Energy " << Phot.Energy << " \n";
                     
                     initialPhotonPosition = Phot.InitialPosition;	
                     finalPhotonPosition = Phot.FinalLocalPosition;
