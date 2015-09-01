@@ -586,7 +586,7 @@ new_x.clear();
   for(int jj=0; jj<int(tablesize); jj++){
 
  new_x.push_back(jj*(xrange/double(tablesize)));
-std::cout<<"position "<<jj<<" "<<new_x[jj]<<" size of table "<<tablesize<<" range x "<<xrange<<std::endl;
+//std::cout<<"position "<<jj<<" "<<new_x[jj]<<" size of table "<<tablesize<<" range x "<<xrange<<std::endl;
 }
   std::map<double, double> ToReturn;
   //for(size_t i=0; i!=fTpbEmmisionSpectrum.size(); ++i)

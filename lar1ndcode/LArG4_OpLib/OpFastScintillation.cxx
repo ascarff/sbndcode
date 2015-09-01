@@ -667,15 +667,15 @@ bool OpFastScintillation::RecordPhotonsProduced(const G4Step& aStep, double Mean
 		if(DetThisPMT>0) 
 		{
 		    DetectedNum[OpChan]=DetThisPMT;
-		       std::cout <<("OpFastScintillation") << "FastScint: " <<
-		     OpChan <<" " << Num << " " << DetThisPMT << std::endl;  
+		  //     std::cout <<("OpFastScintillation") << "FastScint: " <<
+		  //   OpChan <<" " << Num << " " << DetThisPMT << std::endl;  
 		}
 		G4int ReflDetThisPMT = G4int(G4Poisson(ReflVisibilities->at(OpChan) * Num));
 		if(ReflDetThisPMT>0) 
 		{
 		    ReflDetectedNum[OpChan]=ReflDetThisPMT;
-		       std::cout <<("OpFastScintillation") << "FastScintRefl: " <<
-		     OpChan <<" " << Num << " " << DetThisPMT << std::endl;  
+		    //   std::cout <<("OpFastScintillation") << "FastScintRefl: " <<
+		   //  OpChan <<" " << Num << " " << DetThisPMT << std::endl;  
 		}
 		
       }
@@ -742,7 +742,6 @@ bool OpFastScintillation::RecordPhotonsProduced(const G4Step& aStep, double Mean
 	    
 	  float Energy = 9.7*eV;
             float Time = aSecondaryTime;
-	 std::cout << " saving direct with energy: " << Energy << " "<< std::endl;
            	
             // Make a photon object for the collection
 	    sim::OnePhoton PhotToAdd;
@@ -756,7 +755,6 @@ bool OpFastScintillation::RecordPhotonsProduced(const G4Step& aStep, double Mean
       }
       if(pvs->StoreReflected())
       {
-	std::cout << "in Store Reflected, nphotons: " << ReflDetectedNum.size() << std::endl;
         // And then add these to the total collection for the event	    
       for(std::map<int,int>::const_iterator itdetphot = ReflDetectedNum.begin();
 	    itdetphot!=ReflDetectedNum.end(); ++itdetphot)
@@ -787,27 +785,23 @@ bool OpFastScintillation::RecordPhotonsProduced(const G4Step& aStep, double Mean
 	    std::map<double,double> tpbemission=art::ServiceHandle<util::LArPropertiesOpLib>()->TpbEm();
 	    const int nbins=tpbemission.size();
 	    
-	    std::cout << " nbins reflected " << nbins << " " << (*tpbemission.begin()).first << " " << (*(--tpbemission.end())).first <<  std::endl;
 	    
 	    double * parent=new double[nbins];
 	   
             int ii=0;
 	    for( std::map<double, double>::iterator iter = tpbemission.begin(); iter != tpbemission.end(); ++iter)
 	    { parent[ii++]=(*iter).second;
-	     std::cout << " binninf TPB: " << i << " " << (*iter).first << " "  <<  (*iter).second << std::endl;
 	    }
             
 	    CLHEP::RandGeneral rgen0(parent,nbins);
              
             double x0 = rgen0.fire()*((*(--tpbemission.end())).first-(*tpbemission.begin()).first)+(*tpbemission.begin()).first;
 	    
-	    std::cout << "range: " << (*(--tpbemission.end())).first << " " << (*tpbemission.begin()).first << std::endl;
 	    
             // We don't know anything about the momentum dir, so set it to be Z		
             float Energy = x0*eV;
             float Time = aSecondaryTime;
 		
-	    std::cout << " saving with energy: " << Energy << " "<< x0 << "range: " <<  (*(--tpbemission.end())).first-(*tpbemission.begin()).first << " zero level: " <<  (*tpbemission.begin()).first << std::endl;
             // Make a photon object for the collection
 	    sim::OnePhoton PhotToAdd;
             PhotToAdd.InitialPosition  = PhotonPosition;
