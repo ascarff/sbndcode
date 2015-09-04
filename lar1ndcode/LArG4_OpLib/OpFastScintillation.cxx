@@ -1185,7 +1185,7 @@ double OpFastScintillation::TimingParamReflected(TVector3 ScintPoint, TVector3 O
   int counter = 0;
   for(int j = 1; j<6; j++){
     
-    v_to_wall[dir_index_norm[j]] = ScintPoint[dir_index_norm[j]] - plane_depth[j]; 
+    v_to_wall[dir_index_norm[j]] = plane_depth[j] - ScintPoint[dir_index_norm[j]]; 
     
     // hotspot is point on wall where TPB is
     // activated most intensely by the scintillation
