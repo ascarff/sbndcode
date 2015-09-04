@@ -1101,13 +1101,6 @@ double OpFastScintillation::TimingParam(const double & distance){
         return paramRand ; 
     }
 
-// Get random number from a parametrized approximation to the reflected
-// light distribution (as obtained in a toy MC using Rayleigh scattering
-// length of 60cm)
-double OpFastScintillation::TimingParamReflected(){
-  return 1;
-}
-
 double mixLaga(double *x, double *par) {
 
  double fmixGaus;
@@ -1123,7 +1116,153 @@ double mixLaga(double *x, double *par) {
  return sum; 
 }
 
+// 
+// Get random time (ns) from a parametrized approximation to the reflected
+// light distribution, as obtained in a toy MC. - W. Foreman, Sep 4, 2015
+// (UNDER CONSTRUCTION)
+// ---------------
+//
+double OpFastScintillation::TimingParamReflected(TVector3 ScintPoint, TVector3 OpDetPoint ) {
+  
+  // This function takes as input the scintillation point and the optical 
+  // detector point, and uses this information to return a photon propagation 
+  // time assuming the field cage walls and cathode are covered ~100% uniformly 
+  // in TPB reflector foil (100% efficiency for VUV conversion, 95% diffuse 
+  // reflectance to blue-visible light).
+  //
+  // Note:  Modeling photon arrival times as a function of scintillation
+  //        position in a fully reflective system is complicated, given there
+  //        is no obvious "distance to PMT" handle we can use to parametrize
+  //        the distribution.  This parametrization is only an approximation 
+  //        to this timing, and should be treated accordingly.
+  //       
+  //        The arrival time distributions are well-described by the double-
+  //        landau function, DoubleLandauCutoff.  However, this has several
+  //        free parameters that were not able to be parametrized.  So for 
+  //        now, we are zeroing-out the second ("fast") landau in the function
+  //        and thus treating it as a single landau with a t0-cutoff.
+  //
+  //        This parametrization was developed specifically for the SBND
+  //        half-TPC (2x4x5m).  It's not yet known if it holds for other 
+  //        dimensions.  These dimensions are thus hard-coded in for now.
+  //        
+
+  // Convert to center-of-detector origin coordinates, reversing the 
+  // x direction to go from APA to cathode (RHR!!)
+  ScintPoint[0] = -1.*(ScintPoint[0]-1.);
+  OpDetPoint[0] = -1.*(OpDetPoint[0]-1.);
+  ScintPoint[2] -= 2.5;
+  OpDetPoint[2] -= 2.5;
+
+  // Each plane's position in x,y,z
+  //    index 0: APA (x)
+  //    index 1: cathode plane (x)
+  //    index 2: bottom (y)
+  //    index 3: top (y)
+  //    index 4: upstream wall (z)
+  //    index 5: downstream wall (z)
+  double  plane_depth[6] = {-1.,1.,-2.,2.,-2.5,2.5};
+  int     dir_index_norm[6] = {0,0,1,1,2,2};
+
+  // Speed of light in LAr, refractive indices
+  double n_LAr_VUV = 2.632;             // Effective index due to group vel.
+  double n_LAr_vis = 1.23;
+  double c_LAr_VUV = 0.12;              // m per s
+  double c_LAr_vis = 0.29979/n_LAr_vis; // m per s
+
+  // TVectors to be used later
+  TVector3 image(0,0,0);
+  TVector3 bounce_point(0,0,0);
+  TVector3 hotspot(0,0,0);
+  TVector3 v_to_wall(0,0,0);
+
+  // First find shortest 1-bounce path and fill
+  // vector of "tAB" paths, each with their weighting:
+  double t0   = 99;
+  double tAB[5];
+  double WAB=0;
+  double tAB_sum=0; 
+  int counter = 0;
+  for(int j = 1; j<6; j++){
+    
+    v_to_wall[dir_index_norm[j]] = ScintPoint[dir_index_norm[j]] - plane_depth[j]; 
+    
+    // hotspot is point on wall where TPB is
+    // activated most intensely by the scintillation
+    hotspot = ScintPoint + v_to_wall;
+
+    // define "image" by reflecting over plane
+    image = hotspot + v_to_wall*(n_LAr_vis/n_LAr_VUV);
+
+    // find point of intersection with plane j of ray 
+    // from the PMT to the image
+    TVector3  tempvec = (OpDetPoint-image).Unit();
+    double    tempnorm= ((image-hotspot).Mag())/tempvec[dir_index_norm[j]];
+    bounce_point = image + tempvec*tempnorm;
+
+    // find t, check for t0    
+    double t1 = (ScintPoint-bounce_point).Mag()/c_LAr_VUV;
+    double t2 = (OpDetPoint-bounce_point).Mag()/c_LAr_vis;
+    double t  = t1 + t2;
+    if( t < t0 ) t0 = t;
+
+    // find "tAB" and its weight
+    double dA = (ScintPoint-hotspot).Mag();
+    double dB = (OpDetPoint-hotspot).Mag();
+    double tA = dA/c_LAr_VUV;
+    double tB = dB/c_LAr_vis;
+    double hotspot_weight = 1./pow(dA,2.) - 0.0294/pow(dA,3.);
+    double tAB_w          = hotspot_weight/(1.+dB*dB);
+    tAB[counter]  =  tA + tB;
+    tAB_sum       += (tA+tB)*tAB_w;
+    WAB           += tAB_w;
+
+    counter++;
+
+  } //<-- end loop over 5 foil-covered planes
+
+  // weighted mean
+  double tAB_mean = tAB_sum/WAB;
+
+  // now find tAB_spread
+  double tAB_spread = 0;
+  for(int jj=0; jj<counter; jj++) tAB_spread += fabs( tAB[jj] - tAB_mean )/counter; 
+
+  // Now we have all the info we need for the parametrization
+  double mpv    = 93.695 - 16.572*tAB_spread + 2.064*pow(tAB_spread,2) - 0.1177*pow(tAB_spread,3) + 0.002025*pow(tAB_spread,4); 
+  double width  = 14.75 - 0.4295*tAB_spread;  
+
+  TF1 *fReflectedTiming = new TF1("fReflectedTiming",DoubleLandauCutoff,0.,250.,7);
+  fReflectedTiming -> FixParameter(0,t0);
+  fReflectedTiming -> FixParameter(1,mpv);
+  fReflectedTiming -> FixParameter(2,width);
+  fReflectedTiming -> FixParameter(3,0);  // ***setting "fast" landau to zero***
+  fReflectedTiming -> FixParameter(4,1.); // fast landau mpv (irrelevant for now)
+  fReflectedTiming -> FixParameter(5,1.); // fast landau width (irrelevant for now)
+  fReflectedTiming -> FixParameter(6,1.); // overall normalization 
+
+  return fReflectedTiming->GetRandom();
+}
 
 
+double DoubleLandauCutoff(double *x, double *par){
+  // par0 = t0 cutoff (no causality violation)
+  // par1 = main Landau MPV
+  // par2 = main Landau width
+  // par3 = normalization of "fast" Landau
+  //        relative to main
+  // par4 = MPV of fast Landau (relative to
+  //        the calculated t0)
+  // par5 = width of fast Landau
+  // par6 = overall function normalization
+
+  double y = par[6]*(TMath::Landau(x[0],par[1],par[2])          
+             + par[3]*TMath::Landau(x[0],par[0]+par[4],par[5]));
+
+  // apply t0 cutoff
+  if(x[0] < par[0]) y = 0.;
+
+  return y;
+}
 
 } //namespace larg4

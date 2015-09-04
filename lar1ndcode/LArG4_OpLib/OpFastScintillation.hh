@@ -99,6 +99,8 @@
 #include "Geant4/G4MaterialPropertiesTable.hh"
 #include "Geant4/G4PhysicsOrderedFreeVector.hh"
 #include "Geant4/G4EmSaturation.hh"
+#include "TMath.h"
+#include "TLorentzVector.h"
 
 // Class Description:
 // RestDiscrete Process - Generation of Scintillation Photons.
@@ -232,7 +234,7 @@ public: // With description
 		double TimingParam(const double &) ;
 		// Given a distance, calculates a random number according to the distance based parametrization
 
-                double TimingParamReflected() ;
+                double TimingParamReflected(TVector3,TVector3) ;
                
 
 protected:
@@ -277,8 +279,9 @@ private:
   
 };
 
-double mixLaga(double*, double*) ;
 //Define function for fitting 
+double mixLaga(double*, double*) ;
+double DoubleLandauCutoff(double*, double*);
         
 
 ////////////////////
