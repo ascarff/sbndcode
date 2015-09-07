@@ -1134,9 +1134,9 @@ double OpFastScintillation::TimingParamDirect(TVector3 ScintPoint, TVector3 OpDe
   TF1 *fDirectTiming = new TF1("fDirectTiming",DoubleLandauCutoff,0.,250.,7);
   fDirectTiming->SetNpx(10000);
 
-  fDirectTiming->FixParameter(0.,distance/c_LAr_VUV);
-  fDirectTiming->FixParameter(1.,mpv);
-  fDirectTiming->FixParameter(2.,width);
+  fDirectTiming->FixParameter(0,distance/c_LAr_VUV);
+  fDirectTiming->FixParameter(1,mpv);
+  fDirectTiming->FixParameter(2,width);
 
   // Set 2nd landau normalization to zero, turning
   // this into a simple 1-landau functino
