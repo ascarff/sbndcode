@@ -1116,16 +1116,49 @@ double mixLaga(double *x, double *par) {
  return sum; 
 }
 
-// 
+// Get random time (ns) from a simplified parametrized approximation of 
+// the direct light distribution, as obtained in a toy MC.
+// Input argument units: meters
+// ----------
+double OpFastScintillation::TimingParamDirect(TVector3 ScintPoint, TVector3 OpDetPoint) {
+  
+  // This function takes as input the scintillation point and the optical detector
+  // point (in m), and returns a direct photon propagation time (with Rayleigh scattering).
+
+  double c_LAr_VUV = 0.13; // meters per second (~group velocity)
+
+  double distance = (ScintPoint - OpDetPoint).Mag(); // this must be in METERS!
+  double mpv      = -3.933 + 15.26*distance;
+  double width    = 1.81 + 0.214*mpv;
+
+  TF1 *fDirectTiming = new TF1("fDirectTiming",DoubleLandauCutoff,0.,250.,7);
+  fDirectTiming->SetNpx(10000);
+
+  fDirectTiming->FixParameter(0.,distance/c_LAr_VUV);
+  fDirectTiming->FixParameter(1.,mpv);
+  fDirectTiming->FixParameter(2.,width);
+
+  // Set 2nd landau normalization to zero, turning
+  // this into a simple 1-landau functino
+  fDirectTiming->FixParameter(3,0.);
+  fDirectTiming->FixParameter(4,1.); // irrelevant parameter for now
+  fDirectTiming->FixParameter(5,1.); // irrelevant parameter for now
+  fDirectTiming->FixParameter(6,1.); // overall normalization
+
+  return fDirectTiming->GetRandom();
+}
+
+
+
 // Get random time (ns) from a parametrized approximation to the reflected
-// light distribution, as obtained in a toy MC. - W. Foreman, Sep 4, 2015
+// light distribution, as obtained in a toy MC.
 // (UNDER CONSTRUCTION)
+// Input argument units: meters
 // ---------------
-//
 double OpFastScintillation::TimingParamReflected(TVector3 ScintPoint, TVector3 OpDetPoint ) {
   
   // This function takes as input the scintillation point and the optical 
-  // detector point, and uses this information to return a photon propagation 
+  // detector point (in m), and uses this information to return a photon propagation 
   // time assuming the field cage walls and cathode are covered ~100% uniformly 
   // in TPB reflector foil (100% efficiency for VUV conversion, 95% diffuse 
   // reflectance to blue-visible light).
@@ -1233,6 +1266,7 @@ double OpFastScintillation::TimingParamReflected(TVector3 ScintPoint, TVector3 O
   double width  = 14.75 - 0.4295*tAB_spread;  
 
   TF1 *fReflectedTiming = new TF1("fReflectedTiming",DoubleLandauCutoff,0.,250.,7);
+  fReflectedTiming -> SetNpx(10000);
   fReflectedTiming -> FixParameter(0,t0);
   fReflectedTiming -> FixParameter(1,mpv);
   fReflectedTiming -> FixParameter(2,width);
@@ -1256,11 +1290,13 @@ double DoubleLandauCutoff(double *x, double *par){
   // par5 = width of fast Landau
   // par6 = overall function normalization
 
-  double y = par[6]*(TMath::Landau(x[0],par[1],par[2])          
-             + par[3]*TMath::Landau(x[0],par[0]+par[4],par[5]));
-
-  // apply t0 cutoff
-  if(x[0] < par[0]) y = 0.;
+  double y = 0.;
+  if( x[0] > par[0]) {
+    y = par[6]*(TMath::Landau(x[0],par[1],par[2])          
+      + par[3]*TMath::Landau(x[0],par[0]+par[4],par[5]));
+  } else {
+    y = 0.;
+  }
 
   return y;
 }

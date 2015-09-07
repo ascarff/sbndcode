@@ -234,6 +234,7 @@ public: // With description
 		double TimingParam(const double &) ;
 		// Given a distance, calculates a random number according to the distance based parametrization
 
+                double TimingParamDirect(TVector3,TVector3) ;
                 double TimingParamReflected(TVector3,TVector3) ;
                
 
