@@ -13,6 +13,7 @@
 #include "sam_lar1nd.fcl"
 #include "detectorclocks_lar1nd.fcl"
 #include "seedservices_lar1nd.fcl"
+#include "channelstatus_lar1nd.fcl"
 
 BEGIN_PROLOG
 
@@ -30,6 +31,7 @@ lar1nd_services:
 #OpDigiProperties:               @local::lar1nd_opdigiproperties
  DetectorClocksService:                    @local::lar1nd_detectorclocks
  SeedService:                    @local::lar1nd_seedservice
+ ChannelStatusService:           @local::lar1nd_channelstatus
 }
 
 # Define lar1nd_optical_service (exclude simulation specific component)
@@ -51,6 +53,7 @@ lar1nd_simulation_services:
  BackTracker:                    @local::standard_backtracker
  DetectorClocksService:                    @local::lar1nd_detectorclocks
  SeedService:                    @local::lar1nd_seedservice
+ ChannelStatusService:           @local::lar1nd_channelstatus
 }
 
 lar1nd_opsimulation_services:
@@ -68,6 +71,7 @@ lar1nd_opsimulation_services:
  BackTracker:                    @local::standard_backtracker
  DetectorClocksService:                    @local::lar1nd_detectorclocks
  SeedService:                    @local::lar1nd_seedservice
+ ChannelStatusService:           @local::lar1nd_channelstatus
 }
 
 lar1nd_opsimulation_services.OpDetResponseInterface: @local::lar1nd_opdetresponse

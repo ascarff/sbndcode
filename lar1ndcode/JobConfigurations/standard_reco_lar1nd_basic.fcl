@@ -154,7 +154,7 @@ physics.producers.cccluster.CCHitFinderAlg.CalDataModuleLabel:  "caldata"
 physics.producers.spacepointfindercc.ClusterModuleLabel:        "cccluster"
 
 physics.producers.trackkalspscc.ClusterModuleLabel:             "cccluster"
-physics.producers.trackkalspscc.SpptModuleLabel:                "spacepointfindercc"
+physics.producers.trackkalspscc.SpacePtsModuleLabel:            "spacepointfindercc"
 physics.producers.trackkalspscc.GenieGenModuleLabel:            "generator"
 physics.producers.trackkalspscc.G4ModuleLabel:                  "largeant"
 
