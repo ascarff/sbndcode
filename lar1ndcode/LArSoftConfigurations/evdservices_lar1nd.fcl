@@ -36,7 +36,7 @@ lar1nd_disp:
  Geometry:                                    @local::lar1nd_geo                    
  LArPropertiesService:                               @local::lar1nd_properties             
  DetectorPropertiesService:                          @local::lar1nd_detproperties          
- DatabaseUtil:		                      @local::lar1nd_database               
+# DatabaseUtil:		                      @local::lar1nd_database               
  ColorDrawingOptions:                         @local::lar1nd_colordrawingopt        
  SimulationDrawingOptions:                    @local::lar1nd_simdrawingopt          
  RawDrawingOptions:                           @local::lar1nd_rawdrawingopt          
@@ -49,6 +49,8 @@ lar1nd_disp:
  LArVoxelCalculator:                          @local::lar1nd_larvoxelcalculator     
  InfoTransfer:		                      @local::lar1nd_infotransfer    
  DetectorClocksService:                  		       @local::lar1nd_detectorclocks
+ ChannelStatusService:                        @local::lar1nd_channelstatus
+ DetPedestalService:                          @local::lar1nd_detpedestalservice
 }                                                                                  
                                                                                    
                                                                                    
