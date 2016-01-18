@@ -6,7 +6,7 @@
 #include "simulationservices_lar1nd.fcl"
 #include "signalservices_lar1nd.fcl"
 #include "magfield.fcl"
-# #include "databaseutil_lar1nd.fcl"
+#include "databaseutil_lar1nd.fcl"
 #include "backtracker.fcl"
 ## #include "photpropservices_lar1nd.fcl"
 #include "opticaldetectorservices_lar1nd.fcl"
@@ -26,14 +26,14 @@ lar1nd_services:
  DetectorPropertiesService:             @local::lar1nd_detproperties 
  LArPropertiesService:                  @local::lar1nd_properties    
  LArFFT:                         @local::lar1nd_larfft        
-# DatabaseUtil:	                 @local::lar1nd_database      
+ DatabaseUtil:	                 @local::lar1nd_database      
  SignalShapingServiceT1053:      @local::lar1nd_signalshapingservice
  BackTracker:                    @local::standard_backtracker  
 #OpDigiProperties:               @local::lar1nd_opdigiproperties
  DetectorClocksService:                    @local::lar1nd_detectorclocks
  SeedService:                    @local::lar1nd_seedservice
  ChannelStatusService:           @local::lar1nd_channelstatus
- DetPedestalService:             @local::lar1nd_detpedestalservice
+# DetPedestalService:             @local::lar1nd_detpedestalservice
 }
 
 # Define lar1nd_optical_service (exclude simulation specific component)
