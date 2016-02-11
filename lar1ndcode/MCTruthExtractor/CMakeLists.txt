@@ -3,13 +3,13 @@
 #                  SOURCE NuAna_module
 #                  LIBRARIES
 #                        NuAna
-#                        Geometry
-#                        Geometry_service
-#                        Simulation
-#                        Utilities
-#                        TimeService_service
-#                        Filters
-#                        RawData
+#                        larcore_Geometry
+#                        larcore_Geometry_Geometry_service
+#                        larsim_Simulation
+#                        lardata_Utilities
+#                        lardata_Utilities_TimeService_service
+#                        larevt_Filters
+#                        lardata_RawData
 #                        SignalShapingServiceT1034_service
 #                        NuReweightArt
 #                        ${SIMULATIONBASE}
@@ -40,15 +40,15 @@ art_make( BASENAME_ONLY
           LIBRARY_NAME Ntuples          
           MODULE_LIBRARIES 
             NuAnaAlg
-            Geometry_service
-            TimeService_service
+            larcore_Geometry_Geometry_service
+            lardata_Utilities_TimeService_service
             ${ART_FRAMEWORK_SERVICES_OPTIONAL_TFILESERVICE_SERVICE}
             ${ART_FRAMEWORK_SERVICES_OPTIONAL_RANDOMNUMBERGENERATOR_SERVICE}
-            Geometry
-            Simulation
-            Utilities
-            Filters
-            RawData
+            larcore_Geometry
+            larsim_Simulation
+            lardata_Utilities
+            larevt_Filters
+            lardata_RawData
             NuReweightArt
             ${SIMULATIONBASE}
             ${ART_FRAMEWORK_CORE}
