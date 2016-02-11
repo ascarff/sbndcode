@@ -72,6 +72,7 @@ physics.producers.pandora.EnableMonitoring: true
 ####physics.producers.pandora.UseLeftVolume: false
 ####physics.producers.pandora.UseRightVolume: true
 ####physics.producers.pandora.ConfigFile: "PandoraSettings_SBND_Cosmic.xml"
+####physics.producers.pandora.StitchingConfigFile: "PandoraSettings_Stitching.xml"
 
 
 ### Configure the Pandora Analyzer modules

@@ -4,6 +4,7 @@ lar1nd_pandora:
 {
   module_type:           "SBNDPandora"
   ConfigFile:            "PandoraSettings_SBND_Neutrino.xml"
+  StitchingConfigFile:   "PandoraSettings_Stitching.xml"
   GeantModuleLabel:      "largeant"
   HitFinderModuleLabel:  "gaushit"
   EnableMCParticles:     false
