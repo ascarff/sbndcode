@@ -28,4 +28,12 @@ lar1nd_analysistree:
  G4MinE:                   0.01
 }
 
+
+lar1nd_LarAnalyzerEg:
+{
+module_type: "LarAnalyzerEg"
+G4ModuleLabel: "largeant"
+MCShowerModuleLabel:      "mcreco"
+}
+
 END_PROLOG
