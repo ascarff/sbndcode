@@ -133,7 +133,7 @@ private:
    int TrackId[kMaxPrimaries];			//<---Geant4 TrackID number
    int Mother[kMaxPrimaries];			//<---TrackID of the mother of this particle
    int process_primary[kMaxPrimaries];		//<---Is this particle primary (primary = 1, non-primary = 1)
-   
+   std::vector<std::string> processname;
    
    // ==== Storing MCShower MCTruth Information ===
    
@@ -179,7 +179,7 @@ private:
    double     mcshwr_AncestorendX[kMaxMCShower];     	//MC Shower's ancestor  G4 endX 
    double     mcshwr_AncestorendY[kMaxMCShower];     	//MC Shower's ancestor  G4 endY
    double     mcshwr_AncestorendZ[kMaxMCShower];      	//MC Shower's ancestor  G4 endZ    
-   
+   int Process[kMaxPrimaries];                        //<---records the process for this particle
    
    
    std::string fG4ModuleLabel;
@@ -274,6 +274,27 @@ void LarAnalyzerEg::analyze(art::Event const & evt)
       
       // ### Setting a string for primary ###
       std::string pri("primary");
+      // ### Setting a string for PionMinusInelastic ###
+      std::string PionMinusInelastic("PionMinusInelastic");
+      // ### Setting a string for NeutronInelastic ###
+      std::string NeutronInelastic("NeutronInelastic");
+      // ### Setting a string for hadElastic ###
+      std::string hadElastic("hadElastic");
+      // ### Setting a string for nCapture ###
+      std::string nCapture("nCapture");
+      // ### Setting a string for CHIPSNuclearCaptureAtRest ###
+      std::string CHIPSNuclearCaptureAtRest("CHIPSNuclearCaptureAtRest");
+      // ### Setting a string for Decay ###
+      std::string Decay("Decay");
+      // ### Setting a string for KaonZeroLInelastic ###
+      std::string KaonZeroLInelastic("KaonZeroLInelastic");
+      // ### Setting a string for CoulombScat ###
+      std::string CoulombScat("CoulombScat");
+      // ### Setting a string for muMinusCaptureAtRest ###
+      std::string muMinusCaptureAtRest("muMinusCaptureAtRest");
+      // ### Setting a string for ProtonInelastic ###
+      std::string ProtonInelastic("ProtonInelastic");
+
       
       int primary=0;
       int geant_particle=0;
@@ -301,11 +322,50 @@ void LarAnalyzerEg::analyze(art::Event const & evt)
 	  //std::cout<<"pdg= "<<geant_part[i]->PdgCode()<<" Process= "<<geant_part[i]->Process()<<" trackId= "<<geant_part[i]->TrackId()<<" E= "<<geant_part[i]->E()<<" P= "<<geant_part[i]->P()<<" "<<sqrt(geant_part[i]->Px()*geant_part[i]->Px() + geant_part[i]->Py()*geant_part[i]->Py()+ geant_part[i]->Pz()*geant_part[i]->Pz())<<" Mother= "<<geant_part[i]->Mother()<<" Vertex= ("<<geant_part[i]->Vx()<<","<<geant_part[i]->Vy()<<","<<geant_part[i]->Vz()<<" ) end=("<<geant_part[i]->EndPosition()[0]<<","<<geant_part[i]->EndPosition()[1]<<","<<geant_part[i]->EndPosition()[2]<<")"<<std::endl;
    
           // ### If this particle is primary, set = 1 ###
-	  if(geant_part[i]->Process()==pri)
-	     {process_primary[i]=1;}
+          if(geant_part[i]->Process()==pri) {process_primary[i]=1;}
+
           // ### If this particle is not-primary, set = 0 ###
-	  else
-	     {process_primary[i]=0;}
+          else {process_primary[i]=0;}
+
+          // ### Recording the process as a integer ###
+          // 0 = primary
+          // 1 = PionMinusInelastic
+          // 2 = NeutronInelastic
+          // 3 = hadElastic
+          // 4 = nCapture
+          // 5 = CHIPSNuclearCaptureAtRest
+          // 6 = Decay
+          // 7 = KaonZeroLInelastic
+          // 8 = CoulombScat
+          // 9 = muMinusCaptureAtRest
+          //10 = ProtonInelastic
+
+        if(geant_part[i]->Process() == pri)
+             {Process[i] = 0;}
+        if(geant_part[i]->Process() == PionMinusInelastic)
+             {Process[i] = 1;}
+        if(geant_part[i]->Process() == NeutronInelastic)
+             {Process[i] = 2;}
+        if(geant_part[i]->Process() == hadElastic)
+             {Process[i] = 3;}
+        if(geant_part[i]->Process() == nCapture)
+             {Process[i] = 4;}
+        if(geant_part[i]->Process() == CHIPSNuclearCaptureAtRest)
+             {Process[i] = 5;}
+        if(geant_part[i]->Process() == Decay)
+             {Process[i] = 6;}
+        if(geant_part[i]->Process() == KaonZeroLInelastic)
+             {Process[i] = 7;}
+        if(geant_part[i]->Process() == CoulombScat)
+             {Process[i] = 8;}
+        if(geant_part[i]->Process() == muMinusCaptureAtRest)
+             {Process[i] = 9;}
+        if(geant_part[i]->Process() == ProtonInelastic)
+             {Process[i] = 10;}
+      
+	  
+	  std::cout<<"Process = "<<geant_part[i]->Process()<<std::endl;
+
    
           // ### Saving the particles mother TrackID ###
 	  Mother[i]=geant_part[i]->Mother();
@@ -444,6 +504,7 @@ void LarAnalyzerEg::beginJob()
   fTree->Branch("EndPointx",EndPointx,"EndPointx[geant_list_size]/D");
   fTree->Branch("EndPointy",EndPointy,"EndPointy[geant_list_size]/D");
   fTree->Branch("EndPointz",EndPointz,"EndPointz[geant_list_size]/D");
+  fTree->Branch("Process", Process, "Process[geant_list_size]/I");
   fTree->Branch("NumberDaughters",NumberDaughters,"NumberDaughters[geant_list_size]/I");
   fTree->Branch("Mother",Mother,"Mother[geant_list_size]/I");
   fTree->Branch("TrackId",TrackId,"TrackId[geant_list_size]/I");
@@ -540,6 +601,7 @@ void LarAnalyzerEg::ResetVars()
     EndPointx[i] = -99999;
     EndPointy[i] = -99999;
     EndPointz[i] = -99999;
+	Process[i] = -99999;
     NumberDaughters[i] = -99999;
     Mother[i] = -99999;
     TrackId[i] = -99999;
