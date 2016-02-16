@@ -115,6 +115,7 @@ DEFINE_ART_MODULE(SimWireT1053)
 
 //-------------------------------------------------
 SimWireT1053::SimWireT1053(fhicl::ParameterSet const& pset)
+  : fNoiseHist(nullptr) //--hec
 {
   this->reconfigure(pset);
 
@@ -432,3 +433,4 @@ void SimWireT1053::GenNoiseInFreq(std::vector<float> &noise)
 
 
 }
+
