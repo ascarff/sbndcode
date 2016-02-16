@@ -1,8 +1,6 @@
 #include "calorimetry.fcl"
 #include "services_lar1nd.fcl"
 #include "evdservices_base.fcl"
-##include "channelstatus_lar1nd.fcl"
-#include "database_lar1nd.fcl"
 
 BEGIN_PROLOG
 
@@ -51,7 +49,8 @@ lar1nd_disp:
  LArVoxelCalculator:                          @local::lar1nd_larvoxelcalculator     
  InfoTransfer:		                      @local::lar1nd_infotransfer    
  DetectorClocksService:                  		       @local::lar1nd_detectorclocks
-#ChannelStatusService:                        @local::lar1nd_channelstatus
+ ChannelStatusService:                        @local::lar1nd_channelstatus
+ DetPedestalService:                          @local::lar1nd_detpedestalservice
 }                                                                                  
                                                                                    
                                                                                    
