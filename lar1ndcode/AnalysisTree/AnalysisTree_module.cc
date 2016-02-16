@@ -103,9 +103,9 @@
 #include "lardata/AnalysisBase/ParticleID.h"
 #include "lardata/RawData/RawDigit.h"
 #include "lardata/RawData/BeamInfo.h"
-#include "lardata/Utilities/LArProperties.h"
+#include "lardata/DetectorInfoServices/LArPropertiesService.h"
 #include "lardata/Utilities/AssociationUtil.h"
-#include "lardata/Utilities/DetectorProperties.h"
+#include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
 #include "larcore/SummaryData/POTSummary.h"
 #include "larsim/MCCheater/BackTracker.h"
 #include "lardata/RecoBase/Track.h"
@@ -1660,8 +1660,8 @@ void microboone::AnalysisTree::analyze(const art::Event& evt)
   //services
   art::ServiceHandle<geo::Geometry> geom;
   art::ServiceHandle<cheat::BackTracker> bt;
-  art::ServiceHandle<util::DetectorProperties> detprop;
-  art::ServiceHandle<util::LArProperties> LArProp;
+//  auto const* detprop = lar::providerFrom<detinfo::DetectorPropertiesService>();
+//  auto const* LArProp = lar::providerFrom<detinfo::LArPropertiesService>();
 
   // collect the sizes which might me needed to resize the tree data structure:
   bool isMC = !evt.isRealData();
@@ -2475,7 +2475,7 @@ void microboone::AnalysisTree::analyze(const art::Event& evt)
             
     }//if (mcevts_truth)
   }//if (isMC){
-  //fData->taulife = LArProp->ElectronLifetime();
+  //fData->taulife = detprop->ElectronLifetime();
   fTree->Fill();
   
   if (mf::isDebugEnabled()) {
@@ -2598,7 +2598,7 @@ double microboone::AnalysisTree::length(const simb::MCParticle& part, TVector3& 
 {
   // Get geometry.
   art::ServiceHandle<geo::Geometry> geom;
-  art::ServiceHandle<util::DetectorProperties> detprop;
+//  auto const* detprop = lar::providerFrom<detinfo::DetectorPropertiesService>();
 
   // Get active volume boundary.
   //double xmin = 0.;
@@ -2658,4 +2658,3 @@ namespace microboone{
 }
 
 #endif
-

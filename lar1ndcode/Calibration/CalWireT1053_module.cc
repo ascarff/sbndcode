@@ -34,7 +34,6 @@ extern "C" {
 #include "lar1ndcode/Utilities/SignalShapingServiceT1053.h"
 #include "larcore/Geometry/Geometry.h"
 //#include "Filters/ChannelFilter.h"
-
 #include "lardata/RawData/RawDigit.h"
 #include "lardata/RawData/raw.h"
 #include "lardata/RecoBase/Wire.h"

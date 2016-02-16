@@ -1,7 +1,6 @@
 cet_enable_asserts()
 
 set( lar1nd_util_lib_list lardata_Utilities_LArFFT_service
-                       lardata_Utilities_LArProperties_service
 			larcore_Geometry
 			larcore_Geometry_Geometry_service
 			lardata_Utilities
@@ -35,6 +34,3 @@ simple_plugin( FileCatalogMetadataLAr1ND  "service"
 install_headers()
 install_fhicl()
 install_source()
-
-
-

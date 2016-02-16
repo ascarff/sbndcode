@@ -7,7 +7,6 @@
 #                        larcore_Geometry_Geometry_service
 #                        larsim_Simulation
 #                        lardata_Utilities
-#                        lardata_Utilities_TimeService_service
 #                        larevt_Filters
 #                        lardata_RawData
 #                        SignalShapingServiceT1034_service
@@ -41,7 +40,6 @@ art_make( BASENAME_ONLY
           MODULE_LIBRARIES 
             NuAnaAlg
             larcore_Geometry_Geometry_service
-            lardata_Utilities_TimeService_service
             ${ART_FRAMEWORK_SERVICES_OPTIONAL_TFILESERVICE_SERVICE}
             ${ART_FRAMEWORK_SERVICES_OPTIONAL_RANDOMNUMBERGENERATOR_SERVICE}
             larcore_Geometry
@@ -69,4 +67,3 @@ art_make( BASENAME_ONLY
 install_headers()
 install_fhicl()
 # install_source()
-
