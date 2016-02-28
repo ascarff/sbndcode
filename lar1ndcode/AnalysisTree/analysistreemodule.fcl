@@ -1,3 +1,5 @@
+#include "calorimetry.fcl"
+
 BEGIN_PROLOG
 
 lar1nd_analysistree:
@@ -31,9 +33,16 @@ lar1nd_analysistree:
 
 lar1nd_LarAnalyzerEg:
 {
-module_type: "LarAnalyzerEg"
-G4ModuleLabel: "largeant"
-MCShowerModuleLabel:      "mcreco"
+    module_type: 		"LarAnalyzerEg"
+    HitsModuleLabel:    	"gaushit"
+    TrackModuleLabel:         	"pmtrack"
+    CalorimetryModuleLabel:   	"calo"
+    ParticleIDModuleLabel:    	"pid"
+    ClusterModuleLabel:       	"linecluster"
+    G4ModuleLabel:            	"largeant"
+    ShowerModuleLabel:        	"showerreco"
+    MCShowerModuleLabel:      	"mcreco"
+    CalorimetryAlg:          	@local::standard_calorimetryalgmc
 }
 
 END_PROLOG

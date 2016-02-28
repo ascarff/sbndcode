@@ -9,7 +9,11 @@ art_make( BASENAME_ONLY
 			RawData
 			RecoBase
 			RecoObjects  
-			#RecoAlg
+			RecoAlg
+			Utilities
+         		LArProperties_service
+         		DetectorProperties_service
+         		BackTracker_service
 			#SignalShapingServiceMicroBooNE_service
                         ${SIMULATIONBASE}
                         ${LARRECO_LIB}
