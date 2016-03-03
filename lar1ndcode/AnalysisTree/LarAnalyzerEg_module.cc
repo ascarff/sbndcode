@@ -85,6 +85,8 @@ const int kMaxAG         = 100;   //maximum number of AG objects
 const int kMaxPrimaries  = 20000;  //maximum number of primary particles
 const int kMaxShower     = 100;   //maximum number of Reconstructed showers
 const int kMaxMCShower   = 1000; // maximum number of MCShower Object
+const int kMaxSimChannel = 15000; // maximum number of SimChannels
+const int kMaxSimIDE	 = 15000; // maximum number of SimIDE's stored
 
 class LarAnalyzerEg;
 
@@ -147,8 +149,7 @@ private:
   double trkmomrange[kMaxTrack];	//<---Calculated track momentum from its length assuming a PID of 13
   double trkmommschi2[kMaxTrack];	//<---Calculated track momentum from multiple scattering using Chi2
   double trkmommsllhd[kMaxTrack];	//<---Calculated track momentum from multiple scattering
-  int    trkWCtoTPCMath;		//<---Using an association to see if there was a match between WC and TPC
-  					//    0 = match, 1 = no match
+
    
    
   // === Storing the tracks SpacePoints (Individual 3D points)
@@ -176,7 +177,7 @@ private:
   double trjPt_Y[kMaxTrack][kMaxTrajHits];	//<---Storing the trajector point location in Y
   double trjPt_Z[kMaxTrack][kMaxTrajHits];	//<---Storing the trajector point location in Z
 
-  // === Geaaant inforamtion for reconstruction track
+  // === Geant inforamtion for reconstruction track
   int trkg4id[kMaxHits];         //<---geant track id for the track
 
   int primarytrkkey;             //<---reco track index for primary particle
@@ -244,8 +245,16 @@ private:
   int TrackId[kMaxPrimaries];			//<---Geant4 TrackID number
   int Mother[kMaxPrimaries];			//<---TrackID of the mother of this particle
   int process_primary[kMaxPrimaries];		//<---Is this particle primary (primary = 1, non-primary = 1)
-  std::vector<std::string> G4Process;         //<---The process which created this particle
-  std::vector<std::string> G4FinalProcess;    //<---The last process which this particle went under
+  std::vector<std::string> G4Process;         	//<---The process which created this particle
+  std::vector<std::string> G4FinalProcess;    	//<---The last process which this particle went under
+  
+  // === Adding SimIDE information ===
+  int 		numSimChannels;					//<---Number of Sim Channels in the event
+  double 	SimChannelElectron[kMaxSimChannel];		//<---Electron Charge on this SimChannel
+  double	SimChannelEnergy[kMaxSimChannel];		//<---Energy on this SimChannel
+  int 		numIDEs;					//<---number of IDE's
+  double 	SimIDEElectron[kMaxSimIDE];			//<---Electron Charge for this SIM::IDE
+  double	SimIDEEnergy[kMaxSimIDE];			//<---Energy for this SIM::IDE
    
    
   // ==== Storing MCShower MCTruth Information ===
@@ -493,6 +502,77 @@ void LarAnalyzerEg::analyze(art::Event const & evt)
     {isdata = true;}
 	
   else isdata = false;
+  
+  
+  
+  // -----------------------------------------------------------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------------------------------------------------------
+  //							FILLING THE SIMIDE INFORMATION
+  // -----------------------------------------------------------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------------------------------------------------------
+  
+  // loop over all sim::SimChannels in the event and make sure there are no
+  // sim::IDEs with trackID values that are not in the sim::ParticleList
+  std::vector<const sim::SimChannel*> SimChannelCollection;
+  evt.getView(fG4ModuleLabel, SimChannelCollection);
+  
+  double SimChannelCharge = 0;
+  double SimChannelE = 0;
+  
+  int nSimIDEs = 0;
+  numSimChannels = SimChannelCollection.size();
+  for(unsigned int sc = 0; sc < SimChannelCollection.size(); ++sc)
+     {
+     // ### Initialize the channel to zero ###
+     SimChannelCharge = 0;
+     SimChannelE = 0;
+     
+     // ### Making a map to IDE's ###
+     const std::map<unsigned short, std::vector<sim::IDE> >& tdcidemap = SimChannelCollection[sc]->TDCIDEMap();
+     
+     // ### Looping over the map of IDE's ###
+     for(auto mapitr = tdcidemap.begin(); mapitr != tdcidemap.end(); mapitr++)
+        {
+	
+	// ### Creating a vector of SIM::IDE's ###
+	const std::vector<sim::IDE> idevec = (*mapitr).second;
+	
+	//std::cout<<"numIDEs = "<<idevec.size()<<std::endl;
+	
+	// ### Loop over all the IDE's for this channel ###
+	for(size_t iv = 0; iv < idevec.size(); ++iv)
+	   {
+	   //std::cout<<"SimIDE = "<<idevec[iv].trackID<<std::endl;
+	   //std::cout<<"Number of Electrons for this IDE = "<<idevec[iv].numElectrons<<std::endl;
+	   //std::cout<<"Total Energy for this IDE = "<<idevec[iv].energy<<std::endl;
+	   SimIDEElectron[nSimIDEs] = idevec[iv].numElectrons;
+	   SimIDEEnergy[nSimIDEs] = idevec[iv].energy;
+	   
+	   SimChannelCharge+= idevec[iv].numElectrons;
+	   SimChannelE+= idevec[iv].energy;
+	   
+	   nSimIDEs++;
+	   }//<--End looping over all the IDE's for this channel
+	
+	}//<---End looping over the map of IDE's
+     SimChannelElectron[sc] = SimChannelCharge;
+     SimChannelEnergy[sc] = SimChannelE;
+     
+     //std::cout<<std::endl;
+     //std::cout<<std::endl;
+     //std::cout<<"SimChannelCharge = "<<SimChannelCharge<<std::endl;
+     //std::cout<<"SimChannelEnergy = "<<SimChannelE<<std::endl;
+     
+     
+     
+     }//<---End SimChannel loop
+     
+     // ### Recording the number of SIM::IDE's for this event ###
+     numIDEs = nSimIDEs;
+ 
+  
+  
+  
    
    
   // ----------------------------------------------------------------------------------------------------------------------------
@@ -1187,6 +1267,8 @@ void LarAnalyzerEg::beginJob()
   //std::cout<<"Check-1"<<std::endl;
   // Implementation of optional member function here.
   art::ServiceHandle<art::TFileService> tfs;
+  
+  // === Event Information ===
   fTree = tfs->make<TTree>("anatree","analysis tree");
   fTree->Branch("run",&run,"run/I");
   fTree->Branch("subrun",&subrun,"subrun/I");
@@ -1194,13 +1276,16 @@ void LarAnalyzerEg::beginJob()
   fTree->Branch("evttime",&evttime,"evttime/D");
   fTree->Branch("efield",efield,"efield[3]/D");
   fTree->Branch("t0",&t0,"t0/I");
-  //fTree->Branch("trigtime",trigtime,"trigtime[16]/I");
+  
+  // === Cluster Information ===
   fTree->Branch("nclus",&nclus,"nclus/I");
   fTree->Branch("clustertwire",clustertwire,"clustertwire[nclus]/D");
   fTree->Branch("clusterttick",clusterttick,"clusterttick[nclus]/D");
   fTree->Branch("cluendwire",cluendwire,"cluendwire[nclus]/D");
   fTree->Branch("cluendtick",cluendtick,"cluendtick[nclus]/D");
   fTree->Branch("cluplane",cluplane,"cluplane[nclus]/I");
+  
+  // === Track Information ===
   fTree->Branch("ntracks_reco",&ntracks_reco,"ntracks_reco/I");
   fTree->Branch("trkvtxx",trkvtxx,"trkvtxx[ntracks_reco]/D");
   fTree->Branch("trkvtxy",trkvtxy,"trkvtxy[ntracks_reco]/D");
@@ -1214,11 +1299,12 @@ void LarAnalyzerEg::beginJob()
   fTree->Branch("trkenddcosx",trkenddcosx,"trkenddcosx[ntracks_reco]/D");
   fTree->Branch("trkenddcosy",trkenddcosy,"trkenddcosy[ntracks_reco]/D");
   fTree->Branch("trkenddcosz",trkenddcosz,"trkenddcosz[ntracks_reco]/D");
-  fTree->Branch("trkWCtoTPCMath",trkWCtoTPCMath,"trkWCtoTPCMath/I");
   fTree->Branch("trklength",trklength,"trklength[ntracks_reco]/D");
   fTree->Branch("trkmomrange",trkmomrange,"trkmomrange[ntracks_reco]/D");
   fTree->Branch("trkmommschi2",trkmommschi2,"trkmommschi2[ntracks_reco]/D");
   fTree->Branch("trkmommsllhd",trkmommsllhd,"trkmommsllhd[ntracks_reco]/D");
+  
+  // === Track SpacePoint Information ====
   fTree->Branch("ntrkhits",ntrkhits,"ntrkhits[ntracks_reco]/I");
   fTree->Branch("trkx",trkx,"trkx[ntracks_reco][1000]/D");
   fTree->Branch("trky",trky,"trky[ntracks_reco][1000]/D");
@@ -1231,6 +1317,7 @@ void LarAnalyzerEg::beginJob()
   fTree->Branch("trkke",trkke,"trkke[ntracks_reco][2]/D");
   fTree->Branch("trkpida",trkpida,"trkpida[ntracks_reco][2]/D");
   
+  // === Track Trajectory Point Information ===
   fTree->Branch("nTrajPoint", &nTrajPoint, "nTrajPoint[ntracks_reco]/I");
   fTree->Branch("pHat0_X", pHat0_X, "pHat0_X[ntracks_reco][1000]/D");
   fTree->Branch("pHat0_Y", pHat0_Y, "pHat0_Y[ntracks_reco][1000]/D");
@@ -1240,6 +1327,8 @@ void LarAnalyzerEg::beginJob()
   fTree->Branch("trjPt_Z", trjPt_Z, "trjPt_Z[ntracks_reco][1000]/D");
   fTree->Branch("trkg4id", trkg4id, "trkg4id[ntracks_reco]/I");
   fTree->Branch("primarytrkkey", primarytrkkey, "primarytrkkey/I");
+  
+  // === Hit Information ===
   fTree->Branch("nhits",&nhits,"nhits/I");
   fTree->Branch("hit_plane",hit_plane,"hit_plane[nhits]/I");
   fTree->Branch("hit_wire",hit_wire,"hit_wire[nhits]/I");
@@ -1266,10 +1355,10 @@ void LarAnalyzerEg::beginJob()
   fTree->Branch("hit_x", hit_x, "hit_x[nhits]/F");
   fTree->Branch("hit_y", hit_y, "hit_y[nhits]/F");
   fTree->Branch("hit_z", hit_z, "hit_z[nhits]/F");
-
+  
+  // === Geant4 Information ====
   fTree->Branch("no_primaries",&no_primaries,"no_primaries/I");
   fTree->Branch("geant_list_size",&geant_list_size,"geant_list_size/I");
-  
   fTree->Branch("pdg",pdg,"pdg[geant_list_size]/I");
   fTree->Branch("Eng",Eng,"Eng[geant_list_size]/D");
   fTree->Branch("Px",Px,"Px[geant_list_size]/D");
@@ -1288,6 +1377,19 @@ void LarAnalyzerEg::beginJob()
   fTree->Branch("process_primary",process_primary,"process_primary[geant_list_size]/I");
   fTree->Branch("G4Process",&G4Process);//,"G4Process[geant_list_size]");
   fTree->Branch("G4FinalProcess",&G4FinalProcess);//,"G4FinalProcess[geant_list_size]");  
+  
+  // === Sim Channel Information ===
+  fTree->Branch("numSimChannels", &numSimChannels, "numSimChannels/I");
+  fTree->Branch("SimChannelElectron", SimChannelElectron, "SimChannelElectron[numSimChannels]/D");
+  fTree->Branch("SimChannelEnergy", SimChannelEnergy, "SimChannelEnergy[numSimChannels]/D");
+  
+  // === SIM::IDE Information ===
+  fTree->Branch("numIDEs", &numIDEs, "numIDEs/I");
+  fTree->Branch("SimIDEElectron", SimIDEElectron, "SimIDEElectron[numIDEs]/D");
+  fTree->Branch("SimIDEEnergy", SimIDEEnergy, "SimIDEEnergy[numIDEs]/D");
+  
+
+  // === MCShower Information ===
   fTree->Branch("no_mcshowers", &no_mcshowers, "no_mcshowers/I");
   fTree->Branch("mcshwr_origin", mcshwr_origin, "mcshwr_origin[no_mcshowers]/D");
   fTree->Branch("mcshwr_pdg", mcshwr_pdg, "mcshwr_pdg[no_mcshowers]/D");
@@ -1318,7 +1420,6 @@ void LarAnalyzerEg::beginJob()
   fTree->Branch("mcshwr_MotherendX", mcshwr_MotherendX, "mcshwr_MotherendX[no_mcshowers]/I");
   fTree->Branch("mcshwr_MotherendY", mcshwr_MotherendY, "mcshwr_MotherendY[no_mcshowers]/I");
   fTree->Branch("mcshwr_MotherendZ", mcshwr_MotherendZ, "mcshwr_MotherendZ[no_mcshowers]/I");
-  
   fTree->Branch("mcshwr_Ancestorpdg", mcshwr_Ancestorpdg, "mcshwr_Ancestorpdg[no_mcshowers]/I");
   fTree->Branch("mcshwr_AncestorTrkId", mcshwr_AncestorTrkId, "mcshwr_AncestorTrkId[no_mcshowers]/I");
   fTree->Branch("mcshwr_AncestorstartX", mcshwr_AncestorstartX, "mcshwr_AncestorstartX[no_mcshowers]/I");
@@ -1393,7 +1494,6 @@ void LarAnalyzerEg::ResetVars()
     trkendx[i] = -99999;
     trkendy[i] = -99999;
     trkendz[i] = -99999;
-    trkWCtoTPCMath = -99999;
     trkstartdcosx[i] = -99999;
     trkstartdcosy[i] = -99999;
     trkstartdcosz[i] = -99999;
@@ -1479,9 +1579,24 @@ void LarAnalyzerEg::ResetVars()
     Mother[i] = -99999;
     TrackId[i] = -99999;
     process_primary[i] = -99999;}
-
-
-  nshowers = -99999;
+   
+  
+  // ### Clearing the SimChannels ###
+  numSimChannels = -999;
+  numIDEs = -999;
+  for(int i = 0; i<kMaxSimChannel; ++i)
+     {
+     SimChannelElectron[i] = -99999;
+     SimChannelEnergy[i] = -99999;
+     }
+  
+  // ### Clearing the SIM::IDE's
+  for(int i = 0; i< kMaxSimIDE;++i)
+     {
+     SimIDEElectron[i] = -999;
+     SimIDEEnergy[i] = -999;  
+     
+     }
 
   for (int i = 0; i<kMaxShower; ++i) 
     {
