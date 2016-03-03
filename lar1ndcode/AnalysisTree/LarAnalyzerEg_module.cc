@@ -255,7 +255,9 @@ private:
   int 		numIDEs;					//<---number of IDE's
   double 	SimIDEElectron[kMaxSimIDE];			//<---Electron Charge for this SIM::IDE
   double	SimIDEEnergy[kMaxSimIDE];			//<---Energy for this SIM::IDE
-   
+  double	SimIDEX[kMaxSimIDE];				//<---SIM::IDE X Position
+  double	SimIDEY[kMaxSimIDE];				//<---SIM::IDE Y Position
+   double	SimIDEZ[kMaxSimIDE];				//<---SIM::IDE Z Position
    
   // ==== Storing MCShower MCTruth Information ===
    
@@ -547,6 +549,9 @@ void LarAnalyzerEg::analyze(art::Event const & evt)
 	   //std::cout<<"Total Energy for this IDE = "<<idevec[iv].energy<<std::endl;
 	   SimIDEElectron[nSimIDEs] = idevec[iv].numElectrons;
 	   SimIDEEnergy[nSimIDEs] = idevec[iv].energy;
+	   SimIDEX[nSimIDEs] = idevec[iv].x;
+	   SimIDEY[nSimIDEs] = idevec[iv].y;
+	   SimIDEZ[nSimIDEs] = idevec[iv].z;
 	   
 	   SimChannelCharge+= idevec[iv].numElectrons;
 	   SimChannelE+= idevec[iv].energy;
@@ -1387,7 +1392,9 @@ void LarAnalyzerEg::beginJob()
   fTree->Branch("numIDEs", &numIDEs, "numIDEs/I");
   fTree->Branch("SimIDEElectron", SimIDEElectron, "SimIDEElectron[numIDEs]/D");
   fTree->Branch("SimIDEEnergy", SimIDEEnergy, "SimIDEEnergy[numIDEs]/D");
-  
+  fTree->Branch("SimIDEX", SimIDEX, "SimIDEX[numIDEs]/D");
+  fTree->Branch("SimIDEY", SimIDEY, "SimIDEY[numIDEs]/D");
+  fTree->Branch("SimIDEZ", SimIDEZ, "SimIDEZ[numIDEs]/D");
 
   // === MCShower Information ===
   fTree->Branch("no_mcshowers", &no_mcshowers, "no_mcshowers/I");
@@ -1595,7 +1602,9 @@ void LarAnalyzerEg::ResetVars()
      {
      SimIDEElectron[i] = -999;
      SimIDEEnergy[i] = -999;  
-     
+     SimIDEX[i] = -999; 
+     SimIDEY[i] = -999; 
+     SimIDEZ[i] = -999; 
      }
 
   for (int i = 0; i<kMaxShower; ++i) 
