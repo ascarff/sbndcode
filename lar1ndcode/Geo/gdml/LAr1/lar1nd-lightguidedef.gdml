@@ -1,11 +1,11 @@
 <solids>
- <tube name="PMTVolume" rmax="(3.*2.54)" z="(11.1*2.54)+0.005" deltaphi="360" aunit="deg" lunit="cm"/>
+ <tube name="PMTVolume" rmax="7.62" z="28.199" deltaphi="360" aunit="deg" lunit="cm"/>
 
- <tube name="PMT_AcrylicPlate" rmax="(6.0*3/6.1*2.54)" z="(0.2)" deltaphi="360" aunit="deg" lunit="cm"/>
- <tube name="PMT_Stalk" rmax="(1.25*3/6.1*2.54)" z="(3.0*2.54)" deltaphi="360" aunit="deg" lunit="cm"/>
- <tube name="PMT_SteelBase" rmax="(6.0*3/6.1*2.54)" z="(1.5*2.54)" deltaphi="360" aunit="deg" lunit="cm"/>
- <tube name="PMT_Underside" rmax="2.54*4.0*3/6.1" z="2.54*2.5" deltaphi="360" aunit="deg" lunit="cm"/>
- <tube name="PMT_Lens" rmax="2.54*4.0*3/6.1" z="2.54*2.5" deltaphi="360" aunit="deg" lunit="cm"/>
+ <tube name="PMT_AcrylicPlate" rmax="7.49508196721" z="0.2" deltaphi="360" aunit="deg" lunit="cm"/>
+ <tube name="PMT_Stalk" rmax="1.56147540984" z="7.62" deltaphi="360" aunit="deg" lunit="cm"/>
+ <tube name="PMT_SteelBase" rmax="7.49508196721" z="3.81" deltaphi="360" aunit="deg" lunit="cm"/>
+ <tube name="PMT_Underside" rmax="4.99672131148" z="6.35" deltaphi="360" aunit="deg" lunit="cm"/>
+ <tube name="PMT_Lens" rmax="4.99672131148" z="6.35" deltaphi="360" aunit="deg" lunit="cm"/>
 </solids>
 <structure>
  <volume name="volOpDetSensitive">
@@ -39,34 +39,34 @@
   <solidref ref="PMTVolume"/>
   <physvol>
    <volumeref ref="volOpDetSensitive"/>
-   <position name="posOpDetSensitive" unit="cm" x="0" y="0" z="(5.5 * 2.54) - 0.1"/>
+   <position name="posOpDetSensitive" unit="cm" x="0" y="0" z="13.87"/>
   </physvol>
   <physvol>
    <volumeref ref="vol_PMT_AcrylicPlate"/>
-   <position name="pos_PMT_AcrylicPlate" unit="cm" x="0" y="0" z="(5.5 * 2.54) - 0.3"/>
+   <position name="pos_PMT_AcrylicPlate" unit="cm" x="0" y="0" z="13.67"/>
   </physvol>
   <physvol>
    <volumeref ref="vol_PMT_Stalk"/>
-   <position name="pos_PMT_Stalk" unit="cm" x="0" y="0" z="(3.0 * 2.54)-(5.5 * 2.54)"/>
+   <position name="pos_PMT_Stalk" unit="cm" x="0" y="0" z="-6.35"/>
   </physvol>
   <physvol>
    <volumeref ref="vol_PMT_SteelBase"/>
-   <position name="pos_PMT_SteelBase" unit="cm" x="0" y="0" z="(0.75 * 2.54)-(5.5 * 2.54)"/>
+   <position name="pos_PMT_SteelBase" unit="cm" x="0" y="0" z="-12.065"/>
   </physvol>
   <physvol>
    <volumeref ref="vol_PMT_Lens"/>
-   <position name="pos_PMT_Lens" unit="cm" x="0" y="0" z="(7.0 * 2.54)-(5.5 * 2.54)"/>
+   <position name="pos_PMT_Lens" unit="cm" x="0" y="0" z="3.81"/>
   </physvol>
   <physvol>
    <volumeref ref="vol_PMT_Underside"/>
-   <position name="pos_PMT_Underside" unit="cm" x="0" y="0" z="(7.0 * 2.54)-(5.5 * 2.54)"/>
+   <position name="pos_PMT_Underside" unit="cm" x="0" y="0" z="3.81"/>
   </physvol>
  </volume>
 </structure>
 <solids>
  <box name="lightguidebar"
   lunit="cm"
-  x="0.25*2.54"
+  x="0.635"
   y="100"
   z="2.54"/>
  <box name="lightguidebarcoating"
@@ -76,7 +76,7 @@
   z="2.54"/>
  <box name="lightguidedetector"
   lunit="cm"
-  x="0.25*2.54+0.1"
+  x="0.735"
   y="100"
   z="2.54"/>
 </solids>
@@ -94,7 +94,7 @@
   <solidref ref="lightguidedetector"/>
   <physvol>
    <volumeref ref="volOpDetSensitive"/>
-   <position name="posOpDetSensitive" unit="cm" x="(0.125*2.54)+0.025" y="0" z="0"/>
+   <position name="posOpDetSensitive" unit="cm" x="0.3425" y="0" z="0"/>
   </physvol>
   <physvol>
    <volumeref ref="vollightguidebar"/>

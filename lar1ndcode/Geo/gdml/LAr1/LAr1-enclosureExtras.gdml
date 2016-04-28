@@ -1,10 +1,10 @@
-<?xml version='1.0'?>
+<?xml version'1.0'?>
 <gdml>
 <solids>
-  <box name="InsulationOuter" lunit="cm" x="517+120" y="480+120" z="638+120"/>
-  <box name="InsulationInner" lunit="cm" x="517+0.1" y="480+0.1" z="638+0.1"/>
-  <box name="StructureOuter" lunit="cm" x="517+120+2*25-0.1" y="480+120+2*25-0.1" z="638+120+2*25-0.1"/>
-  <box name="StructureInner" lunit="cm" x="517+120+0.2" y="480+120+0.2" z="638+120+0.2"/>
+  <box name="InsulationOuter" lunit="cm" x="637.0" y="600.0" z="758.0"/>
+  <box name="InsulationInner" lunit="cm" x="517.1" y="480.1" z="638.1"/>
+  <box name="StructureOuter" lunit="cm" x="686.9" y="649.9" z="807.9"/>
+  <box name="StructureInner" lunit="cm" x="637.2" y="600.2" z="758.2"/>
 
    <subtraction name="Structure">
      <first ref="StructureOuter"/> <second ref="StructureInner"/>

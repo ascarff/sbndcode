@@ -1,32 +1,32 @@
-<?xml version='1.0'?>
+<?xml version'1.0'?>
 <gdml>
 <solids>
- <box name="DetEnclosure" lunit="cm" x="1006 - 62+0.01" y="1099+0.01" z="1280 - 62+0.01" />
-<!-- <box name="DetEnclosure" lunit="cm" x="520.2+2*60+2*25" y="542.3+2*60+2*25" z="702.7+2*60+2*25" /> -->
+ <box name="DetEnclosure" lunit="cm" x="944.01" y="1099.01" z="1218.01" />
+<!-- <box name="DetEnclosure" lunit="cm" x="690.2" y="712.3" z="872.7" /> -->
 
- <box name="TaggerUpper0" lunit="cm" x="702.7+2*60+2*25+2*2" y="300+2*2" z="702.7+2*60+2*25+2*2" />
-<box name="VoidTaggerUpper" lunit="cm" x="832+120" y="300" z="1189-60+60" />
+ <box name="TaggerUpper0" lunit="cm" x="876.7" y="304.0" z="876.7" />
+<box name="VoidTaggerUpper" lunit="cm" x="952.0" y="300" z="1189.0" />
   <subtraction name="TaggerUpper">
     <first ref="TaggerUpper0"/> <second ref="VoidTaggerUpper"/>
     <position name="posConcreteEnclosureSubtraction0" unit="cm" x="0" y="0" z="0"/>
   </subtraction>
 
 
- <box name="TaggerMain0" lunit="cm" x="520.2+2*60+2*25+2*2" y="542.3+2*60+2*25+2*2" z="702.7+2*60+2*25+2*2" />
-<box name="VoidTaggerMain" lunit="cm" x="520.2+2*60+2*25+0.05" y="542.3+2*60+2*25+0.05" z="702.7+2*60+2*25+0.05" />
+ <box name="TaggerMain0" lunit="cm" x="694.2" y="716.3" z="876.7" />
+<box name="VoidTaggerMain" lunit="cm" x="690.25" y="712.35" z="872.75" />
   <subtraction name="TaggerMain">
     <first ref="TaggerMain0"/> <second ref="VoidTaggerMain"/>
     <position name="posConcreteEnclosureSubtraction1" unit="cm" x="0" y="0" z="0"/>
   </subtraction>
 
 
- <box name="TaggerTop" lunit="cm" x="702.7+2*60+2*25-0.1" y="2-0.1" z="702.7+2*60+2*25-0.1" />
- <box name="TaggerFace" lunit="cm" x="520.2+2*60+2*25-0.1" y="542.3+2*60+2*25-0.1" z="2-0.1" />
- <box name="TaggerSide" lunit="cm" x="2-0.1" y="542.3+2*60+2*25-0.1" z="702.7+2*60+2*25-0.1" />
- <box name="TaggerBot" lunit="cm" x="520.2+2*60+2*25-0.1" y="2-0.1" z="702.7+2*60+2*25-0.1" />
+ <box name="TaggerTop" lunit="cm" x="872.6" y="1.9" z="872.6" />
+ <box name="TaggerFace" lunit="cm" x="690.1" y="712.2" z="1.9" />
+ <box name="TaggerSide" lunit="cm" x="1.9" y="712.2" z="872.6" />
+ <box name="TaggerBot" lunit="cm" x="690.1" y="1.9" z="872.6" />
 
   <box name="Building0" lunit="cm" x="1418" y="762" z="1560"/>
-  <box name="BuildingVoid" lunit="cm" x="1418-2*10" y="762-10" z="1560-2*10"/>
+  <box name="BuildingVoid" lunit="cm" x="1398.0" y="752.0" z="1540.0"/>
  <subtraction name="Building">
     <first ref="Building0"/> <second ref="BuildingVoid"/>
     <position name="posBuildingVoid" unit="cm" x="0" y="-10" z="0"/>
@@ -57,11 +57,11 @@
   <solidref ref="TaggerUpper"/>
   <physvol>
    <volumeref ref="volTaggerTop"/>
-   <position name="posTaggerTop1" unit="cm" x="0" y="2/2 +300/2" z="0"/>
+   <position name="posTaggerTop1" unit="cm" x="0" y="151.0" z="0"/>
   </physvol>
   <physvol>
    <volumeref ref="volTaggerTop"/>
-   <position name="posTaggerTop2" unit="cm" x="0" y="-2/2 -300/2" z="0"/>
+   <position name="posTaggerTop2" unit="cm" x="0" y="-151.0" z="0"/>
   </physvol>
  </volume>
 
@@ -70,23 +70,23 @@
   <solidref ref="TaggerMain"/>
   <physvol>
    <volumeref ref="volTaggerFace"/>
-   <position name="posTaggerFront" unit="cm" x="0" y="0" z="-702.7/2-60-25-2/2"/>
+   <position name="posTaggerFront" unit="cm" x="0" y="0" z="-437.35"/>
   </physvol>
   <physvol>
    <volumeref ref="volTaggerFace"/>
-   <position name="posTaggerBack" unit="cm" x="0" y="0" z="702.7/2+60+25+2/2"/>
+   <position name="posTaggerBack" unit="cm" x="0" y="0" z="437.35"/>
   </physvol>
 <physvol>
    <volumeref ref="volTaggerSide"/>
-   <position name="posTaggerLeft" unit="cm" x="520.2/2+60+25+2/2" y="0" z="0"/>
+   <position name="posTaggerLeft" unit="cm" x="346.1" y="0" z="0"/>
   </physvol>
   <physvol>
    <volumeref ref="volTaggerSide"/>
-   <position name="posTaggerRight" unit="cm" x="-520.2/2-60-25-2/2" y="0" z="0"/>
+   <position name="posTaggerRight" unit="cm" x="-346.1" y="0" z="0"/>
   </physvol>
   <physvol>
    <volumeref ref="volTaggerBot"/>
-   <position name="posTaggerBot" unit="cm" x="0" y="-542.3/2-60-25-2/2" z="0"/>
+   <position name="posTaggerBot" unit="cm" x="0" y="-357.15" z="0"/>
   </physvol>
  </volume>
 
