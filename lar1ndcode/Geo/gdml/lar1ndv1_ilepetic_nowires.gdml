@@ -9,10 +9,14 @@
    <rotation name="rPlus180AboutY" unit="deg" x="0" y="180" z="0"/>
    <rotation name="rPMTRotation"  unit="deg" x="90"  y="270"   z="0"/>
    <rotation name="rPMTRotation1"  unit="deg" x="90"  y="90"   z="0"/>
-   <position name="InnerCylinderPos" unit="cm" x="0." y="0." z="-300." />
-   <rotation name="InnerCylinderRot" x="90." unit="deg"/>	
-   <position name="OuterCylinderPos" unit="cm" x="0." y="0." z="-300." />
-   <rotation name="OuterCylinderRot" x="90." unit="deg"/>	
+   <position name="InnerCylinderPos" unit="cm" x="100." y="0." z="0." />
+   <rotation name="InnerCylinderRot" x="90." unit="deg"/>
+   <position name="OuterCylinderPos" unit="cm" x="100." y="0." z="0." />
+   <rotation name="OuterCylinderRot" x="90." unit="deg"/>
+   <position name="InnerCylinderPos2" unit="cm" x="-100." y="0." z="0." />
+   <rotation name="InnerCylinderRot2" x="90." unit="deg"/>
+   <position name="OuterCylinderPos2" unit="cm" x="-100." y="0." z="0." />
+   <rotation name="OuterCylinderRot2" x="90." unit="deg"/>
 </define>
 <materials>
   <element name="bromine" formula="Br" Z="35"> <atom value="79.904"/> </element>
@@ -242,6 +246,8 @@
 <solids>
 <tube name="InnerCylinder" rmax="5.08" z="10.16" deltaphi="360" startphi="0" aunit="deg" lunit="cm"/>
 <tube name="OuterCylinder" rmin="5.08" rmax="7.62" z="30.48" deltaphi="360" startphi="0" aunit="deg" lunit="cm"/>
+<tube name="InnerCylinder2" rmax="5.08" z="10.16" deltaphi="360" startphi="0" aunit="deg" lunit="cm"/>
+<tube name="OuterCylinder2" rmin="5.08" rmax="7.62" z="30.48" deltaphi="360" startphi="0" aunit="deg" lunit="cm"/>
 
 <tube name="TPCWireVert"
   rmax="0.5*0.015"
@@ -457,13 +463,21 @@
 </solids>
 <structure>
 	<volume name="volInnerCylinder">
-		<materialref ref="Acrylic"/>
+		<materialref ref="STEEL_STAINLESS_Fe7Cr2Ni"/>
 		<solidref ref="InnerCylinder" />
 	</volume>
 	<volume name="volOuterCylinder">
 		<materialref ref="STEEL_STAINLESS_Fe7Cr2Ni"/>
 		<solidref ref="OuterCylinder" />
 	</volume>
+	<volume name="volInnerCylinder2">
+		<materialref ref="STEEL_STAINLESS_Fe7Cr2Ni"/>
+		<solidref ref="InnerCylinder2" />
+	</volume>
+	<volume name="volOuterCylinder2">
+		<materialref ref="STEEL_STAINLESS_Fe7Cr2Ni"/>
+		<solidref ref="OuterCylinder2" />
+		</volume>
   <volume name="volTPCWireVert">
     <materialref ref="Titanium"/>
     <solidref ref="TPCWireVert"/>
@@ -521,6 +535,7 @@
  <volume name="volTPC">
    <materialref ref="LAr"/>
    <solidref ref="TPC"/>
+    
 	<physvol>
 		 <volumeref ref="volTPCPlaneVert"/>
 		 <position name="posTPCPlaneVert2" unit="cm" x="200/2-0.1" y="0" z="0" />
@@ -677,6 +692,16 @@
 		<positionref ref="OuterCylinderPos" />
 		<rotationref ref="OuterCylinderRot" />
 	</physvol>
+		  <physvol>
+		<volumeref ref="volInnerCylinder2" />
+		<positionref ref="InnerCylinderPos2" />
+		<rotationref ref="InnerCylinderRot2" />
+	</physvol>
+	<physvol>
+		<volumeref ref="volOuterCylinder2" />
+		<positionref ref="OuterCylinderPos2" />
+		<rotationref ref="OuterCylinderRot2" />
+	</physvol> 
 	<physvol>
 	  <volumeref ref="volSteelBox"/>
 	  <position name="posSteelBox" unit="cm" x="0" y="0" z="0"/>
@@ -2694,6 +2719,7 @@
  <volume name="volDetEnclosure">
   <materialref ref="Air"/>
   <solidref ref="DetEnclosure"/>
+
      <physvol>
         <volumeref ref="volStructure"/>
         <position name="posStructure" unit="cm" x="0" y="2" z="0"/>
