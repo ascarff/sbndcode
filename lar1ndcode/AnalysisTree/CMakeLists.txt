@@ -1,5 +1,6 @@
 
 art_make( BASENAME_ONLY
+<<<<<<< HEAD
           MODULE_LIBRARIES Geometry
 			Geometry_service
 			Simulation
@@ -34,8 +35,6 @@ art_make( BASENAME_ONLY
                         ${ROOT_XMLIO}
                         ${ROOT_GDML}
 			${ROOT_BASIC_LIB_LIST}
-        )
-
 # install_headers()
 install_fhicl()
 install_source()
