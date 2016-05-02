@@ -1,6 +1,6 @@
 #
 # File:    seedservice_lar1nd.fcl
-# Desc:    custom configurations of SeedService for lar1nd
+# Desc:    custom configurations of LArSeedService for lar1nd
 # Author:  Gianluca Petrillo (petrillo@fnal.gov)
 # Date:    February 13th, 2015
 # Version: 1.0
@@ -20,7 +20,7 @@ BEGIN_PROLOG
 
 # 
 # the random policy extracts unpredictable, random seeds in a way similar to the
-# behaviour that existed before SeedService.
+# behaviour that existed before LArSeedService.
 # You don't want this for production.
 # 
 
