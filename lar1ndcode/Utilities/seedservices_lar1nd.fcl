@@ -24,6 +24,6 @@ BEGIN_PROLOG
 # You don't want this for production.
 # 
 
-lar1nd_seedservice: @local::random_seedservice # from seedservice.fcl
+lar1nd_seedservice: @local::standard_seedservice # from seedservice.fcl
 
 END_PROLOG
