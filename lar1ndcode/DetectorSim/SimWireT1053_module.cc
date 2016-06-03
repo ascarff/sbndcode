@@ -36,15 +36,15 @@ extern "C" {
 
 
 #include "lardata/Utilities/LArFFT.h"
-#include "lardata/RawData/RawDigit.h"
-#include "lardata/RawData/raw.h"
-#include "lardata/RawData/TriggerData.h"
+#include "lardataobj/RawData/RawDigit.h"
+#include "lardataobj/RawData/raw.h"
+#include "lardataobj/RawData/TriggerData.h"
 // #include "lardata/Utilities/LArProperties.h"
 #include "lardata/DetectorInfoServices/DetectorClocksServiceStandard.h"
 #include "lar1ndcode/Utilities/SignalShapingServiceT1053.h"
 #include "larcore/Geometry/Geometry.h"
-#include "larsim/Simulation/sim.h"
-#include "larsim/Simulation/SimChannel.h"
+#include "larsimobj/Simulation/sim.h"
+#include "larsimobj/Simulation/SimChannel.h"
 #include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
 
 #include "TMath.h"
