@@ -36,7 +36,7 @@ product          version
 larsoft          v06_00_00_rc4
 lar1ndutil       v01_14_00 - optional
 
-cetbuildtools   v5_02_04        -       only_for_build
+cetbuildtools   v5_02_02        -       only_for_build
 end_product_list
 
 # We now define allowed qualifiers and the corresponding qualifiers for the depdencies.
