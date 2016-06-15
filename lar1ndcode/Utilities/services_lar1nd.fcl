@@ -13,7 +13,8 @@
 #include "sam_lar1nd.fcl"
 #include "detectorclocks_lar1nd.fcl"
 #include "seedservices_lar1nd.fcl"
-##include "channelstatus_lar1nd.fcl"
+#include "channelstatus_lar1nd.fcl"
+#include "database_lar1nd.fcl"
 
 BEGIN_PROLOG
 
@@ -31,9 +32,8 @@ lar1nd_services:
 #OpDigiProperties:               @local::lar1nd_opdigiproperties
  DetectorClocksService:                    @local::lar1nd_detectorclocks
  SeedService:                    @local::lar1nd_seedservice
-# ChannelStatusService:           @local::lar1nd_channelstatus
+ ChannelStatusService:           @local::lar1nd_channelstatus
 # DetPedestalService:             @local::lar1nd_detpedestalservice
-
 }
 
 # Define lar1nd_optical_service (exclude simulation specific component)
@@ -42,38 +42,15 @@ lar1nd_services:
 # Define lar1nd_simulation_services
 lar1nd_simulation_services:
 {
+ @table::lar1nd_services # include all the standard LAr1ND services
  LArG4Parameters:                @local::lar1nd_largeantparameters 
  LArVoxelCalculator:             @local::lar1nd_larvoxelcalculator 
- ExptGeoHelperInterface:         @local::lar1nd_geometry_helper
- Geometry:                       @local::lar1nd_geo 	           
- DetectorPropertiesService:             @local::lar1nd_detproperties      
- LArPropertiesService:                  @local::lar1nd_properties	   
- LArFFT:                         @local::lar1nd_larfft             
- DatabaseUtil:	                 @local::lar1nd_database           
- SignalShapingServiceT1053: @local::lar1nd_signalshapingservice
  MagneticField:                  @local::no_mag 	       
- BackTracker:                    @local::standard_backtracker
- DetectorClocksService:                    @local::lar1nd_detectorclocks
- SeedService:                    @local::lar1nd_seedservice
-#ChannelStatusService:           @local::lar1nd_channelstatus
 }
 
 lar1nd_opsimulation_services:
 {
- LArG4Parameters:                @local::lar1nd_largeantparameters 
- LArVoxelCalculator:             @local::lar1nd_larvoxelcalculator 
- ExptGeoHelperInterface:         @local::lar1nd_geometry_helper
- Geometry:                       @local::lar1nd_geo 	           
- DetectorPropertiesService:             @local::lar1nd_detproperties      
- LArPropertiesService:                  @local::lar1nd_properties	   
- LArFFT:                         @local::lar1nd_larfft             
- DatabaseUtil:	                 @local::lar1nd_database           
- SignalShapingServiceT1053: @local::lar1nd_signalshapingservice
- MagneticField:                  @local::no_mag 	       
- BackTracker:                    @local::standard_backtracker
- DetectorClocksService:                    @local::lar1nd_detectorclocks
- SeedService:                    @local::lar1nd_seedservice
-# ChannelStatusService:           @local::lar1nd_channelstatus
+  @table::lar1nd_simulation_services # include all the standard LAr1ND services
 }
 
 lar1nd_opsimulation_services.OpDetResponseInterface: @local::lar1nd_opdetresponse

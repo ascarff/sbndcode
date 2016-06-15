@@ -51,7 +51,7 @@ lar1nd_disp:
  LArVoxelCalculator:                          @local::lar1nd_larvoxelcalculator     
  InfoTransfer:		                      @local::lar1nd_infotransfer    
  DetectorClocksService:                  		      @local::lar1nd_detectorclocks
-#ChannelStatusService:                        @local::lar1nd_channelstatus
+ ChannelStatusService:                        @local::lar1nd_channelstatus   #--Hec: Uncommented
  DetPedestalService:      		      @local::lar1nd_detpedestalservice
 }                                                                                  
                                                                                    
