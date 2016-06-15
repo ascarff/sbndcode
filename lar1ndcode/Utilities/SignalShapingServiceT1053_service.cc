@@ -48,8 +48,18 @@ void util::SignalShapingServiceT1053::reconfigure(const fhicl::ParameterSet& pse
   // Fetch fcl parameters.
 
   fADCTicksPerPCAtLowestASICGainSetting = pset.get<double>("ADCTicksPerPCAtLowestASICGainSetting");
-  fASICGainInMVPerFC = pset.get<double>("ASICGainInMVPerFC");
   fNFieldBins = pset.get<int>("FieldBins");
+  
+  fASICGainInMVPerFC = pset.get<std::vector<double> >("ASICGainInMVPerFC");
+  fShapeTimeConst = pset.get<std::vector<double> >("ShapeTimeConst");
+  fNoiseFactVec =  pset.get<std::vector<DoubleVec> >("NoiseFactVec");
+  fInputFieldRespSamplingPeriod = pset.get<double>("InputFieldRespSamplingPeriod");
+
+  fFieldResponseTOffset = pset.get<std::vector<double> >("FieldResponseTOffset");
+  fCalibResponseTOffset = pset.get<std::vector<double> >("CalibResponseTOffset");
+
+  fUseHistogramFieldShape = pset.get<bool>("UseHistogramFieldShape");
+
   fCol3DCorrection = pset.get<double>("Col3DCorrection");
   fInd3DCorrection = pset.get<double>("Ind3DCorrection");
   fColFieldRespAmp = pset.get<double>("ColFieldRespAmp");
@@ -176,6 +186,45 @@ util::SignalShapingServiceT1053::SignalShaping(unsigned int channel) const
   return fColSignalShaping;
 }
 
+
+//-----Give Gain Settings to SimWire-----//jyoti
+double util::SignalShapingServiceT1053::GetASICGain(unsigned int const channel) const
+{
+  art::ServiceHandle<geo::Geometry> geom;
+  
+  geo::View_t view = geom->View(channel);
+  double gain = 0;
+  if(view == geo::kU)
+    gain = fASICGainInMVPerFC.at(0);
+  else if(view == geo::kV)
+    gain = fASICGainInMVPerFC.at(1);
+  else if(view == geo::kZ)
+    gain = fASICGainInMVPerFC.at(2); 
+  else
+    throw cet::exception("SignalShapingServiceT1053")<< "can't determine"
+                                                     << " View\n";
+  return gain;
+}
+
+
+//-----Give Shaping time to SimWire-----//jyoti
+double util::SignalShapingServiceT1053::GetShapingTime(unsigned int const channel) const
+{
+  art::ServiceHandle<geo::Geometry> geom;
+
+  geo::View_t view = geom->View(channel); 
+  double shaping_time = 0;
+  if(view == geo::kU)
+    shaping_time = fShapeTimeConst.at(0);
+  else if(view == geo::kV)
+    shaping_time = fShapeTimeConst.at(1);
+  else if(view == geo::kZ)
+    shaping_time = fShapeTimeConst.at(2);   
+  else
+    throw cet::exception("SignalShapingServiceT1053")<< "can't determine"
+                                                     << " View\n";
+  return shaping_time;
+}   
 
 //----------------------------------------------------------------------
 // Initialization method.

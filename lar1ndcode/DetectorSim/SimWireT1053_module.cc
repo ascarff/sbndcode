@@ -8,6 +8,8 @@
 // - Revised to use sim::RawDigit instead of rawdata::RawDigit, and to
 // - save the electron clusters associated with each digit.
 // - ported from the MicroBooNE class by A.Szlec
+
+// Updating Simulation Code, 06/06/2016 by J.Joshi
 ////////////////////////////////////////////////////////////////////////
 #include <vector>
 #include <string>
@@ -100,6 +102,8 @@ private:
   std::string fNoiseFileFname;
   std::string fNoiseHistoName;
   TH1D*             fNoiseHist;             ///< distribution of noise counts
+
+  std::map< double, int > fShapingTimeOrder;
 
   std::string fTrigModName;                 ///< Trigger data product producer name
   //define max ADC value - if one wishes this can
