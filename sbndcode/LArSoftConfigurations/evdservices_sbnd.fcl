@@ -1,0 +1,59 @@
+#include "calorimetry.fcl"
+#include "services_sbnd.fcl"
+#include "evdservices_base.fcl"
+
+BEGIN_PROLOG
+
+sbnd_colordrawingopt:                       @local::standard_colordrawingopt
+sbnd_rawdrawingopt:                         @local::standard_rawdrawingopt
+sbnd_recodrawingopt:                        @local::standard_recodrawingopt
+sbnd_analysisdrawingopt:                    @local::standard_analysisdrawingopt
+#{
+# DrawCalorimetry:                             1                                     
+# DrawParticleID:                              1                                     
+# DrawShowerCalor:                 	      0
+# CalorimetryModuleLabels:                     ["calo"]                              
+# ParticleIDModuleLabels:                      ["pid"]                               
+# CalorTemplateFileNames:                      ["dEdxKinErestemplate.root"]          
+#}                                                                                      
+sbnd_simdrawingopt:                         @local::standard_simdrawingopt        
+sbnd_evdlayoutopt:   		              @local::standard_evdlayoutopt         
+sbnd_evdlayoutopt.ShowSideBar:	      1                                     
+sbnd_evdlayoutopt.AutoZoomInterest:	      0                                     
+sbnd_evdlayoutopt.PrintTotalCharge:	      0                                     
+sbnd_evdlayoutopt.ShowEndPointSection:      1	                             
+sbnd_evdlayoutopt.ShowEndPointMarkers:      1                                     
+sbnd_evdlayoutopt.MakeSeeds:	              0                                     
+sbnd_evdlayoutopt.ChangeWire:	              0                                     
+sbnd_evdlayoutopt.MakeSeeds:	              0                                     
+sbnd_evdlayoutopt.ChangeWire:	              1                                     
+sbnd_scanopt:                               @local::standard_scanopt              
+sbnd_evd:                                   @local::standard_evd                  
+sbnd_infotransfer:                          @local::standard_infotransfer         
+sbnd_disp:                                                                       
+{                                                                                  
+ ExptGeoHelperInterface:                      @local::sbnd_geometry_helper        
+ Geometry:                                    @local::sbnd_geo                    
+ LArProperties:                               @local::sbnd_properties             
+ DetectorProperties:                          @local::sbnd_detproperties          
+ DatabaseUtil:		                      @local::sbnd_database               
+ ColorDrawingOptions:                         @local::sbnd_colordrawingopt        
+ SimulationDrawingOptions:                    @local::sbnd_simdrawingopt          
+ RawDrawingOptions:                           @local::sbnd_rawdrawingopt          
+ RecoDrawingOptions:                          @local::sbnd_recodrawingopt         
+ AnalysisDrawingOptions:                      @local::sbnd_analysisdrawingopt     
+ EvdLayoutOptions:	                      @local::sbnd_evdlayoutopt           
+ EventDisplay:                                @local::sbnd_evd                    
+ ScanOptions:                                 @local::sbnd_scanopt                
+ LArG4Parameters:                             @local::sbnd_largeantparameters     
+ LArVoxelCalculator:                          @local::sbnd_larvoxelcalculator     
+ InfoTransfer:		                      @local::sbnd_infotransfer    
+ TimeService:                  		       @local::sbnd_timeservice
+}                                                                                  
+                                                                                   
+                                                                                   
+#######################################                                            
+                                                                                   
+sbnd_graphcluster:                          @local::standard_graphcluster         
+
+END_PROLOG
