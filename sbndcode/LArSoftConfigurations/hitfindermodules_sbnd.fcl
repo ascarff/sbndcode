@@ -1,0 +1,10 @@
+#include "hitfindermodules.fcl"
+
+BEGIN_PROLOG
+
+sbnd_hitfinder:              @local::standard_hitfinder
+sbnd_gaushitfinder:          @local::gaus_hitfinder
+sbnd_mc_hitfinder:           @local::standard_hitfinder
+sbnd_mc_hitfinder.AreaNorms: [ 12.89, 14.51 ]
+
+END_PROLOG

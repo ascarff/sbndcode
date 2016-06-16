@@ -1,0 +1,20 @@
+#include "timeservice.fcl"
+
+BEGIN_PROLOG
+
+sbnd_timeservice: @local::standard_timeservice
+
+sbnd_timeservice.TrigModuleName:     "triggersim"
+sbnd_timeservice.InheritClockConfig: true
+sbnd_timeservice.G4RefTime:        0      # G4 time [us] where electronics clock counting start
+sbnd_timeservice.TriggerOffsetTPC:  0  # Time [us] for TPC readout start w.r.t. trigger time
+sbnd_timeservice.FramePeriod:       1.25e3 # Frame period [us]
+sbnd_timeservice.ClockSpeedTPC:     2.    # TPC clock speed in MHz
+sbnd_timeservice.ClockSpeedOptical: 64.   # Optical clock speed in MHz
+sbnd_timeservice.ClockSpeedTrigger: 16.   # Trigger clock speed in MHz
+sbnd_timeservice.DefaultTrigTime:   0. # Default trigger time [us].
+sbnd_timeservice.DefaultBeamTime:   0. # Default beam time [us].
+
+
+
+END_PROLOG

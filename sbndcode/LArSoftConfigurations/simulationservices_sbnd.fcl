@@ -1,0 +1,8 @@
+#include "simulationservices.fcl"
+
+BEGIN_PROLOG
+
+sbnd_largeantparameters:   @local::standard_largeantparameters
+sbnd_larvoxelcalculator:   @local::standard_larvoxelcalculator
+
+END_PROLOG
