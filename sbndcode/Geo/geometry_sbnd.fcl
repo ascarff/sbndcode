@@ -1,0 +1,25 @@
+
+BEGIN_PROLOG
+
+sbnd_geo:
+{
+ SurfaceY: 130.0e2                      #in cm, vertical distance to the surface
+ Name:     "sbndv1_ilepetic"
+ GDML:     "sbndv1_ilepetic.gdml"
+ ROOT:     "sbndv1_ilepetic.gdml"
+
+ SortingParameters: { 
+   DetectorVersion: "sbnd" 
+ } 
+
+ SurfaceY:           0.0e2               #in cm, vertical distance to the surface
+ DisableWiresInG4:   true
+
+}
+
+sbnd_geometry_helper:
+{
+ service_provider : SBNDGeometryHelper
+}
+
+END_PROLOG
