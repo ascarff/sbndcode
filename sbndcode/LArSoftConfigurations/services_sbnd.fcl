@@ -45,7 +45,7 @@ BEGIN_PROLOG
 sbnd_services:
 {
   message:                        @local::sbnd_message_services
-                                  @table::sbnd_resourcemonitorservices
+ #                                 @table::sbnd_resourcemonitorservices
   LArSeedService:                 @local::sbnd_seedservice
   ExptGeoHelperInterface:         @local::sbnd_geometry_helper     # from geometry_sbnd.fcl
   Geometry:                       @local::sbnd_geo                 # from geometry_sbnd.fcl
