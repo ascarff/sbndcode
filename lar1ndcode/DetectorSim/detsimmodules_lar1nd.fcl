@@ -12,7 +12,7 @@ lar1nd_simwire:
  NoiseRand:          0.1          #frac of randomness of noise freq-spec
  LowCutoff:          7.5          #Low frequency filter cutoff (kHz)
  CompressionType:    "none"       #could also be none		
- GenNoise:            false        #gen noise...if false function not called
+ GenNoise:            true        #gen noise...if false function not called
  GetNoiseFromHisto:   false
  GenNoiseInTime:      false
  # the two settings below determine the ADC baseline for collection and induction plane, respectively;

@@ -8,6 +8,8 @@
 // - Revised to use sim::RawDigit instead of rawdata::RawDigit, and to
 // - save the electron clusters associated with each digit.
 // - ported from the MicroBooNE class by A.Szlec
+
+// Updating Simulation Code, 06/06/2016 by J.Joshi
 ////////////////////////////////////////////////////////////////////////
 #include <vector>
 #include <string>
@@ -21,6 +23,7 @@ extern "C" {
 #include <sys/stat.h>
 }
 
+#include "art/Utilities/Exception.h"
 #include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Core/EDProducer.h"
 #include "art/Framework/Principal/Event.h"
@@ -32,14 +35,14 @@ extern "C" {
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
 // art extensions
-#include "artextensions/SeedService/SeedService.hh"
+#include "larsim/RandomUtils/LArSeedService.h"
 
 
 #include "lardata/Utilities/LArFFT.h"
 #include "lardata/RawData/RawDigit.h"
 #include "lardata/RawData/raw.h"
 #include "lardata/RawData/TriggerData.h"
-// #include "lardata/Utilities/LArProperties.h"
+// #include "lardata/DetectorInfoServices/LArPropertiesService.h"
 #include "lardata/DetectorInfoServices/DetectorClocksServiceStandard.h"
 #include "lar1ndcode/Utilities/SignalShapingServiceT1053.h"
 #include "larcore/Geometry/Geometry.h"
@@ -99,7 +102,9 @@ private:
   bool fGenNoise;                           ///< if True -> Gen Noise. if False -> Skip noise generation entierly
   std::string fNoiseFileFname;
   std::string fNoiseHistoName;
-  TH1D*             fNoiseHist;             ///< distribution of noise counts
+  TH1D*                  fNoiseHist = nullptr; ///< distribution of noise counts
+
+  std::map< double, int > fShapingTimeOrder;
 
   std::string fTrigModName;                 ///< Trigger data product producer name
   //define max ADC value - if one wishes this can
@@ -123,9 +128,9 @@ SimWireT1053::SimWireT1053(fhicl::ParameterSet const& pset)
   TString compression(pset.get< std::string >("CompressionType"));
   if (compression.Contains("Huffman", TString::kIgnoreCase)) fCompression = raw::kHuffman;
 
-  // create a default random engine; obtain the random seed from SeedService,
+  // create a default random engine; obtain the random seed from LArSeedService,
   // unless overridden in configuration with key "Seed" and "SeedPedestal"
-  art::ServiceHandle<artext::SeedService> Seeds;
+  art::ServiceHandle<sim::LArSeedService> Seeds;
   Seeds->createEngine(*this, "HepJamesRandom", "noise", pset, "Seed");
   Seeds->createEngine(*this, "HepJamesRandom", "pedestal", pset, "SeedPedestal");
 
@@ -162,18 +167,22 @@ void SimWireT1053::reconfigure(fhicl::ParameterSet const& p)
     cet::search_path sp("FW_SEARCH_PATH");
     sp.find_file(p.get<std::string>("NoiseFileFname"), fNoiseFileFname);
 
-    TFile * in = new TFile(fNoiseFileFname.c_str(), "READ");
-    TH1D * temp = (TH1D *)in->Get(fNoiseHistoName.c_str());
-
-    if (temp != NULL)
-    {
-      fNoiseHist = new TH1D(fNoiseHistoName.c_str(), fNoiseHistoName.c_str(), temp->GetNbinsX(), 0, temp->GetNbinsX());
-      temp->Copy(*fNoiseHist);
+    TFile in(fNoiseFileFname.c_str(), "READ");
+    if (!in.IsOpen()) {
+      throw art::Exception(art::errors::FileOpenError)
+        << "Could not find Root file '" << fNoiseHistoName
+        << "' for noise histogram\n";
     }
-    else
-      throw cet::exception("SimWireT1053") << " Could not find noise histogram in Root file\n";
-    in->Close();
+    fNoiseHist = (TH1D*) in.Get(fNoiseHistoName.c_str());
 
+    if (!fNoiseHist) {
+      throw art::Exception(art::errors::NotFound)
+        << "Could not find noise histogram '" << fNoiseHistoName
+        << "' in Root file '" << in.GetPath() << "'\n";
+    }
+    // release the histogram from its file; now we own it
+    fNoiseHist->SetDirectory(nullptr);
+    in.Close();
   }
   
   //detector properties information
@@ -216,7 +225,7 @@ void SimWireT1053::endJob()
 void SimWireT1053::produce(art::Event& evt)
 {
 
-  // art::ServiceHandle<util::TimeService> ts;
+  // auto const* ts = lar::providerFrom<detinfo::DetectorClocksService>();
   art::ServiceHandle<detinfo::DetectorClocksServiceStandard> tss;
   // In case trigger simulation is run in the same job...
   tss->preProcessEvent(evt);
