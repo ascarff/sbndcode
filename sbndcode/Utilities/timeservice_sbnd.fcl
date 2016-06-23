@@ -5,6 +5,6 @@
 
 BEGIN_PROLOG
 
-sbnd_timeservice: @local::sbnd_detectorclocks
+sbnd_detectorclocks: @local::sbnd_detectorclocks
 
 END_PROLOG

@@ -21,7 +21,7 @@ extern "C" {
 #include <sys/stat.h>
 }
 
-#include "art/Utilities/Exception.h"
+#include "canvas/Utilities/Exception.h"
 #include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Core/EDProducer.h"
 #include "art/Framework/Principal/Event.h"
@@ -40,7 +40,7 @@ extern "C" {
 #include "lardataobj/RawData/RawDigit.h"
 #include "lardataobj/RawData/raw.h"
 #include "lardataobj/RawData/TriggerData.h"
-// #include "lardata/Utilities/LArProperties.h"
+// #include "lardata/DetectorInfoServices/LArPropertiesService.h"
 #include "lardata/DetectorInfoServices/DetectorClocksServiceStandard.h"
 #include "sbndcode/Utilities/SignalShapingServiceT1053.h"
 #include "larcore/Geometry/Geometry.h"
