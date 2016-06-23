@@ -34,14 +34,14 @@ fcldir  product_dir
 
 product          version
 larsoft          v06_00_00_rc4
-lar1ndutil       v01_14_00 - optional
+sbndutil         v01_14_00 - optional
 
 cetbuildtools   v5_02_02        -       only_for_build
 end_product_list
 
 # We now define allowed qualifiers and the corresponding qualifiers for the depdencies.
 # Make a table by adding columns before "notes". 
-qualifier        larsoft      lar1ndutil notes
+qualifier        larsoft      sbndutil notes
 e10:debug        e10:debug    e10:debug   
 e10:opt          e10:opt      e10:opt     
 e10:prof         e10:prof     e10:prof    
@@ -50,7 +50,7 @@ end_qualifier_list
 # table fragment to set FW_SEARCH_PATH needed 
 # to find gdml and xml files:
 table_fragment_begin
-    pathPrepend(FW_SEARCH_PATH, ${LAR1NDCODE_DIR}/scripts)
+    pathPrepend(FW_SEARCH_PATH, ${SBNDCODE_DIR}/scripts)
 table_fragment_end
 
 
