@@ -4,9 +4,9 @@ BEGIN_PROLOG
 sbnd_geo:
 {
  SurfaceY: 130.0e2                      #in cm, vertical distance to the surface
- Name:     "sbndv0"
- GDML:     "sbndv0.gdml"
- ROOT:     "sbndv0.gdml"
+ Name:     "sbndv0_ilepetic"
+ GDML:     "sbndv0_ilepetic.gdml"
+ ROOT:     "sbndv0_ilepetic.gdml"
 
  SortingParameters: { 
    DetectorVersion: "sbnd" 

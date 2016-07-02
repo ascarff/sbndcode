@@ -28,4 +28,16 @@ sbnd_analysistree:
  G4MinE:                   0.01
 }
 
+sbnd_LarAnalyzerEg:
+{
+module_type:		"LarAnalyzerEg"
+G4ModuleLabel:            "largeant"
+MCShowerModuleLabel:      "mcreco"
+HitsModuleLabel:          "gaushit"
+ClusterModuleLabel:       "linecluster"
+TrackModuleLabel:         "pmtrack"
+CalorimetryModuleLabel:   "calo"
+ParticleIDModuleLabel:    "pid"
+}
+
 END_PROLOG
