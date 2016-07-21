@@ -1,4 +1,14 @@
+#
+# services
+#
+
 #include "simulationservices_sbnd.fcl"
+#include "messages_sbnd.fcl"
+#include "sam_sbnd.fcl"
+#
+# modules
+#
+
 #include "singles_sbnd.fcl"
 
 process_name: SinglesGen
@@ -46,11 +56,11 @@ services:
   # Load the service that manages root files for histograms.
   TFileService: { fileName: "single_hist.root" }
   Timing:       {}
-  RandomNumberGenerator: {} #ART native random number generator
   FileCatalogMetadata:  @local::sbnd_file_catalog_mc
   user:         @local::sbnd_simulation_services
 }
 
+services.message: @local::sbnd_message_services_prod # from messages_sbnd.fcl
 
 #Start each new event with an empty event.
 source:
