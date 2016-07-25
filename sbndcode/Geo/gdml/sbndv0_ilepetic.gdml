@@ -9,13 +9,13 @@
    <rotation name="rPlus180AboutY" unit="deg" x="0" y="180" z="0"/>
    <rotation name="rPMTRotation"  unit="deg" x="90"  y="270"   z="0"/>
    <rotation name="rPMTRotation1"  unit="deg" x="90"  y="90"   z="0"/>
-   <position name="InnerCylinderPos" unit="cm" x="100" y="0" z="-280" />
+   <position name="InnerCylinderPos" unit="cm" x="100" y="0" z="0" />
    <rotation name="InnerCylinderRot" x="90" unit="deg"/>
-   <position name="OuterCylinderPos" unit="cm" x="100" y="0" z="-280" />
+   <position name="OuterCylinderPos" unit="cm" x="100" y="0" z="0" />
    <rotation name="OuterCylinderRot" x="90" unit="deg"/>
-   <position name="InnerCylinderPos2" unit="cm" x="-100." y="0" z="-280" />
+   <position name="InnerCylinderPos2" unit="cm" x="-100." y="0" z="0" />
    <rotation name="InnerCylinderRot2" x="90" unit="deg"/>
-   <position name="OuterCylinderPos2" unit="cm" x="-100" y="0" z="-280" />
+   <position name="OuterCylinderPos2" unit="cm" x="-100" y="0" z="0" />
    <rotation name="OuterCylinderRot2" x="90" unit="deg"/>
  <!--  <position name="TopCylinderPos" unit="cm" x="100." y="10.16" z="0." />
    <rotation name="TopCylinderRot" x="90." unit="deg"/>
@@ -254,9 +254,9 @@
 </materials>
 <solids>
 <tube name="InnerCylinder" rmax="2.54" z="10.16" deltaphi="360" startphi="0" aunit="deg" lunit="cm"/>
-<tube name="OuterCylinder" rmin="2.54" rmax="10.16" z="30.48" deltaphi="360" startphi="0" aunit="deg" lunit="cm"/>
+<tube name="OuterCylinder" rmin="2.54" rmax="15.24" z="30.48" deltaphi="360" startphi="0" aunit="deg" lunit="cm"/>
 <tube name="InnerCylinder2" rmax="2.54" z="10.16" deltaphi="360" startphi="0" aunit="deg" lunit="cm"/>
-<tube name="OuterCylinder2" rmin="2.54" rmax="10.16" z="30.48" deltaphi="360" startphi="0" aunit="deg" lunit="cm"/>
+<tube name="OuterCylinder2" rmin="2.54" rmax="15.24" z="30.48" deltaphi="360" startphi="0" aunit="deg" lunit="cm"/>
 <!--<tube name="TopCylinder" rmax="2.54" z="10.16" deltaphi="360" startphi="0" aunit="deg" lunit="cm"/>
 <tube name="BottomCylinder" rmax="2.54" z="10.16" deltaphi="360" startphi="0" aunit="deg" lunit="cm"/>
 <tube name="TopCylinder2" rmax="2.54" z="10.16" deltaphi="360" startphi="0" aunit="deg" lunit="cm"/>
