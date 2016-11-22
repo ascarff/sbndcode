@@ -1,0 +1,9 @@
+BEGIN_PROLOG
+standard_caenana:
+{
+  module_type:        "CAENExtractor"
+  DAQModuleLabel:     "daq"
+}
+
+END_PROLOG
+

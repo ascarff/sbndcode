@@ -1,0 +1,55 @@
+#include "services_sbnd.fcl"
+
+process_name: EventBuilder
+
+services:
+{
+  Timing:       {}
+  RandomNumberGenerator: {}
+  TFileService: { fileName: "hists_daq_sbnd_%p-%tc.root" }
+}
+
+source:
+{
+  module_type: EventBuilderInput
+
+  # Number of events to analyze ("-1" for all, override with -n)
+  maxEvents:    -1
+
+  SourceName:           "daq"
+  InputTag:             "daq:V1730:Driver"
+}
+
+outputs:
+{
+  out1:
+  {
+    module_type: RootOutput
+    # Output file name, override with -o
+    fileName:    "standard_eventbuilder.root"
+    dataTier:    "raw"
+    streamName:  "all"
+    compressionLevel: 1
+  }
+}
+
+physics:
+{
+  producers: {}
+  stream1: [ out1 ]
+  analyzers:
+  {
+    caenana:
+    {
+      module_type: "CAENExtractor"
+      DAQModuleLabel: "daq"
+    }
+  }
+
+  ana: [caenana]
+
+  end_paths: [stream1, ana]
+}
+
+services.user.LArSeedService: @local::random_seedservice
+
