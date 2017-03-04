@@ -20,14 +20,6 @@
 	
 	Version History (latest on top)
 	
-	v0.7
-		+ NEW PMT model from Diego;
-		> Bugfixes:
-			*[12] Solved collisions between container volumes: building and detector; 
-		> Known problems:
-			+[12] CRT Placeholders colliding;
-			+[13] Building's material budget has to be discussed with specialists;
-
 	v0.6
 		+ Placeholders for CRT Panels;
 		+ Added Concrete Shieldings;
@@ -36,8 +28,7 @@
 			*[11] Constants' declarations reviewed;
 			*[0]  Material budget mostly reviewd;
 		> Known problems:
-			+[12] CRT Placeholders colliding;
-			+[13] Building's material budget has to be discussed with specialists;
+			+[12] Building's material budget has to be discussed with specialists;
 
 	v0.5
 		+ Cryostat and external structure;
@@ -275,6 +266,8 @@
 
 	<position name="posUnderground" unit="mm" x="whereTPC_X" y="whereTPC_Y-theCryo_Y/2" z="whereTPC_Z+theTPC_Z/2"/>
 	<position name="posBuilding"    unit="mm" x="whereBuild_X" y="whereBuild_Y" z="whereBuild_Z"/>	
+	<position name="posBuildingVoid" unit="mm" x="0" y="-(wallWidth+buildingRoofTop)/2-eD" z="0"/>
+
         <position name="posCryostat"    unit="mm" x="0" y="0" z="theTPC_Z/2-system_DZ" />
         <position name="posStructure"   unit="mm" x="0" y="0" z="theTPC_Z/2-system_DZ" />
 
@@ -573,7 +566,7 @@
 	<subtraction name="BuildingWalls">
     		<first  ref="boxBuildingExternal"/> 
     		<second ref="boxBuildingVoid"/>
-    		<position name="posBuildingVoid" unit="mm" x="0" y="-(wW+rT)/2-eD" z="0"/>
+    		<positionref ref="posBuildingVoid"/>
   	</subtraction>
 	<subtraction name="BuildingWallsRoof">
 		<first  ref="BuildingWalls"/> 
@@ -600,7 +593,7 @@
 	<subtraction name="boxBuildingContainer1">
     		<first  ref="boxBuildingExternal"/> 
     		<second ref="boxBuildingVoid"/>
-    		<position name="posBuildingVoid" unit="mm" x="0" y="-(wW+rT)/2-eD" z="0"/>
+    		<positionref ref="posBuildingVoid"/>
   	</subtraction>
 
 	<union name="boxBuildingContainer">
@@ -1061,6 +1054,39 @@
 <!--========================================================================-->
 <!--                           A Single PMT                                 -->
 <!--========================================================================-->
+
+<solids>
+	<tube name="PMTVolume" rmax="(4.5*2.54)" z="(11.1*2.54)+0.005" deltaphi="360" aunit="deg" lunit="cm"/>
+	<tube name="PMT_Underside" rmax="2.54*4.0" z="0.1" deltaphi="360" aunit="deg" lunit="cm"/>
+	<tube name="PMT_Back" rmax="2.54*4.0" z="0.5" deltaphi="360" aunit="deg" lunit="cm"/>
+</solids>
+
+<structure>
+	<volume name="volOpDetSensitive">
+		<materialref ref="LAr"/> <!-- for some reason, has to be LAr -->
+		<solidref ref="PMT_Underside"/>
+	</volume>
+
+	<volume name="vol_PMT_Back">
+		<materialref ref="STEEL_STAINLESS_Fe7Cr2Ni"/>
+		<solidref ref="PMT_Back"/>
+	</volume>
+
+	<volume name="volPMT">
+		<materialref ref="LAr"/>
+		<solidref ref="PMTVolume"/>
+
+		<physvol>
+			<volumeref ref="vol_PMT_Back"/>
+			<position name="pos_PMT_Back" unit="cm" x="0" y="0" z="(3.0 * 2.54) + 1.25*2.54/2 - (5.5 * 2.54) - 0.5/2+(3.0*2.54)/2 + 1.25*2.54/2 + (2.54*2.5 - 0.1)"/>
+		</physvol>
+		<physvol>
+			<volumeref ref="volOpDetSensitive"/>
+			<position name="pos_PMT_Underside" unit="cm" x="0" y="0" z="(7.0 * 2.54)-(5.5 * 2.54) + (2.54*2.5 - 0.1)/2"/>
+		</physvol>
+	</volume>
+</structure>
+
 <!--
 <define>
 	<rotation name="rPMTRotation"  unit="deg" x="90"  y="270"   z="0"/>
@@ -1133,38 +1159,6 @@
 </structure>
 -->
 
-<solids>
-	<tube name="PMTVolume" rmax="(4.5*2.54)" z="(11.1*2.54)+0.005" deltaphi="360" aunit="deg" lunit="cm"/>
-	<tube name="PMT_Underside" rmax="2.54*4.0" z="0.1" deltaphi="360" aunit="deg" lunit="cm"/>
-	<tube name="PMT_Back" rmax="2.54*4.0" z="0.5" deltaphi="360" aunit="deg" lunit="cm"/>
-</solids>
-
-<structure>
-	<volume name="volOpDetSensitive">
-		<materialref ref="LAr"/>
-		<solidref ref="PMT_Underside"/>
-	</volume>
-	<volume name="vol_PMT_Back">
-		<materialref ref="STEEL_STAINLESS_Fe7Cr2Ni"/>
-		<solidref ref="PMT_Back"/>
-	</volume>
-	<volume name="volPMT">
-		<materialref ref="LAr"/>
-		<solidref ref="PMTVolume"/>
-
-		<physvol>
-			<volumeref ref="vol_PMT_Back"/>
-			<position name="pos_PMT_Back" unit="cm" x="0" y="0" z="(3.0 * 2.54) + 1.25*2.54/2 - (5.5 * 2.54) - 0.5/2+(3.0*2.54)/2 + 1.25*2.54/2 + (2.54*2.5 - 0.1)"/>
-			</physvol>
-
-			<physvol>
-				<volumeref ref="volOpDetSensitive"/>
-				<position name="pos_PMT_Underside" unit="cm" x="0" y="0" z="(7.0 * 2.54)-(5.5 * 2.54) + (2.54*2.5 - 0.1)/2"/>
-			</physvol>
-	</volume>
-</structure>
-
-
 <!--========================================================================-->
 <!--                 Assembling a Full APA                                  -->
 <!--========================================================================-->
@@ -1209,13 +1203,16 @@
 <!--                          Wire Planes                                   -->
 <!--========================================================================-->
 <define>
+
+	<constant name="visibleWires" value="1" /> <!-- Make wires visible. Has to be 1 for physics runs -->
 	<rotation name="rPlusUVAngleAboutX" unit="deg" x="30" y="0" z="0"/>
-	<constant name="commonWire_D" value="1e0*0.015" /> 
+	<constant name="commonWire_D" value="visibleWires*0.015" /> 
 	<constant name="commonWire_R" value="0.5*commonWire_D" />
 
-	<constant name="tpcPLANE_Y" value="theTPC_Y - metalon_W" />
-	<constant name="tpcPLANE_Z" value="theTPC_Z - metalon_W" />
-	<constant name="tpcPLANE_Border" value="metalon_W/2"/>
+	<constant name="planeFrameGap" value="0" /> <!-- or metalon_W -->
+	<constant name="tpcPLANE_Y" value="theTPC_Y - 2*planeFrameGap" />
+	<constant name="tpcPLANE_Z" value="theTPC_Z - 2*planeFrameGap" />
+	<constant name="tpcPLANE_Border" value="2*commonWire_R*Sin30"/>
 	<constant name="wireMax_Z" value="tpcPLANE_Z-2*tpcPLANE_Border" />
 	<constant name="wireMax_Y" value="tpcPLANE_Y-2*tpcPLANE_Border" />
 	<constant name="commonWire_L" value="wireMax_Z/Cos30" />
@@ -1228,10 +1225,11 @@
 	<constant name="wirePitch_Y1" value="wirePitch_Z * Tan30" />
 	<constant name="wirePitch_Y2" value="wirePitch_Z / Cos30" />
 	
-	<constant name="originWires_Y1" value="tpcPLANE_Y/2 - tpcPLANE_Border" />
-	<constant name="originWires_Y2" value="originWires_Y1 - (wireMax_Z/2 * Tan30)" />
-	<constant name="originWires_Y3" value="originWires_Y1 - (wireMax_Y - wireMax_Z * Tan30)" />
-	<constant name="originWires_Z" value="-tpcPLANE_Z/2 + tpcPLANE_Border" />
+	<constant name="originWires_Z"  value="-wireMax_Z/2"/>
+	<constant name="originWires_Y1" value="wireMax_Y/2" />
+	<constant name="originWires_Y2" value="originWires_Y1 - (wireMax_Z/2 * Tan30) + 1.2" />
+	<constant name="originWires_Y3" value="(wireMax_Z - wireMax_Y)*Tan30/2" />
+	<constant name="originWires_Z3" value="-tpcPLANE_Z/2 + tpcPLANE_Border - 1.2" />
 
 	<constant name="wireScaleFactor" value="2*wirePitch_Z / wireMax_Z" />
 	<constant name="wireUnit_L" value="wireScaleFactor * commonWire_L" />
@@ -1240,6 +1238,7 @@
 <solids>
 	<box  name="boxTPCPlane"  lunit="mm" x="theTPCPlane_W"  y="tpcPLANE_Y" z="tpcPLANE_Z"/>
 	<tube name="tubeWire" lunit="mm" rmax="commonWire_R" z="commonWire_L" aunit="rad" deltaphi="2*pi" />
+
 </solids>
 
 <structure>
@@ -1247,6 +1246,7 @@
 		<materialref ref="Titanium"/>
 		<solidref ref="tubeWire"/>
 	</volume>
+
 </structure>
 
 <structure>	
@@ -1255,16 +1255,31 @@
 		<solidref ref="boxTPCPlane"/>
 
 		<!-- Place Y Wires here -->
+
 	</volume>
 </structure>
 
 <structure>	
-	<volume name="volTPCPlane_UV">
+	<volume name="volTPCPlane_U">
 		<materialref ref="LAr"/>
 		<solidref ref="boxTPCPlane"/>
 
 		<!-- Place U Wires here -->
+
+
 	</volume>
+
+	<volume name="volTPCPlane_V">
+		<materialref ref="LAr"/>
+		<solidref ref="boxTPCPlane"/>
+
+		<!-- Place V Wires here -->
+
+
+
+	</volume>
+
+
 </structure>
 
 
@@ -1330,13 +1345,12 @@
 			<positionref ref="posTPCActive_n"/>
 		</physvol>
 		<physvol>
-			<volumeref ref="volTPCPlane_UV"/>
+			<volumeref ref="volTPCPlane_U"/>
 			<positionref ref="posTPCPlane_nU"/>
 		</physvol>
 		<physvol>
-			<volumeref ref="volTPCPlane_UV"/>
+			<volumeref ref="volTPCPlane_V"/>
 			<positionref ref="posTPCPlane_nV"/>
-			<rotationref ref="rotate180Y"/>
 		</physvol>
 		<physvol>
 			<volumeref ref="volTPCPlaneVert"/>
@@ -1352,13 +1366,12 @@
 			<positionref ref="posTPCActive_p"/>
 		</physvol>
 		<physvol>
-			<volumeref ref="volTPCPlane_UV"/>
+			<volumeref ref="volTPCPlane_U"/>
 			<positionref ref="posTPCPlane_pU"/>
 		</physvol>
 		<physvol>
-			<volumeref ref="volTPCPlane_UV"/>
+			<volumeref ref="volTPCPlane_V"/>
 			<positionref ref="posTPCPlane_pV"/>
-			<rotationref ref="rotate180Y"/>
 		</physvol>
 		<physvol>
 			<volumeref ref="volTPCPlaneVert"/>
@@ -1455,7 +1468,7 @@
     <union name="boxStructure_14_Beams">
 		<first ref="boxStructure_13_Beams"/>
 		<second ref="boxIPE450Beam_V"/>
-		<position name="posIPEBeam_15" unit="mm" x="((structure_X+IPE_Beam_W)/2+structure_W)" y="IPE_Beam_DY" z="IPE_Beam_DZ*3" />
+		<position name="posIPEBeam_14" unit="mm" x="((structure_X+IPE_Beam_W)/2+structure_W)" y="IPE_Beam_DY" z="IPE_Beam_DZ*3" />
         <rotationref ref="rotateN90Y"/>
     </union>
     <union name="boxStructure_15_Beams">
@@ -1529,11 +1542,13 @@
 		<physvol>
 			<volumeref ref="volOneAPAFrame"/>
 			<positionref ref="posAPAFrame_pXnZ"/> 
-			<scaleref ref="reflection_Z"/>
 			<rotationref ref="rotate180Y"/>
+			<scaleref ref="reflection_Z"/>
 		</physvol>
 
         <!-- Place PMTs here -->
+
+Processing makePMTs.C...
 		<physvol>
 			<volumeref ref="volPMT"/>
 				<position name="posPMT_0" unit="mm" x="(-1)*pmt_X" y="pmt_DY+(1)*pmtSet_DY" z="-pmt_DZ+(-1)*pmtSet_DZ+(-1)*frame_DZ+system_DZ"/>
@@ -2254,18 +2269,13 @@
 				<position name="posPMT_143" unit="mm" x="(1)*pmt_X" y="-pmt_DY+(-1)*pmtSet_DY" z="pmt_DZ+(1)*pmtSet_DZ+(1)*frame_DZ+system_DZ"/>
 				<rotationref ref="rotateN90Y"/>
 		</physvol>
+
 	</volume>
 </structure>
 
 <!--========================================================================-->
 <!--                  Cosmic Ray Tagging - CRT Panels                       -->
 <!--========================================================================-->
-<define>
-	<constant name="theCRT_X" value="theEnclosure_X"/>
-	<constant name="theCRT_Y" value="theEnclosure_Y"/>
-	<constant name="theCRT_Z" value="theEnclosure_Z"/>
-</define>
-
 <solids>
 	<box name="boxCRTPanel_Z" lunit="mm" x="theCRT_X" y="theCRT_Y" z="theCRT_W"/>
 	<box name="boxCRTPanel_X" lunit="mm" x="theCRT_W" y="theCRT_Y" z="theCRT_Z"/>
@@ -2466,5 +2476,6 @@
 </setup>
 
 </gdml>
+
 
 
