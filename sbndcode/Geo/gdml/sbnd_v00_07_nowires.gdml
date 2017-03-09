@@ -234,9 +234,11 @@
 
 	<rotation name="rotPlusAroundX" unit="deg" x="30" y="0" z="0"/>
 	<rotation name="rotCableAroundX" unit="deg" x="60" y="0" z="0"/>
+
+<!--
 	<scale name="reflection_Z" x="1" y="1" z="-1"/>
 	<scale name="reflection_X" x="-1" y="1" z="1"/>
-
+-->
 	<constant name="rWire"  value="0.15*0.5" />
 
 	<constant name="metalon_H" value="150" /> <!-- initialy X -->
@@ -1191,11 +1193,13 @@
 			<volumeref ref="volHalfAPA"/>
 			<positionref ref="posHalfAPA_nZ"/>
 		</physvol>
+<!--
 		<physvol>
 			<volumeref ref="volHalfAPA"/>
 			<positionref ref="posHalfAPA_pZ"/>
 			<scaleref ref="reflection_Z" />
 		</physvol>
+-->
 	</volume>
 </structure>
 
@@ -1238,6 +1242,7 @@
 <solids>
 	<box  name="boxTPCPlane"  lunit="mm" x="theTPCPlane_W"  y="tpcPLANE_Y" z="tpcPLANE_Z"/>
 	<tube name="tubeWire" lunit="mm" rmax="commonWire_R" z="commonWire_L" aunit="rad" deltaphi="2*pi" />
+	<tube name="tubeWireVert" lunit="mm" rmax="commonWire_R" z="wireMax_Y" aunit="rad" deltaphi="2*pi" />
 
 </solids>
 
@@ -1245,6 +1250,11 @@
 	<volume name="volTPCWire">
 		<materialref ref="Titanium"/>
 		<solidref ref="tubeWire"/>
+	</volume>
+
+	<volume name="volTPCWireVert">
+		<materialref ref="Titanium"/>
+		<solidref ref="tubeWireVert"/>
 	</volume>
 
 </structure>
@@ -1274,6 +1284,8 @@
 		<solidref ref="boxTPCPlane"/>
 
 		<!-- Place V Wires here -->
+
+
 
 
 
@@ -1315,14 +1327,13 @@
 	<constant name="pmt_DY" value="275" />
 	<constant name="pmtSet_DZ" value="(theTPC_Z)/8"/> 
 	<constant name="pmtSet_DY" value="(theTPC_Y)/3"/>
-    <constant name="pmt_X" value="theTPC_X+180" />
-    <constant name="frame_DZ" value="(theTPC_Z)/4" />
+	<constant name="pmt_X" value="theTPC_X+180" />
+	<constant name="frame_DZ" value="(theTPC_Z)/4" />
 
-    <position name="posAPAFrame_nXnZ" unit="mm" x="-(theTPC_X+metalon_H/2+theCPA_W/2)" y="0" z="-(theTPC_Z)/2+system_DZ" />    
-    <position name="posAPAFrame_nXpZ" unit="mm" x="-(theTPC_X+metalon_H/2+theCPA_W/2)" y="0" z="(theTPC_Z)/2+system_DZ" />    
-    <position name="posAPAFrame_pXnZ" unit="mm" x="(theTPC_X+metalon_H/2+theCPA_W/2)" y="0" z="-(theTPC_Z)/2+system_DZ" />    
-    <position name="posAPAFrame_pXpZ" unit="mm" x="(theTPC_X+metalon_H/2+theCPA_W/2)" y="0" z="(theTPC_Z)/2+system_DZ" />    
-    
+	<position name="posAPAFrame_nXnZ" unit="mm" x="-(theTPC_X+metalon_H/2+theCPA_W/2)" y="0" z="-(theTPC_Z)/2+system_DZ" />    
+	<position name="posAPAFrame_nXpZ" unit="mm" x="-(theTPC_X+metalon_H/2+theCPA_W/2)" y="0" z="(theTPC_Z)/2+system_DZ" />    
+	<position name="posAPAFrame_pXnZ" unit="mm" x="(theTPC_X+metalon_H/2+theCPA_W/2)" y="0" z="-(theTPC_Z)/2+system_DZ" />    
+	<position name="posAPAFrame_pXpZ" unit="mm" x="(theTPC_X+metalon_H/2+theCPA_W/2)" y="0" z="(theTPC_Z)/2+system_DZ" />    
 </define>
 
 
@@ -1345,11 +1356,11 @@
 			<positionref ref="posTPCActive_n"/>
 		</physvol>
 		<physvol>
-			<volumeref ref="volTPCPlane_U"/>
+			<volumeref ref="volTPCPlane_V"/>
 			<positionref ref="posTPCPlane_nU"/>
 		</physvol>
 		<physvol>
-			<volumeref ref="volTPCPlane_V"/>
+			<volumeref ref="volTPCPlane_U"/>
 			<positionref ref="posTPCPlane_nV"/>
 		</physvol>
 		<physvol>
@@ -1366,11 +1377,11 @@
 			<positionref ref="posTPCActive_p"/>
 		</physvol>
 		<physvol>
-			<volumeref ref="volTPCPlane_U"/>
+			<volumeref ref="volTPCPlane_V"/>
 			<positionref ref="posTPCPlane_pU"/>
 		</physvol>
 		<physvol>
-			<volumeref ref="volTPCPlane_V"/>
+			<volumeref ref="volTPCPlane_U"/>
 			<positionref ref="posTPCPlane_pV"/>
 		</physvol>
 		<physvol>
@@ -1521,6 +1532,7 @@
 			<volumeref ref="volTPC_N"/>
 			<positionref ref="posTPCatCryo_n"/>
 		</physvol>
+<!--
 		<physvol>
 			<volumeref ref="volOneAPAFrame"/>
 			<positionref ref="posAPAFrame_nXnZ"/> 
@@ -1530,10 +1542,12 @@
 			<positionref ref="posAPAFrame_nXpZ"/> 
             		<scaleref ref="reflection_Z"/>
 		</physvol>
+-->
 	        <physvol>
 			<volumeref ref="volTPC_P"/>
 			<positionref ref="posTPCatCryo_p"/>
 		</physvol>
+<!--
 		<physvol>
 			<volumeref ref="volOneAPAFrame"/>
 			<positionref ref="posAPAFrame_pXpZ"/> 
@@ -1545,14 +1559,13 @@
 			<rotationref ref="rotate180Y"/>
 			<scaleref ref="reflection_Z"/>
 		</physvol>
+-->
 
         <!-- Place PMTs here -->
-
-Processing makePMTs.C...
 		<physvol>
 			<volumeref ref="volPMT"/>
-				<position name="posPMT_0" unit="mm" x="(-1)*pmt_X" y="pmt_DY+(1)*pmtSet_DY" z="-pmt_DZ+(-1)*pmtSet_DZ+(-1)*frame_DZ+system_DZ"/>
-				<rotationref ref="rotateP90Y"/>
+			<position name="posPMT_0" unit="mm" x="(-1)*pmt_X" y="pmt_DY+(1)*pmtSet_DY" z="-pmt_DZ+(-1)*pmtSet_DZ+(-1)*frame_DZ+system_DZ"/>
+			<rotationref ref="rotateP90Y"/>
 		</physvol>
 		<physvol>
 			<volumeref ref="volPMT"/>
@@ -2390,11 +2403,7 @@ Processing makePMTs.C...
 	<volume name="volDetEnclosure" >
 		<materialref ref="Air"/> 
 		<solidref ref="boxDetectorEnclosure"/>
-<!--		<physvol>
-			<volumeref ref="volDummy"/>
-			<positionref ref="center"/>
-		</physvol>
--->		<physvol>
+		<physvol>
 			<volumeref ref="volShieldingLid"/>
 			<positionref ref="posShieldingLid"/>
 		</physvol>
@@ -2447,6 +2456,23 @@ Processing makePMTs.C...
 	<volume name="volWorld" >
 		<materialref ref="Air"/> 
 		<solidref ref="boxWorld"/>
+<!--
+
+		<physvol>
+			<volumeref ref="volTPCActive"/>
+			<positionref ref="posTPCActive_n"/>
+		</physvol>
+
+		<physvol>
+			<volumeref ref="volTPCPlaneVert"/>
+			<positionref ref="posTPCPlane_nY"/>
+		</physvol>
+
+		<physvol>
+			<volumeref ref="volTPCPlane_V"/>
+			<positionref ref="posTPCPlane_nV"/>
+		</physvol>
+-->
 
 		<physvol>
 			<volumeref ref="volBuilding"/>
@@ -2468,6 +2494,7 @@ Processing makePMTs.C...
 			<volumeref ref="volDetEnclosure"/>
 			<positionref ref="posCryostat"/>
 		</physvol>
+
 	</volume> 
 </structure>
 
