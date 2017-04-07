@@ -1,0 +1,14 @@
+BEGIN_PROLOG
+
+sbnd_simadc: { 
+  module_type: "SimWireDataADC"
+  DAQModuleLabel: "daq"
+  NChips: 11
+  ChPerChip: 16
+  ADCMax: 4096
+  DoPerfectCalibration: false
+  ResponseFilePath: "/pnfs/sbnd/persistent/users/mastbaum/adc_sim/chips.root"
+}
+
+END_PROLOG
+
