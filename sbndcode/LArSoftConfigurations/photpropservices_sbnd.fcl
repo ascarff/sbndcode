@@ -2,7 +2,8 @@
 
 BEGIN_PROLOG
 
-sbnd_photonvisibilityservice: @local::standard_photonvisibilityservice
+#sbnd_photonvisibilityservice: @local::standard_photonvisibilityservice
+sbnd_photonvisibilityservice: @local::sbnd_timeparametrization_photonvisibilityservice
 sbnd_photonvisibilityservice.DoNotLoadLibrary: false 
 sbnd_photonvisibilityservice.LibraryBuildJob: false
 sbnd_photonvisibilityservice.UseCryoBoundary: false 
