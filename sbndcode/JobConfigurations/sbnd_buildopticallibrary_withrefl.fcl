@@ -1,0 +1,142 @@
+#include "simulationservices_sbnd.fcl"
+#include "singles_sbnd.fcl"
+#include "largeantmodules_sbnd.fcl"
+#include "detsimmodules_sbnd.fcl"
+#include "opticaldetectormodules_sbnd.fcl"
+#include "photpropservices_sbnd.fcl"
+#include "lightsource_sbnd.fcl"
+
+#include "backtracker.fcl"
+
+process_name: LibraryBuild
+
+
+
+services:
+{
+  # Load the service that manages root files for histograms.
+  TFileService: { fileName: "PhotonLibraryFile.root" }
+                 @table::sbnd_simulation_services # load simulation services in bulk
+}
+
+services.BackTracker:                @local::standard_backtracker
+services.OpDetResponseInterface:     @local::sbnd_opdetresponse
+
+services.PhotonVisibilityService: @local::standard_photonvisibilityservice_buildlib
+services.PhotonVisibilityService.DoNotLoadLibrary: true
+services.PhotonVisibilityService.LibraryBuildJob: true
+services.PhotonVisibilityService.UseCryoBoundary: false
+services.PhotonVisibilityService.XMin: 2.5
+services.PhotonVisibilityService.XMax: 202.5
+services.PhotonVisibilityService.YMin: -200 
+services.PhotonVisibilityService.YMax: 200
+services.PhotonVisibilityService.ZMin: 0
+services.PhotonVisibilityService.ZMax: 500
+
+services.PhotonVisibilityService.NX: 40 
+services.PhotonVisibilityService.NY: 80
+services.PhotonVisibilityService.NZ: 100
+
+services.PhotonVisibilityService.StoreReflected: true
+services.PhotonVisibilityService.StoreReflT0: true
+services.PhotonVisibilityService.IncludePropTime: false
+services.Geometry.GDML: "sbndv0.gdml"
+
+# for a geometry without wires uncomment this line
+#services.Geometry.DisableWiresInG4:   true
+
+#Start each new event with an empty event.
+source:
+{
+  module_type: EmptyEvent
+  timestampPlugin: { plugin_type: "GeneratedEventTimestamp" }
+  maxEvents:   1           # Number of events to create
+  firstRun:    1           # Run number to use for this file
+  firstEvent:  1           # number of first event in the file
+}
+
+# Define and configure some modules to do work on each event.
+# First modules are defined; they are scheduled later.
+# Modules are grouped by type.
+physics:
+{
+
+ producers:
+ {
+   rns:       { module_type: "RandomNumberSaver" }
+   generator: @local::sbnd_lightsource	  
+   largeant:  @local::sbnd_largeant	  
+ }
+
+ analyzers:
+ {
+   pmtresponse: @local::sbnd_simphotoncounter
+ }
+
+ #define the producer and filter modules for this path, order matters, 
+ #filters reject all following items.  see lines starting physics.producers below
+ simulate: [ generator, largeant ] 
+ analyzeIt:  [ pmtresponse ]
+ #define the output stream, there could be more than one if using filters 
+ stream1:  [ ]
+
+ #trigger_paths is a keyword and contains the paths that modify the art::event, 
+ #ie filters and producers
+ trigger_paths: [simulate] 
+
+ #end_paths is a keyword and contains the paths that do not modify the art::Event, 
+ #ie analyzers and output streams.  these all run simultaneously
+ end_paths:     [analyzeIt] #, stream1]  
+}
+
+#block to define where the output goes.  if you defined a filter in the physics
+#block and put it in the trigger_paths then you need to put a SelectEvents: {SelectEvents: [XXX]}
+#entry in the output stream you want those to go to, where XXX is the label of the filter module(s)
+#outputs:
+#{
+# out1:
+# {
+#   module_type: RootOutput
+#   fileName:    "single_gen_sbnd.root" #default file name, can override from command line with -o or --output
+# }
+#}
+
+# Begin optical specific parts:
+
+# set quantum efficiency supressed scint yield to 0.03 * 24000 
+services.LArPropertiesService.ScintYield: 72
+
+# enable optical physics in LArG4
+services.LArG4Parameters.EnabledPhysics: [ "Em", 
+						"Optical", 
+						"SynchrotronAndGN", 
+						"Ion", 
+						"Hadron", 
+						"Decay", 
+						"HadronElastic", 
+						"Stopping", 
+						"NeutronTrackingCut" ]
+
+# enable this custom physics list
+services.LArG4Parameters.UseCustomPhysics: true
+# To disable wireplane absorption model, uncomment this line
+services.LArG4Parameters.OpticalParamModels: ["TransparentPlaneAction"]
+
+# enable extra materialproperties (including tpb WLS)
+services.LArPropertiesService.LoadExtraMatProperties: true
+services.LArPropertiesService.SimpleBoundaryProcess: false
+services.LArPropertiesService.SimpleScintillation: false
+
+# do not allow lightsource to write output into root file
+physics.producers.generator.FillTree: false
+physics.analyzers.pmtresponse.MakeAllPhotonsTree: false
+
+#physics.analyzers.pmtresponse.UsePMTEff: true
+#physics.analyzers.pmtresponse.WavelengthCutLow: 300
+#physics.analyzers.pmtresponse.WavelengthCutHigh: 600
+
+physics.analyzers.pmtresponse.MakeDetectedPhotonsTree: false
+physics.analyzers.pmtresponse.MakeSimPhotonssTree: false
+#physics.analyzers.pmtresponse.MakeEventsTree: false
+physics.analyzers.pmtresponse.MakeLightAnalysisTree: false
+physics.producers.generator.N: 10000
