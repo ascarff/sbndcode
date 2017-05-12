@@ -124,8 +124,6 @@ services.LArG4Parameters.OpticalParamModels: ["TransparentPlaneAction"]
 
 # enable extra materialproperties (including tpb WLS)
 services.LArPropertiesService.LoadExtraMatProperties: true
-services.LArPropertiesService.SimpleBoundaryProcess: false
-services.LArPropertiesService.SimpleScintillation: false
 
 # do not allow lightsource to write output into root file
 physics.producers.generator.FillTree: false
