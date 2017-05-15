@@ -20,32 +20,33 @@ services:
   Timing:       {}
   RandomNumberGenerator: {} #ART native random number generator
   FileCatalogMetadata:  @local::sbnd_file_catalog_mc
-  user:         @local::sbnd_opsimulation_services
+                @table::sbnd_opsimulation_services
+  BackTracker:  @local::sbnd_backtracker # defind in simulationservices_sbnd.fcl
 }
 
 
-services.user.PhotonVisibilityService: @local::standard_photonvisibilityservice_buildlib
-services.user.PhotonVisibilityService.DoNotLoadLibrary: true
-services.user.PhotonVisibilityService.LibraryBuildJob: true
-services.user.PhotonVisibilityService.UseCryoBoundary: false 
-services.user.PhotonVisibilityService.XMin: 1 
-services.user.PhotonVisibilityService.XMax: 199
-services.user.PhotonVisibilityService.YMin: -199 
-services.user.PhotonVisibilityService.YMax: 199
-services.user.PhotonVisibilityService.ZMin: 1
-services.user.PhotonVisibilityService.ZMax: 499
+services.PhotonVisibilityService: @local::standard_photonvisibilityservice_buildlib
+services.PhotonVisibilityService.DoNotLoadLibrary: true
+services.PhotonVisibilityService.LibraryBuildJob: true
+services.PhotonVisibilityService.UseCryoBoundary: false 
+services.PhotonVisibilityService.XMin: 1 
+services.PhotonVisibilityService.XMax: 199
+services.PhotonVisibilityService.YMin: -199 
+services.PhotonVisibilityService.YMax: 199
+services.PhotonVisibilityService.ZMin: 1
+services.PhotonVisibilityService.ZMax: 499
 
 
-services.user.PhotonVisibilityService.NX: 40 
-services.user.PhotonVisibilityService.NY: 80
-services.user.PhotonVisibilityService.NZ: 100
+services.PhotonVisibilityService.NX: 40 
+services.PhotonVisibilityService.NY: 80
+services.PhotonVisibilityService.NZ: 100
 
-services.user.Geometry.GDML: "sbnd.gdml"
+services.Geometry.GDML: "sbnd.gdml"
 
-#services.user.sbnd_simulation_services.OpDetResponseInterface: @local::sbnd_opdetresponse
-#services.user.BackTracker: ""
-#services.user.LArFFT: ""
-#services.user.SignalShapingServiceT1034: ""
+#services.sbnd_simulation_services.OpDetResponseInterface: @local::sbnd_opdetresponse
+#services.BackTracker: ""
+#services.LArFFT: ""
+#services.SignalShapingServiceT1034: ""
 
 #Start each new event with an empty event.
 source:

@@ -19,30 +19,30 @@ services:
   TFileService: { fileName: "PhotonLibraryFile.root" }
   Timing:       {}
   RandomNumberGenerator: {} #ART native random number generator
-  user:         @local::sbnd_simulation_services
+                @table::sbnd_simulation_services
+  BackTracker:  @local::sbnd_backtracker # defind in simulationservices_sbnd.fcl
 }
 
 
-services.user.PhotonVisibilityService: @local::standard_photonvisibilityservice_buildlib
-services.user.PhotonVisibilityService.DoNotLoadLibrary: true
-services.user.PhotonVisibilityService.LibraryBuildJob: true
-services.user.PhotonVisibilityService.UseCryoBoundary: false
-services.user.PhotonVisibilityService.XMin: 0
-services.user.PhotonVisibilityService.XMax: 200
-services.user.PhotonVisibilityService.YMin: -200 
-services.user.PhotonVisibilityService.YMax: 200
-services.user.PhotonVisibilityService.ZMin: 0
-services.user.PhotonVisibilityService.ZMax: 365
+services.PhotonVisibilityService: @local::standard_photonvisibilityservice_buildlib
+services.PhotonVisibilityService.DoNotLoadLibrary: true
+services.PhotonVisibilityService.LibraryBuildJob: true
+services.PhotonVisibilityService.UseCryoBoundary: false
+services.PhotonVisibilityService.XMin: 0
+services.PhotonVisibilityService.XMax: 200
+services.PhotonVisibilityService.YMin: -200 
+services.PhotonVisibilityService.YMax: 200
+services.PhotonVisibilityService.ZMin: 0
+services.PhotonVisibilityService.ZMax: 365
 
-services.user.PhotonVisibilityService.NX: 3 
-services.user.PhotonVisibilityService.NY: 3
-services.user.PhotonVisibilityService.NZ: 3 
+services.PhotonVisibilityService.NX: 3 
+services.PhotonVisibilityService.NY: 3
+services.PhotonVisibilityService.NZ: 3 
 
-services.user.Geometry.GDML: "sbnd.gdml"
+services.Geometry.GDML: "sbnd.gdml"
 
-#services.user.BackTracker: ""
-#services.user.LArFFT: ""
-#services.user.SignalShapingServiceT1034: ""
+#services.LArFFT: ""
+#services.SignalShapingServiceT1034: ""
 
 #Start each new event with an empty event.
 source:
