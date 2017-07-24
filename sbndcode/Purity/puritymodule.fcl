@@ -1,0 +1,60 @@
+BEGIN_PROLOG
+
+sbnd_purity:
+{
+  module_type:  "sbndcode/Purity/PuritySingle"
+  HitsModuleLabel:          "linecluster"
+  TrackModuleLabel:         "pmalgtrackmaker"
+  ChargeCut:                100000.                   #####   uppercut on hit charge  Run1 Value: 2000
+  FirstHitCut:              230                      #####   Cut on the number of hits in a track, before recursive linear fit
+  SecondHitCut:             230                      #####   Cut on the number of hits in a track, after recursive linear fit
+  LinearFitCut:             0.02                    #####   Tolerance for removing hits in recursive linear fit
+  ChiSquaredCut:            2.                      #####   Cut on the chi squred per Ndof from linear fit
+  TimeCut:                  1238.                   #####   Cut on extent of track in time
+  WireNumberCut:            230                     #####   Cut on extent of track in wire number   
+  SamplingTime:             0.5                     #####   TPC sampling rate (us/tick)
+  PreSampling:              0                       #####   = 0 mus of pre-sampling
+  Variable:                 [1000., 1000., 5000.]   #####   Starting values for minimization. Run1 values: [1000., 1000., 2000.]
+  Step:                     [1., 1., 1.]            #####   Minimization Steps
+  Verbose:                  true                    #####   Set how much I want to print on screen
+  NumberEvents:             10                       #####   Probability of event being used
+}
+
+sbnd_purityalltracks:
+{
+  module_type:  "sbndcode/Purity/PurityAllTracks"
+  HitsModuleLabel:          "linecluster"
+  TrackModuleLabel:         "pmalgtrackmaker"
+  ChargeCut:                100000.                   #####   uppercut on hit charge  Run1 Value: 2000
+  FirstHitCut:              230                   #####   Cut on the number of hits in a track, before recursive linear fit
+  SecondHitCut:             230                     #####   Cut on the number of hits in a track, after recursive linear fit
+  LinearFitCut:             0.02                    #####   Tolerance for removing hits in recursive linear fit
+  ChiSquaredCut:            2.                      #####   Cut on the chi squred per Ndof from linear fit
+  TimeCut:                  1238.                  #####   Cut on extent of track in time
+  WireNumberCut:            230                     #####   Cut on expent of track in wire number
+  SamplingTime:             0.5                     #####   TPC sampling rate
+  PreSampling:              0                       #####   = 0 mus of pre-sampling
+  Variable:                 [1000., 1000., 5000.]   #####   Starting values for minimization. Run1 values: [1000., 1000., 2000.]
+  Step:                     [1., 1., 1.]            #####   Minimization Steps
+  Verbose:                  true                    #####   Set how much I want to print on screen
+  TimeSlices:               20                      #####   Number of time slices to cut amp vs time scatter plot into
+  NumberEvents:             10                       #####   Probability of event being used
+}
+
+sbnd_purityparallel:
+{
+  module_type:  "sbndcode/Purity/PurityParallel"
+  HitsModuleLabel:          "linecluster"
+  TrackModuleLabel:         "pmalgtrackmaker"
+  ChargeCut:                100000.                   #####   uppercut on hit charge  Run1 Value: 2000
+  FirstHitCut:              80                      #####   Cut on the number of hits in a track, before recursive linear fit
+  SecondHitCut:             500                      #####   Cut on the number of hits in a track, after recursive linear fit
+  LinearFitCut:             0.08                    #####   Tolerance for removing hits in recursive linear fit
+  ChiSquaredCut:            2.                      #####   Cut on the chi squred per Ndof from linear fit
+  SamplingTime:             0.5                     #####   TPC sampling rate (us/tick)
+  PreSampling:              0                       #####   = 0 mus of pre-sampling
+  Verbose:                  true                    #####   Set how much I want to print on screen
+  NumberEvents:             1                       #####   Probability of event being used
+}
+
+END_PROLOG

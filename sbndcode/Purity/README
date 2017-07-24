@@ -1,0 +1,62 @@
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+-------------- INSTRUCTIONS FOR THE SBND PURITY MODULE -------------------
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+
+
+---------------------------- RELAVENT FILES: -----------------------------
+Purity/Purity_module.cc
+Purity/puritymodule.fcl
+JobConfigurations/purity_sbnd.fcl
+
+
+----------------------  DESCRIPTION OF METHODS: --------------------------
+--- METHOD 1:
+- The first method uses a similar technique to the online purity measurements used by the LArIAT collaboration.
+- A hit is defined as the charge on a wire above some pre-defined threshold.
+- Hits are grouped into track objects.
+- The integral of each deconvoluted hit is normalised by the track pitch to give dQ/dx in electrons per mm (e/mm).
+- Straight tracks which pass through both the anode (wire) and cathode planes and are well reconstructed are selected.
+- The energy loss by a minimum ionising muon is a Landau distributed variable and the collected charge is reduced by dQ/dx=dQ_0/dxe^{-t/tau_e} where t is the drift time and tau_e is the electron lifetime.
+- A maximum likelihood estimate is used to extract \tau_e.
+- Multiple tracks are then used to give an average value for the electron lifetime.
+
+--- METHOD 2:
+- The second method is based on papers by the ICARUS (arXiv:1409.5592) and ArgoNeuT (arXiv:1205.6747) collaborations. 
+- The same sample of through-going muons as in method 1 is used.
+- The dQ/dx and times of the hits from all of the selected tracks are collated into one scatter plot.
+- The dQ/dx are then separated into a certain number of time slices, and fitted with a Landau Gaussian convolution (LGC).
+- The Landau function models the energy loss by the muon and the detector response is described by a Gaussian.
+- The most probable dQ/dx from the LGC against the mean drift time is then fitted with an exponential to determine the electron lifetime.
+
+--- METHOD 3:
+- The third method uses muons that cross the detector parallel to the wire planes.
+- These muons would be triggered when they pass through pairs of cosmic ray tracker (CRT) scintillator strips.
+- The charge will all arrive in a short period of time so minimal tracking reconstruction would be required.
+- Tracks that pass through 10cm wide strips between 15 and 185cm from the wire planes are selected.
+- A histogram of the dQ/dx for each pair is fit with a LGC.
+- The same fit as in method 2 is then used to calculate the electron lifetime.
+
+-------------------------------- USAGE: ----------------------------------
+Choose which method you want to use (1, 2 or 3) along with any other configurable parameters in the configuration files (purity_sbnd.fcl, puritymodule.fcl)
+--- METHOD 1:
+>lar -c purity_sbnd.fcl -s <file 1> <file 2> ...
+
+--- METHOD 2:
+>lar -c purity_sbnd.fcl -s <file 1> <file 2> ...
+
+--- METHOD 3:
+>lar -c purity_sbnd.fcl -S <text file with file names>
+
+------------------------------ OUTPUTS: ---------------------------------
+All methods output errors.log, messages.log and a root file starting with "purity_sbnd" which contains some diagnostic histograms
+--- METHOD 1:
+No other files, lifetime is in the text output
+
+--- METHOD 2:
+-AmpVsTime.root: Contains amplitude vs time scatter plot, number of hits per time slice and most probable charge vs time
+-GaussFits.root: Contains charge histograms for each time slice with landau gaussian fits
+
+--- METHOD 3:
+-Histograms.root: Contains time and charge distributions for each CRT pair, the charge distributions are fitted with LGCs. Most probable charge vs time plot

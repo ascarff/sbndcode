@@ -1,0 +1,48 @@
+#
+# File:    purity_sbnd.fcl
+# Purpose: Calculate purity of LAr from through going cosmic muons
+# 
+
+#
+# service configuration
+#
+#include "simulationservices_sbnd.fcl"
+#include "backtracker.fcl"
+
+#
+# algorithm configuration
+#
+#include "puritymodule.fcl"
+
+process_name: Purity
+
+services:
+{
+  # this is the real output file
+  TFileService: { fileName: "purity_sbnd-%p_%tc.root" }
+                @table::sbnd_services
+  BackTracker:  @local::sbnd_backtracker
+}
+
+source: {
+  module_type: RootInput
+}
+
+physics:
+{
+  producers:{}
+  filters:  {} 
+  analyzers:{
+    
+    purity: @local::sbnd_purity
+    purityat: @local::sbnd_purityalltracks
+    purityp: @local::sbnd_purityparallel
+    
+  } # analyzers
+ 
+  ana:  [ purity ]
+ 
+  trigger_paths: [] 
+  end_paths:     [ ana ] 
+  
+} # physics
