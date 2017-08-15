@@ -40,7 +40,7 @@ physics:
     
   } # analyzers
  
-  ana:  [ purity ]
+  ana:  [ purityat ]
  
   trigger_paths: [] 
   end_paths:     [ ana ] 
