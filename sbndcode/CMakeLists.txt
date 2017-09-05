@@ -11,4 +11,5 @@ add_subdirectory(DetectorSim)
 add_subdirectory(MCTruthExtractor)
 add_subdirectory(SBNDPandora)
 add_subdirectory(AnalysisTree)
+add_subdirectory(LArCVImageMaker)
 

@@ -1,0 +1,60 @@
+#include "genie_sbnd.fcl"
+#include "detsimmodules_sbnd.fcl"
+#include "largeantmodules_sbnd.fcl"
+#include "mcreco.fcl"
+#include "caldata_sbnd.fcl" 
+#include "filters.fcl" 
+
+BEGIN_PROLOG
+
+RSEFilter: {
+  module_type: "RSEFilter"
+  CSVName: ""
+}
+
+dlprod_producers:
+{
+   rns:       { module_type: "RandomNumberSaver" }
+   generator:   @local::sbnd_genie_simple
+   largeant:    @local::sbnd_largeant
+   mcreco:      @local::standard_mcreco
+   daq:         @local::sbnd_simwire
+   caldata:     @local::sbnd_calwire
+}
+
+dlprod_filters: { 
+    rsefilter:  @local::RSEFilter
+}
+
+dlprod_simpart: [ generator, largeant, mcreco ]
+
+dlprod_simtpc: [ daq ]
+
+dlprod_tpcreco: [ caldata ]
+
+# generator
+dlprod_producers.generator: @local::sbnd_genie_simple
+dlprod_producers.generator.GlobalTimeOffset: 3125.
+dlprod_producers.generator.RandomTimeOffset: 1600.
+dlprod_producers.generator.TopVolume: "volTPCActive"
+dlprod_producers.generator.BeamName:  "booster"
+dlprod_producers.generator.FluxCopyMethod:   "IFDH"
+dlprod_producers.generator.MaxFluxFileMB:    2000
+
+# G4 step
+dlprod_producers.mcreco.MCRecoPart.SavePathPDGList: [13,-13,211,-211,111,311,310,130,321,-321,2212,2112,2224,2214,2114,1114,3122,
+                                                      1000010020,1000010030,1000020030,1000020040]
+dlprod_producers.largeant.KeepParticlesInVolumes: ["volCryostat"] #only keep MCParticles that cross the cryostat
+dlprod_producers.mcreco.MCRecoPart.SavePathPDGList: [13,-13,211,-211,111,311,310,130,321,-321,2212,2112,2224,2214,2114,1114,3122,
+                                                      1000010020,1000010030,1000020030,1000020040]
+
+#dlprod_producers.daq.GenNoise: 0
+
+#dlprod_producers.caldata.DigitModuleLabel:                         "wcNoiseFilter"
+#dlprod_producers.caldata.Threshold:                                [0, 0, 0]  # Not what you think...
+#dlprod_producers.caldata.NumSigma:                                 [9, 9, 9]  # Closer to what you think...
+#dlprod_producers.caldata.ROIFinder.Threshold:                      [0, 0, 0]
+#dlprod_producers.caldata.ROIFinder.NumSigma:                       [9, 9, 9]
+#dlprod_producers.caldata.DodQdxCalib:                              false
+
+END_PROLOG

@@ -1,0 +1,22 @@
+#include "services_sbnd.fcl"
+#include "simulationservices_sbnd.fcl"
+
+BEGIN_PROLOG
+
+dlprod_services:
+{
+  RandomNumberGenerator:   {} #ART native random number generator                                                                                          
+  # LLMetaMaker: {Enable: true}
+  # @table::sbnd_basic_services   # from simulationservices_sbnd.fcl
+    @table::sbnd_simulation_services # load simulation services in bulk
+}
+
+dlprod_services.Geometry.ForceUseFCLOnly: true
+
+
+#dlprod_services.DetectorPropertiesService.NumberTimeSamples:        6400
+#dlprod_services.DetectorPropertiesService.ReadOutWindowSize:        6400
+#dlprod_services.DetectorClocksService.InheritClockConfig:           false
+#dlprod_services.DetectorClocksService.TriggerOffsetTPC:             -0.400e3
+
+END_PROLOG

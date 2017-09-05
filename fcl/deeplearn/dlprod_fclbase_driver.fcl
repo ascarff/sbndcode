@@ -1,0 +1,54 @@
+#include "dlprod_fclbase_producers.fcl"
+#include "dlprod_fclbase_analyzers.fcl"
+#include "dlprod_fclbase_services.fcl"
+
+process_name: LArLite
+
+services:
+{
+  scheduler:    { defaultExceptions: false }
+  TFileService: { fileName: "mc_hist.root" }
+  message:               @local::sbnd_message_services_prod
+  FileCatalogMetadata:   @local::sbnd_file_catalog_mc
+  @table::dlprod_services
+}
+
+source_gen:
+{
+  module_type: EmptyEvent
+  timestampPlugin: { plugin_type: "GeneratedEventTimestamp" }
+  maxEvents:   10         # Number of events to create
+  firstRun:    1          # Run number to use for this file
+  firstEvent:  1          # number of first event in the file
+}
+
+source_reprocess:
+{
+  module_type: RootInput
+  maxEvents:   100000     # Number of events to create
+}
+
+physics:
+{
+ producers: { @table::dlprod_producers }
+
+ filters: { @table::dlprod_filters }
+
+ analyzers: { @table::dlprod_analyzers }
+
+ stream: []
+ end_paths: []
+ trigger_paths: []
+}
+
+outputs:
+{
+ out1:
+ {
+   module_type: RootOutput
+   fileName:    "larsoft.root" #default file name, can override from command line with -o or --output
+   dataTier:    "larlite"
+   compressionLevel: 1
+ }
+}
+
