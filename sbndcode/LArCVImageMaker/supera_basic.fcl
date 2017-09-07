@@ -64,9 +64,9 @@ ProcessDriver: {
       FilterTargetInitEMin: []
       FilterTargetDepEMin:  []
       ShowerInitEMin: 0
-      ShowerDepEMin:  10
+      ShowerDepEMin:  00
       TrackInitEMin:  0
-      TrackDepEMin:   10
+      TrackDepEMin:   00
       FilterROIMinRows: 0
       FilterROIMinCols: 0
       MetaConfig: {
