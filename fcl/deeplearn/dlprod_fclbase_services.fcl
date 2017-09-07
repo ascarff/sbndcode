@@ -14,9 +14,4 @@ dlprod_services:
 dlprod_services.Geometry.ForceUseFCLOnly: true
 
 
-#dlprod_services.DetectorPropertiesService.NumberTimeSamples:        6400
-#dlprod_services.DetectorPropertiesService.ReadOutWindowSize:        6400
-#dlprod_services.DetectorClocksService.InheritClockConfig:           false
-#dlprod_services.DetectorClocksService.TriggerOffsetTPC:             -0.400e3
-
 END_PROLOG
