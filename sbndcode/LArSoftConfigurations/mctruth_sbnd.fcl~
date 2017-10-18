@@ -1,19 +1,6 @@
 #include "clustermodules.fcl"
-#include "showerfindermodules.fcl"                                                                                                                                                 
-#include "showeralgorithms.fcl"
+
 BEGIN_PROLOG
-
-sbnd_mchitfinder:
-{
-  module_type:     "MCHitFinder"
-  LArG4ModuleName: "largeant"
-  MakeMCWire:      false
-  Verbose:         false
-}
-
-#sbnd_emshower: @local::standard_emshower
-#sbnd_emshower.EMShowerAlg: @local::standard_emshoweralg
-
 
 sbnd_dbscanalg:                                 @local::standard_dbscanalg        
                                                                                     

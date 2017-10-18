@@ -1,0 +1,40 @@
+#include "calorimetry_sbnd.fcl"                                                                                                           
+#include "showerfindermodules.fcl"                                                                                                           
+#include "showeralgorithms.fcl"   
+
+BEGIN_PROLOG
+
+emshower3d:
+{
+    module_type:            "EMShower3D"
+    HitsModuleLabel:        "hit"
+    ClustersModuleLabel:    "cluster"
+    Trk3DModuleLabel:       "track"
+    ProjectionMatchingAlg:  @local::standard_projectionmatchingalg
+    CalorimetryAlg:         @local::sbnd_calorimetryalgmc
+    }
+emshower3d.ProjectionMatchingAlg.TrkValidationDist2D: 1.0 # max. distance [cm] used in the track validation in the "third" plane             
+                                     
+ 
+mergeemshower3d:
+{
+    module_type:            "MergeEMShower3D"
+    HitsModuleLabel:        "hit"
+    ClustersModuleLabel:    "cluster"
+    Trk3DModuleLabel:       "track"
+    VtxModuleLabel:         "vertex"
+    NarrowConeAngle:        15
+    WideConeAngle:          20
+    ProjectionMatchingAlg:  @local::standard_projectionmatchingalg
+    ShowerEnergyAlg:        @local::standard_showerenergyalg
+    }
+mergeemshower3d.ProjectionMatchingAlg.TrkValidationDist2D: 1.0 # max. distance [cm] used in the track validation in the "third" plane        
+                                     
+
+emshower_sbnd: @local::standard_emshower
+emshower_sbnd.EMShowerAlg: @local::standard_emshoweralg
+emshower_sbnd.EMShowerAlg.CalorimetryAlg: @local::sbnd_calorimetryalgmc
+emshower_sbnd.EMShowerAlg.ShowerEnergyAlg: @local::standard_showerenergy
+
+
+END_PROLOG

@@ -1,0 +1,212 @@
+#
+# File:    standard_reco_sbnd_basic.fcl
+# Purpose: run basic reconstruction with SBND detector
+# Version: 1.3
+#
+# Changes:
+# 20160621 (petrillo@fnal.gov) [v1.1]
+#   updated with sbndcode services
+# 20160929 (petrillo@fnal.gov) [v1.2]
+#   replace tracker from TrackKalman3D to PMTrackMaker
+#
+# 20161223 (petrillo@fnal.gov) [v1.3]
+#   - adopted shared root output configuration
+#
+
+#
+# service configuration
+#
+
+#include "services_sbnd.fcl"
+#include "messages_sbnd.fcl"
+#include "sam_sbnd.fcl"
+#include "larfft_sbnd.fcl"
+#include "signalservices_sbnd.fcl"
+
+#
+# module configuration
+#
+
+#include "caldata_sbnd.fcl"
+#include "hitfindermodules_sbnd.fcl"
+#include "cluster_sbnd.fcl"
+#include "trackfindermodules_sbnd.fcl"
+#include "calorimetry_sbnd.fcl"
+#include "showerfindermodules.fcl"
+#include "databaseutil_sbnd.fcl"
+##include "opticaldetectormodules_sbnd.fcl"
+#include "vertexfindermodules.fcl"
+##include "pandoramodules.fcl"
+##include "triggeralgo_service.fcl"
+##include "photpropservices_sbnd.fcl"
+##include "mchitmodules_sbnd.fcl"
+#include "showerfindermodules_sbnd.fcl"
+#include "rootoutput_sbnd.fcl" 
+process_name: Reco
+
+services:
+{
+  # Load the service that manages root files for histograms.
+  TFileService:              { fileName: "reco_hist.root" }
+  message:                   @local::sbnd_message_services_prod # from messages_sbnd.fcl
+  FileCatalogMetadata:       @local::sbnd_file_catalog_mc       # from sam_sbnd.fcl
+                             @table::sbnd_services              # from services_sbnd.fcl
+                             @table::sbnd_random_services       # from services_sbnd.fcl; required by fuzzyCluster
+  LArFFT:                    @local::sbnd_larfft
+  SignalShapingServiceSBND: @local::sbnd_signalshapingservice  # from signalservices_sbnd.fcl
+}
+
+#source is now a root file
+source:
+{
+  module_type: RootInput
+  maxEvents:  -1        # Number of events to create
+}
+
+# Define and configure some modules to do work on each event.
+# First modules are defined; they are scheduled later.
+# Modules are grouped by type.
+physics:
+{
+
+
+ producers:
+ {
+  ### random number saver
+  rns:                 { module_type: RandomNumberSaver }
+
+
+  ### calwire producers
+  caldata:             @local::sbnd_calwire
+
+  ### hit-finder producers
+  gaushit:             @local::sbnd_gaushitfinder
+  fasthit:             @local::sbnd_fasthitfinder
+
+
+  ### cluster-finder producers
+  blurredcluster:      @local::sbnd_blurredcluster
+  mccheater:          {module_type: HitCheater } 
+  mchit:               @local::sbnd_mchitfinder
+  linecluster:         @local::sbnd_linecluster
+
+
+  ### pandora
+  # pandora:             @local::standard_pandora
+  
+  ### track-finder producers
+  pmalgtrackmaker:     @local::sbnd_pmalgtrackmaker
+
+  ### shower-finder producers
+  emshower:            @local::sbnd_emshower
+  ### vertex-finder producers
+
+    ### flash-track matching
+  # beamflashcompat:     @local::standard_beamflashcompat
+ }
+
+#  blurredclusteralg:   @local::sbnd_blurredclusteralg
+
+
+ #define the producer and filter modules for this path, order matters, 
+ #filters reject all following items.  see lines starting physics.producers below
+ reco: [ rns
+   #     , opflash
+         , caldata 
+         , gaushit
+         , mccheater
+         , mchit
+         , fasthit
+         , linecluster
+         , pmalgtrackmaker
+         , blurredcluster
+         , emshower 
+   #      , rffhit
+   #      , corner
+   #      , fuzzycluster
+   #      , linecluster
+   #      , cccluster
+   #      , spacepts,
+   #      , pandora,
+   #      , trackkalmanhit, spacepointfinder, trackkalsps,
+   #      , pmalgtrackmaker
+   #      , trackkalmanhitcalo,
+   #      , pmatrackcalo
+   #      , beamflashcompat
+ ]
+
+
+
+ #define the output stream, there could be more than one if using filters 
+ stream1:  [ out1 ]
+
+ #trigger_paths is a keyword and contains the paths that modify the art::event, 
+ #ie filters and producers
+ trigger_paths: [reco] 
+
+ #end_paths is a keyword and contains the paths that do not modify the art::Event, 
+ #ie analyzers and output streams.  these all run simultaneously
+ end_paths:     [stream1]  
+
+
+
+
+ 
+
+}#Physics
+
+#block to define where the output goes.  if you defined a filter in the physics
+#block and put it in the trigger_paths then you need to put a SelectEvents: {SelectEvents: [XXX]}
+#entry in the output stream you want those to go to, where XXX is the label of the filter module(s)
+outputs:
+{
+ out1:
+ {
+                @table::sbnd_rootoutput
+   dataTier:    "reconstructed"
+ }
+
+
+}
+
+
+### Here, we overwrite ALL module labels with the ones defined above.
+
+
+physics.producers.caldata.DigitModuleLabel:                     "daq"
+physics.producers.gaushit.CalDataModuleLabel:                   "caldata"
+physics.producers.fasthit.DigitModuleLabel:                     "daq"
+
+physics.producers.linecluster.HitFinderModuleLabel:              "gaushit"
+
+physics.producers.pmalgtrackmaker.HitModuleLabel:               "linecluster"
+physics.producers.pmalgtrackmaker.ClusterModuleLabel:           "linecluster"
+physics.producers.pmalgtrackmaker.EmClusterModuleLabel:         "" # do not exculde a\ny cluster                                                       
+
+physics.producers.blurredcluster.HitsModuleLabel: "linecluster"
+physics.producers.blurredcluster.TrackModuleLabel: "pmalgtrackmaker"
+physics.producers.blurredcluster.VertexModuleLabel: "linecluster"
+
+
+physics.producers.emshower.ClusterModuleLabel: "blurredcluster"
+physics.producers.emshower.HitsModuleLabel: "linecluster"
+physics.producers.emshower.TrackModuleLabel: "pmalgtrackmaker"
+
+physics.producers.blurredcluster.CreateDebugPDF:           true
+physics.producers.blurredcluster.BlurredClusterAlg.BlurWire:18
+physics.producers.blurredcluster.BlurredClusterAlg.BlurTick:12
+physics.producers.blurredcluster.BlurredClusterAlg.SigmaWire:3
+physics.producers.blurredcluster.BlurredClusterAlg.SigmaTick:6
+physics.producers.blurredcluster.BlurredClusterAlg.ClusterWireDistance:2
+physics.producers.blurredcluster.BlurredClusterAlg.ClusterTickDistance:2
+physics.producers.blurredcluster.BlurredClusterAlg.MaxTickWidthBlur:10
+physics.producers.blurredcluster.BlurredClusterAlg.NeighboursThreshold:0
+physics.producers.blurredcluster.BlurredClusterAlg.MinNeighbours:0
+physics.producers.blurredcluster.BlurredClusterAlg.MinSize:2
+physics.producers.blurredcluster.BlurredClusterAlg.MinSeed:0.1
+physics.producers.blurredcluster.BlurredClusterAlg.TimeThreshold:500
+physics.producers.blurredcluster.BlurredClusterAlg.ChargeThreshold:0.07
+
+
+
+

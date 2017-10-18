@@ -1,0 +1,11 @@
+BEGIN_PROLOG
+
+sbnd_mchitfinder:
+{
+  module_type:     "MCHitFinder"
+  LArG4ModuleName: "largeant"
+  MakeMCWire:      false
+  Verbose:         false
+}
+
+END_PROLOG

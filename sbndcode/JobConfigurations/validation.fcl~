@@ -1,0 +1,52 @@
+#include "hitfindermodules_sbnd.fcl"                                                                                           
+#include "cluster_sbnd.fcl"                                                                                                    
+#include "Validation_Para.fcl"                                                                                                  
+
+
+#include "caldata_sbnd.fcl"                                                                                                                                                         
+#include "hitfindermodules_sbnd.fcl"                                                                                                                                                
+#include "cluster_sbnd.fcl"                                                                                                                                                        
+#include "trackfindermodules_sbnd.fcl"                                                                                                                                             
+#include "calorimetry_sbnd.fcl"                                                                                                                                                    
+#include "showerfindermodules.fcl"                                                                                                                                                 
+#include "databaseutil_sbnd.fcl"                                                                                                                                                   
+##include "opticaldetectormodules_sbnd.fcl"                                                                                                                                        
+#include "vertexfindermodules.fcl"                                                                                                                                                 
+##include "pandoramodules.fcl"                                                                                                                                                    
+##include "triggeralgo_service.fcl"                                                                                                                                                
+##include "photpropservices_sbnd.fcl"                                                                                                                                              
+#include "rootoutput_sbnd.fcl"                                                                                                                                                     
+ 
+
+
+
+services:
+{
+
+  TFileService: { fileName: "dom_analysis.root" }
+  message:                   @local::sbnd_message_services_prod # from messages_sbnd.fcl                                                                                            
+  FileCatalogMetadata:       @local::sbnd_file_catalog_mc       # from sam_sbnd.fcl                                                                                               
+                             @table::sbnd_services              # from services_sbnd.fcl                                                                                         
+                             @table::sbnd_random_services       # from services_sbnd.fcl; required by fuzzyCluster                                                                
+  LArFFT:                    @local::sbnd_larfft
+  SignalShapingServiceSBND:  @local::sbnd_signalshapingservice  # from signalservices_sbnd.fcl  
+}
+
+source:
+{
+  module_type: RootInput
+  maxEvents:  -1        # Number of events to create                                                                           
+                                                                                                                              
+}
+
+physics:
+{
+  analyzers:
+  {
+     ana: @local::standard_Validation_Para
+  }
+
+ a1: [ ana ]
+ end_paths: [ a1 ]
+
+}

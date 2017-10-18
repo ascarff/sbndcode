@@ -1,0 +1,7 @@
+standard_ShowerReco_Para: {
+ module_type: "sbndcode/ShowerReco/ShowerReco"
+ HitsModuleLabel: "linecluster"
+ ClusterModuleLabel: "blurredcluster"
+
+}
+
