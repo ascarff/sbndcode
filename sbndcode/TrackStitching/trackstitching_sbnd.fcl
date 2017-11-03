@@ -14,7 +14,7 @@ services:
   TimeTracker:            {}
 
   # This parameter controls the level of descriptive output from various LArSoft modules.
-  message:                @local::sbnd_message_services_interactive
+  message:                @local::sbnd_message_services_interactive_debug
 
   # This following line defines many default LArSoft resources for this job.
   @table::sbnd_simulation_services
@@ -54,8 +54,6 @@ physics:
       TrackLabel:      "pmalgtrackmaker"
       # In this example, which primary particle(s) we'll focus on in an event. PDG code 13 = mu-.
       PDGcode:          13
-      # dx used for the dE/dx calculation; units are cm. 
-      BinSize:          0.3
     }
   }
 
