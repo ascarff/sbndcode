@@ -10,6 +10,8 @@ services:
   # Load the service that manages root files for histograms.
   TFileService:           { fileName: "TrackStitching.root" }
 
+  BackTracker:  @local::sbnd_backtracker
+
   # This constrols the display in the output of how long each job step takes for each event. 
   TimeTracker:            {}
 
@@ -50,10 +52,9 @@ physics:
 
       # The input parameters
       SimulationLabel: "largeant"
-      HitLabel:        "gaushit"
       TrackLabel:      "pmalgtrackmaker"
-      # In this example, which primary particle(s) we'll focus on in an event. PDG code 13 = mu-.
-      PDGcode:          13
+      StitchAngle:     10.0
+      DeltaX:          2.0
     }
   }
 
