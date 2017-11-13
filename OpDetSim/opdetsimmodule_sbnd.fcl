@@ -1,0 +1,15 @@
+#include "detsimmodules.fcl"
+
+BEGIN_PROLOG
+
+sbnd_simpmt:
+{
+ module_type:        "SimPMTSBND"
+ InputModule:        "largeant"
+ ReadoutWindow:      1000.0
+ PeakWidth:          2.5
+ PeakDelta:          6.0
+ AmpNoise:	     1.0
+}
+
+END_PROLOG

@@ -68,6 +68,9 @@ add_subdirectory(ups)
 add_subdirectory(fcl)
 # subdirectory for scripts
 add_subdirectory(bin)
+#subdirectory for pmt waveforms
+add_subdirectory(OpDetSim)
+add_subdirectory(pmtwvfana)
 
 # packaging utility
 include(UseCPack)
