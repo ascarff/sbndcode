@@ -14,4 +14,5 @@ add_subdirectory(SimulationFilters)
 add_subdirectory(AnalysisTree)
 add_subdirectory(RecoUtils)
 add_subdirectory(ShowerReco)
-
+add_subdirectory(NeutrinoEnergyReco)
+add_subdirectory(HitEff)
