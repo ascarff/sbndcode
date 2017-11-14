@@ -1,0 +1,8 @@
+standard_NeutrinoEnergy_Para: {
+ module_type: "sbndcode/NeutrinoEnergyReco/NeutrinoEnergy"
+ HitsModuleLabel: "linecluster"
+ TrackModuleLabel: "pmalgtrackmaker"
+ CalorimetryModuleLabel: "pmatrackcalo"
+ 
+}
+

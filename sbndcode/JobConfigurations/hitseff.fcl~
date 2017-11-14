@@ -1,0 +1,39 @@
+#include "services_sbnd.fcl"                                                                                                                                                       
+#include "messages_sbnd.fcl"                                                                                                                                                        
+#include "sam_sbnd.fcl"                                                                                                                                                             
+#include "larfft_sbnd.fcl"                                                                                                                                                        
+#include "signalservices_sbnd.fcl" 
+
+#include "hitfindermodules_sbnd.fcl"                                                                                           
+#include "cluster_sbnd.fcl"                                                                                                    
+#include "HitEff_Para.fcl"                                                                                                  
+services:
+{
+
+  TFileService: { fileName: "dom_analysis.root" }
+  message:                   @local::sbnd_message_services_prod # from messages_sbnd.fcl                                                                                            
+  FileCatalogMetadata:       @local::sbnd_file_catalog_mc       # from sam_sbnd.fcl                                                                                                
+                             @table::sbnd_services              # from services_sbnd.fcl                                                                                           
+                             @table::sbnd_random_services       # from services_sbnd.fcl; required by fuzzyCluster                                                                
+  LArFFT:                    @local::sbnd_larfft
+  SignalShapingServiceSBND:  @local::sbnd_signalshapingservice  # from signalservices_sbnd.fcl   
+}
+
+source:
+{
+  module_type: RootInput
+  maxEvents:  -1        # Number of events to create                                                                           
+                                                                                                                              
+}
+
+physics:
+{
+  analyzers:
+  {
+     ana: @local::standard_HitEff_Para
+  }
+
+ a1: [ ana ]
+ end_paths: [ a1 ]
+
+}

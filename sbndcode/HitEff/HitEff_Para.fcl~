@@ -1,0 +1,6 @@
+standard_HitEff_Para: {
+ module_type: "sbndcode/HitEff/HitEff"
+ HitsModuleLabel: "gaushit"
+ 
+}
+

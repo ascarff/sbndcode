@@ -1,0 +1,27 @@
+#include "hitfindermodules_sbnd.fcl"                                                                                           
+#include "cluster_sbnd.fcl"                                                                                                    
+#include "NeutrinoEnergy_Para.fcl"                                                                                                  
+services:
+{
+
+  TFileService: { fileName: "dom_analysis.root" }
+}
+
+source:
+{
+  module_type: RootInput
+  maxEvents:  -1        # Number of events to create                                                                           
+                                                                                                                              
+}
+
+physics:
+{
+  analyzers:
+  {
+     ana: @local::standard_NeutrinoEnergy_Para
+  }
+
+ a1: [ ana ]
+ end_paths: [ a1 ]
+
+}
