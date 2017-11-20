@@ -67,7 +67,8 @@ namespace {
   // Temp utility function to determine if true particle triggers the PDS
   bool HitsPDS(simb::MCParticle const& particle, double lengthLimit);
 
-  int isVisible(const simb::MCParticle& part, double lengthLimit);
+  // Utility function to determine if tracks should be stitched
+  int StitchTracks(recob::Track const& track1, recob::Track const& track2, double distLimit, double angleLimit);
 
 }
 
@@ -243,8 +244,8 @@ namespace sbnd {
       particles[partId] = particle;
 
       double startTimeTicks = (particle.T()*10e-9)/(0.5*10e-6);
-      double readoutWindow  = (double)detprop->ReadOutWindowSize();
-      double driftTimeTicks = 4.0*geom->DetHalfWidth()/detprop->DriftVelocity();
+      double readoutWindow  = (double)fDetectorProperties->ReadOutWindowSize();
+      double driftTimeTicks = 4.0*fGeometryService->DetHalfWidth()/fDetectorProperties->DriftVelocity();
       // If charged particle crosses CRTs and is within reconstructable window add the start time to a vector
       if (HitsCRT(particle) && startTimeTicks > -driftTimeTicks && startTimeTicks < readoutWindow){
         vCrtTimes.push_back(startTimeTicks);
@@ -271,54 +272,90 @@ namespace sbnd {
     // Loop over tracks
     for (auto const& track : (*trackHandle) ){
       // Put tracks in a map according to which tpc the hits are in
+      std::vector< art::Ptr<recob::Hit> > hits = findManyHits.at(track_i);
+      bool inTpc1 = false;
+      bool inTpc2 = false;
+      for (auto const& hit : hits){
+        if (hit->WireID().TPC == 0) inTpc1 = true;
+        if (hit->WireID().TPC == 1) inTpc2 = true;
+      }
       // Hits all in first tpc
-      if (track.Vertex().X() < 0 && track.End().X() < 0){
+      if (inTpc1 && !inTpc2){
         tracksInTpc1[track_i] = &track;
       }
       // Hits all in second tpc
-      else if (track.Vertex().X() > 0 && track.End().X() > 0){
+      else if (inTpc2 && !inTpc1){
         tracksInTpc2[track_i] = &track;
       }
       // If reconstructed track crossed the cathode (has hits in both tpcs) don't put in map
       track_i++;
     }
     
-    // Loop over first tpc
-    for (auto const& tpc1Track : tracksInTpc1){
-      // Find any hits detected in one tpc and reconstructed in the other
-      // For each track loop over over the other map and compare x positions
-      auto track1 = tpc1Track.second;
-      double tpc1MinX = std::max(track1->Vertex().X(), track1->End().X());
-      // Get the direction of the point closest to the cathode
-      TVector3 tpc1Direction = track1->EndDirection();
-      if (track1->Vertex().X() == tpc1MinX) tpc1Direction = track1->VertexDirection();
+    // There are 3 distinct ways that tracks can be messed up when they cross the cathode plane depending on their true start times
+    // Case 1 (-drift time < t < 0): Tracks shifted towards anodes
+    // Case 2 (0 < t < dt): Tracks shifted into other TPC, crossing points reconstructed (dt = readout window - drift time)
+    // Case 3 (dt < t < readout window): Tracks shifted into other TPC, crossing points not reconstructed
 
-      // Loop over second tpc
+    // Loop over tracks in the first TPC
+    for (auto const& tpc1Track : tracksInTpc1){
+      auto track1 = tpc1Track.second;
+      std::vector< art::Ptr<recob::Hit> > tpc1Hits = findManyHits.at(track1.ID());
+      int tpc1TrueId = RecoUtils::TrueParticleIDFromTotalTrueEnergy(tpc1Hits);
+
+      // Loop over tracks in second TPC
       for (auto const& tpc2Track : tracksInTpc2){
         auto track2 = tpc2Track.second;
-        double tpc2MinX = std::min(track2->Vertex().X(), track2->End().X());
-        // Get the direction of the point closest to the cathode
-        TVector3 tpc2Direction = track2->EndDirection();
-        if (track2->Vertex().X() == tpc2MinX) tpc2Direction = track2->VertexDirection();
-
-        // Calculate angle between tracks
-        double cos3d = tpc1Direction.Dot(tpc2Direction);
-        double cosThr = cos(TMath::Pi() * fStitchAngle / 180.0);
-
-        bool isStitched = false;
-        // If absolute values agree within +/- deltaX cm and angle < threshold, mark as stitched
-        if (std::abs(tpc1MinX+tpc2MinX) < fDeltaX && cos3d > cosThr){ isStitched = true; nStitched++; }
-
-        // Find associated true particle for both tracks
-        std::vector< art::Ptr<recob::Hit> > tpc1Hits = findManyHits.at(tpc1Track.first);
-        int tpc1TrueId = RecoUtils::TrueParticleIDFromTotalTrueEnergy(tpc1Hits);
-        std::vector< art::Ptr<recob::Hit> > tpc2Hits = findManyHits.at(tpc2Track.first);
+        std::vector< art::Ptr<recob::Hit> > tpc2Hits = findManyHits.at(track2.ID());
         int tpc2TrueId = RecoUtils::TrueParticleIDFromTotalTrueEnergy(tpc2Hits);
-  
-        //if (trueCrossers.find(tpc1TrueId) == trueCrossers.end() || trueCrossers.find(tpc2TrueId) == trueCrossers.end()) {std::cout<<tpc1TrueId<<std::endl; continue;}
+
+        // If the start or end x points match within some tolerance mark as potential crosser
+        double cosThr = cos(TMath::Pi() * fStitchAngle / 180.0);
+        int stitchResult = StitchTracks(track1, track2, fDeltaX, cosThr);
 
         // If stitched, true particle ID same and true particle crosses cathode mark as correct, fill hist
-        if (isStitched && tpc1TrueId == tpc2TrueId && CrossesCathode(particles[tpc1TrueId])){
+        if (stitchResult != 0 && tpc1TrueId == tpc2TrueId && CrossesCathode(particles[tpc1TrueId])){
+          fNCorrect++;
+          nCorrect++;
+          //fCorrectAngleHist->Fill(TMath::ACos(cos3d)*180./TMath::Pi());
+          //fCorrectDeltaXHist->Fill(std::abs(tpc1MinX+tpc2MinX));
+        }
+
+        // If stitched, true particle IDs not equal and/or true particle doesn't cross cathode mark as incorrect, fill hist
+        if (stitchResult != 0 && (tpc1TrueId != tpc2TrueId || !CrossesCathode(particles[tpc1TrueId]))){ 
+          std::cout<<"Incorrect, event = "<<fEvent<<std::endl;
+          fNIncorrect++;
+          nIncorrect++;
+          //fIncorrectAngleHist->Fill(TMath::ACos(cos3d)*180./TMath::Pi());
+          //fIncorrectDeltaXHist->Fill(std::abs(tpc1MinX+tpc2MinX));
+        }
+
+        // If not stitched, true particle ID same and true particle crosses cathode mark as missed, fill hist
+        if (stitchResult == 0 && tpc1TrueId == tpc2TrueId && CrossesCathode(particles[tpc1TrueId])){
+          std::cout<<"Missed, event = "<<fEvent<<std::endl;
+          fNMissed++;
+          nMissed++;
+          //fMissedAngleHist->Fill(TMath::ACos(cos3d)*180./TMath::Pi());
+          //fMissedDeltaXHist->Fill(std::abs(tpc1MinX+tpc2MinX));
+          //fMissedMinLenHist->Fill(std::min(track1->Length(),track2->Length()));
+        }
+        if (stitchResult != 0){
+          nStitched++;
+        }   
+      }
+    }
+
+    // Loop over the matched
+    for (auto const& match : matches){
+      // For each track loop over over the other map and compare x positions
+      
+        // Find associated true particle for both tracks
+        std::vector< art::Ptr<recob::Hit> > tpc1Hits = findManyHits.at(match.first.ID());
+        int tpc1TrueId = RecoUtils::TrueParticleIDFromTotalTrueEnergy(tpc1Hits);
+        std::vector< art::Ptr<recob::Hit> > tpc2Hits = findManyHits.at(match.second.ID());
+        int tpc2TrueId = RecoUtils::TrueParticleIDFromTotalTrueEnergy(tpc2Hits);
+
+        // If stitched, true particle ID same and true particle crosses cathode mark as correct, fill hist
+        if (tpc1TrueId == tpc2TrueId && CrossesCathode(particles[tpc1TrueId])){
           fNCorrect++;
           nCorrect++;
           fCorrectAngleHist->Fill(TMath::ACos(cos3d)*180./TMath::Pi());
@@ -326,7 +363,7 @@ namespace sbnd {
         }
 
         // If stitched, true particle IDs not equal and/or true particle doesn't cross cathode mark as incorrect, fill hist
-        if (isStitched && (tpc1TrueId != tpc2TrueId || !CrossesCathode(particles[tpc1TrueId]))){ 
+        if (tpc1TrueId != tpc2TrueId || !CrossesCathode(particles[tpc1TrueId])){ 
           std::cout<<"Incorrect, event = "<<fEvent<<std::endl;
           fNIncorrect++;
           nIncorrect++;
@@ -421,7 +458,7 @@ namespace {
     if(insideAV && outsideAV) return true;
     return false;
 
-  }
+  } // HitsCRT()
 
   // Function to check if particle is charged and has a certain length inside TPC
   bool HitsPDS(const simb::MCParticle& part, double lengthLimit){
@@ -450,7 +487,7 @@ namespace {
     for (int traj_i = 0; traj_i < nTrajPoints; traj_i++){
       TVector3 trajPoint(part.Vx(traj_i), part.Vy(traj_i), part.Vz(traj_i));
       // Check if point is within reconstructable volume
-      if (trajPoint[0] >= xmin && trajPoint[0] <= deltaX && trajPoint[1] >= ymin && trajPoint[1] <= ymax && trajPoint[2] >= zmin && trajPoint[2] <= zmax){
+      if (trajPoint[0] >= xmin && trajPoint[0] <= xmax && trajPoint[1] >= ymin && trajPoint[1] <= ymax && trajPoint[2] >= zmin && trajPoint[2] <= zmax){
         if(!first) {
           displacement -= trajPoint;
           length += displacement.Mag();
@@ -463,96 +500,78 @@ namespace {
     if (length > lengthLimit) return true;
     return false;
 
-  }
+  } // HitsPDS()
 
-  // Returns if both sides of track are visible and if so, what time case they fall into
-  // CHANGE THIS SO IT TESTS IF PARTICLE CROSSES CATHODE
-  // OUTPUT: 0 - not visible, 1 - visible no cross, 2 - visible cross case 1, 3 - visible cross case 2, 4 - visible cross case 3
-  int isVisible(const simb::MCParticle& part, double lengthLimit){
+  // Function to determine if tracks should be stitched
+  int MatchPoints(recob::Track const& track1, recob::Track const& track2, double distLimit){
 
-    // DESCRIPTION OF OUTPUT:
-    // 0 = true particle would not be reconstructed
-    // 1 = true particle would be reconstructed in first tpc (x < 0)
-    // 2 = true particle would be reconstructed in second tpc (x > 0)
-    // 3 = true particle crosses cathode, segments shifted away from cathode (t < 0)
-    // 4 = true particle crosses cathode, segments shifted towards cathode, fully reconstructed (0 < t < evt window - drift time)
-    // 5 = true particle crosses cathode, segments shifted towards cathode, partially reconstructed (t > evt window - drift time)
+    // RETURN CODES:
+    // 0 = not matched;
+    // 11 = start matched with start
+    // 12 = start matched with end, etc
 
-    // Check particle is charged first
-    int pdg = part.PdgCode();
-    if (!(pdg == std::abs(13) || pdg == std::abs(11) || pdg == std::abs(2212) || pdg == std::abs(321) || pdg == std::abs(211))) return 0;
-  
-    // Get geometry.
+    // Compare start and end x positions
+    TVector3 position1, position2;
+    TVector3 direction1, direction2;
+    bool possibleMatch = false;
+    double origLimit = distLimit;
+    int code = 0;
+
+    double difference = std::abs(std::abs(track1.Vertex().X())-std::abs(track2.Vertex().X()));
+    if (difference < distLimit && track1.Vertex().X()*track2.Vertex().X < 0.0){
+      position1 = track1.Vertex();
+      position2 = track2.Vertex();
+      direction1 = track1.VertexDirection();
+      direction2 = track2.VertexDirection();
+      distLimit = difference;
+      possibleMatch = true;
+      code = 11;
+    }
+    difference = std::abs(std::abs(track1.Vertex().X())-std::abs(track2.End().X()));
+    if (difference < distLimit && track1.Vertex().X()*track2.End().X() < 0.0){
+      position1 = track1.Vertex();
+      position2 = track2.End();
+      direction1 = track1.VertexDirection();
+      direction2 = track2.EndDirection();
+      distLimit = difference;
+      possibleMatch = true;
+      code = 12;
+    }
+    difference = std::abs(std::abs(track1.End().X())-std::abs(track2.Vertex().X()));
+    if (difference < distLimit && track1.End().X()*track2.Vertex().X() < 0.0){
+      position1 = track1.End();
+      position2 = track2.Vertex();
+      direction1 = track1.EndDirection();
+      direction2 = track2.VertexDirection();
+      distLimit = difference;
+      possibleMatch = true;
+      code = 21;
+    }
+    difference = std::abs(std::abs(track1.End().X())-std::abs(track2.End().X()));
+    if (difference < distLimit && track1.End().X()*track2.End().X() < 0.0){
+      position1 = track1.End();
+      position2 = track2.End();
+      direction1 = track1.EndDirection();
+      direction2 = track2.EndDirection();
+      possibleMatch = true;
+      code = 22;
+    }
+
+    if (!possibleMatch) return 0;
+
+    // If the matched positions are = difference between drift time and readout window mark as a case 3 match
     art::ServiceHandle<geo::Geometry> geom;
-    auto const* detprop = lar::providerFrom<detinfo::DetectorPropertiesService>();
-
-    double driftVelocity = detprop->DriftVelocity();
-    size_t readoutWindow = detprop->ReadOutWindowSize();
+    auto detprop = lar::providerFrom<detinfo::DetectorPropertiesService>();
+    double readoutWindow  = (double)detprop->ReadOutWindowSize();
     double driftTimeTicks = 4.0*geom->DetHalfWidth()/detprop->DriftVelocity();
-    double deltaT = (double)readoutWindow - driftTimeTicks;
-    double deltaX = deltaT * 0.5 * driftVelocity;
+    double dx = ((readoutWindow-driftTimeTicks)/0.5)*detprop->DriftVelocity();
+    if (std::abs(position1.X()-dx) < origLimit) return 100 + code;
 
-    // Get active volume boundary. SBND specific
-    double xmin = -2.0 * geom->DetHalfWidth();
-    double xmax = 2.0 * geom->DetHalfWidth();
-    double ymin = -geom->DetHalfHeight();
-    double ymax = geom->DetHalfHeight();
-    double zmin = 0.;
-    double zmax = geom->DetLength();
+    // Calculate angle between tracks
+    double cos3d = direction1.Dot(direction2);
+    if (cos3d < angleLimit) return 200 + code;
 
-    double startTimeTicks = (part.T()*10e-9)/(0.5*10e-6);
-
-    // Initialize length in both tpcs
-    double lengthTpc1 = 0.;
-    double lengthTpc2 = 0.;
-    bool firstTpc1 = true;
-    bool firstTpc2 = true;
-    TVector3 dispTpc1;
-    TVector3 dispTpc2;
-
-    // Loop over trajectory points
-    int nTrajPoints = part.NumberTrajectoryPoints();
-    for (int traj_i = 0; traj_i < nTrajPoints; traj_i++){
-      TVector3 trajPoint(part.Vx(traj_i), part.Vy(traj_i), part.Vz(traj_i));
-      // For all points in first tpc (x < 0)
-      if (trajPoint[0] < 0){
-        // Shift x positions by x + t0*vdrift
-        trajPoint[0] += (part.T()*10e-9)/(10e-6) * driftVelocity;
-        // Check if point is within reconstructable volume
-        if (trajPoint[0] >= xmin && trajPoint[0] <= deltaX && trajPoint[1] >= ymin && trajPoint[1] <= ymax && trajPoint[2] >= zmin && trajPoint[2] <= zmax){
-          if(!firstTpc1) {
-            dispTpc1 -= trajPoint;
-            lengthTpc1 += dispTpc1.Mag();
-          }
-          firstTpc1 = false;
-          dispTpc1 = trajPoint;
-        }
-      }
-      // For all points in in second tpc (x > 0)
-      if (trajPoint[0] > 0){ 
-        // Shift x positions by x - t0*vdrift
-        trajPoint[0] -= (part.T()*10e-9)/(10e-6) * driftVelocity;
-        // Check if points within reconstructable volume
-        if (trajPoint[0] >= -deltaX && trajPoint[0] <= xmax && trajPoint[1] >= ymin && trajPoint[1] <= ymax && trajPoint[2] >= zmin && trajPoint[2] <= zmax){
-          if(!firstTpc2) {
-            dispTpc2 -= trajPoint;
-            lengthTpc2 += dispTpc1.Mag();
-          }
-          firstTpc2 = false;
-          dispTpc2 = trajPoint;
-        }
-      }
-    }
-
-    if (lengthTpc1 > lengthLimit && lengthTpc2 == 0.) return 1;
-    if (lengthTpc1 == 0. && lengthTpc2 > lengthLimit) return 2;
-    if (lengthTpc1 > lengthLimit && lengthTpc2 > lengthLimit){
-      if (startTimeTicks < 0.) return 3;
-      if (startTimeTicks >= 0. && startTimeTicks <= deltaT) return 4;
-      if (startTimeTicks > deltaT) return 5;
-    }
-    return 0;
-  }
+  } // StitchTracks()
 
 } // local namespace
 
