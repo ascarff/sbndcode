@@ -61,6 +61,12 @@ namespace {
   // Utility function to determine if a true particle crosses the cathode
   bool CrossesCathode(simb::MCParticle const& particle);
 
+  // Temp utility function to determine if a true particle hits a CRT
+  bool HitsCRT(simb::MCParticle const& particle);
+
+  // Temp utility function to determine if true particle triggers the PDS
+  bool HitsPDS(simb::MCParticle const& particle, double lengthLimit);
+
   int isVisible(const simb::MCParticle& part, double lengthLimit);
 
 }
@@ -118,7 +124,7 @@ namespace sbnd {
     art::InputTag         fTrackProducerLabel;      ///< name of the track producer
     double                fStitchAngle;             ///< minimum stitching angle between tracks
     double                fDeltaX;                  ///< maxmum difference in absolute x positions
-    std::vector<double>   fStartTimes;              ///< vector of true start times for visible particles (units = ticks)
+    
 
     // Pointers to histograms
     TH1D* fCorrectAngleHist;    ///< Angle between correctly stitched tracks
@@ -219,6 +225,9 @@ namespace sbnd {
     fNIncorrect       = 0;
     fNMissed          = 0;
 
+    std::vector<double> vCrtTimes; // Vector of true start times from cosmic rat trackers (units = ticks)
+    std::vector<double> vPdsTimes; // Vector of true start times from photon detection system (units = ticks)
+
     // Fetch basic event info
     fEvent  = event.id().event();
     fRun    = event.run();
@@ -227,61 +236,23 @@ namespace sbnd {
     // Get true particles
     // Define handle to point to a vector of MCParticles
     auto particleHandle = event.getValidHandle<std::vector<simb::MCParticle>>(fSimulationProducerLabel);
-    std::map<int, bool> trueCrossers;
     std::map<int, simb::MCParticle> particles;
     // Loop over the true particles
     for (auto const& particle : (*particleHandle) ){
       int partId = particle.TrackId();
       particles[partId] = particle;
+
       double startTimeTicks = (particle.T()*10e-9)/(0.5*10e-6);
-      if (particle.E()>0.01 || particle.Process() == "primary"){
-        fStartT->Fill(startTimeTicks);
+      double readoutWindow  = (double)detprop->ReadOutWindowSize();
+      double driftTimeTicks = 4.0*geom->DetHalfWidth()/detprop->DriftVelocity();
+      // If charged particle crosses CRTs and is within reconstructable window add the start time to a vector
+      if (HitsCRT(particle) && startTimeTicks > -driftTimeTicks && startTimeTicks < readoutWindow){
+        vCrtTimes.push_back(startTimeTicks);
       }
-      int visibleCode = isVisible(particle, 1);
-      // If particle is visible but doesn't cross cathode mark as not crossing and add time to vector
-      if (visibleCode == 1 || visibleCode == 2){
-        //trueCrossers[partId] = false;
-        fStartTimes.push_back(startTimeTicks);
+      // If charged particle has more than 5 cm inside AV and is within reconstructable window add the start time to a vector
+      if (HitsPDS(particle, 5) && startTimeTicks > -driftTimeTicks && startTimeTicks < readoutWindow){
+        vPdsTimes.push_back(startTimeTicks);
       }
-      /*
-      // If particle is visible and crosses cathode and is shifted away from cathode
-      if (visibleCode == 3){
-        trueCrossers[partId] = true;
-        fNCathodeCrossers++;
-        nCathodeCrossers++;
-        nCase1++;
-        fStartTimes.push_back(startTimeTicks);
-      }
-      // If particle is visible and crosses cathode and is shifted towards cathode without being cut off
-      else if (visibleCode == 4){
-        trueCrossers[partId] = true;
-        fNCathodeCrossers++;
-        nCathodeCrossers++;
-        nCase2++;
-        fStartTimes.push_back(startTimeTicks);
-      }
-      // If particle is visible and crosses cathode and is shifted towards cathode and isn't fully recosntructed
-      else if (visibleCode == 5){
-        trueCrossers[partId] = true;
-        fNCathodeCrossers++;
-        nCathodeCrossers++;
-        nCase3++;
-        fStartTimes.push_back(startTimeTicks);
-      }
-      */
-      // For now just a rough estimate of if a particle can be reconstructed
-      if (startTimeTicks>-2515 && startTimeTicks<3000){
-        // Fill vector with start times
-        // Count the number of primary particles that cross the cathode
-        int pdg = particle.PdgCode();
-        if (CrossesCathode(particle) && (pdg == std::abs(13) || pdg == std::abs(11) || pdg == std::abs(2212) || pdg == std::abs(321) || pdg == std::abs(211))){
-          trueCrossers[partId] = true;
-          fNCathodeCrossers++;
-          nCathodeCrossers++;
-        }
-        else trueCrossers[partId] = false;
-      }
-      
     }
       
     // Get tracks from the event
@@ -300,20 +271,21 @@ namespace sbnd {
     // Loop over tracks
     for (auto const& track : (*trackHandle) ){
       // Put tracks in a map according to which tpc the hits are in
-      // -> One for +Ve x position
+      // Hits all in first tpc
       if (track.Vertex().X() < 0 && track.End().X() < 0){
         tracksInTpc1[track_i] = &track;
       }
-      // -> One for -Ve x position
+      // Hits all in second tpc
       else if (track.Vertex().X() > 0 && track.End().X() > 0){
         tracksInTpc2[track_i] = &track;
       }
-      // If reconstructed track crossed the cathode don't put in map
+      // If reconstructed track crossed the cathode (has hits in both tpcs) don't put in map
       track_i++;
     }
     
-    // Loop over +Ve map
+    // Loop over first tpc
     for (auto const& tpc1Track : tracksInTpc1){
+      // Find any hits detected in one tpc and reconstructed in the other
       // For each track loop over over the other map and compare x positions
       auto track1 = tpc1Track.second;
       double tpc1MinX = std::max(track1->Vertex().X(), track1->End().X());
@@ -321,6 +293,7 @@ namespace sbnd {
       TVector3 tpc1Direction = track1->EndDirection();
       if (track1->Vertex().X() == tpc1MinX) tpc1Direction = track1->VertexDirection();
 
+      // Loop over second tpc
       for (auto const& tpc2Track : tracksInTpc2){
         auto track2 = tpc2Track.second;
         double tpc2MinX = std::min(track2->Vertex().X(), track2->End().X());
@@ -412,6 +385,85 @@ namespace {
     }
     return false;
   } // CrossesCathode()
+
+  // Function to check if particle is charged and crosses the TPC boundary
+  bool HitsCRT(const simb::MCParticle& part){
+
+    // Check particle is charged first
+    int pdg = part.PdgCode();
+    if (!(pdg == std::abs(13) || pdg == std::abs(11) || pdg == std::abs(2212) || pdg == std::abs(321) || pdg == std::abs(211))) return false;
+
+    // Check if particle has points both inside and outside the active volume
+    bool outsideAV = false;
+    bool insideAV  = false;
+
+    // Get geometry.
+    art::ServiceHandle<geo::Geometry> geom;
+    // Get active volume boundary. SBND specific
+    double xmin = -2.0 * geom->DetHalfWidth();
+    double xmax = 2.0 * geom->DetHalfWidth();
+    double ymin = -geom->DetHalfHeight();
+    double ymax = geom->DetHalfHeight();
+    double zmin = 0.;
+    double zmax = geom->DetLength();
+
+    // Loop over trajectory points
+    int nTrajPoints = part.NumberTrajectoryPoints();
+    for (int traj_i = 0; traj_i < nTrajPoints; traj_i++){
+      TVector3 trajPoint(part.Vx(traj_i), part.Vy(traj_i), part.Vz(traj_i));
+      // Check if point is within reconstructable volume
+      if (trajPoint[0] >= xmin && trajPoint[0] <= xmax && trajPoint[1] >= ymin && trajPoint[1] <= ymax && trajPoint[2] >= zmin && trajPoint[2] <= zmax){
+        insideAV = true;
+      }
+      else outsideAV = true;
+    }
+
+    if(insideAV && outsideAV) return true;
+    return false;
+
+  }
+
+  // Function to check if particle is charged and has a certain length inside TPC
+  bool HitsPDS(const simb::MCParticle& part, double lengthLimit){
+
+    // Check particle is charged first
+    int pdg = part.PdgCode();
+    if (!(pdg == std::abs(13) || pdg == std::abs(11) || pdg == std::abs(2212) || pdg == std::abs(321) || pdg == std::abs(211))) return false;
+
+    // Calculate the length of the track inside the TPC
+    double length = 0.;
+    bool first  = true;
+    TVector3 displacement;
+
+    // Get geometry.
+    art::ServiceHandle<geo::Geometry> geom;
+    // Get active volume boundary. SBND specific
+    double xmin = -2.0 * geom->DetHalfWidth();
+    double xmax = 2.0 * geom->DetHalfWidth();
+    double ymin = -geom->DetHalfHeight();
+    double ymax = geom->DetHalfHeight();
+    double zmin = 0.;
+    double zmax = geom->DetLength();
+
+    // Loop over trajectory points
+    int nTrajPoints = part.NumberTrajectoryPoints();
+    for (int traj_i = 0; traj_i < nTrajPoints; traj_i++){
+      TVector3 trajPoint(part.Vx(traj_i), part.Vy(traj_i), part.Vz(traj_i));
+      // Check if point is within reconstructable volume
+      if (trajPoint[0] >= xmin && trajPoint[0] <= deltaX && trajPoint[1] >= ymin && trajPoint[1] <= ymax && trajPoint[2] >= zmin && trajPoint[2] <= zmax){
+        if(!first) {
+          displacement -= trajPoint;
+          length += displacement.Mag();
+        }
+        first = false;
+        displacement = trajPoint;
+      }
+    }
+
+    if (length > lengthLimit) return true;
+    return false;
+
+  }
 
   // Returns if both sides of track are visible and if so, what time case they fall into
   // CHANGE THIS SO IT TESTS IF PARTICLE CROSSES CATHODE
