@@ -68,7 +68,12 @@ namespace {
   bool HitsPDS(simb::MCParticle const& particle, double lengthLimit);
 
   // Utility function to determine if tracks should be stitched
-  int StitchTracks(recob::Track const& track1, recob::Track const& track2, double distLimit, double angleLimit);
+  int MatchPoints(recob::Track const& track1, recob::Track const& track2, double distLimit, double &cosResult);
+
+  std::vector< std::pair< const recob::Track*, const recob::Track* >> StitchWithoutT0(std::vector<const recob::Track*> tracks1, 
+                                                                                      std::vector<const recob::Track*> tracks2, 
+                                                                                      double distLimit, 
+                                                                                      double cosLimit);
 
 }
 
@@ -161,9 +166,6 @@ namespace sbnd {
 
     // Counters for text output
     int nCathodeCrossers = 0;
-    int nCase1           = 0;
-    int nCase2           = 0;
-    int nCase3           = 0;
     int nStitched        = 0;
     int nCorrect         = 0;
     int nIncorrect       = 0;
@@ -246,6 +248,7 @@ namespace sbnd {
       double startTimeTicks = (particle.T()*10e-9)/(0.5*10e-6);
       double readoutWindow  = (double)fDetectorProperties->ReadOutWindowSize();
       double driftTimeTicks = 4.0*fGeometryService->DetHalfWidth()/fDetectorProperties->DriftVelocity();
+
       // If charged particle crosses CRTs and is within reconstructable window add the start time to a vector
       if (HitsCRT(particle) && startTimeTicks > -driftTimeTicks && startTimeTicks < readoutWindow){
         vCrtTimes.push_back(startTimeTicks);
@@ -266,13 +269,12 @@ namespace sbnd {
         << " track label='" << fTrackProducerLabel << "'";
     }
 
-    std::map<int ,const recob::Track*> tracksInTpc1;
-    std::map<int, const recob::Track*> tracksInTpc2;
-    int track_i = 0;
+    std::vector<const recob::Track*> tracksInTpc1;
+    std::vector<const recob::Track*> tracksInTpc2;
     // Loop over tracks
     for (auto const& track : (*trackHandle) ){
       // Put tracks in a map according to which tpc the hits are in
-      std::vector< art::Ptr<recob::Hit> > hits = findManyHits.at(track_i);
+      std::vector< art::Ptr<recob::Hit> > hits = findManyHits.at(track.ID());
       bool inTpc1 = false;
       bool inTpc2 = false;
       for (auto const& hit : hits){
@@ -281,14 +283,13 @@ namespace sbnd {
       }
       // Hits all in first tpc
       if (inTpc1 && !inTpc2){
-        tracksInTpc1[track_i] = &track;
+        tracksInTpc1.push_back(&track);
       }
       // Hits all in second tpc
       else if (inTpc2 && !inTpc1){
-        tracksInTpc2[track_i] = &track;
+        tracksInTpc2.push_back(&track);
       }
       // If reconstructed track crossed the cathode (has hits in both tpcs) don't put in map
-      track_i++;
     }
     
     // There are 3 distinct ways that tracks can be messed up when they cross the cathode plane depending on their true start times
@@ -296,94 +297,92 @@ namespace sbnd {
     // Case 2 (0 < t < dt): Tracks shifted into other TPC, crossing points reconstructed (dt = readout window - drift time)
     // Case 3 (dt < t < readout window): Tracks shifted into other TPC, crossing points not reconstructed
 
-    // Loop over tracks in the first TPC
-    for (auto const& tpc1Track : tracksInTpc1){
-      auto track1 = tpc1Track.second;
-      std::vector< art::Ptr<recob::Hit> > tpc1Hits = findManyHits.at(track1.ID());
+    //double readoutWindow  = (double)fDetectorProperties->ReadOutWindowSize();
+    //double driftTimeTicks = 4.0*fGeometryService->DetHalfWidth()/fDetectorProperties->DriftVelocity();
+    //double dx = ((readoutWindow-driftTimeTicks)/0.5)*fDetectorProperties->DriftVelocity();
+
+    double cosThr = cos(TMath::Pi() * fStitchAngle / 180.0);
+
+    std::vector< std::pair<const recob::Track*, const recob::Track*>> matches;
+    std::vector< std::pair<const recob::Track*, const recob::Track*>> trueMatches;
+    // Loop over tracks in first TPC
+    for (auto const& track1 : tracksInTpc1){
+      std::vector< art::Ptr<recob::Hit> > tpc1Hits = findManyHits.at(track1->ID());
       int tpc1TrueId = RecoUtils::TrueParticleIDFromTotalTrueEnergy(tpc1Hits);
 
+      //if (CrossesCathode(particles[tpc1TrueId]) && track1->Length() > 5) nCathodeCrossers++;
+
+      double lowestCos = -1.;
+      const recob::Track* matchCandidate = track1; // ugly, needed to avoid warnings
+
       // Loop over tracks in second TPC
-      for (auto const& tpc2Track : tracksInTpc2){
-        auto track2 = tpc2Track.second;
-        std::vector< art::Ptr<recob::Hit> > tpc2Hits = findManyHits.at(track2.ID());
+      for (auto const& track2 : tracksInTpc2){
+        std::vector< art::Ptr<recob::Hit> > tpc2Hits = findManyHits.at(track2->ID());
         int tpc2TrueId = RecoUtils::TrueParticleIDFromTotalTrueEnergy(tpc2Hits);
 
-        // If the start or end x points match within some tolerance mark as potential crosser
-        double cosThr = cos(TMath::Pi() * fStitchAngle / 180.0);
-        int stitchResult = StitchTracks(track1, track2, fDeltaX, cosThr);
+        
+        // Check if start/end matched
+        double currentCos;
+        int matchResult = MatchPoints((*track1), (*track2), fDeltaX, currentCos);
+        if (tpc1TrueId == tpc2TrueId && CrossesCathode(particles[tpc1TrueId])){
+          nCathodeCrossers++;
+          trueMatches.push_back(std::make_pair(track1, track2));
+          std::cout<<matchResult<<std::endl;
+        }
+        // If they do check if matched points = dx
+        /*if (std::abs(std::abs(track1->Vertex().X())-dx) < fDeltaX || std::abs(std::abs(track1->End().X())-dx) < fDeltaX){
+          // If they do record candidate track and angle
+          if (currentCos < lowestCos){ lowestCos = currentCos; matchCandidate = track2; }
+        }*/     
 
-        // If stitched, true particle ID same and true particle crosses cathode mark as correct, fill hist
-        if (stitchResult != 0 && tpc1TrueId == tpc2TrueId && CrossesCathode(particles[tpc1TrueId])){
-          fNCorrect++;
-          nCorrect++;
-          //fCorrectAngleHist->Fill(TMath::ACos(cos3d)*180./TMath::Pi());
-          //fCorrectDeltaXHist->Fill(std::abs(tpc1MinX+tpc2MinX));
+        // Else check if angle < threshold
+        if (matchResult != 0 && currentCos > cosThr){
+          // If it is record candidate track and threshold (could add length check)
+          if (currentCos > lowestCos){ lowestCos = currentCos; matchCandidate = track2; }
         }
 
-        // If stitched, true particle IDs not equal and/or true particle doesn't cross cathode mark as incorrect, fill hist
-        if (stitchResult != 0 && (tpc1TrueId != tpc2TrueId || !CrossesCathode(particles[tpc1TrueId]))){ 
-          std::cout<<"Incorrect, event = "<<fEvent<<std::endl;
-          fNIncorrect++;
-          nIncorrect++;
-          //fIncorrectAngleHist->Fill(TMath::ACos(cos3d)*180./TMath::Pi());
-          //fIncorrectDeltaXHist->Fill(std::abs(tpc1MinX+tpc2MinX));
-        }
-
+        // Check for missed cathode crosser
         // If not stitched, true particle ID same and true particle crosses cathode mark as missed, fill hist
-        if (stitchResult == 0 && tpc1TrueId == tpc2TrueId && CrossesCathode(particles[tpc1TrueId])){
-          std::cout<<"Missed, event = "<<fEvent<<std::endl;
+        else if (tpc1TrueId == tpc2TrueId && CrossesCathode(particles[tpc1TrueId])){
+          //std::cout<<"Missed, event = "<<fEvent<<std::endl;
           fNMissed++;
           nMissed++;
           //fMissedAngleHist->Fill(TMath::ACos(cos3d)*180./TMath::Pi());
           //fMissedDeltaXHist->Fill(std::abs(tpc1MinX+tpc2MinX));
           //fMissedMinLenHist->Fill(std::min(track1->Length(),track2->Length()));
         }
-        if (stitchResult != 0){
-          nStitched++;
-        }   
-      }
-    }
-
-    // Loop over the matched
-    for (auto const& match : matches){
-      // For each track loop over over the other map and compare x positions
-      
-        // Find associated true particle for both tracks
-        std::vector< art::Ptr<recob::Hit> > tpc1Hits = findManyHits.at(match.first.ID());
-        int tpc1TrueId = RecoUtils::TrueParticleIDFromTotalTrueEnergy(tpc1Hits);
-        std::vector< art::Ptr<recob::Hit> > tpc2Hits = findManyHits.at(match.second.ID());
-        int tpc2TrueId = RecoUtils::TrueParticleIDFromTotalTrueEnergy(tpc2Hits);
-
-        // If stitched, true particle ID same and true particle crosses cathode mark as correct, fill hist
-        if (tpc1TrueId == tpc2TrueId && CrossesCathode(particles[tpc1TrueId])){
-          fNCorrect++;
-          nCorrect++;
-          fCorrectAngleHist->Fill(TMath::ACos(cos3d)*180./TMath::Pi());
-          fCorrectDeltaXHist->Fill(std::abs(tpc1MinX+tpc2MinX));
-        }
-
-        // If stitched, true particle IDs not equal and/or true particle doesn't cross cathode mark as incorrect, fill hist
-        if (tpc1TrueId != tpc2TrueId || !CrossesCathode(particles[tpc1TrueId])){ 
-          std::cout<<"Incorrect, event = "<<fEvent<<std::endl;
-          fNIncorrect++;
-          nIncorrect++;
-          fIncorrectAngleHist->Fill(TMath::ACos(cos3d)*180./TMath::Pi());
-          fIncorrectDeltaXHist->Fill(std::abs(tpc1MinX+tpc2MinX));
-        }
-
-        // If not stitched, true particle ID same and true particle crosses cathode mark as missed, fill hist
-        if (!isStitched && tpc1TrueId == tpc2TrueId && CrossesCathode(particles[tpc1TrueId])){
-          std::cout<<"Missed, event = "<<fEvent<<std::endl;
-          fNMissed++;
-          nMissed++;
-          fMissedAngleHist->Fill(TMath::ACos(cos3d)*180./TMath::Pi());
-          fMissedDeltaXHist->Fill(std::abs(tpc1MinX+tpc2MinX));
-          fMissedMinLenHist->Fill(std::min(track1->Length(),track2->Length()));
-        }
 
       } // End of loop over TPC 2 tracks
-    
+      // Match with best candidate (lowest cos theta) add to vector
+      if (lowestCos != -1.) matches.push_back(std::make_pair(track1, matchCandidate));
     } // End of loop over TPC 1 tracks
+
+    // Deal with duplicate matches somehow
+
+    // Loop over vector of matches
+    for (auto const& match : matches){
+      // For each match check if it is correct
+      std::vector< art::Ptr<recob::Hit> > tpc1Hits = findManyHits.at(match.first->ID());
+      int tpc1TrueId = RecoUtils::TrueParticleIDFromTotalTrueEnergy(tpc1Hits);
+      std::vector< art::Ptr<recob::Hit> > tpc2Hits = findManyHits.at(match.second->ID());
+      int tpc2TrueId = RecoUtils::TrueParticleIDFromTotalTrueEnergy(tpc2Hits);
+      // If stitched, true particle ID same and true particle crosses cathode mark as correct, fill hist
+      if (tpc1TrueId == tpc2TrueId && CrossesCathode(particles[tpc1TrueId])){
+        fNCorrect++;
+        nCorrect++;
+        //fCorrectAngleHist->Fill(TMath::ACos(cos3d)*180./TMath::Pi());
+        //fCorrectDeltaXHist->Fill(std::abs(tpc1MinX+tpc2MinX));
+      }
+      // If stitched, true particle IDs not equal and/or true particle doesn't cross cathode mark as incorrect, fill hist
+      else { 
+        //std::cout<<"Incorrect, event = "<<fEvent<<std::endl;
+        fNIncorrect++;
+        nIncorrect++;
+        //fIncorrectAngleHist->Fill(TMath::ACos(cos3d)*180./TMath::Pi());
+        //fIncorrectDeltaXHist->Fill(std::abs(tpc1MinX+tpc2MinX));
+      }
+      nStitched++;
+    }
 
     fStitchingNtuple->Fill();
 
@@ -391,10 +390,7 @@ namespace sbnd {
 
   void TrackStitching::endJob(){
     // Output some variables
-    std::cout<<"Number of true tracks crossing the cathode = "<<nCathodeCrossers<<std::endl
-             <<"Number moved away from cathode             = "<<nCase1<<std::endl
-             <<"Number moved towards cathode, not cut off  = "<<nCase2<<std::endl
-             <<"Number moved towards cathode, cut off      = "<<nCase3<<std::endl
+    std::cout<<"Total number of cathode crossers           = "<<nCathodeCrossers<<std::endl
              <<"Total number of stitched reco tracks       = "<<nStitched<<std::endl
              <<"Number of correctly stitched reco tracks   = "<<nCorrect<<std::endl
              <<"Number of incorrectly stitched reco tracks = "<<nIncorrect<<std::endl
@@ -502,76 +498,89 @@ namespace {
 
   } // HitsPDS()
 
-  // Function to determine if tracks should be stitched
-  int MatchPoints(recob::Track const& track1, recob::Track const& track2, double distLimit){
+  // Function to determine if track starts/ends match
+  int MatchPoints(recob::Track const& track1, recob::Track const& track2, double distLimit, double &cosResult){
 
     // RETURN CODES:
     // 0 = not matched;
     // 11 = start matched with start
-    // 12 = start matched with end, etc
+    // 12 = start matched with end
+    // 21 = end matched with start
+    // 22 = end matched with end
 
-    // Compare start and end x positions
-    TVector3 position1, position2;
-    TVector3 direction1, direction2;
-    bool possibleMatch = false;
-    double origLimit = distLimit;
+    double cos = 1.;
     int code = 0;
 
+    // Compare start and end x positions
     double difference = std::abs(std::abs(track1.Vertex().X())-std::abs(track2.Vertex().X()));
-    if (difference < distLimit && track1.Vertex().X()*track2.Vertex().X < 0.0){
-      position1 = track1.Vertex();
-      position2 = track2.Vertex();
-      direction1 = track1.VertexDirection();
-      direction2 = track2.VertexDirection();
+    if (difference < distLimit && track1.Vertex().X()*track2.Vertex().X() < 0.0){
       distLimit = difference;
-      possibleMatch = true;
+      cos = track1.VertexDirection().Dot(track2.VertexDirection());
       code = 11;
     }
     difference = std::abs(std::abs(track1.Vertex().X())-std::abs(track2.End().X()));
     if (difference < distLimit && track1.Vertex().X()*track2.End().X() < 0.0){
-      position1 = track1.Vertex();
-      position2 = track2.End();
-      direction1 = track1.VertexDirection();
-      direction2 = track2.EndDirection();
       distLimit = difference;
-      possibleMatch = true;
+      cos = track1.VertexDirection().Dot(track2.EndDirection());
       code = 12;
     }
     difference = std::abs(std::abs(track1.End().X())-std::abs(track2.Vertex().X()));
     if (difference < distLimit && track1.End().X()*track2.Vertex().X() < 0.0){
-      position1 = track1.End();
-      position2 = track2.Vertex();
-      direction1 = track1.EndDirection();
-      direction2 = track2.VertexDirection();
       distLimit = difference;
-      possibleMatch = true;
+      cos = track1.EndDirection().Dot(track2.VertexDirection());
       code = 21;
     }
     difference = std::abs(std::abs(track1.End().X())-std::abs(track2.End().X()));
     if (difference < distLimit && track1.End().X()*track2.End().X() < 0.0){
-      position1 = track1.End();
-      position2 = track2.End();
-      direction1 = track1.EndDirection();
-      direction2 = track2.EndDirection();
-      possibleMatch = true;
+      cos = track1.EndDirection().Dot(track2.EndDirection());
       code = 22;
     }
 
-    if (!possibleMatch) return 0;
+    cosResult = cos;
+    return code;
 
-    // If the matched positions are = difference between drift time and readout window mark as a case 3 match
-    art::ServiceHandle<geo::Geometry> geom;
-    auto detprop = lar::providerFrom<detinfo::DetectorPropertiesService>();
-    double readoutWindow  = (double)detprop->ReadOutWindowSize();
-    double driftTimeTicks = 4.0*geom->DetHalfWidth()/detprop->DriftVelocity();
-    double dx = ((readoutWindow-driftTimeTicks)/0.5)*detprop->DriftVelocity();
-    if (std::abs(position1.X()-dx) < origLimit) return 100 + code;
+  } // MatchPoints()
 
-    // Calculate angle between tracks
-    double cos3d = direction1.Dot(direction2);
-    if (cos3d < angleLimit) return 200 + code;
+  std::vector< std::pair< const recob::Track*, const recob::Track* >> StitchWithoutT0(std::vector<const recob::Track*> tracks1, 
+                                                                                      std::vector<const recob::Track*> tracks2, 
+                                                                                      double distLimit, 
+                                                                                      double cosLimit){
 
-  } // StitchTracks()
+    std::vector< std::pair< const recob::Track*, const recob::Track* >> matches;
+
+    // Loop over tracks in first TPC
+    for (auto const& track1 : tracks1){
+
+      double lowestCos = -1.;
+      const recob::Track* matchCandidate = track1; // ugly, needed to avoid warnings
+
+      // Loop over tracks in second TPC
+      for (auto const& track2 : tracks2){
+        
+        // Check if start/end matched
+        double currentCos;
+        int matchResult = MatchPoints((*track1), (*track2), distLimit, currentCos);
+
+        // If they do check if matched points = dx
+        /*if (std::abs(std::abs(track1->Vertex().X())-dx) < fDeltaX || std::abs(std::abs(track1->End().X())-dx) < fDeltaX){
+          // If they do record candidate track and angle
+          if (currentCos < lowestCos){ lowestCos = currentCos; matchCandidate = track2; }
+        }*/     
+
+        // Else check if angle < threshold
+        if (matchResult != 0 && currentCos > cosLimit){
+          // If it is record candidate track and threshold (could add length check)
+          if (currentCos > lowestCos){ lowestCos = currentCos; matchCandidate = track2; }
+        }
+
+      } // End of loop over TPC 2 tracks
+      // Match with best candidate (lowest cos theta) add to vector
+      if (lowestCos != -1.) matches.push_back(std::make_pair(track1, matchCandidate));
+    } // End of loop over TPC 1 tracks
+
+    return matches;
+
+  } // StitchWithoutT0()
 
 } // local namespace
 
