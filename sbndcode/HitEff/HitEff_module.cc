@@ -84,6 +84,7 @@ class MCHits {
   
   int channel;
   int peak_time;
+  int TrackID = 0; 
   double total_charge; 
   double peak_charge; 
   std::vector<std::pair<int,double> > time_charge_vec;
@@ -91,9 +92,13 @@ class MCHits {
 public:
   MCHits(int,int,double,double, std::vector<std::pair<int,double> >); 
   MCHits(int, std::vector<std::pair<int,double> >);
+  MCHits(int, std::vector<std::pair<int,double> >, int);
   int PeakTime(){return peak_time;}
+  int Channel(){return channel;}
+  int Trackid(){return TrackID;}
   double PeakCharge(){return peak_charge;}
   double TotalCharge(){return total_charge;}
+  std::vector<std::pair<int,double> > TimeChargeVec(){return time_charge_vec;}
 };
 
   MCHits::MCHits(int chan, std::vector<std::pair<int,double> > time_char_vec){
@@ -118,6 +123,30 @@ public:
        
   }
 
+MCHits::MCHits(int chan, std::vector<std::pair<int,double> > time_char_vec, int trackid){
+  
+  channel = chan;
+  time_charge_vec = time_char_vec;
+
+  double max_charge =0;
+  double max_time = 0;
+  double charge=0;
+  double sum_charge=0;
+
+  for(std::vector<std::pair<int,double> >::iterator iter = time_charge_vec.begin();iter != time_charge_vec.end();++iter){
+    if(iter->first == (std::prev(iter))->first){charge =+ iter->second;}
+    else {charge = iter->second;}
+    if(charge > max_charge){max_charge = charge; max_time = iter->first;}
+    sum_charge += iter->second;
+  }
+
+  peak_charge = max_charge;
+  total_charge = sum_charge;
+  peak_time = max_time;
+
+  TrackID = trackid ; 
+}
+
 
 MCHits::MCHits(int chan, int peak_t ,double tot_charge, double peak_char,  std::vector<std::pair<int,double> > time_char_vec){
     channel = chan;
@@ -127,7 +156,176 @@ MCHits::MCHits(int chan, int peak_t ,double tot_charge, double peak_char,  std::
     time_charge_vec = time_char_vec;
   }
 
+MCHits MergeHits(MCHits first_hit, MCHits second_hit){
 
+  std::vector<std::pair<int,double> > first_hit_vec = first_hit.TimeChargeVec();
+  std::vector<std::pair<int,double> > second_hit_vec = second_hit.TimeChargeVec();
+  first_hit_vec.insert(first_hit_vec.end(), second_hit_vec.begin(), second_hit_vec.end()); 
+  std::vector<std::pair<int,double> > time_charge_vec =  first_hit_vec;
+  int channel = first_hit.Channel();
+  int TrackID;
+  if(first_hit.Trackid() == second_hit.Trackid()){TrackID = first_hit.Trackid();}
+  else{TrackID=0;}
+  MCHits MC_hit(channel,time_charge_vec,TrackID);
+  return  MC_hit; 
+}
+
+bool sortbysec(const std::pair<int,double> &a,
+	       const std::pair<int,double> &b)
+{
+  return (a.second > b.second);
+}
+
+std::vector<MCHits> CutHit(MCHits hit,std::vector<std::pair<int,double> > MaxPoints){
+  std::vector<MCHits> hit_vec;
+  if(MaxPoints.size()<2){hit_vec.push_back(hit); return hit_vec;} 
+  std::cout << "#########################" << std::endl;
+ 
+  sort(MaxPoints.begin(), MaxPoints.end(), sortbysec); 
+  std::vector<std::pair<int,double> > TimeChargeVector =  hit.TimeChargeVec();
+  TH1D *ChargeHist = new TH1D("ChargeHist","Charge on the Channel Hist",3000,0,3000);
+
+  for(std::vector<std::pair<int,double> >::iterator iter=TimeChargeVector.begin(); iter!=TimeChargeVector.end(); ++iter){
+    ChargeHist->Fill(iter->first,iter->second);
+    std::cout << "time: " << iter->first << " Charge: " << iter->second << std::endl;
+  }
+
+  int n = 3;
+  std::stringstream sstm1; 
+  std::string fit_string;
+  std::vector<double> Parameter_vec;
+  std::vector<std::pair<double,std::vector<double> > > chi2s;
+  std::vector<double> par_min;
+  std::vector<double> par_max;
+
+  // for(std::vector<std::pair<int,double> >::iterator iter=MaxPoints.begin(); iter!=MaxPoints.end(); ++iter){
+  //   Parameter_vec.push_back(iter->second);//max                                                                                                                              
+  //   Parameter_vec.push_back(iter->first);//time position                                                                                                                     
+  //   Parameter_vec.push_back(2);//sigma                                                                                                                                       
+
+  //   par.push_back(0);
+  //   par.push_back(10);
+  //   par.push_back(1);
+  //}
+
+  int lump_num = 0;
+  for(std::vector<std::pair<int,double> >::iterator iter=MaxPoints.begin(); iter!=MaxPoints.end(); ++iter){
+
+    //	  if(iter==MaxPoints.begin()){sstm1 << "([" << n-3 <<"]*TMath::Exp(-0.5*std::pow(((x-["<<n-2<<"])/["<<n-1<<"]),2))/(["<<n-1<<"] *sqrt(2*TMath::Pi()))) ";}
+    //	  else{sstm1 << "+ ([" << n-3 <<"]*TMath::Exp(-0.5*std::pow(((x-["<<n-2<<"])/["<<n-1<<"]),2))/(["<<n-1<<"] *sqrt(2*TMath::Pi())))";}
+    lump_num = lump_num +1;
+    if(iter==MaxPoints.begin()){sstm1 << "([" << n-3 <<"]*TMath::Exp(-0.5*std::pow(((x-["<<n-2<<"])/["<<n-1<<"]),2))) ";}                   
+    else{sstm1 << "+ ([" << n-3 <<"]*TMath::Exp(-0.5*std::pow(((x-["<<n-2<<"])/["<<n-1<<"]),2))) ";}    
+	  fit_string = sstm1.str();          
+	  const char* fit_name = fit_string.c_str();
+	  std::cout << "test 1 " <<std::endl;
+	  //	  TF1 *gausFit = new TF1( "gausfit", fit_name,TimeChargeVector.begin()->first,std::prev(TimeChargeVector.end())->first);           
+
+	  Parameter_vec.push_back(iter->second);//max                                                                                                                          
+	  Parameter_vec.push_back(iter->first);//time position                                                                                                                 
+	  Parameter_vec.push_back(2);//sigma                                            
+ 
+	  par_min.push_back(MaxPoints[MaxPoints.size()-1].second);
+	  //	  par_min.push_back(TimeChargeVector[0].first);
+	  par_min.push_back(2);  
+	  par_min.push_back(1);
+
+	  par_max.push_back(MaxPoints[0].second);
+          //par_max.push_back(TimeChargeVector[TimeChargeVector.size()-1].first);
+	  par_max.push_back(2); 
+	  par_max.push_back(1);
+
+	  if(iter != MaxPoints.begin() && iter != MaxPoints.end()){
+	    for(std::vector<std::pair<int,double> >::iterator jter=iter; jter!=MaxPoints.end(); ++jter){
+	      TF1 *gausFit = new TF1( "gausfit", fit_name,TimeChargeVector.begin()->first,std::prev(TimeChargeVector.end())->first);
+                Parameter_vec[n-3] = jter->second;//max                                                                                    
+	        Parameter_vec[n-2] = jter->first;//time position                                                                           
+	        //Parameter_vec[n-1].push_back(2);//sigma                                                                                            
+		
+
+		for(Int_t i=0; i<n; ++i){gausFit->SetParameter(i,Parameter_vec[i]); gausFit->SetParLimits(i, par_min[i], par_max[i]);}        
+                                 
+
+	    ChargeHist->Fit(gausFit,"R");                                                                                                  
+                                  
+            std::cout << "Chi2: " << gausFit->GetChisquare() <<std::endl;                                                                  
+	    std::vector<double> Parameters;                                
+	    for(Int_t i=0; i<n; ++i){std::cout << "Parameter " << i << ": "  << gausFit->GetParameter(i) <<std::endl; Parameters.push_back(gausFit->GetParameter(i));}
+	    ChargeHist->Write();     
+	    chi2s.push_back(std::make_pair(gausFit->GetChisquare(),Parameters));
+   
+
+	    delete gausFit;   
+	    }
+	  }
+	    else{  std::cout << "Max:  " << iter->second << " Time: " << iter->first << std::endl;
+	      TF1 *gausFit = new TF1( "gausfit", fit_name,TimeChargeVector.begin()->first,std::prev(TimeChargeVector.end())->first);
+	      
+	      for(Int_t i=0; i<n; ++i){gausFit->SetParameter(i,Parameter_vec[i]); gausFit->SetParLimits(i, par_min[i], par_max[i]);}
+	      
+	      ChargeHist->Fit(gausFit,"R");
+
+	      std::cout << "Chi2: " << gausFit->GetChisquare() <<std::endl;
+	      std::vector<double> Parameters;
+	      for(Int_t i=0; i<n; ++i){std::cout << "Parameter " << i << ": "  << gausFit->GetParameter(i) <<std::endl;
+		Parameters.push_back(gausFit->GetParameter(i));}
+	      ChargeHist->Write();
+	      chi2s.push_back(std::make_pair(gausFit->GetChisquare(),Parameters));
+	      delete gausFit;
+	    }
+
+	    n=n+3;
+	   
+  }
+            delete ChargeHist;
+
+  double min_chi2 = 1e9;
+  std::pair<double,std::vector<double > > min_chi2_info;
+
+  for(std::vector< std::pair<double,std::vector<double > > >::iterator iter=chi2s.begin(); iter!=chi2s.end(); ++iter){
+    if(iter->first < min_chi2){min_chi2 = iter->first; min_chi2_info = *iter; }
+  }
+
+  double gaus;
+
+  for(unsigned int n=3; n<(min_chi2_info.second).size() +1; n = n+ 3){
+    std::vector<std::pair<int,double> > TimeChargeVector_new;
+
+    for(std::vector<std::pair<int,double> >::iterator iter=TimeChargeVector.begin(); iter!=TimeChargeVector.end(); ++iter){
+
+      gaus =  min_chi2_info.second.at(n-3)*TMath::Exp(-0.5*std::pow(((iter->first - min_chi2_info.second.at(n-2))/ min_chi2_info.second.at(n-1)),2)); 
+      TimeChargeVector_new.push_back(std::make_pair(iter->first, gaus));
+    }
+    
+      MCHits  Split_hit(hit.Channel(),TimeChargeVector_new,hit.Trackid());
+      hit_vec.push_back(Split_hit);
+
+
+      std::vector<std::pair<int,double> > TimeChargeVector_temp = Split_hit.TimeChargeVec();
+      TH1D *ChargeHist = new TH1D("ChargeHist","Charge on the Channel Hist",3000,0,3000);
+      for(std::vector<std::pair<int,double> >::iterator jjter=TimeChargeVector_temp.begin(); jjter!=TimeChargeVector_temp.end(); ++jjter){
+	ChargeHist->Fill(jjter->first,jjter->second);
+      }
+      ChargeHist->Write();
+      delete ChargeHist;
+
+
+  }
+
+  return hit_vec;
+}
+ 
+
+Double_t GausFit(Double_t *x, Double_t *par){
+  return  par[0]*TMath::Exp(-0.5*std::pow(((x[0]-par[1])/par[2]),2))/(par[2] *sqrt(2*TMath::Pi()));
+}
+
+
+Double_t NGausFit(Double_t *x, Double_t *par){
+  std::cout << "test of NGausFit" << std::endl;
+  //  if(GiveN == 3){return GausFit(x,par);}
+  return GausFit(x,par) +  NGausFit(x,&par[3]);
+}
 
 class ana::HitEff : public art::EDAnalyzer {
 public:
@@ -169,7 +367,7 @@ ana::HitEff::HitEff(const fhicl::ParameterSet& pset) : EDAnalyzer(pset) {
 void ana::HitEff::analyze(const art::Event& evt) {
   event = event +1;
 
-
+  TFile *f = new TFile("TimeVsWire","RECREATE");
  
   // const detinfo::DetectorClocks* ts = lar::providerFrom<detinfo::DetectorClocksService>();
   
@@ -209,13 +407,21 @@ void ana::HitEff::analyze(const art::Event& evt) {
 
   }
 
+
+  TH1D *BckTrackTotChargeHist = new TH1D("TotChargeHist","Ratio difference between reco and MC Total Charge",500,-1.5,1.5);
+  TH1D *BckTrackTotChargeHist0 = new TH1D("TotChargeHist0","Ratio difference between reco and MC Total Charge",500,-1.5,1.5);
+  TH1D *BckTrackTotChargeHist1 = new TH1D("TotChargeHist1","Ratio difference between reco and MC Total Charge",500,-1.5,1.5);
+  TH1D *BckTrackTotChargeHist2 = new TH1D("TotChargeHist2","Ratio difference between reco and MC Total Charge",500,-1.5,1.5);
+
   int test2=0;
   // Assign a track id to a hit. Now there is contributions from delta rays (id=-1) and the muon (id=1)                                                                          
   std::map<art::Ptr<recob::Hit>,int >    likelyTrackID;
 
+  //std::map<int,art::Ptr<recob::Hit> > MuonOnlyHits;
+
   // Loop over hits.                                                                                                                                                              
   for(std::vector<art::Ptr<recob::Hit> >::iterator hitIt = hits.begin(); hitIt != hits.end(); ++hitIt){
-    double particleEnergy = 0;
+  double particleEnergy = 0;
 
 
 
@@ -224,18 +430,76 @@ void ana::HitEff::analyze(const art::Event& evt) {
     if(wire_id.Plane ==2){++test2;}
     std::vector<sim::TrackIDE> trackIDs = backtracker->HitToTrackID(hit);
     // true_reco_hit ++                                                                                                                                                          
+     double  mc_qsum=0;
 
+     // if(trackIDs.size() == 1 && trackIDs.at(0).trackID){MuonOnlyHits.push_back(hit);}
+     
     for (unsigned int idIt = 0; idIt < trackIDs.size(); ++idIt) {
 
+      
+      //   if(trackIDs.at(idIt).trackID != 1 && trackIDs.at(idIt).numElectrons < 348.22){MuonOnlyHits.push_back(hit);}
+ 
       //      const simb::MCParticle * MotherParticle = backtracker->TrackIDToMotherParticle(trackIDs.at(idIt).trackID);                                                         
+      mc_qsum  +=  trackIDs.at(idIt).numElectrons;
 
+   
       //Assign the track ID to hit that contributes the most energy.                                                                                                             
       if (trackIDs.at(idIt).energy > particleEnergy) {
 	particleEnergy = trackIDs.at(idIt).energy;
 	likelyTrackID[hit] = trackIDs.at(idIt).trackID;
       }
     }
+
+    double      reco_tot = hit->Integral();
+    double      totalchargediff;
+
+    if( wire_id.Plane == 0){
+      totalchargediff = (mc_qsum*0.02354  - reco_tot)/(mc_qsum*0.02354 );
+      BckTrackTotChargeHist0->Fill(totalchargediff);
+    }
+    else if( wire_id.Plane == 2){
+      totalchargediff = (mc_qsum*0.02354  - reco_tot)/(mc_qsum*0.02354 );
+      BckTrackTotChargeHist2->Fill(totalchargediff);
+    }
+    else{
+      totalchargediff = (mc_qsum*0.0213  - reco_tot)/(mc_qsum*0.0213);
+      BckTrackTotChargeHist1->Fill(totalchargediff);
+    }
+
+
+    BckTrackTotChargeHist->Fill(totalchargediff);
+
   }
+
+
+
+  BckTrackTotChargeHist->Draw("same");
+  BckTrackTotChargeHist->SetName("BckTrackTotalCharge");
+  BckTrackTotChargeHist->GetXaxis()->SetTitle("(mc_tot - reco_tot)/mc_tot");
+  BckTrackTotChargeHist->SetTitle("BckTrackTotal Charge ");
+  BckTrackTotChargeHist->Write();
+
+  BckTrackTotChargeHist0->Draw("same");
+  BckTrackTotChargeHist0->SetName("BckTrackTotalCharge 0");
+  BckTrackTotChargeHist0->GetXaxis()->SetTitle("(mc_tot - reco_tot)/mc_tot");
+  BckTrackTotChargeHist0->SetTitle("BckTrackTotal Charge0 ");
+  BckTrackTotChargeHist0->Write();
+
+  BckTrackTotChargeHist1->Draw("same");
+  BckTrackTotChargeHist1->SetName("BckTrackTotalCharge 1");
+  BckTrackTotChargeHist1->GetXaxis()->SetTitle("(mc_tot - reco_tot)/mc_tot");
+  BckTrackTotChargeHist1->SetTitle("BckTrackTotal Charge ");
+  BckTrackTotChargeHist1->Write();
+
+  BckTrackTotChargeHist2->Draw("same");
+  BckTrackTotChargeHist2->SetName("BckTrackTotalCharge 2");
+  BckTrackTotChargeHist2->GetXaxis()->SetTitle("(mc_tot - reco_tot)/mc_tot");
+  BckTrackTotChargeHist2->SetTitle("BckTrackTotal Charge ");
+  BckTrackTotChargeHist2->Write();
+
+
+
+
 
   //Define the graphs that show the WireVsTime
   gInterpreter->GenerateDictionary("std::map<geo::PlaneID,TGraph*>","TGraph.h;map");
@@ -262,45 +526,45 @@ void ana::HitEff::analyze(const art::Event& evt) {
   int mchit_num=0;
   int channel_num;
   int logic_int;
+
   double peak_time=0;
+  double charge_cut=348.22; //2ADCs in Electrons 
+  int dt_threshold =2;
   int test=0;
+  
   std::map<unsigned int,std::vector<MCHits> > channel_MCHit_map; 
   std::vector<MCHits> MC_vec;
   
   //loop over the mchit collections (i.e loop over all the wires with MC hits) and find how many true hits we have.
   for(auto const& mchits : mchits_v) {
     
+    TH1D *ChargeHist = new TH1D("ChargeHist","Charge on the Channel Hist",3000,0,3000);
+
    
     geo::PlaneID plane = geom->ChannelToWire(mchits.Channel()).at(0).planeID();
     channel_num = mchits.Channel();
     channels.push_back(channel_num);
    
     // Set the logic to 0 for the collection this allows that one hit is counted from the collection
-    logic_int=0;
+       logic_int=0;
 
 
     std::vector<std::pair<int,double> > total_time_charge_vec;
     std::vector<std::pair<int,double> > time_charge_vec;
     std::map<int, double> charge_map;
+    std::map<int,std::vector<std::pair<int,double> > > TrackIDtoMCHitMap;
 
     //loop of the MChits in the collection  
     for(auto const& mchit : mchits){
 
       ++test;
       total_time_charge_vec.push_back(std::make_pair(mchit.PeakTime(),mchit.Charge(true))); 
-      charge_map[mchit.PeakTime()] += mchit.Charge(true);
-
-      //Only count MC Hits that are above the threshold of the detector (maybe should add up all the charge in a voxel). 1740 is 10ADCs
-      if(mchit.Charge(true) > 1){
-
-        //The MC hits run in time order. If there is a seperation in the voxels of one tick then another hit exists. Reset logic int to zero so this is additional hit is counted  
-	if(mchit.PeakTime() > peak_time + 4){logic_int=0;}
-	if(logic_int==0){
-	  // ++mchit_num; logic_int=1; 
-      	}
-	//	mcbighits[mchit] = mchit_num;
-	      
-         peak_time = mchit.PeakTime();
+      charge_map[mchit.PeakTime()] =  charge_map[mchit.PeakTime()] +  mchit.Charge(true);
+      ChargeHist->Fill(mchit.PeakTime(),mchit.Charge(true));
+      //      std::cout << " Charge: " << mchit.Charge(true) << " Time: " << mchit.PeakTime() << " Track ID: " << mchit.PartTrackId()<< " Channel: " << channel_num << std::endl;
+      TrackIDtoMCHitMap[mchit.PartTrackId()].push_back(std::make_pair(mchit.PeakTime(),mchit.Charge(true)));
+      //      if(mchit.Charge(true)>charge_cut){MCHitVec.push_back(mchit);}  
+      peak_time = mchit.PeakTime();
 
         // Add points for the WireVsTime Graph 
 	 if(mchit.PartTrackId() == -1){
@@ -315,49 +579,241 @@ void ana::HitEff::analyze(const art::Event& evt) {
 	 //	 std::cout << "channel_num " << channel_num << " ID " << mchit.PartTrackId() << " Peak Time " << peak_time  << " Charge: " << mchit.Charge(true)<<std::endl;
 	   Graph_map[plane]->SetPoint(Graph_map[plane]->GetN(),channel_num, peak_time);
       
-      } //Charge Threshold
 
     } //MC Hit Loop
+    
 
-    if(time_charge_vec.size() < 0){continue;}
 
-    for(std::vector<std::pair<int,double> >::iterator iter=total_time_charge_vec.begin(); iter != total_time_charge_vec.end(); ++iter){
-	time_charge_vec.push_back(*iter);
+
+    // std::cout << " ###########################################" << std::endl;
+    // std::cout << "channel_num " << channel_num << std::endl; 
+
+    //This method for defining true hits was to find the chi2 of NGaussian Fits until the chi2 was no longer getting smaller. The Parameters need to be defined to get this to work not sure how
+    //###################################################################################################  
+    //    double chi2 = 99999999999999;
+    //    double chi2_new = 0;
+    //    int n = 3;
+    //    std::vector<double> Parameter_vec;
+    //    Double_t nextmax = ChargeHist->GetMaximumBin();
+    //    std::cout << "GetMaxBin " << nextmax <<std::endl;
+    //    Double_t max = ChargeHist->GetMaximum();
+    //    std::cout << "GetMax " << max << std::endl;
+    //    TF1 *gausFit = new TF1( "gausfit", GausFit,total_time_charge_vec.begin()->first,std::prev(total_time_charge_vec.end())->first,n);
+    //    // Parameter_vec.push_back(nextmax);
+    //    //Parameter_vec.push_back(1);
+    //    //Parameter_vec.push_back(nextmax);
+    //    //for(Int_t i=0; i<n; ++i){gausFit->SetParameter(i,Parameter_vec[i]);}
+    //    std::cout << "Fit Test" << std::endl;    
+    //    ChargeHist->Fit(gausFit,"R");
+    // std::string fit_string;
+    // std::stringstream sstm1;
+    // sstm1 << "([" << n-3 <<"]*TMath::Exp(-0.5*std::pow(((x-["<<n-2<<"])/["<<n-1<<"]),2))/(["<<n-1<<"] *sqrt(2*TMath::Pi()))) ";
+    //    while(chi2 > chi2_new){ 
+    //      n = n+3;
+    //      chi2 = gausFit->GetChisquare();
+    //      sstm1 <<  "+ ([" << n-3 <<"]*TMath::Exp(-0.5*std::pow(((x-["<<n-2<<"])/["<<n-1<<"]),2))/(["<<n-1<<"] *sqrt(2*TMath::Pi())))";
+    //      fit_string = sstm1.str();
+    //      const char* fit_name = fit_string.c_str();
+    //      TF1 *gausFit = new TF1( "gausfit", fit_name,total_time_charge_vec.begin()->first,std::prev(total_time_charge_vec.end())->first);
+    //      //Parameter_vec.push_back(nextmax);
+    //      //Parameter_vec.push_back(1);
+    //      //Parameter_vec.push_back(nextmax);
+    //      //for(Int_t i=0; i<n; ++i){gausFit->SetParameter(i,Parameter_vec[i]);}
+    //      ChargeHist->Fit(gausFit,"R");
+    //      std::cout << "Chi2: " << gausFit->GetChisquare() <<std::endl;
+    //      nextmax = ChargeHist->GetMaximum(nextmax);
+    //      chi2_new = gausFit->GetChisquare();
+    //    }
+    //    ChargeHist->Write();
+    //    delete ChargeHist;
+    //    delete gausFit;
+
+
+    //This method takes mutliple cuts of the hits to try to take a true hit which is mimics a reco hit
+    //###################################################################################################  
+    // if(total_time_charge_vec.size() == 0){continue;}
+    // std::vector<std::pair<int,double> >::iterator prev_iter=total_time_charge_vec.begin();
+    // std::vector<std::pair<int,double> >::iterator next_iter;
+    // std::vector<std::pair<int,double> >::iterator prev_iter_temp;
+    
+    // for(std::vector<std::pair<int,double> >::iterator iter=total_time_charge_vec.begin(); iter != total_time_charge_vec.end(); ++iter){
+
+
+    //   next_iter =std::next(iter);
+
+    //   if(prev_iter ==total_time_charge_vec.begin()){prev_iter = iter; continue;}
+    //   else if(charge_map[std::prev(iter)->first]  < charge_cut && std::prev(prev_iter)->first != iter->first && iter != std::prev(total_time_charge_vec.end())){}
+    //   else if(std::prev(prev_iter)->first == iter->first){prev_iter = std::prev(prev_iter);}
+    //   else{prev_iter = std::prev(iter);}
+
+    //   time_charge_vec.push_back(*iter);
+
+    //   if(charge_map[iter->first]  < charge_cut  && iter != std::prev(total_time_charge_vec.end())){continue;}
+    
+    //   if(logic_int ==0){prev_iter = std::prev(iter);}
+    //   logic_int=1;
+
+    //   //If there is a gap of 1 tick make a new hit
+    // 	if(prev_iter->first < iter->first - 1){
+    // 	  MCHits MC_hit(channel_num,time_charge_vec,iter->first); channel_MCHit_map[channel_num].push_back(MC_hit); MC_vec.push_back(MC_hit); time_charge_vec.clear(); 
+    // 	} 
+    //   //If at the end of the charge vector this a new hit
+    // 	else if(iter == std::prev(total_time_charge_vec.end())){
+    // 	  MCHits  MC_hit(channel_num,time_charge_vec,iter->first); channel_MCHit_map[channel_num].push_back(MC_hit); MC_vec.push_back(MC_hit); time_charge_vec.clear();
+    // 	}
+    //   //If there is a minimum point create a new hit 
+    // 	 else if(charge_map[prev_iter->first] >= charge_map[(iter)->first] && charge_map[next_iter->first] >= charge_map[(iter)->first]){
+
+    // 	   prev_iter_temp = prev_iter;
+    // 	   while(charge_map[next_iter->first] == charge_map[(iter)->first]){ next_iter = std::next(next_iter);}
+    // 	   while(charge_map[prev_iter_temp->first] == charge_map[(iter)->first]){ prev_iter_temp = std::prev(prev_iter_temp);}
+    // 	   if(charge_map[prev_iter_temp->first] > charge_map[(iter)->first] && charge_map[next_iter->first] > charge_map[(iter)->first]){
+    //        if(prev_iter->first == iter->first){continue;}
+    // 	   MCHits MC_hit(channel_num,time_charge_vec,iter->first); channel_MCHit_map.push_back(MC_hit); MC_vec.push_back(MC_hit);time_charge_vec.clear();
+    // 	   }
+    // 	 }
+    // }
+    
+    //This method takes mutliple takes delta ray and muon contribution seperately placing a cut on the dt of the muon and charge threshold.                                       
+    //###################################################################################################
+
+  //   if(total_time_charge_vec.size() == 0){continue;}                                                                                                                             
+
+    for(std::map<int,std::vector<std::pair<int,double> > >::iterator jter=TrackIDtoMCHitMap.begin(); jter!=TrackIDtoMCHitMap.end(); ++jter){
+
+      std::vector<MCHits> MC_vec_temp;
+      std::vector<std::pair<int,double> >::iterator prev_iter=(jter->second).begin();
+      std::vector<std::pair<int,double> >::iterator next_iter;
+            
+      for(std::vector<std::pair<int,double> >::iterator iter=(jter->second).begin(); iter!=(jter->second).end(); ++iter){ 
+      
+      next_iter =std::next(iter);                                                                                                                                                
+      if(iter == (jter->second).begin()){prev_iter = iter; if(iter->second  > charge_cut){time_charge_vec.push_back(*iter);} continue;}                                            
+      else if(std::prev(prev_iter)->first == iter->first && prev_iter != (jter->second).begin()){prev_iter = std::prev(prev_iter);}                                               
+      else{prev_iter = std::prev(iter);}                                                                                                                                        
+
+
+         if(charge_map[iter->first]  < charge_cut  && iter != std::prev((jter->second).end())){continue;}                                                                  
+	 //    if(iter->second  < charge_cut  && iter != std::prev((jter->second).end())){continue;}
+      else if(iter->second  < charge_cut  && iter == std::prev((jter->second).end())){}
+      else{time_charge_vec.push_back(*iter);}//std::cout<< "Time: " << iter->first << " Charge: " << iter->second << std::endl; }
+
+      if(logic_int ==0){prev_iter = std::prev(iter);}                                                                                                                          
+      logic_int=1;                                                                                                                                                               
+
+
+      //If at the end of the charge vector this a new hit                                                                                                                        
+       if(iter == std::prev((jter->second).end())){                                                                                                                 
+       if(time_charge_vec.size() == 0){continue;}
+       MCHits  MC_hit(channel_num,time_charge_vec,jter->first); //channel_MCHit_map[channel_num].push_back(MC_hit); 
+       MC_vec_temp.push_back(MC_hit); time_charge_vec.clear();
+       }
+     //If there is a gap of 1 tick make a new hit                                                                                                                                   
+     else  if(next_iter->first - iter->first > 1){
+       MCHits MC_hit(channel_num,time_charge_vec,jter->first); //channel_MCHit_map[channel_num].push_back(MC_hit);                                                                
+       MC_vec_temp.push_back(MC_hit); time_charge_vec.clear();
+     }                                                                                                                                                                           
+    
+
+
+     }//iter
+  
+     for(unsigned int i=0; i< MC_vec_temp.size(); ++i){
+
+       std::vector<std::pair<int,double> > timeChargeVec = MC_vec_temp[i].TimeChargeVec();
+       std::vector<std::pair<int,double> > MaxPoints;
+       std::vector<std::pair<int,double> >::iterator prev_kter;
+       std::vector<std::pair<int,double> >::iterator next_kter;
+       for(std::vector<std::pair<int,double> >::iterator kter = timeChargeVec.begin(); kter!=timeChargeVec.end(); ++kter){
+       
+
+  	 if(kter == timeChargeVec.begin()){continue;}
+  	 else{prev_kter = std::prev(kter);}
+
+  	 if(kter == std::prev(timeChargeVec.end())){continue;}    
+  	 else{next_kter = std::next(kter);}
+
+  	   if(prev_kter->second < kter->second  && next_kter->second < kter->second){
+  	     MaxPoints.push_back(std::make_pair(kter->first,kter->second));
+  	   }
+       }
+  	 std::vector<MCHits> MC_hits = CutHit(MC_vec_temp[i],MaxPoints);
+  	 channel_MCHit_map[channel_num].insert(channel_MCHit_map[channel_num].end(),  MC_hits.begin(),  MC_hits.end());
+  	 //	 MC_vec.insert(MC_vec.end(),  channel_MCHit_map[channel_num].begin(),  channel_MCHit_map[channel_num].end());
+
+     }
+       
+  }
+     
+
+  
+  
+
+  
+    //  for(std::map<int,std::vector<std::pair<int,double> > >::iterator iter=TrackIDtoMCHitMap.begin(); iter!=TrackIDtoMCHitMap.end(); ++iter){
+      
+    // MCHits MC_hit(channel_num,iter->second,iter->first); channel_MCHit_map[channel_num].push_back(MC_hit); //MC_vec.push_back(MC_hit);
+
+    //}
+    std::vector<std::vector<MCHits>::iterator> erase_hits_vec;
+    std::vector<MCHits> merged_hits;
+
+    // if(channel_MCHit_map[channel_num].size()<2){continue;}
+
+    if(channel_MCHit_map[channel_num].size()>1){
+    for(std::vector<MCHits>::iterator iter=channel_MCHit_map[channel_num].begin(); iter !=channel_MCHit_map[channel_num].end(); ++iter){ 
+      if(TMath::Abs(iter->PeakTime() - std::prev(iter)->PeakTime()) < dt_threshold && iter!=channel_MCHit_map[channel_num].begin()){
+	//	std::cout << "(iter->PeakTime(): " << iter->PeakTime() << "   std::prev(iter)->PeakTime(): " << std::prev(iter)->PeakTime() <<std::endl;  
+	MCHits MergeHit =  MergeHits(*iter,*std::prev(iter));
 	
-	//if(iter->second < 200 && iter != std::prev(total_time_charge_vec.end())){continue;}  
-	if((std::next(iter))->first > iter->first + 1){
-	  MCHits MC_hit(channel_num,time_charge_vec); channel_MCHit_map[channel_num].push_back(MC_hit); MC_vec.push_back(MC_hit); time_charge_vec.clear();
-	} 
-	else if(charge_map[(std::prev(iter))->first] > charge_map[(iter)->first] && charge_map[(std::next(iter))->first] > charge_map[(iter)->first]){
-	  MCHits MC_hit(channel_num,time_charge_vec); channel_MCHit_map[channel_num].push_back(MC_hit); MC_vec.push_back(MC_hit);time_charge_vec.clear(); 
-	}
-	else if(iter == std::prev(total_time_charge_vec.end())){
-	  MCHits  MC_hit(channel_num,time_charge_vec); channel_MCHit_map[channel_num].push_back(MC_hit); MC_vec.push_back(MC_hit); time_charge_vec.clear();
-	}
+
+	if (std::find(erase_hits_vec.begin(), erase_hits_vec.end(), iter) == erase_hits_vec.end()) {erase_hits_vec.push_back(iter);}
+	if (std::find(erase_hits_vec.begin(), erase_hits_vec.end(), std::prev(iter)) == erase_hits_vec.end()) {erase_hits_vec.push_back(std::prev(iter));}
+
+	merged_hits.push_back(MergeHit);
+      }
+
     }
     
 
-      //  if(iter->second < 9999999999){continue;}
-      //try{ 
-      //	auto next_iter = std::next(iter);
-      //	if(next_iter->first > iter->first + 1){++mchit_num;} 
-      //	else if((std::prev(iter))->second > iter->second && (std::next(iter))->second > iter->second){++mchit_num;}
-      // }
-      // catch (...) { std::cout << "default exception"; }
-    
-    
-        
- 
-    
+    for(std::vector<std::vector<MCHits>::iterator>::iterator iter=erase_hits_vec.begin(); iter!=erase_hits_vec.end();++iter){
+
+      channel_MCHit_map[channel_num].erase(*iter);
+      }
+    }
+    channel_MCHit_map[channel_num].insert(channel_MCHit_map[channel_num].end(),  merged_hits.begin(),  merged_hits.end());
+    MC_vec.insert(MC_vec.end(),  channel_MCHit_map[channel_num].begin(),  channel_MCHit_map[channel_num].end());
+   
+    int MUON_Hits =0;
+    if(channel_MCHit_map[channel_num].size()>1){
+    for(std::vector<MCHits>::iterator iter=channel_MCHit_map[channel_num].begin(); iter !=channel_MCHit_map[channel_num].end(); ++iter){
+      if(iter->Trackid() != -1){ ++MUON_Hits;}
+     
+    }}
+    if(MUON_Hits>1){std::cout<<"This is the event!"<<std::endl;}
   } //MC HitCollection Loop
-  
+
+
+  std::vector<MCHits> MuonMCHits;
+  std::vector<MCHits>::iterator iter=MC_vec.begin();
+  //  for(std::vector<MCHits>::iterator iter=MC_vec.begin(); iter!=MC_vec.end(); ++iter){
+  while(iter != MC_vec.end()) {  
+    if(iter->PeakCharge() < charge_cut){iter = MC_vec.erase(iter); continue;}
+    std::cout << " Peak Time:" << iter->PeakTime() << " Peak Charge: " << iter->PeakCharge() << " Channel: " << iter->Channel() << "TrackID: " << iter->Trackid()  <<std::endl;
+    std::vector<std::pair<int,double> > timechargevec = iter->TimeChargeVec();
+    for(std::vector<std::pair<int,double> >::iterator  jter=timechargevec.begin(); jter!=timechargevec.end(); ++jter){
+         std::cout<< "Charge " << jter->second << " Time: " << jter->first << std::endl;
+    }
+
+    if(iter->Trackid() != -1){MuonMCHits.push_back(*iter);}
+    ++iter;
+  }
 
   //Create the the names of the of the graphs and write to file. 
   std::string map_string;
   std::string map_stringm1;
   std::string map_string1;
 
-  TFile *f = new TFile("TimeVsWire","RECREATE");
 
   std::cout << "Graph map Size: " <<Graph_map.size() << std::endl;
   for(geo::PlaneID plane_id: geom->IteratePlaneIDs()){
@@ -468,7 +924,7 @@ void ana::HitEff::analyze(const art::Event& evt) {
       // std::cout << " The reco peak time is: " << peak_time.PeakTime() << std::endl;
       //std::cout << " ID " <<  (*start_iter).PartTrackId() <<  " The MC Peak time is: " << (*start_iter).PeakTime() << std::endl;
       //std::cout << "dt " << dt << " Charge: " << (*start_iter).Charge(true) << std::endl;
-
+      
       if(abs_dt<0) abs_dt *= -1;
       //if(abs_dt>5){std::cout << "interesting event"<<std::endl;}
 
@@ -482,22 +938,24 @@ void ana::HitEff::analyze(const art::Event& evt) {
 	mc_q = mc_q + iter->PeakCharge();
         mc_qsum = mc_qsum + iter->TotalCharge();
       }
-    
+      
+
       //}
       //Find the MCHits that have been matched to a reco hit and get rid of them. 
       //      mcbighits.erase(*start_iter);
       
  
-      std::cout << "mc_q: " << mc_q << " sum: " << mc_qsum << std::endl;
+      //      std::cout << "mc_q: " << mc_q << " sum: " << mc_qsum << std::endl;
 
 
    
     }// MC Hits Loop
     
     //    reco_to_MC_map[hit] =  mcbighits[std::make_pair(MCHit_peak,ch)]; 
-    //    std::cout << "abds_td_min: " << abs_dt_min << "Charge: " << mc_q <<"  " <<wire_id << " hit num: " <<  mcbighits[std::make_pair(MCHit_peak,ch)] <<std::endl;
+    std::cout << "abds_td_min: " << abs_dt_min << "Charge: " << mc_q <<"  channel  " <<  ch <<std::endl;
     //Take Note of any Noise Hits.
-    if(mc_qsum == 0){
+    if(abs_dt_min > 20){
+      std::cout << "intersting event" <<std::endl;
       noise_hits.push_back(hit);
     }
     else{
@@ -526,8 +984,10 @@ void ana::HitEff::analyze(const art::Event& evt) {
       }
       }
   
-    //std::cout << "Total Charge: " << mc_qsum*0.0224426  << " Reco Charge: " << reco_tot <<"Wire ID " << wire_id << std::endl;
-
+    // std::cout << "Total Charge: " << mc_qsum*0.0224426  << " Reco Charge: " << reco_tot <<" channel num " << ch << std::endl;
+    //    if(mc_qsum*0.0224426 <  reco_tot - 100){std::cout << "mcCharge under"<< std::endl;}
+    //if(mc_qsum*0.0224426 >  reco_tot + 100){std::cout <<"mcCharge over"<< std::endl;}
+    //    std::cout << "Wire ID: " << wire_id << std::endl;
 
   } // Reco Hits Loop
 
@@ -856,7 +1316,7 @@ void ana::HitEff::analyze(const art::Event& evt) {
       
   //   }
 
-  //numberoftruehits = numberoftruehits+colltruehits;
+  // numberoftruehits = numberoftruehits+colltruehits;
 
   //Find the number of hits in the plane in total and place in a channel map to look for wires with more than 2 hits.
   for(std::vector<art::Ptr<recob::Hit> >::iterator hitIt = hits.begin(); hitIt != hits.end(); ++hitIt){
@@ -883,15 +1343,22 @@ void ana::HitEff::analyze(const art::Event& evt) {
   //   }
   // }
 
-  
+  std::map<int,int> mt1_channelmap;  
 //Find the number of channels with more than one hit from all the hits.
 for(std::map<int,int>::iterator channelIt = channelmap.begin(); channelIt != channelmap.end(); ++channelIt){
   if(channelIt->second != 1){
-    ++number_of_wires_with_morethan_one_hit;
-    //    std::cout << "The Channel: " << channelIt->first << " has more than one hit. It has hits: " << channelIt->second << std::endl;
-  }
- } 
+    
+    mt1_channelmap[channelIt->first] = channelIt->second;
+    if(channelIt->first != 0){mt1_channelmap[(channelIt->first) - 1] = channelIt->second;}
+    int channel_map_size_m1 = channelmap.size() - 1;
+      if(channelIt->first != channel_map_size_m1){mt1_channelmap[(channelIt->first) + 1] = channelIt->second;}
   
+    ++number_of_wires_with_morethan_one_hit;
+  }  //    std::cout << "The Channel: " << channelIt->first << " has more than one hit. It has hits: " << channelIt->second << std::endl;
+ 
+
+ }
+    
 
 
 
@@ -899,9 +1366,10 @@ for(std::map<int,int>::iterator channelIt = channelmap.begin(); channelIt != cha
   double  wires_that_are_crossed = WiresCrossed_map[plane_it].size();
   
   // number_of_wires_with_one_truehit = number_of_wire_that_are_truehit - number_of_wires_with_morethan_one_truehit;
- number_of_wires_with_one_hit = number_of_wire_that_are_hit - number_of_wires_with_morethan_one_hit; 
+  number_of_wires_with_one_hit = number_of_wire_that_are_hit - number_of_wires_with_morethan_one_hit; 
 
-
+  double number_of_wires_not_excluded =  number_of_wire_that_are_hit-mt1_channelmap.size();
+  std::cout << "number_of_wires_not_excluded = " << number_of_wires_not_excluded << std::endl;
  //Efficiencies 
 
      //The number of wires which see one hit/ number of wires cross  - number of wires which see more than one hit.
@@ -942,7 +1410,8 @@ for(std::map<int,int>::iterator channelIt = channelmap.begin(); channelIt != cha
  std::cout << " #############################################" << std::endl;
 
   }//plane loop
-
+ 
+  std::cout << " MuonMCHits.size(): " << MuonMCHits.size() <<std::endl;
   std::cout << "MC_vec.size() " << MC_vec.size() << std::endl;
   std::cout << "The channels that see true hits: " << channels_see_hit << " Number of wires truly crossed: " << Wirenum << std::endl;
   std::cout << "The total number of noise hits is: " << noise_hits.size() << std::endl;
@@ -958,54 +1427,54 @@ return;
  
 
 void ana::HitEff::endJob() {
-  std::cout << event << std::endl;
+  // std::cout << event << std::endl;
 
-  for(int i=0; i<3; ++i){
-    std::cout << E1[i]/event << " " << i << std::endl;
-    std::cout << E2[i]/event << " " << i << std::endl;
-    std::cout << E3[i]/event << " " << i << std::endl;
-    std::cout << E4[i]/event << " " << i << std::endl;
+  // for(int i=0; i<3; ++i){
+  //   std::cout << E1[i]/event << " " << i << std::endl;
+  //   std::cout << E2[i]/event << " " << i << std::endl;
+  //   std::cout << E3[i]/event << " " << i << std::endl;
+  //   std::cout << E4[i]/event << " " << i << std::endl;
   
-  }
+  // }
 
-  TFile *file = new TFile("EfficiencyGraphs","RECREATE");
+  // TFile *file = new TFile("EfficiencyGraphs","RECREATE");
 
-  for( std::map<geo::PlaneID, std::map<double,std::vector<double> > >::iterator i = Efficiency_angle_map.begin(); i != Efficiency_angle_map.end(); ++i){
+  // for( std::map<geo::PlaneID, std::map<double,std::vector<double> > >::iterator i = Efficiency_angle_map.begin(); i != Efficiency_angle_map.end(); ++i){
     
-    TGraphErrors* Efficiency_para_graph = new TGraphErrors(0);
+  //   TGraphErrors* Efficiency_para_graph = new TGraphErrors(0);
 
-    for(std::map<double,std::vector<double> >::iterator j = (i->second).begin();  j != (i->second).end(); ++j){
+  //   for(std::map<double,std::vector<double> >::iterator j = (i->second).begin();  j != (i->second).end(); ++j){
     
-      double angle=j->first;
-      std::cout << "angle: "<< angle << std::endl;
-      double mean   = accumulate( (j->second).begin(), (j->second).end(), 0.0)/ (j->second).size();
-      double sq_sum = std::inner_product((j->second).begin(), (j->second).end(), (j->second).begin(), 0.0);
-      double stdev  = std::sqrt(sq_sum / (j->second).size() - mean * mean);
-      double stderrmean = stdev/std::sqrt((j->second).size());
-      std::cout << mean << std::endl;
-      std::cout << "stderrmean: " << stderrmean << std::endl;
-      Efficiency_para_graph->SetPoint(Efficiency_para_graph->GetN(),angle, mean);
-      Efficiency_para_graph->SetPointError(Efficiency_para_graph->GetN(),0, stderrmean);
-    }
+  //     double angle=j->first;
+  //     std::cout << "angle: "<< angle << std::endl;
+  //     double mean   = accumulate( (j->second).begin(), (j->second).end(), 0.0)/ (j->second).size();
+  //     double sq_sum = std::inner_product((j->second).begin(), (j->second).end(), (j->second).begin(), 0.0);
+  //     double stdev  = std::sqrt(sq_sum / (j->second).size() - mean * mean);
+  //     double stderrmean = stdev/std::sqrt((j->second).size());
+  //     std::cout << mean << std::endl;
+  //     std::cout << "stderrmean: " << stderrmean << std::endl;
+  //     Efficiency_para_graph->SetPoint(Efficiency_para_graph->GetN(),angle, mean);
+  //     Efficiency_para_graph->SetPointError(Efficiency_para_graph->GetN(),0, stderrmean);
+  //   }
   
-    std::string map_string;
-    std::stringstream sstm1;
-    sstm1 << "Efficiency_Para PlaneID:" << (i->first);
-    map_string = sstm1.str();
-    const char* name = map_string.c_str();
+  //   std::string map_string;
+  //   std::stringstream sstm1;
+  //   sstm1 << "Efficiency_Para PlaneID:" << (i->first);
+  //   map_string = sstm1.str();
+  //   const char* name = map_string.c_str();
 
-    Efficiency_para_graph->SetMarkerColor(4);
-    Efficiency_para_graph->SetMarkerStyle(21);
-    Efficiency_para_graph->Draw("AP");
-    Efficiency_para_graph->SetName(name);
-    Efficiency_para_graph->GetXaxis()->SetTitle("Angle");
-    Efficiency_para_graph->GetYaxis()->SetTitle("Efficiency Para");
-    Efficiency_para_graph->SetTitle(name);
-    Efficiency_para_graph->Write();
+  //   Efficiency_para_graph->SetMarkerColor(4);
+  //   Efficiency_para_graph->SetMarkerStyle(21);
+  //   Efficiency_para_graph->Draw("AP");
+  //   Efficiency_para_graph->SetName(name);
+  //   Efficiency_para_graph->GetXaxis()->SetTitle("Angle");
+  //   Efficiency_para_graph->GetYaxis()->SetTitle("Efficiency Para");
+  //   Efficiency_para_graph->SetTitle(name);
+  //   Efficiency_para_graph->Write();
 
-  }
+  // }
 
-  file->Close();
+  // file->Close();
 
  //    TCanvas *c1 = new TCanvas("c1","Profile histogram example",200,10,700,500);
 //     TProfile * hprof  = new TProfile("hprof","Profile of pz versus px",100,-4,4,0,20);
@@ -1018,8 +1487,9 @@ void ana::HitEff::endJob() {
 //     }
 //     hprof->Draw();
 // }
+  return;  
+}
 
-  }
 DEFINE_ART_MODULE(ana::HitEff)
 
 
