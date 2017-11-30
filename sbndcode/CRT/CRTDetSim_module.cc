@@ -36,6 +36,7 @@
 #include <memory>
 #include <string>
 
+
 namespace sbnd {
 namespace crt {
 
@@ -87,7 +88,6 @@ uint32_t CRTDetSim::getChannelTriggerTicks(CLHEP::HepRandomEngine* engine,
     fTDelayNorm *
       exp(-0.5 * pow((npeMean - fTDelayShift) / fTDelaySigma, 2)) +
     fTDelayOffset;
-
   double tDelayRMS = \
     fTDelayRMSGausNorm *
       exp(-pow(npeMean - fTDelayRMSGausShift, 2) / fTDelayRMSGausSigma) +
@@ -105,13 +105,14 @@ uint32_t CRTDetSim::getChannelTriggerTicks(CLHEP::HepRandomEngine* engine,
   double t = t0 + tProp + tDelay;
 
   // Get clock ticks
-  clock.SetTime(t / 1e3);  // SetTime takes microseconds
-
-  mf::LogInfo("CRT")
-    << "CRT TIMING: t0=" << t0
+  clock.SetTime((t / 1e3));  // SetTime takes microseconds
+  std::cout //mf::LogInfo("CRT")
+    << "CRT TIMING: t0=" << t0 << "  LOOK RIGHT CHYA" << " CLOCK FREQUENCY: " << clock.Frequency()
     << ", tDelayMean=" << tDelayMean << ", tDelayRMS=" << tDelayRMS
     << ", tDelay=" << tDelay << ", tDelay(interp)="
     << tDelay << ", tProp=" << tProp << ", t=" << t << ", ticks=" << clock.Ticks() << "\n";
+  std::cout << "TRIGGER CLOCK: " << clock.Ticks() << std::endl;
+  std::cout << "TickPeriod: " << clock.TickPeriod() << std::endl;
 
   return clock.Ticks();
 }
@@ -132,6 +133,8 @@ void CRTDetSim::produce(art::Event & e) {
 
   art::ServiceHandle<detinfo::DetectorClocksService> detClocks;
   detinfo::ElecClock trigClock = detClocks->provider()->TriggerClock();
+
+//  std::cout << "TRIGGER CLOCK: " << clock.Ticks() << std::endl;
 
   art::ServiceHandle<art::RandomNumberGenerator> rng;
   CLHEP::HepRandomEngine* engine = &rng->getEngine("crt");
@@ -226,17 +229,18 @@ void CRTDetSim::produce(art::Event & e) {
         getChannelTriggerTicks(engine, trigClock, tTrue, npe0, distToReadout);
       uint32_t t1 = \
         getChannelTriggerTicks(engine, trigClock, tTrue, npe1, distToReadout);
-
+std::cout << "test t0: " << t0 << std::endl;
       // Time relative to PPS: Random for now! (FIXME)
       uint32_t ppsTicks = \
         CLHEP::RandFlat::shootInt(engine, trigClock.Frequency() * 1e6);
-
+std::cout << "test t0: " << t0 << std::endl;
       // SiPM and ADC response: Npe to ADC counts
       short q0 = \
         CLHEP::RandGauss::shoot(engine, fQPed + fQSlope * npe0, fQRMS * sqrt(npe0));
       short q1 = \
         CLHEP::RandGauss::shoot(engine, fQPed + fQSlope * npe1, fQRMS * sqrt(npe1));
 
+std::cout << "test t0: " << t0 << std::endl;
       // Adjacent channels on a strip are numbered sequentially.
       //
       // In the AuxDetChannelMapAlg methods, channels are identified by an
@@ -245,23 +249,30 @@ void CRTDetSim::produce(art::Event & e) {
       uint32_t moduleID = adsc.AuxDetID();
       uint32_t stripID = adsc.AuxDetSensitiveID();
       uint32_t channel0ID = 32 * moduleID + 2 * stripID + 0;
-      uint32_t channel1ID = 32 * moduleID + 2 * stripID + 1;
+      //uint32_t channel1ID = 32 * moduleID + 2 * stripID + 1;
 
+std::cout << "test t0: " << t0 << std::endl;
       // Apply ADC threshold and strip-level coincidence (both fibers fire)
       if (q0 > fQThreshold &&
           q1 > fQThreshold &&
           abs(t0 - t1) < fStripCoincidenceWindow) {
         Tagger& tagger = taggers[nodeTagger->GetName()];
         tagger.planesHit.insert(planeID);
-        tagger.data.push_back(sbnd::crt::CRTData(channel0ID, t0, ppsTicks, q0));
-        tagger.data.push_back(sbnd::crt::CRTData(channel1ID, t1, ppsTicks, q1));
+	double px = ide.exitMomentumX;
+	double py = ide.exitMomentumY;
+	double pz = ide.exitMomentumZ;
+        double t = (ide.entryT + ide.exitT) / 2;
+        tagger.data.push_back(sbnd::crt::CRTData(channel0ID, t0, ppsTicks, q0, t, TVector3(x, y, z), TVector3(px, py, pz)));
+        //tagger.data.push_back(sbnd::crt::CRTData(channel1ID, t1, ppsTicks, q1));
       }
 
+std::cout << "test t0: " << t0 << std::endl;
       double poss[3];
       adsGeo.LocalToWorld(origin, poss);
       mf::LogInfo("CRT")
         << "CRT HIT in " << adsc.AuxDetID() << "/" << adsc.AuxDetSensitiveID() << "\n"
         << "CRT HIT POS " << x << " " << y << " " << z << "\n"
+	<< "CRT HIT POS " << "entryX: " << ide.entryX << " exitX: " << ide.exitX << "\n"
         << "CRT STRIP POS " << poss[0] << " " << poss[1] << " " << poss[2] << "\n"
         << "CRT MODULE POS " << modulePosMother[0] << " "
                              << modulePosMother[1] << " "
@@ -274,7 +285,7 @@ void CRTDetSim::produce(art::Event & e) {
         << "CRT level 3 (tagger): " << nodeTagger->GetName() << "\n"
         << "CRT PLANE ID: " << planeID << "\n"
         << "CRT distToReadout: " << distToReadout << " " << (top ? "top" : "bot") << "\n"
-        << "CRT q0: " << q0 << ", q1: " << q1 << ", t0: " << t0 << ", t1: " << t1 << ", dt: " << abs(t0-t1) << "\n";
+        << "CRT q0 RIGHT CHYA: " << q0 << ", q1: " << q1 << ", t0: " << t0 << ", t1: " << t1 << ", dt: " << abs(t0-t1) << "\n";
     }
   }
 
