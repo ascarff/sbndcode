@@ -549,6 +549,7 @@ void ClusteringValidationsbnd::ClusterAnalyser::WriteFile() {
       tree.Branch("avCompleteness",&avCompleteness,"avCompleteness/D");
       tree.Branch("avCleanliness",&avCleanliness,"avCleanliness/D");
       tree.Branch("avCompClean",&avCompClean,"avCompClean/D");
+
       tree.Branch("BlurWire",&BlurWire,"BlurWire/D");
       tree.Branch("BlurTick",&BlurTick,"BlurTick/D");
       tree.Branch("SigmaWire",&SigmaWire,"SigmaWire/D");

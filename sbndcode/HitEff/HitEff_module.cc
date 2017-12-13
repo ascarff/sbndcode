@@ -31,6 +31,7 @@
 #include "lardataobj/RecoBase/Shower.h"
 #include "lardata/Utilities/AssociationUtil.h"
 #include "larsim/MCCheater/BackTracker.h"
+
 #include "lardataobj/AnalysisBase/ParticleID.h"
 #include "nusimdata/SimulationBase/MCParticle.h"
 #include "nusimdata/SimulationBase/MCTruth.h"
@@ -65,6 +66,8 @@
 #include "TGraphAsymmErrors.h"
 #include "TSystem.h"
 #include "TProfile.h"
+#include "TMultiGraph.h"
+#include "TLegend.h"
 
 #include <fstream>
 #include <iostream>
@@ -80,7 +83,7 @@ namespace ana {
 enum class TrackID   : int { };
 
 //Class for Doms MC  Hit objects.
-class MCHits {
+class MCHits {  
   
   int channel;
   int peak_time;
@@ -90,9 +93,23 @@ class MCHits {
   std::vector<std::pair<int,double> > time_charge_vec;
   
 public:
+  MCHits();
   MCHits(int,int,double,double, std::vector<std::pair<int,double> >); 
   MCHits(int, std::vector<std::pair<int,double> >);
   MCHits(int, std::vector<std::pair<int,double> >, int);
+  MCHits& operator=(const MCHits& a){
+    channel = a.channel;
+    peak_time = a.peak_time;
+    TrackID = a.TrackID;
+    total_charge = a.total_charge;
+    peak_charge = a.peak_charge;
+    time_charge_vec = a.time_charge_vec;
+    return *this;
+  } 
+  //friend bool operator< (const MCHits& rhs);
+  friend bool operator<(const MCHits a, const  MCHits b);
+  friend bool operator== (const MCHits &a, const MCHits &b);
+
   int PeakTime(){return peak_time;}
   int Channel(){return channel;}
   int Trackid(){return TrackID;}
@@ -101,7 +118,32 @@ public:
   std::vector<std::pair<int,double> > TimeChargeVec(){return time_charge_vec;}
 };
 
-  MCHits::MCHits(int chan, std::vector<std::pair<int,double> > time_char_vec){
+//bool operator< (const MCHits& rhs)
+//{
+//  return peak_time < rhs.peak_time || (peak_time == rhs.peak_time && peak_charge < rhs.peak_charge);
+//}
+
+bool operator<(const MCHits a, const  MCHits b)
+{
+  return a.peak_time  > b.peak_time  || (a.peak_time == b.peak_time && a.peak_charge < b.peak_charge);
+}
+
+
+bool operator== (const MCHits &a, const MCHits &b)
+{
+  return (a.peak_time == b.peak_time && b.peak_charge == b.peak_charge && a.TrackID == b.TrackID && a.channel == b.channel && a.total_charge == b.total_charge);
+}
+
+
+MCHits::MCHits(){
+  channel = 1e9;
+  peak_charge = 1e9;
+  peak_time = 1e9;
+  total_charge = 1e9;
+  TrackID = 1e9;
+}
+
+MCHits::MCHits(int chan, std::vector<std::pair<int,double> > time_char_vec){
     channel = chan;
     time_charge_vec = time_char_vec;
     
@@ -156,6 +198,7 @@ MCHits::MCHits(int chan, int peak_t ,double tot_charge, double peak_char,  std::
     time_charge_vec = time_char_vec;
   }
 
+//Merge Hits takes two hits and merges them into one hit. It does not merge the time-charged vector by time it just takes both vectors.
 MCHits MergeHits(MCHits first_hit, MCHits second_hit){
 
   std::vector<std::pair<int,double> > first_hit_vec = first_hit.TimeChargeVec();
@@ -170,26 +213,42 @@ MCHits MergeHits(MCHits first_hit, MCHits second_hit){
   return  MC_hit; 
 }
 
+//Sorts a map from highest to lowest of the second paramater in the map 
 bool sortbysec(const std::pair<int,double> &a,
 	       const std::pair<int,double> &b)
 {
   return (a.second > b.second);
 }
 
-std::vector<MCHits> CutHit(MCHits hit,std::vector<std::pair<int,double> > MaxPoints){
-  std::vector<MCHits> hit_vec;
-  if(MaxPoints.size()<2){hit_vec.push_back(hit); return hit_vec;} 
-  std::cout << "#########################" << std::endl;
- 
-  sort(MaxPoints.begin(), MaxPoints.end(), sortbysec); 
-  std::vector<std::pair<int,double> > TimeChargeVector =  hit.TimeChargeVec();
-  TH1D *ChargeHist = new TH1D("ChargeHist","Charge on the Channel Hist",3000,0,3000);
+bool sortbyPeakTime(MCHits &a, MCHits &b)
+{return a.PeakTime() < b.PeakTime();} 
 
+
+//Cut Hit looks a specifici hit and its maximum points. It fits permutations of all the possible  gaussians fits to the hit and takes returns the number of gaussians that gives the miniumum chi-2 
+std::vector<MCHits> CutHit(MCHits hit,std::vector<std::pair<int,double> > MaxPoints, double fGausWidth, double fSigmaGausWidth,double fSigmaTimeWidth, double charge_cut){
+  std::vector<MCHits> hit_vec;
+
+  //If there is only one (or no) max points just return the hit again - no cutting occurs.
+  if(MaxPoints.size()<2){hit_vec.push_back(hit); return hit_vec;} 
+
+  //Sort the Max points so the highest point has the gaussian fitted first (now not necessary).
+  sort(MaxPoints.begin(), MaxPoints.end(), sortbysec); 
+
+  //Accesss the time Time Charge vector of the hit.
+  std::vector<std::pair<int,double> > TimeChargeVector =  hit.TimeChargeVec();
+  
+  //Create The histrogram for entire drift window - Change for ICARUS and fill wieghting by the charge.
+  TH1D *ChargeHist = new TH1D("ChargeHist","Charge on the Channel Hist",3000,0,3000);
   for(std::vector<std::pair<int,double> >::iterator iter=TimeChargeVector.begin(); iter!=TimeChargeVector.end(); ++iter){
     ChargeHist->Fill(iter->first,iter->second);
-    std::cout << "time: " << iter->first << " Charge: " << iter->second << std::endl;
   }
 
+  //if the fcl parameter that sets the lowest width of the fitted gaussian is higher than the RMS of the hist obviously we will have a bad fit on the graph for one gaus. Change accordingly.
+  double hist_RMS = ChargeHist->GetRMS();
+  if(fGausWidth > hist_RMS){fGausWidth = hist_RMS;}
+
+
+  //Initialse start on n=3 as at least the one gaussian fit will occur. 
   int n = 3;
   std::stringstream sstm1; 
   std::string fit_string;
@@ -198,134 +257,163 @@ std::vector<MCHits> CutHit(MCHits hit,std::vector<std::pair<int,double> > MaxPoi
   std::vector<double> par_min;
   std::vector<double> par_max;
 
-  // for(std::vector<std::pair<int,double> >::iterator iter=MaxPoints.begin(); iter!=MaxPoints.end(); ++iter){
-  //   Parameter_vec.push_back(iter->second);//max                                                                                                                              
-  //   Parameter_vec.push_back(iter->first);//time position                                                                                                                     
-  //   Parameter_vec.push_back(2);//sigma                                                                                                                                       
-
-  //   par.push_back(0);
-  //   par.push_back(10);
-  //   par.push_back(1);
-  //}
 
   int lump_num = 0;
+
+  //Loop over the maximum points fitting  
   for(std::vector<std::pair<int,double> >::iterator iter=MaxPoints.begin(); iter!=MaxPoints.end(); ++iter){
 
-    //	  if(iter==MaxPoints.begin()){sstm1 << "([" << n-3 <<"]*TMath::Exp(-0.5*std::pow(((x-["<<n-2<<"])/["<<n-1<<"]),2))/(["<<n-1<<"] *sqrt(2*TMath::Pi()))) ";}
-    //	  else{sstm1 << "+ ([" << n-3 <<"]*TMath::Exp(-0.5*std::pow(((x-["<<n-2<<"])/["<<n-1<<"]),2))/(["<<n-1<<"] *sqrt(2*TMath::Pi())))";}
+
     lump_num = lump_num +1;
+    
+    //Add to the strign stream another gaussian 
     if(iter==MaxPoints.begin()){sstm1 << "([" << n-3 <<"]*TMath::Exp(-0.5*std::pow(((x-["<<n-2<<"])/["<<n-1<<"]),2))) ";}                   
     else{sstm1 << "+ ([" << n-3 <<"]*TMath::Exp(-0.5*std::pow(((x-["<<n-2<<"])/["<<n-1<<"]),2))) ";}    
-	  fit_string = sstm1.str();          
-	  const char* fit_name = fit_string.c_str();
-	  std::cout << "test 1 " <<std::endl;
-	  //	  TF1 *gausFit = new TF1( "gausfit", fit_name,TimeChargeVector.begin()->first,std::prev(TimeChargeVector.end())->first);           
+    
+    fit_string = sstm1.str();          
+    const char* fit_name = fit_string.c_str();
 
-	  Parameter_vec.push_back(iter->second);//max                                                                                                                          
-	  Parameter_vec.push_back(iter->first);//time position                                                                                                                 
-	  Parameter_vec.push_back(2);//sigma                                            
- 
-	  par_min.push_back(MaxPoints[MaxPoints.size()-1].second);
-	  //	  par_min.push_back(TimeChargeVector[0].first);
-	  par_min.push_back(2);  
-	  par_min.push_back(1);
+    //Add the initial fit paramters to the vector based off the MaxPoints info 
+    Parameter_vec.push_back(iter->second);//max                                                                                                                          
+    Parameter_vec.push_back(iter->first);//time position                                                                                                                 
+    Parameter_vec.push_back(fGausWidth);//sigma                                            
 
-	  par_max.push_back(MaxPoints[0].second);
-          //par_max.push_back(TimeChargeVector[TimeChargeVector.size()-1].first);
-	  par_max.push_back(2); 
-	  par_max.push_back(1);
+    //Give a range for the fits, the highest and lowest maxmium points set the range.  
+    // par_min.push_back(MaxPoints[MaxPoints.size()-1].second);
+    if(iter->second - charge_cut < charge_cut){par_min.push_back(iter->second);}
+    else{par_min.push_back(iter->second - charge_cut);} 
+    
+    if(iter->first - fSigmaTimeWidth<0){par_min.push_back(0);}
+    else{par_min.push_back(iter->first - fSigmaTimeWidth);}  
+    par_min.push_back(fGausWidth);
+    //par_min.push_back(fSigmaTimeWidth);                                                                                                                            
+    //par_min.push_back(fSigmaGausWidth);
 
-	  if(iter != MaxPoints.begin() && iter != MaxPoints.end()){
-	    for(std::vector<std::pair<int,double> >::iterator jter=iter; jter!=MaxPoints.end(); ++jter){
-	      TF1 *gausFit = new TF1( "gausfit", fit_name,TimeChargeVector.begin()->first,std::prev(TimeChargeVector.end())->first);
-                Parameter_vec[n-3] = jter->second;//max                                                                                    
-	        Parameter_vec[n-2] = jter->first;//time position                                                                           
-	        //Parameter_vec[n-1].push_back(2);//sigma                                                                                            
-		
+    //par_max.push_back(MaxPoints[0].second);
+    par_max.push_back(iter->second + charge_cut);
+    par_max.push_back(iter->first + fSigmaTimeWidth); 
+    par_max.push_back(fGausWidth + fSigmaGausWidth);
+    //par_max.push_back(fSigmaTimeWidth);                                                                                                                            
+    //par_max.push_back(fSigmaGausWidth);    
 
-		for(Int_t i=0; i<n; ++i){gausFit->SetParameter(i,Parameter_vec[i]); gausFit->SetParLimits(i, par_min[i], par_max[i]);}        
-                                 
 
-	    ChargeHist->Fit(gausFit,"R");                                                                                                  
-                                  
-            std::cout << "Chi2: " << gausFit->GetChisquare() <<std::endl;                                                                  
-	    std::vector<double> Parameters;                                
-	    for(Int_t i=0; i<n; ++i){std::cout << "Parameter " << i << ": "  << gausFit->GetParameter(i) <<std::endl; Parameters.push_back(gausFit->GetParameter(i));}
-	    ChargeHist->Write();     
-	    chi2s.push_back(std::make_pair(gausFit->GetChisquare(),Parameters));
+    if(iter != MaxPoints.begin() && iter != MaxPoints.end()){
+      //Try permutations of the fitting for the gaussian fits which involve more than one gaussian but not a fit too all the peaks. 
+      for(std::vector<std::pair<int,double> >::iterator jter=iter; jter!=MaxPoints.end(); ++jter){
+	
+	//Set the fit range to start and end times of the hit and change the fit paramter according to which peak we are fitting over. 
+	TF1 *gausFit = new TF1( "gausfit", fit_name,TimeChargeVector.begin()->first,std::prev(TimeChargeVector.end())->first);
+
+	std::vector<double>  Parameter_vec_temp =  Parameter_vec;
+	std::vector<double>  par_min_temp = par_min;
+	std::vector<double>  par_max_temp = par_max;
+
+	Parameter_vec_temp[n-3] = jter->second;//max                                                                                    
+	Parameter_vec_temp[n-2] = jter->first;//time position
+
+	if(jter->second - charge_cut< charge_cut){par_min_temp[n-3] =jter->second;}
+	else{par_min_temp[n-3] = jter->second - charge_cut;}
+	par_max_temp[n-3] = jter->second + charge_cut;
+	if(jter->first - fSigmaTimeWidth<0){par_min_temp[n-2] =0;}
+	else{par_min_temp[n-2] = jter->first - fSigmaTimeWidth;}
+	par_max_temp[n-2] = jter->first + fSigmaTimeWidth;                                                                           
+	//Parameter_vec[n-1].push_back(2);//sigma                                                                                            
+	
+	for(Int_t i=0; i<n; ++i){gausFit->SetParameter(i,Parameter_vec_temp[i]); gausFit->SetParLimits(i, par_min_temp[i], par_max_temp[i]);}        
+
+	//Fit the parameters within range specified above. 
+	ChargeHist->Fit(gausFit,"QR");                                                                                                  
+                    
+	//Get the chi2s and store with the parameters as an identifier.
+	std::vector<double> Parameters;                                
+	for(Int_t i=0; i<n; ++i){Parameters.push_back(gausFit->GetParameter(i));}
+	
+	std::stringstream sstm2;
+	sstm2 << "Channel: " << hit.Channel() ;
+	std::string map_string = sstm2.str();
+	const char* name = map_string.c_str();
+	ChargeHist->SetName(name);
+	ChargeHist->Write();     
+	
+	chi2s.push_back(std::make_pair(gausFit->GetChisquare(),Parameters));
    
-
-	    delete gausFit;   
-	    }
-	  }
-	    else{  std::cout << "Max:  " << iter->second << " Time: " << iter->first << std::endl;
-	      TF1 *gausFit = new TF1( "gausfit", fit_name,TimeChargeVector.begin()->first,std::prev(TimeChargeVector.end())->first);
+	delete gausFit;   
+      }//Permutation loop
+    }//If 
+    else{
+      //If it is the first and last fit do the same thing as above just don't repeat the permutations.  
+      TF1 *gausFit = new TF1( "gausfit", fit_name,TimeChargeVector.begin()->first,std::prev(TimeChargeVector.end())->first);
 	      
-	      for(Int_t i=0; i<n; ++i){gausFit->SetParameter(i,Parameter_vec[i]); gausFit->SetParLimits(i, par_min[i], par_max[i]);}
+      for(Int_t i=0; i<n; ++i){gausFit->SetParameter(i,Parameter_vec[i]); gausFit->SetParLimits(i, par_min[i], par_max[i]);}
+      ChargeHist->Fit(gausFit,"QR");
 	      
-	      ChargeHist->Fit(gausFit,"R");
+      std::vector<double> Parameters;
+      for(Int_t i=0; i<n; ++i){
+	Parameters.push_back(gausFit->GetParameter(i));}
+      
+      std::stringstream sstm2;
+      sstm2 << "Channel: " << hit.Channel() ;
+      std::string map_string = sstm2.str();
+      const char* name = map_string.c_str();
+      ChargeHist->SetName(name);
+      ChargeHist->Write();
 
-	      std::cout << "Chi2: " << gausFit->GetChisquare() <<std::endl;
-	      std::vector<double> Parameters;
-	      for(Int_t i=0; i<n; ++i){std::cout << "Parameter " << i << ": "  << gausFit->GetParameter(i) <<std::endl;
-		Parameters.push_back(gausFit->GetParameter(i));}
-	      ChargeHist->Write();
-	      chi2s.push_back(std::make_pair(gausFit->GetChisquare(),Parameters));
-	      delete gausFit;
-	    }
 
-	    n=n+3;
-	   
-  }
-            delete ChargeHist;
+      chi2s.push_back(std::make_pair(gausFit->GetChisquare(),Parameters));
+      
+      delete gausFit;
+    }//Else
+    n=n+3; //Add three onto the n for the next 3 paramters in the fit.
+  }//Max Points Loop 
+  
+  delete ChargeHist;
 
   double min_chi2 = 1e9;
   std::pair<double,std::vector<double > > min_chi2_info;
 
+  //loop over chi2s and find the minimum and its paramter info.
   for(std::vector< std::pair<double,std::vector<double > > >::iterator iter=chi2s.begin(); iter!=chi2s.end(); ++iter){
     if(iter->first < min_chi2){min_chi2 = iter->first; min_chi2_info = *iter; }
   }
 
   double gaus;
 
+  //Loop over the number of hits to be split e.g. (min_chi2_info.second).size()=6 for 2 hits.
   for(unsigned int n=3; n<(min_chi2_info.second).size() +1; n = n+ 3){
     std::vector<std::pair<int,double> > TimeChargeVector_new;
 
+    //Loop over the TimeCharge vector and multipy by the charge by gaus factor that resulted in the minimum chi2
     for(std::vector<std::pair<int,double> >::iterator iter=TimeChargeVector.begin(); iter!=TimeChargeVector.end(); ++iter){
-
       gaus =  min_chi2_info.second.at(n-3)*TMath::Exp(-0.5*std::pow(((iter->first - min_chi2_info.second.at(n-2))/ min_chi2_info.second.at(n-1)),2)); 
       TimeChargeVector_new.push_back(std::make_pair(iter->first, gaus));
     }
     
-      MCHits  Split_hit(hit.Channel(),TimeChargeVector_new,hit.Trackid());
-      hit_vec.push_back(Split_hit);
+    //Create a new hit (Start and End time of the hit times are not really true but you can't seperate this info this way). Add new hit. 
+    MCHits  Split_hit(hit.Channel(),TimeChargeVector_new,hit.Trackid());
+    hit_vec.push_back(Split_hit);
+
+    // Create new histogram showing the seperated hit - not needed for analysis. More a debugging tool.  
+    std::vector<std::pair<int,double> > TimeChargeVector_temp = Split_hit.TimeChargeVec();
+    TH1D *ChargeHist = new TH1D("ChargeHist","Charge on the Channel Hist",3000,0,3000);
+    for(std::vector<std::pair<int,double> >::iterator jjter=TimeChargeVector_temp.begin(); jjter!=TimeChargeVector_temp.end(); ++jjter){
+      ChargeHist->Fill(jjter->first,jjter->second);
+    }
+
+    std::stringstream sstm2;
+    sstm2 << "Channel: " << hit.Channel() ;
+    std::string map_string = sstm2.str();
+    const char* name = map_string.c_str();
+    ChargeHist->SetName(name);
+    ChargeHist->Write();
+    delete ChargeHist;
 
 
-      std::vector<std::pair<int,double> > TimeChargeVector_temp = Split_hit.TimeChargeVec();
-      TH1D *ChargeHist = new TH1D("ChargeHist","Charge on the Channel Hist",3000,0,3000);
-      for(std::vector<std::pair<int,double> >::iterator jjter=TimeChargeVector_temp.begin(); jjter!=TimeChargeVector_temp.end(); ++jjter){
-	ChargeHist->Fill(jjter->first,jjter->second);
-      }
-      ChargeHist->Write();
-      delete ChargeHist;
-
-
-  }
+  }//Split Hits Loops 
 
   return hit_vec;
 }
  
 
-Double_t GausFit(Double_t *x, Double_t *par){
-  return  par[0]*TMath::Exp(-0.5*std::pow(((x[0]-par[1])/par[2]),2))/(par[2] *sqrt(2*TMath::Pi()));
-}
-
-
-Double_t NGausFit(Double_t *x, Double_t *par){
-  std::cout << "test of NGausFit" << std::endl;
-  //  if(GiveN == 3){return GausFit(x,par);}
-  return GausFit(x,par) +  NGausFit(x,&par[3]);
-}
 
 class ana::HitEff : public art::EDAnalyzer {
 public:
@@ -338,21 +426,30 @@ private:
 
   std::string fHitsModuleLabel;
   std::string fMCHitsModuleLabel;
+  bool   fThetaXZinstead;
+  std::vector<double> fChargeCut;
+  std::vector<double> fdtThreshold;
 
-  art::ServiceHandle<cheat::BackTracker> backtracker;
+  double  fGausWidth;
+  double  fSigmaGausWidth;
+  double  fSigmaTimeWidth;
+  double  fADC;
+
+
+    art::ServiceHandle<cheat::BackTracker> backtracker;
+  
+  //  art::detail::ServiceHelper<cheat::BackTracker> backtracker;
   std::map<int,const simb::MCParticle*> trueParticles;
-  std::map<double,std::vector<std::vector<double> > > Efficency_para_map;  //angle the key gives a vector of events with vector of planes 
-  std::map<double,std::vector<std::vector<double> > > Efficency_true_map;
-  std::map<double,std::vector<std::vector<double> > > Efficiency_hot_map;
-  std::map<double,std::vector<std::vector<double> > > Efficiency_muondelta_map;
-  int event =0;
-  std::map<geo::PlaneID,std::vector<double> > Efficiency_plane_map;
-  std::map<geo::PlaneID, std::map<double,std::vector<double> > > Efficiency_angle_map;
 
-  std::vector<double> E1 = {0,0,0};
-  std::vector<double> E2 = {0,0,0};
-  std::vector<double> E3 = {0,0,0};
-  std::vector<double> E4 = {0,0,0};
+  //First plane, then thresholds, then angle, finally vector of Efficiencies. 
+  std::map<geo::PlaneID, std::map<std::pair<double,double>, std::map<double,std::vector<double> > > > Efficiency_wire_map;  
+  std::map<geo::PlaneID, std::map<std::pair<double,double>, std::map<double,std::vector<double> > > > Efficiency_nodelta_map;
+  std::map<geo::PlaneID, std::map<std::pair<double,double>, std::map<double,std::vector<double> > > > Efficiency_seperatedelta_map;
+
+  //First second threshold_pair finally vector of Efficiencies. 
+  std::map<std::pair<double,double>,std::map<double, std::vector<double> > > Efficiency_total_wire_map;
+  std::map<std::pair<double,double>,std::map<double, std::vector<double> > > Efficiency_total_nodelta_map;
+  std::map<std::pair<double,double>,std::map<double, std::vector<double> > > Efficiency_total_seperatedelta_map;
 
   //conversion 1ADC = 174.11 electrons
   double ADCconversion = 174.11;
@@ -361,16 +458,31 @@ private:
 ana::HitEff::HitEff(const fhicl::ParameterSet& pset) : EDAnalyzer(pset) {
   fHitsModuleLabel = pset.get<std::string>("HitsModuleLabel");
   fMCHitsModuleLabel = pset.get<std::string>("MCHitsModuleLabel");
+  fChargeCut = pset.get<std::vector<double> >("ChargeCut"); //2ADC is min
+  fGausWidth = pset.get<double>("GausWidth");
+  fSigmaGausWidth = pset.get<double>("SigmaGausWidth");
+  fSigmaTimeWidth = pset.get<double>("SigmaTimeWidth");
+  fThetaXZinstead= pset.get<bool>("ThetaXZinstead");
+  fADC=pset.get<double>("ADC");
+  fdtThreshold = pset.get<std::vector<double> >("dtThreshold");
   }
 
 
 void ana::HitEff::analyze(const art::Event& evt) {
-  event = event +1;
+
+  for(std::vector<double>::iterator fChargeCut_iter = fChargeCut.begin(); fChargeCut_iter != fChargeCut.end(); ++fChargeCut_iter){  
+  for(std::vector<double>::iterator fdtThreshold_iter = fdtThreshold.begin(); fdtThreshold_iter != fdtThreshold.end(); ++fdtThreshold_iter){ 
+    
+    int num_merged_n_not=0;
+    int num_merged_hits=0;
+   //Make a pair for the legend labels; 
+    std::pair<double,double> threshold_pair = std::make_pair(*fChargeCut_iter, *fdtThreshold_iter);
 
   TFile *f = new TFile("TimeVsWire","RECREATE");
  
-  // const detinfo::DetectorClocks* ts = lar::providerFrom<detinfo::DetectorClocksService>();
-  
+  //IMPORTANT: Change the Charge cut from ADCs to electrons 
+  double charge_cut = *fChargeCut_iter*ADCconversion;  
+
   //Get the geometry                                                                                                                                                              
   art::ServiceHandle<geo::Geometry> geom;
 
@@ -407,42 +519,50 @@ void ana::HitEff::analyze(const art::Event& evt) {
 
   }
 
+  //##################################
+  //### MC-Reco Charge Comparision ###           
+  //##################################
 
+  //Initialse the Reco/MC Charge Comparision Graphs.
   TH1D *BckTrackTotChargeHist = new TH1D("TotChargeHist","Ratio difference between reco and MC Total Charge",500,-1.5,1.5);
   TH1D *BckTrackTotChargeHist0 = new TH1D("TotChargeHist0","Ratio difference between reco and MC Total Charge",500,-1.5,1.5);
   TH1D *BckTrackTotChargeHist1 = new TH1D("TotChargeHist1","Ratio difference between reco and MC Total Charge",500,-1.5,1.5);
   TH1D *BckTrackTotChargeHist2 = new TH1D("TotChargeHist2","Ratio difference between reco and MC Total Charge",500,-1.5,1.5);
 
-  int test2=0;
-  // Assign a track id to a hit. Now there is contributions from delta rays (id=-1) and the muon (id=1)                                                                          
+    
+  // Assign a track id to a hit. Now there is contributions from delta rays (id=-1) and the muon (id=1)/                                                                          
   std::map<art::Ptr<recob::Hit>,int >    likelyTrackID;
 
-  //std::map<int,art::Ptr<recob::Hit> > MuonOnlyHits;
+  
+  //Initialse a map of the reco hits on each channel. 
+  std::map<unsigned int,std::vector<art::Ptr<recob::Hit> > > channel_RecoHit_map;
 
-  // Loop over hits.                                                                                                                                                              
+  // Loop over hits to put into a channel map .                                                                                    
   for(std::vector<art::Ptr<recob::Hit> >::iterator hitIt = hits.begin(); hitIt != hits.end(); ++hitIt){
-  double particleEnergy = 0;
 
-
-
+  
     art::Ptr<recob::Hit> hit = *hitIt;
     auto const wire_id = hit->WireID();
-    if(wire_id.Plane ==2){++test2;}
-    std::vector<sim::TrackIDE> trackIDs = backtracker->HitToTrackID(hit);
-    // true_reco_hit ++                                                                                                                                                          
-     double  mc_qsum=0;
+    
+    //Get the channel 
+    unsigned int ch = geom->PlaneWireToChannel(wire_id.Plane,
+				       wire_id.Wire,
+				       wire_id.TPC,
+				       wire_id.Cryostat);
 
-     // if(trackIDs.size() == 1 && trackIDs.at(0).trackID){MuonOnlyHits.push_back(hit);}
+    channel_RecoHit_map[ch].push_back(hit);
+    
+    //Split the Hit into its IDE for each track it associates with.  
+    std::vector<sim::TrackIDE> trackIDs = backtracker->HitToTrackID(hit);
+
+     double  mc_qsum=0;
+     double particleEnergy = 0;
      
     for (unsigned int idIt = 0; idIt < trackIDs.size(); ++idIt) {
-
-      
-      //   if(trackIDs.at(idIt).trackID != 1 && trackIDs.at(idIt).numElectrons < 348.22){MuonOnlyHits.push_back(hit);}
- 
-      //      const simb::MCParticle * MotherParticle = backtracker->TrackIDToMotherParticle(trackIDs.at(idIt).trackID);                                                         
+     
+      //Add up the number of Electrons in the Hit. 
       mc_qsum  +=  trackIDs.at(idIt).numElectrons;
 
-   
       //Assign the track ID to hit that contributes the most energy.                                                                                                             
       if (trackIDs.at(idIt).energy > particleEnergy) {
 	particleEnergy = trackIDs.at(idIt).energy;
@@ -450,9 +570,11 @@ void ana::HitEff::analyze(const art::Event& evt) {
       }
     }
 
+    //Get the Charge information from GausHitFinder
     double      reco_tot = hit->Integral();
     double      totalchargediff;
 
+    //Plot the MC Charge and Reco charge in ADCs. The conversion factor comes from caloimetry - MIGHT NOT WORK FOR ICARUS 
     if( wire_id.Plane == 0){
       totalchargediff = (mc_qsum*0.02354  - reco_tot)/(mc_qsum*0.02354 );
       BckTrackTotChargeHist0->Fill(totalchargediff);
@@ -465,10 +587,8 @@ void ana::HitEff::analyze(const art::Event& evt) {
       totalchargediff = (mc_qsum*0.0213  - reco_tot)/(mc_qsum*0.0213);
       BckTrackTotChargeHist1->Fill(totalchargediff);
     }
-
-
+    
     BckTrackTotChargeHist->Fill(totalchargediff);
-
   }
 
 
@@ -478,30 +598,36 @@ void ana::HitEff::analyze(const art::Event& evt) {
   BckTrackTotChargeHist->GetXaxis()->SetTitle("(mc_tot - reco_tot)/mc_tot");
   BckTrackTotChargeHist->SetTitle("BckTrackTotal Charge ");
   BckTrackTotChargeHist->Write();
+  BckTrackTotChargeHist->Delete();
 
   BckTrackTotChargeHist0->Draw("same");
   BckTrackTotChargeHist0->SetName("BckTrackTotalCharge 0");
   BckTrackTotChargeHist0->GetXaxis()->SetTitle("(mc_tot - reco_tot)/mc_tot");
   BckTrackTotChargeHist0->SetTitle("BckTrackTotal Charge0 ");
   BckTrackTotChargeHist0->Write();
+  BckTrackTotChargeHist0->Delete();
 
   BckTrackTotChargeHist1->Draw("same");
   BckTrackTotChargeHist1->SetName("BckTrackTotalCharge 1");
   BckTrackTotChargeHist1->GetXaxis()->SetTitle("(mc_tot - reco_tot)/mc_tot");
   BckTrackTotChargeHist1->SetTitle("BckTrackTotal Charge ");
   BckTrackTotChargeHist1->Write();
+  BckTrackTotChargeHist1->Delete();
 
   BckTrackTotChargeHist2->Draw("same");
   BckTrackTotChargeHist2->SetName("BckTrackTotalCharge 2");
   BckTrackTotChargeHist2->GetXaxis()->SetTitle("(mc_tot - reco_tot)/mc_tot");
   BckTrackTotChargeHist2->SetTitle("BckTrackTotal Charge ");
   BckTrackTotChargeHist2->Write();
+  BckTrackTotChargeHist2->Delete();
 
 
+  //##########################
+  //### Create Dom MC Hits ###
+  //#########################
 
 
-
-  //Define the graphs that show the WireVsTime
+  //Define the graphs that show the WireVsTime - These are similar to the event display graphs - This is for debugging 
   gInterpreter->GenerateDictionary("std::map<geo::PlaneID,TGraph*>","TGraph.h;map");
   std::map<geo::PlaneID,TGraph*> Graph_map;
   std::map<geo::PlaneID,TGraph*> Graph_mapm1;
@@ -513,40 +639,31 @@ void ana::HitEff::analyze(const art::Event& evt) {
     Graph_mapm1[plane_id] = new TGraph(0);
     Graph_map1[plane_id] = new TGraph(0);
     }
-  std::cout << "Graph map Size: " <<Graph_map.size() << std::endl;
 
 
+
+
+
+ 
+  //Get the Handle for the MCHit Collections 
+  const std::vector<sim::MCHitCollection> &mchits_v = *MCHitHandle;
+    
+  //Loop Paramters 
+  int mchit_num=0;
+  int channel_num;
+  double peak_time=0;
   std::vector<double> channels;
   std::vector<double> times;
 
- 
-  
-  const std::vector<sim::MCHitCollection> &mchits_v = *MCHitHandle;
-    
-  int mchit_num=0;
-  int channel_num;
-  int logic_int;
-
-  double peak_time=0;
-  double charge_cut=348.22; //2ADCs in Electrons 
-  int dt_threshold =2;
-  int test=0;
-  
+  // Where the MCHits will be stored
   std::map<unsigned int,std::vector<MCHits> > channel_MCHit_map; 
   std::vector<MCHits> MC_vec;
   
   //loop over the mchit collections (i.e loop over all the wires with MC hits) and find how many true hits we have.
   for(auto const& mchits : mchits_v) {
     
-    TH1D *ChargeHist = new TH1D("ChargeHist","Charge on the Channel Hist",3000,0,3000);
-
-   
     geo::PlaneID plane = geom->ChannelToWire(mchits.Channel()).at(0).planeID();
     channel_num = mchits.Channel();
-    channels.push_back(channel_num);
-   
-    // Set the logic to 0 for the collection this allows that one hit is counted from the collection
-       logic_int=0;
 
 
     std::vector<std::pair<int,double> > total_time_charge_vec;
@@ -557,13 +674,16 @@ void ana::HitEff::analyze(const art::Event& evt) {
     //loop of the MChits in the collection  
     for(auto const& mchit : mchits){
 
-      ++test;
+
       total_time_charge_vec.push_back(std::make_pair(mchit.PeakTime(),mchit.Charge(true))); 
       charge_map[mchit.PeakTime()] =  charge_map[mchit.PeakTime()] +  mchit.Charge(true);
-      ChargeHist->Fill(mchit.PeakTime(),mchit.Charge(true));
+      
+     
       //      std::cout << " Charge: " << mchit.Charge(true) << " Time: " << mchit.PeakTime() << " Track ID: " << mchit.PartTrackId()<< " Channel: " << channel_num << std::endl;
+
+      // Create the Time-Charge Vector for each channel used to create the hit  
       TrackIDtoMCHitMap[mchit.PartTrackId()].push_back(std::make_pair(mchit.PeakTime(),mchit.Charge(true)));
-      //      if(mchit.Charge(true)>charge_cut){MCHitVec.push_back(mchit);}  
+
       peak_time = mchit.PeakTime();
 
         // Add points for the WireVsTime Graph 
@@ -576,7 +696,6 @@ void ana::HitEff::analyze(const art::Event& evt) {
 	   Graph_map1[plane]->SetPoint(Graph_map1[plane]->GetN(),channel_num, peak_time);
 	   // std::cout << "channel_num" << channel_num << " ID " << mchit.PartTrackId() << " Peak Time " << peak_time  << std::endl; 
 	 }
-	 //	 std::cout << "channel_num " << channel_num << " ID " << mchit.PartTrackId() << " Peak Time " << peak_time  << " Charge: " << mchit.Charge(true)<<std::endl;
 	   Graph_map[plane]->SetPoint(Graph_map[plane]->GetN(),channel_num, peak_time);
       
 
@@ -585,237 +704,218 @@ void ana::HitEff::analyze(const art::Event& evt) {
 
 
 
-    // std::cout << " ###########################################" << std::endl;
-    // std::cout << "channel_num " << channel_num << std::endl; 
-
-    //This method for defining true hits was to find the chi2 of NGaussian Fits until the chi2 was no longer getting smaller. The Parameters need to be defined to get this to work not sure how
-    //###################################################################################################  
-    //    double chi2 = 99999999999999;
-    //    double chi2_new = 0;
-    //    int n = 3;
-    //    std::vector<double> Parameter_vec;
-    //    Double_t nextmax = ChargeHist->GetMaximumBin();
-    //    std::cout << "GetMaxBin " << nextmax <<std::endl;
-    //    Double_t max = ChargeHist->GetMaximum();
-    //    std::cout << "GetMax " << max << std::endl;
-    //    TF1 *gausFit = new TF1( "gausfit", GausFit,total_time_charge_vec.begin()->first,std::prev(total_time_charge_vec.end())->first,n);
-    //    // Parameter_vec.push_back(nextmax);
-    //    //Parameter_vec.push_back(1);
-    //    //Parameter_vec.push_back(nextmax);
-    //    //for(Int_t i=0; i<n; ++i){gausFit->SetParameter(i,Parameter_vec[i]);}
-    //    std::cout << "Fit Test" << std::endl;    
-    //    ChargeHist->Fit(gausFit,"R");
-    // std::string fit_string;
-    // std::stringstream sstm1;
-    // sstm1 << "([" << n-3 <<"]*TMath::Exp(-0.5*std::pow(((x-["<<n-2<<"])/["<<n-1<<"]),2))/(["<<n-1<<"] *sqrt(2*TMath::Pi()))) ";
-    //    while(chi2 > chi2_new){ 
-    //      n = n+3;
-    //      chi2 = gausFit->GetChisquare();
-    //      sstm1 <<  "+ ([" << n-3 <<"]*TMath::Exp(-0.5*std::pow(((x-["<<n-2<<"])/["<<n-1<<"]),2))/(["<<n-1<<"] *sqrt(2*TMath::Pi())))";
-    //      fit_string = sstm1.str();
-    //      const char* fit_name = fit_string.c_str();
-    //      TF1 *gausFit = new TF1( "gausfit", fit_name,total_time_charge_vec.begin()->first,std::prev(total_time_charge_vec.end())->first);
-    //      //Parameter_vec.push_back(nextmax);
-    //      //Parameter_vec.push_back(1);
-    //      //Parameter_vec.push_back(nextmax);
-    //      //for(Int_t i=0; i<n; ++i){gausFit->SetParameter(i,Parameter_vec[i]);}
-    //      ChargeHist->Fit(gausFit,"R");
-    //      std::cout << "Chi2: " << gausFit->GetChisquare() <<std::endl;
-    //      nextmax = ChargeHist->GetMaximum(nextmax);
-    //      chi2_new = gausFit->GetChisquare();
-    //    }
-    //    ChargeHist->Write();
-    //    delete ChargeHist;
-    //    delete gausFit;
-
-
-    //This method takes mutliple cuts of the hits to try to take a true hit which is mimics a reco hit
-    //###################################################################################################  
-    // if(total_time_charge_vec.size() == 0){continue;}
-    // std::vector<std::pair<int,double> >::iterator prev_iter=total_time_charge_vec.begin();
-    // std::vector<std::pair<int,double> >::iterator next_iter;
-    // std::vector<std::pair<int,double> >::iterator prev_iter_temp;
-    
-    // for(std::vector<std::pair<int,double> >::iterator iter=total_time_charge_vec.begin(); iter != total_time_charge_vec.end(); ++iter){
-
-
-    //   next_iter =std::next(iter);
-
-    //   if(prev_iter ==total_time_charge_vec.begin()){prev_iter = iter; continue;}
-    //   else if(charge_map[std::prev(iter)->first]  < charge_cut && std::prev(prev_iter)->first != iter->first && iter != std::prev(total_time_charge_vec.end())){}
-    //   else if(std::prev(prev_iter)->first == iter->first){prev_iter = std::prev(prev_iter);}
-    //   else{prev_iter = std::prev(iter);}
-
-    //   time_charge_vec.push_back(*iter);
-
-    //   if(charge_map[iter->first]  < charge_cut  && iter != std::prev(total_time_charge_vec.end())){continue;}
-    
-    //   if(logic_int ==0){prev_iter = std::prev(iter);}
-    //   logic_int=1;
-
-    //   //If there is a gap of 1 tick make a new hit
-    // 	if(prev_iter->first < iter->first - 1){
-    // 	  MCHits MC_hit(channel_num,time_charge_vec,iter->first); channel_MCHit_map[channel_num].push_back(MC_hit); MC_vec.push_back(MC_hit); time_charge_vec.clear(); 
-    // 	} 
-    //   //If at the end of the charge vector this a new hit
-    // 	else if(iter == std::prev(total_time_charge_vec.end())){
-    // 	  MCHits  MC_hit(channel_num,time_charge_vec,iter->first); channel_MCHit_map[channel_num].push_back(MC_hit); MC_vec.push_back(MC_hit); time_charge_vec.clear();
-    // 	}
-    //   //If there is a minimum point create a new hit 
-    // 	 else if(charge_map[prev_iter->first] >= charge_map[(iter)->first] && charge_map[next_iter->first] >= charge_map[(iter)->first]){
-
-    // 	   prev_iter_temp = prev_iter;
-    // 	   while(charge_map[next_iter->first] == charge_map[(iter)->first]){ next_iter = std::next(next_iter);}
-    // 	   while(charge_map[prev_iter_temp->first] == charge_map[(iter)->first]){ prev_iter_temp = std::prev(prev_iter_temp);}
-    // 	   if(charge_map[prev_iter_temp->first] > charge_map[(iter)->first] && charge_map[next_iter->first] > charge_map[(iter)->first]){
-    //        if(prev_iter->first == iter->first){continue;}
-    // 	   MCHits MC_hit(channel_num,time_charge_vec,iter->first); channel_MCHit_map.push_back(MC_hit); MC_vec.push_back(MC_hit);time_charge_vec.clear();
-    // 	   }
-    // 	 }
-    // }
     
     //This method takes mutliple takes delta ray and muon contribution seperately placing a cut on the dt of the muon and charge threshold.                                       
     //###################################################################################################
 
-  //   if(total_time_charge_vec.size() == 0){continue;}                                                                                                                             
+    //Only create a hit if there is charge there. 
+    if(charge_map.size() == 0){continue;}                                                                                                                            
 
+     channels.push_back(channel_num);
+    // Loop over all the Tracks IDs on the wire 
     for(std::map<int,std::vector<std::pair<int,double> > >::iterator jter=TrackIDtoMCHitMap.begin(); jter!=TrackIDtoMCHitMap.end(); ++jter){
 
+      int num_voxels_iter=0;
       std::vector<MCHits> MC_vec_temp;
-      std::vector<std::pair<int,double> >::iterator prev_iter=(jter->second).begin();
+      std::vector<std::pair<int,double> >::iterator prev_iter = (jter->second).begin();
+      std::vector<std::pair<int,double> >::iterator now_iter  = (jter->second).begin();
       std::vector<std::pair<int,double> >::iterator next_iter;
-            
+      
+      //Loop over the mchits (i.e.voxels) looking for spaces between hits 
       for(std::vector<std::pair<int,double> >::iterator iter=(jter->second).begin(); iter!=(jter->second).end(); ++iter){ 
       
-      next_iter =std::next(iter);                                                                                                                                                
-      if(iter == (jter->second).begin()){prev_iter = iter; if(iter->second  > charge_cut){time_charge_vec.push_back(*iter);} continue;}                                            
-      else if(std::prev(prev_iter)->first == iter->first && prev_iter != (jter->second).begin()){prev_iter = std::prev(prev_iter);}                                               
-      else{prev_iter = std::prev(iter);}                                                                                                                                        
+      next_iter =std::next(iter);                                         
 
+      //This allows for the only hits above threshold to be compared for the times so two peaks can be split at this stage (if there is a gap). 
+      if(charge_map[iter->first]  > charge_cut){
+	now_iter = iter;
+	//Only Save the hit if there is a accummultive sum of charge at that point
+	++num_voxels_iter;
+	//Set the previous iter if there is yet to be one set. This passes the tick test and looks at the end test. 
+	//	if(prev_iter==(jter->second).end()){prev_iter = now_iter;}
+           }
+      
+      // else if(iter == std::prev((jter->second).end())){ if(charge_map[iter->first]  > charge_cut){time_charge_vec.push_back(*iter);} }
+      //else{time_charge_vec.push_back(std::make_pair(iter->first,0));continue;}
 
-         if(charge_map[iter->first]  < charge_cut  && iter != std::prev((jter->second).end())){continue;}                                                                  
-	 //    if(iter->second  < charge_cut  && iter != std::prev((jter->second).end())){continue;}
-      else if(iter->second  < charge_cut  && iter == std::prev((jter->second).end())){}
-      else{time_charge_vec.push_back(*iter);}//std::cout<< "Time: " << iter->first << " Charge: " << iter->second << std::endl; }
+      //time_charge_vec.push_back(*iter);
 
-      if(logic_int ==0){prev_iter = std::prev(iter);}                                                                                                                          
-      logic_int=1;                                                                                                                                                               
+      //Set the previous iter if there is yet to be one set. this passes the tick test and looks at the end test.
+      //if(prev_iter==(jter->second).end()){prev_iter = now_iter;}
 
+      //      std::cout << " Charge: " << iter->second << " Time: " << iter->first << " Track ID: " << jter->first<< " Channel: " << channel_num << std::endl;
+      //      std::cout << "next_iter->first: " << next_iter->first << "now_iter->first: " << now_iter->first << std::endl;
 
-      //If at the end of the charge vector this a new hit                                                                                                                        
-       if(iter == std::prev((jter->second).end())){                                                                                                                 
-       if(time_charge_vec.size() == 0){continue;}
-       MCHits  MC_hit(channel_num,time_charge_vec,jter->first); //channel_MCHit_map[channel_num].push_back(MC_hit); 
-       MC_vec_temp.push_back(MC_hit); time_charge_vec.clear();
-       }
-     //If there is a gap of 1 tick make a new hit                                                                                                                                   
-     else  if(next_iter->first - iter->first > 1){
-       MCHits MC_hit(channel_num,time_charge_vec,jter->first); //channel_MCHit_map[channel_num].push_back(MC_hit);                                                                
-       MC_vec_temp.push_back(MC_hit); time_charge_vec.clear();
-     }                                                                                                                                                                           
-    
-
-
-     }//iter
+      
+      //If there is a gap of 1 tick make a new hit.                                                                                                                              
+      if(iter->first - prev_iter->first > 1){
+        //std::cout << "#############TIME############ " << std::endl;                                                                                                              
+	if(num_voxels_iter == 0){continue;}
+	MCHits MC_hit(channel_num,time_charge_vec,jter->first);
+	MC_vec_temp.push_back(MC_hit); time_charge_vec.clear();
+      }
+      //If at the end of the charge vector this a new hit.  
+      else if(iter == std::prev((jter->second).end())){                                                                                        
+   	//The last charge will be missed need to check its not above the charge threshold.
+	if(charge_map[iter->first]  > charge_cut){time_charge_vec.push_back(*iter);}
+	if(num_voxels_iter == 0){continue;}
+	//	std::cout << "#############END############ " << std::endl;
+	MCHits  MC_hit(channel_num,time_charge_vec,jter->first); 
+	MC_vec_temp.push_back(MC_hit); time_charge_vec.clear();
+	continue;
+      }
+      time_charge_vec.push_back(*iter);
+      prev_iter= iter;                                                                                                                                                                    }//iter - Loop over the voxels.
   
+      //Look at the Hit (MC_vec_temp.size() should be 1) and find the maximum points then see if it should be hit should be split into multiple hits.    
      for(unsigned int i=0; i< MC_vec_temp.size(); ++i){
+
 
        std::vector<std::pair<int,double> > timeChargeVec = MC_vec_temp[i].TimeChargeVec();
        std::vector<std::pair<int,double> > MaxPoints;
        std::vector<std::pair<int,double> >::iterator prev_kter;
        std::vector<std::pair<int,double> >::iterator next_kter;
+
+       // Loop over the time-charge vec of hit looking for maximum points in the data.
        for(std::vector<std::pair<int,double> >::iterator kter = timeChargeVec.begin(); kter!=timeChargeVec.end(); ++kter){
        
 
-  	 if(kter == timeChargeVec.begin()){continue;}
-  	 else{prev_kter = std::prev(kter);}
+    	 if(kter == timeChargeVec.begin()){continue;}
+    	 else{prev_kter = std::prev(kter);}
 
-  	 if(kter == std::prev(timeChargeVec.end())){continue;}    
-  	 else{next_kter = std::next(kter);}
+    	 if(kter == std::prev(timeChargeVec.end())){continue;}    
+    	 else{next_kter = std::next(kter);}
 
-  	   if(prev_kter->second < kter->second  && next_kter->second < kter->second){
-  	     MaxPoints.push_back(std::make_pair(kter->first,kter->second));
-  	   }
+	 if(prev_kter->second <= kter->second  && next_kter->second <= kter->second && charge_map[kter->first] > charge_cut){
+    	     MaxPoints.push_back(std::make_pair(kter->first,kter->second));
+	   }
        }
-  	 std::vector<MCHits> MC_hits = CutHit(MC_vec_temp[i],MaxPoints);
-  	 channel_MCHit_map[channel_num].insert(channel_MCHit_map[channel_num].end(),  MC_hits.begin(),  MC_hits.end());
-  	 //	 MC_vec.insert(MC_vec.end(),  channel_MCHit_map[channel_num].begin(),  channel_MCHit_map[channel_num].end());
 
-     }
-       
-  }
+       std::vector<MCHits> MC_hits = CutHit(MC_vec_temp[i],MaxPoints, fGausWidth,fSigmaGausWidth, fSigmaTimeWidth, charge_cut);
+       //Add the cut hits to the channel-MCHit map. 
+       channel_MCHit_map[channel_num].insert(channel_MCHit_map[channel_num].end(),  MC_hits.begin(),  MC_hits.end());
+     }//MC_Vec_temp loop
+    } // Loop of TrackIDtoMCHitMap 
      
 
-  
-  
+    // Use this if you don't want to use the gaussian method
+     //        for(std::map<int,std::vector<std::pair<int,double> > >::iterator iter=TrackIDtoMCHitMap.begin(); iter!=TrackIDtoMCHitMap.end(); ++iter){
+     //MCHits MC_hit(channel_num,iter->second,iter->first); channel_MCHit_map[channel_num].push_back(MC_hit); //MC_vec.push_back(MC_hit) for debugging purposes;
+     // }
 
-  
-    //  for(std::map<int,std::vector<std::pair<int,double> > >::iterator iter=TrackIDtoMCHitMap.begin(); iter!=TrackIDtoMCHitMap.end(); ++iter){
-      
-    // MCHits MC_hit(channel_num,iter->second,iter->first); channel_MCHit_map[channel_num].push_back(MC_hit); //MC_vec.push_back(MC_hit);
+    //if(channel_MCHit_map[channel_num].size()<2){continue;} // for debugging purposes 
+    num_merged_n_not = num_merged_n_not + channel_MCHit_map[channel_num].size();
+    // Only Merge if there is more than one hit.                                                                                                                                 
+    if(channel_MCHit_map[channel_num].size()>1){
 
-    //}
+   ++num_merged_hits;
+   //Now see if any of hits should be merged becuase they are ontop of each other.  
     std::vector<std::vector<MCHits>::iterator> erase_hits_vec;
     std::vector<MCHits> merged_hits;
+    std::vector<MCHits*> merged_hits_ptrs;
+    std::map<MCHits,MCHits> merged_hits_map;
+          
+    sort(channel_MCHit_map[channel_num].begin(), channel_MCHit_map[channel_num].end(),sortbyPeakTime);
 
-    // if(channel_MCHit_map[channel_num].size()<2){continue;}
+    //Loop over the hits on the channel
+    for(std::vector<MCHits>::iterator iter=channel_MCHit_map[channel_num].begin(); iter !=channel_MCHit_map[channel_num].end(); ++iter){
+      
+      // If the peak time is of the previous hit is within the threshold merge together 
+      if(TMath::Abs(iter->PeakTime() - std::prev(iter)->PeakTime()) < *fdtThreshold_iter && iter!=channel_MCHit_map[channel_num].begin()){
 
-    if(channel_MCHit_map[channel_num].size()>1){
-    for(std::vector<MCHits>::iterator iter=channel_MCHit_map[channel_num].begin(); iter !=channel_MCHit_map[channel_num].end(); ++iter){ 
-      if(TMath::Abs(iter->PeakTime() - std::prev(iter)->PeakTime()) < dt_threshold && iter!=channel_MCHit_map[channel_num].begin()){
-	//	std::cout << "(iter->PeakTime(): " << iter->PeakTime() << "   std::prev(iter)->PeakTime(): " << std::prev(iter)->PeakTime() <<std::endl;  
-	MCHits MergeHit =  MergeHits(*iter,*std::prev(iter));
-	
-
+	// If the previous hit has not already been merged then merge the hits and take not that they have been merged into the particular hit.
+	if (std::find(erase_hits_vec.begin(), erase_hits_vec.end(), std::prev(iter)) == erase_hits_vec.end()){
+	  //std::cout << "(iter->PeakTime(): " << iter->PeakTime() << "   std::prev(iter)->PeakTime(): " << std::prev(iter)->PeakTime() <<std::endl;  
+	  MCHits MergeHit =  MergeHits(*iter,*std::prev(iter));
+	  merged_hits_map.insert( std::pair<MCHits,MCHits>(*iter,MergeHit));
+	  merged_hits_map.insert( std::pair<MCHits,MCHits>(*std::prev(iter),MergeHit ));
+	}
+	// If the previous has been merged then merge the hit with hit which was created from the previous merging. Change the merge hit that is associated to the previous hit to the new one.
+	else{
+	  if(merged_hits_map.find(*std::prev(iter)) == merged_hits_map.end() )
+	    throw cet::exception(__PRETTY_FUNCTION__)
+	      << "Trying to Merge a MCHit with one that doesn't exist.";
+	 
+	  MCHits MergeHit =  MergeHits(*iter, merged_hits_map[*std::prev(iter)]);
+	  merged_hits_map.insert( std::pair<MCHits,MCHits>(*iter,MergeHit ));
+	  for(std::map<MCHits,MCHits>::iterator jter=merged_hits_map.begin(); jter!=merged_hits_map.end(); ++jter){
+	    if(&jter->second == &merged_hits_map[*std::prev(iter)]){merged_hits_map[jter->first] = MergeHit;}
+	  }
+	}
+	    
+	//Add the iterator to the ones that will be erased because they have been merged. 
 	if (std::find(erase_hits_vec.begin(), erase_hits_vec.end(), iter) == erase_hits_vec.end()) {erase_hits_vec.push_back(iter);}
 	if (std::find(erase_hits_vec.begin(), erase_hits_vec.end(), std::prev(iter)) == erase_hits_vec.end()) {erase_hits_vec.push_back(std::prev(iter));}
-
-	merged_hits.push_back(MergeHit);
       }
-
     }
-    
-
+          
+    // Remove the hits that have been merged.
     for(std::vector<std::vector<MCHits>::iterator>::iterator iter=erase_hits_vec.begin(); iter!=erase_hits_vec.end();++iter){
-
-      channel_MCHit_map[channel_num].erase(*iter);
-      }
+     channel_MCHit_map[channel_num].erase(*iter);
     }
-    channel_MCHit_map[channel_num].insert(channel_MCHit_map[channel_num].end(),  merged_hits.begin(),  merged_hits.end());
-    MC_vec.insert(MC_vec.end(),  channel_MCHit_map[channel_num].begin(),  channel_MCHit_map[channel_num].end());
-   
-    int MUON_Hits =0;
-    if(channel_MCHit_map[channel_num].size()>1){
-    for(std::vector<MCHits>::iterator iter=channel_MCHit_map[channel_num].begin(); iter !=channel_MCHit_map[channel_num].end(); ++iter){
-      if(iter->Trackid() != -1){ ++MUON_Hits;}
-     
-    }}
-    if(MUON_Hits>1){std::cout<<"This is the event!"<<std::endl;}
-  } //MC HitCollection Loop
 
+    //Loop over the hits and get out the merged hits.                                                                                                                              
+    for(std::map<MCHits,MCHits>::iterator jter=merged_hits_map.begin(); jter!=merged_hits_map.end();++jter){
+      if(std::find(merged_hits.begin(), merged_hits.end() , jter->second) == merged_hits.end()){merged_hits.push_back(jter->second);}   
+    }
+
+    //Add the merged hits to MCHits vector/map                                                                                                                                  
+    channel_MCHit_map[channel_num].insert(channel_MCHit_map[channel_num].end(),  merged_hits.begin(),  merged_hits.end());
+
+    }//if(channel_MCHit_map[channel_num].size()>1) 
+   
+} //MC HitCollection Loop
+
+  std::map<unsigned int,std::vector<MCHits> >::iterator kter=channel_MCHit_map.begin();
+
+  while(kter != channel_MCHit_map.end()) {
+    std::vector<MCHits>::iterator jter=kter->second.begin();
+    while(jter != kter->second.end()){
+      if(jter != std::prev(kter->second.end())){
+        //If two insignificant hits are created and then merged with a greater hit they look like the same hit. Remove these (there shouldn't be any)                                                                       
+        if(jter->PeakCharge() == std::next(jter)->PeakCharge() && jter->PeakTime() ==  std::next(jter)->PeakTime()){
+          jter = kter->second.erase(jter); continue;
+        }
+      }
+      if(jter->PeakCharge()<charge_cut){jter = kter->second.erase(jter); continue;}
+
+      MC_vec.push_back(*jter);
+      ++jter;
+    }  
+      //Remove any channels which no longer have MCHits due to the charge cut.                                                                                                      
+      if(kter->second.size() == 0){kter = channel_MCHit_map.erase(kter); continue;}
+      ++kter;
+   }
 
   std::vector<MCHits> MuonMCHits;
   std::vector<MCHits>::iterator iter=MC_vec.begin();
-  //  for(std::vector<MCHits>::iterator iter=MC_vec.begin(); iter!=MC_vec.end(); ++iter){
-  while(iter != MC_vec.end()) {  
-    if(iter->PeakCharge() < charge_cut){iter = MC_vec.erase(iter); continue;}
-    std::cout << " Peak Time:" << iter->PeakTime() << " Peak Charge: " << iter->PeakCharge() << " Channel: " << iter->Channel() << "TrackID: " << iter->Trackid()  <<std::endl;
-    std::vector<std::pair<int,double> > timechargevec = iter->TimeChargeVec();
-    for(std::vector<std::pair<int,double> >::iterator  jter=timechargevec.begin(); jter!=timechargevec.end(); ++jter){
-         std::cout<< "Charge " << jter->second << " Time: " << jter->first << std::endl;
-    }
+  std::vector<MCHits> TrkID1MCHits;
+  std::map<int,int> DeltaMCChannels;
 
+  //Go through the MCHits and take note of muon hits, delta ray hits and merged muon hits 
+  while(iter != MC_vec.end()) {
+    if(iter->PeakCharge() < charge_cut){iter = MC_vec.erase(iter); continue;}
+    //   std::cout << "iter->Trackid(): " << iter->Trackid() << " iter->PeakTime():" << iter->PeakTime() << " iter->Charge(): " << iter->PeakCharge() << " iter->Channel(): " << iter->Channel() <<std::endl; 
+    if(iter->Trackid() == 1){TrkID1MCHits.push_back(*iter);}
+    if(iter->Trackid() == -1){DeltaMCChannels[iter->Channel()]=1;} //The one is irrelevent
     if(iter->Trackid() != -1){MuonMCHits.push_back(*iter);}
     ++iter;
   }
 
-  //Create the the names of the of the graphs and write to file. 
+  //Take note of channels either side channels that see delta ray hits. 
+  std::map<int,int> DeltaMCChannels_Eitherside;
+  for(std::map<int,int>::iterator iter=DeltaMCChannels.begin(); iter!=DeltaMCChannels.end(); ++iter){
+    //    DeltaMCChannels_Eitherside[iter->first + 1] = 1;
+    //   DeltaMCChannels_Eitherside[iter->first - 1] = 1;
+    DeltaMCChannels_Eitherside[iter->first] = 1;
+  }
+
+  
+  //Create the the names of the of the TimeVs Wire (event display stype) graphs and write to file. 
   std::string map_string;
   std::string map_stringm1;
   std::string map_string1;
 
-
-  std::cout << "Graph map Size: " <<Graph_map.size() << std::endl;
   for(geo::PlaneID plane_id: geom->IteratePlaneIDs()){
     
     std::stringstream sstm1;
@@ -839,6 +939,7 @@ void ana::HitEff::analyze(const art::Event& evt) {
     Graph_map[plane_id]->GetYaxis()->SetTitle("Time (Ticks?)");
     Graph_map[plane_id]->SetTitle(name);
     Graph_map[plane_id]->Write();
+    Graph_map[plane_id]->Delete();
 
     Graph_mapm1[plane_id]->Draw("AP");
     Graph_mapm1[plane_id]->SetName(namem1);
@@ -846,6 +947,7 @@ void ana::HitEff::analyze(const art::Event& evt) {
     Graph_mapm1[plane_id]->GetYaxis()->SetTitle("Time (Ticks?)");
     Graph_mapm1[plane_id]->SetTitle(namem1);
     Graph_mapm1[plane_id]->Write();
+    Graph_mapm1[plane_id]->Delete();
 
     Graph_map1[plane_id]->Draw("AP");
     Graph_map1[plane_id]->SetName(name1);
@@ -853,9 +955,13 @@ void ana::HitEff::analyze(const art::Event& evt) {
     Graph_map1[plane_id]->GetYaxis()->SetTitle("Time (Ticks?)");
     Graph_map1[plane_id]->SetTitle(name1);
     Graph_map1[plane_id]->Write();
-
+    Graph_map1[plane_id]->Delete();
 
   }
+
+//################################################################################################  
+//### Compare MCHits Charge against Reco Charge - Needs Work if you want to continue with this ###
+//################################################################################################ 
 
 
   TGraph* ADCGraph = new TGraph(0);  
@@ -871,7 +977,7 @@ void ana::HitEff::analyze(const art::Event& evt) {
   std::vector<art::Ptr<recob::Hit> > noise_hits;
   std::map<art::Ptr<recob::Hit>,int>  reco_to_MC_map;
 
-  int test1=0;
+
   // Compare RecoHits to True Hits.
   // Loop over RecoHit                                                                                                                                                             
   for(size_t hit_index=0; hit_index<hits.size(); ++hit_index) {
@@ -886,7 +992,7 @@ void ana::HitEff::analyze(const art::Event& evt) {
 				      wire_id.Wire,
 				      wire_id.TPC,
 				      wire_id.Cryostat);
-
+    //std::cout << "chan: " << ch << " wire: " << wire_id << std::endl;
     if(mchits_v.size() <= ch )
       throw cet::exception(__PRETTY_FUNCTION__)
 	<< "Channel "<<ch<<" not found in MCHit vector!"<<std::endl;
@@ -894,8 +1000,9 @@ void ana::HitEff::analyze(const art::Event& evt) {
     
     // Found MCHitCollection                                                                                                                                                       
     auto const& mchits = mchits_v.at(ch);
-    std::vector<MCHits> MCHit_vec = channel_MCHit_map[ch];
+    if(channel_MCHit_map.find(ch) == channel_MCHit_map.end()){noise_hits.push_back(hit); continue;}    
 
+    std::vector<MCHits> MCHit_vec = channel_MCHit_map[ch];
     if( ch != mchits.Channel() )
       throw cet::exception(__PRETTY_FUNCTION__)
 	<< "MCHit channel & vector index mismatch: "
@@ -907,30 +1014,19 @@ void ana::HitEff::analyze(const art::Event& evt) {
     double reco_tot = hit->Integral();
     double mc_qsum = 0;
     double mc_q    = 0;
-    //double   dt_min  = 0;
     double abs_dt_min = 1e9;
 
     
-//    std::cout << "####################################"  << std::endl;
-    //std::cout << "Channel: " << ch  << std::endl;
-    //    std::cout << "Start tick: " << hit->StartTick() << " End TicK: " << hit->EndTick() << " Peak Time " << hit->PeakTime()<<std::endl;
-
+    //Loop over the MCHits on the channel to find the closest in time to the reco charge.
     for(std::vector<MCHits>::iterator iter=  MCHit_vec.begin(); iter !=  MCHit_vec.end(); ++iter){
-      
-      //      if((*start_iter).PartTrackId() == likelyTrackID[hit]){
-
+            
       double dt =  hit->PeakTime() - iter->PeakTime();
       double abs_dt = dt;
-      // std::cout << " The reco peak time is: " << peak_time.PeakTime() << std::endl;
-      //std::cout << " ID " <<  (*start_iter).PartTrackId() <<  " The MC Peak time is: " << (*start_iter).PeakTime() << std::endl;
-      //std::cout << "dt " << dt << " Charge: " << (*start_iter).Charge(true) << std::endl;
-      
+            
       if(abs_dt<0) abs_dt *= -1;
-      //if(abs_dt>5){std::cout << "interesting event"<<std::endl;}
-
+      
       if(abs_dt < abs_dt_min) {
 	abs_dt_min = abs_dt;
-	//	dt_min     = dt;
 	mc_q   = iter->PeakCharge(); 
 	mc_qsum = iter->TotalCharge(); 
       }
@@ -938,26 +1034,14 @@ void ana::HitEff::analyze(const art::Event& evt) {
 	mc_q = mc_q + iter->PeakCharge();
         mc_qsum = mc_qsum + iter->TotalCharge();
       }
-      
-
-      //}
-      //Find the MCHits that have been matched to a reco hit and get rid of them. 
-      //      mcbighits.erase(*start_iter);
-      
- 
-      //      std::cout << "mc_q: " << mc_q << " sum: " << mc_qsum << std::endl;
-
-
-   
     }// MC Hits Loop
     
-    //    reco_to_MC_map[hit] =  mcbighits[std::make_pair(MCHit_peak,ch)]; 
-    std::cout << "abds_td_min: " << abs_dt_min << "Charge: " << mc_q <<"  channel  " <<  ch <<std::endl;
+
     //Take Note of any Noise Hits.
-    if(abs_dt_min > 20){
-      std::cout << "intersting event" <<std::endl;
+    if(abs_dt_min > 5){
       noise_hits.push_back(hit);
     }
+    //Otherwise plot a graphs to show the difference between reco and MCHit charge. mc_q is scaled via the calorimetry module - Might neeed Changing for ICARUS 
     else{
 
       if( wire_id.Plane == 0){
@@ -966,7 +1050,6 @@ void ana::HitEff::analyze(const art::Event& evt) {
       TotChargeHist0->Fill(totalchargediff);
       }
       else if( wire_id.Plane == 2){
-	++test1;
 	peakchargediff = (mc_q* 0.02354 - reco_q)/(mc_q* 0.02354);
 	totalchargediff = (mc_qsum*0.02354  - reco_tot)/(mc_qsum*0.02354 );
 	TotChargeHist2->Fill(totalchargediff);
@@ -979,20 +1062,15 @@ void ana::HitEff::analyze(const art::Event& evt) {
 
       PeakChargeHist->Fill(peakchargediff);
       TotChargeHist->Fill(totalchargediff);
-      if( wire_id.Plane == 0){
+  
       ADCGraph->SetPoint(ADCGraph->GetN(),mc_qsum, reco_tot);
-      }
       }
   
     // std::cout << "Total Charge: " << mc_qsum*0.0224426  << " Reco Charge: " << reco_tot <<" channel num " << ch << std::endl;
-    //    if(mc_qsum*0.0224426 <  reco_tot - 100){std::cout << "mcCharge under"<< std::endl;}
-    //if(mc_qsum*0.0224426 >  reco_tot + 100){std::cout <<"mcCharge over"<< std::endl;}
-    //    std::cout << "Wire ID: " << wire_id << std::endl;
-
   } // Reco Hits Loop
 
-  std::cout << "test1 " << test1 << " test2 " << test2 <<std::endl;
 
+  // Fit a linear graph of the MC charge to Reco Charge to check the the scale factor. 
   ADCGraph->Draw("P");
   ADCGraph->SetName("ADCGraph");
   ADCGraph->GetXaxis()->SetTitle("MC Charge (ADC)");
@@ -1002,121 +1080,53 @@ void ana::HitEff::analyze(const art::Event& evt) {
   ADCGraph->Fit(fit,"+rob=0.75");
   std::cout << fit->GetParameter(0) << std::endl;
   ADCGraph->Write();
+  ADCGraph->Delete();
+  fit->Delete();
 
   PeakChargeHist->Draw("same");
   PeakChargeHist->SetName("Peak Charge");
   PeakChargeHist->GetXaxis()->SetTitle("(mc_peak - reco_peak)/mc_peak");
   PeakChargeHist->SetTitle("Peak Charge");
   PeakChargeHist->Write();
+  PeakChargeHist->Delete();
 
   TotChargeHist->Draw("same");
   TotChargeHist->SetName("TotalCharge");
   TotChargeHist->GetXaxis()->SetTitle("(mc_tot - reco_tot)/mc_tot");
   TotChargeHist->SetTitle("Total Charge ");
   TotChargeHist->Write();
+  TotChargeHist->Delete();
+
 
   TotChargeHist0->Draw("same");
   TotChargeHist0->SetName("TotalCharge 0");
   TotChargeHist0->GetXaxis()->SetTitle("(mc_tot - reco_tot)/mc_tot");
   TotChargeHist0->SetTitle("Total Charge ");
   TotChargeHist0->Write();
+  TotChargeHist0->Delete();
+
 
   TotChargeHist1->Draw("same");
   TotChargeHist1->SetName("TotalCharge 1");
   TotChargeHist1->GetXaxis()->SetTitle("(mc_tot - reco_tot)/mc_tot");
   TotChargeHist1->SetTitle("Total Charge ");
   TotChargeHist1->Write();
+  TotChargeHist1->Delete();
+
 
   TotChargeHist2->Draw("same");
   TotChargeHist2->SetName("TotalCharge 2");
   TotChargeHist2->GetXaxis()->SetTitle("(mc_tot - reco_tot)/mc_tot");
   TotChargeHist2->SetTitle("Total Charge ");
   TotChargeHist2->Write();
-
-
-  //  f->Close();
-
-
- //  //Collect the MC hits missed in the reconstruction. 
- //  std::map<int, std::vector<std::pair<sim::MCHit,int> > > missed_hits;
-
- //  //The MCHits left are the ones not associated to a reco hit. Collect ones together assigned to my definition of a MC Hit.
- //  for(std::map<std::pair<sim::MCHit,int>, int>::iterator it = mcbighits.begin(); it!=mcbighits.end(); ++it){
- //      missed_hits[it->second].push_back(it->first); 
- //      //     std::cout << "Hit number is: " << it->second << std::endl;
- // }
- //  std::cout << "noise hits: " << noise_hits.size() << std::endl;
- //  std::cout << "mcbighits: " << mcbighits.size() << " test " << test << " missed_hits " << missed_hits.size() <<std::endl;
- //  TH1D *TotChargeHist0new = new TH1D("TotChargeHist0new","Ratio difference between reco and MC Total Charge",500,-1.5,1.5);
- //  TH1D *TotChargeHist1new = new TH1D("TotChargeHist1new","Ratio difference between reco and MC Total Charge",500,-1.5,1.5);
- //  TH1D *TotChargeHist2new = new TH1D("TotChargeHist2new","Ratio difference between reco and MC Total Charge",500,-1.5,1.5);  
-
-
-// for(size_t hit_index=0; hit_index<hits.size(); ++hit_index) {
-
-//     double Charge=0;
-//     auto const hit = hits.at(hit_index);
-//     auto const wire_id = hit->WireID();   
-//     double reco_tot = hit->Integral();
-//     double totalchargediff;
-
-//    for(unsigned int it=0; it<missed_hits[reco_to_MC_map[hit]].size(); ++it){
-//      Charge = Charge +   missed_hits[reco_to_MC_map[hit]].at(it).first.Charge(true);
-//      std::cout << "Charge: " << missed_hits[reco_to_MC_map[hit]].at(it).first.Charge(true) << std::endl;
-//    }
-//    std::cout << "Total MC Charge is: " << Charge  << " Reco charge: " << reco_tot << " WireID: " << wire_id <<  " hit num: " << reco_to_MC_map[hit]  << std::endl; 
-//    std::cout << "total charge diff: " <<  (Charge*0.02354  - reco_tot)/(Charge*0.02354 ) << std::endl;
-//      if( wire_id.Plane == 0){
-//        totalchargediff = (Charge*0.02354  - reco_tot)/(Charge*0.02354 );
-//        TotChargeHist0new->Fill(totalchargediff);
-//      }
-//      else if( wire_id.Plane == 2){
-//        totalchargediff = (Charge*0.02354  - reco_tot)/(Charge*0.02354 );
-//        TotChargeHist2new->Fill(totalchargediff);
-//      }
-//      else{
-//        totalchargediff = (Charge*0.0213  - reco_tot)/(Charge*0.0213);
-//        TotChargeHist1new->Fill(totalchargediff);
-//      }
-
-
-   
-//   }
-
-
- // TotChargeHist0new->Draw("same");
- // TotChargeHist0new->SetName("TotalCharge 0 new");
- // TotChargeHist0new->GetXaxis()->SetTitle("(mc_tot - reco_tot)/mc_tot");
- // TotChargeHist0new->SetTitle("Total Charge ");
- // TotChargeHist0new->Write();
-
- // TotChargeHist1new->Draw("same");
- // TotChargeHist1new->SetName("TotalCharge 1 new");
- // TotChargeHist1new->GetXaxis()->SetTitle("(mc_tot - reco_tot)/mc_tot");
- // TotChargeHist1new->SetTitle("Total Charge ");
- // TotChargeHist1new->Write();
-
- // TotChargeHist2new->Draw("same");
- // TotChargeHist2new->SetName("TotalCharge 2 new");
- // TotChargeHist2new->GetXaxis()->SetTitle("(mc_tot - reco_tot)/mc_tot");
- // TotChargeHist2new->SetTitle("Total Charge new");
- // TotChargeHist2new->Write();
-
+  TotChargeHist2->Delete();
 
  f->Close();
+ f->Delete();
+//####################################################################################################################################################
+//### Find the MC Trajectory of the Particle and Calculate the wires it crosses. Maybe Neglects diffusion - Now obsolete useful comparision though ###
+//####################################################################################################################################################
 
-
-  // double Total_charge_missed = 0;
-
-  // // Sum up the Charge Missed and the number of hits missed. 
-  // for(std::map<int,std::vector<std::pair<sim::MCHit,int> > >::iterator it = missed_hits.begin(); it!=missed_hits.end(); ++it){
-  //   for(unsigned int iter=0; iter<(it->second).size(); ++iter){
-  //     //      std::cout << "The Charge missed is: " << (it->second).at(iter).first.Charge(true) << std::endl;
-  //     Total_charge_missed = Total_charge_missed + (it->second).at(iter).first.Charge(true);
-  //   }
-  // }
-  // std::cout << "The number of hits that were missed: " <<  missed_hits.size() << std::endl;
-  // std::cout << "Charge Missed: " << Total_charge_missed << std::endl;
 
   //Find the trajectory of the particle;
   const simb::MCParticle * Muon =  backtracker->TrackIDToParticle(MuonID);
@@ -1130,7 +1140,13 @@ void ana::HitEff::analyze(const art::Event& evt) {
   //Use the true muon momentum to find the angle theta yz 
   const double PY = Muon->Py();
   const double PZ = Muon->Pz();
-  const double angle = TMath::ATan(PY/PZ); 
+  const double PX = Muon->Px();
+
+  double angle;
+  if(fThetaXZinstead){angle = TMath::ATan(PX/PZ)*180/TMath::Pi();}
+  else {angle = TMath::ATan(PY/PZ)*180/TMath::Pi();}
+  
+  if(angle>180){angle = 360- angle;}
 
 
 
@@ -1222,6 +1238,7 @@ void ana::HitEff::analyze(const art::Event& evt) {
     rcrossx = ((EndZ_TPC - StartZ_TPC)*(WireEnd.Y()-WireStart.Y())) - ((WireEnd.Z()-WireStart.Z())*(EndY_TPC - StartY_TPC)); 
 
     if(rcrossx == 0){continue;}
+    //Calculate the metrics 
     u = (((WireStart.Z()- StartZ_TPC)*(EndY_TPC-StartY_TPC)) - ((EndZ_TPC-StartZ_TPC)*(WireStart.Y()-StartY_TPC)))/rcrossx;
     t = (((WireStart.Z() - StartZ_TPC)*(WireEnd.Y()-WireStart.Y())) - ((WireEnd.Z()-WireStart.Z())*(WireStart.Y()-StartY_TPC)))/rcrossx;
 
@@ -1231,262 +1248,757 @@ void ana::HitEff::analyze(const art::Event& evt) {
 
     
     if(u<= 1 && t<=1 && u>= 0 && t>=0){
-
-      // add wire to the wirecrossed map if it crosses  
-      //if(wire_id.TPC == 1){  
       int wire_no = wire_id.Wire;
       geo::PlaneID planeID = wire_id.planeID(); 
       WiresCrossed_map[planeID].push_back(wire_no);
       ++Wirenum;
-      //}
-    
     }
-   
+  }
 
+  int test_RecoHits = 0;
+  //run over all planes
+  for(geo::PlaneID plane_it: geom->IteratePlaneIDs()){
+
+//#################################################################                                                                                                      
+//### Compare MCHits to Reco Hits - No DeltaRay Wires involved  ###                                                                                                      
+//#################################################################                         
+
+    int wires_crossed=0;
+    double  missed_hits_nodelta =0;
+    int RemovedMCHits=0;
+    double n0_MCHits_nodelta=0;
+
+  //Loop over the MCHits and see if there is a recostructed that is associated with it.
+  for(std::map<unsigned int,std::vector<MCHits> >::iterator iter=channel_MCHit_map.begin(); iter!=channel_MCHit_map.end(); ++iter){
+ 
+    if(geom->ChannelToWire(iter->first).at(0).planeID() != plane_it){continue;}
+    else{++wires_crossed;}
+
+    //See if the channel holds a delta ray and ignore if so. 
+    unsigned int ch = iter->first; 
+    sort(iter->second.begin(), iter->second.end(),sortbyPeakTime);
+    
+    auto search =  DeltaMCChannels_Eitherside.find(ch);
+    if(search !=  DeltaMCChannels_Eitherside.end()){++RemovedMCHits; continue;} 
+    
+   std::map<art::Ptr<recob::Hit>, double > used_hits;
+ 
+    //Loop over the MCHits on the channel to see if there is a reco hit. 
+    for(std::vector<MCHits>::iterator jter=iter->second.begin(); jter!=iter->second.end(); ++jter){
+      if(jter->PeakCharge()< charge_cut){jter = iter->second.erase(jter);continue;}
+      n0_MCHits_nodelta++;
+      double abs_dt_min = 1e9;
+      art::Ptr<recob::Hit> associted_hit;
+
+      if(channel_RecoHit_map[ch].size() == 0){++missed_hits_nodelta; continue;}
+      //Loop over the reco hits on the chanel to find the minimum peak time. 
+      for(std::vector<art::Ptr<recob::Hit> >::iterator kter=channel_RecoHit_map[ch].begin(); kter!=channel_RecoHit_map[ch].end();++kter){
+ 
+	art::Ptr<recob::Hit> reco_hit_prt = *kter;
+	if(std::find(noise_hits.begin(), noise_hits.end(), reco_hit_prt) != noise_hits.end()){continue;} 
+	if(used_hits.find(reco_hit_prt) != used_hits.end()){continue;}
+	double dt =  jter->PeakTime() - (*kter)->PeakTime();
+	double abs_dt = dt;
+	if(abs_dt<0){abs_dt *= -1;}
+	if(abs_dt < abs_dt_min) {
+	  
+	  abs_dt_min = abs_dt;
+	  associted_hit = *kter;
+	}
+      }
+     
+      //	std::cout << " abs_dt_min: " <<  abs_dt_min << " Peak Charge: "  << jter->PeakCharge() << " TotalCharge: " << jter->TotalCharge() << " Track ID: " << jter->Trackid() << " Channel: " << ch << " Peak Time: " <<  jter->PeakTime() << std::endl;
+
+       //Find a hit within a time threshold and make sure it hasn't already been used. 
+       if(abs_dt_min == 1e9){   	
+	++missed_hits_nodelta;
+      }
+       used_hits[associted_hit] =  abs_dt_min;
+    }//Loop of MCHits on the channel
+  }//Channel Loops (Channel-MCHitsMap)
+
+
+  raw::ChannelID_t channel;
+  double number_of_wires_with_morethan_one_hit=0;
+  double number_of_wires_with_one_hit=0; 
+  double RecoHitNum=0;
+  double MCHitNum=0;
+  std::map<int,int> channelmap;
+
+
+  //###################################################                                                                                                             
+  //### Get Number of MC Hits/ Reco Hits PerPlane  ###                                                                                                              
+  //##################################################  
+
+  //Find the Number of noise hits on the plane.                                                                                                                                        
+  int noise_hits_plane=0;
+  std::map<int,int> noise_map;
+
+  //add up the noise hits in the plane - now obsolete 
+  for(std::vector<art::Ptr<recob::Hit> >::iterator  noise_it = noise_hits.begin(); noise_it != noise_hits.end(); ++noise_it){
+    art::Ptr<recob::Hit> hit = *noise_it;
+    geo::WireID wireid = hit->WireID();
+    geo::PlaneID  PlaneID = wireid.planeID();
+    if(PlaneID != plane_it){continue;}
+    ++noise_hits_plane;
   }
 
 
 
-  int channels_see_hit=0;
-
-  std::vector<std::vector<double> >Efficency_para_vec(3, std::vector<double>(0));
-  std::vector<std::vector<double> >Efficency_true_vec(3, std::vector<double>(0));
-  std::vector<std::vector<double> >Efficiency_hot_vec(3, std::vector<double>(0));
-  std::vector<std::vector<double> >Efficiency_muondelta_vec(3, std::vector<double>(0));
-
-  double  Efficiency_wire;
-  double  Efficiency_hot;
-  double TRUEHITS=0;
-
-  int numberoftruehits =0;
-
-  //run over all planes
-  for(geo::PlaneID plane_it: geom->IteratePlaneIDs()){
-  
-
-  raw::ChannelID_t channel;
-
-  double number_of_wires_with_morethan_one_hit=0;
-  // double number_of_wires_with_morethan_one_truehit=0;
-  double number_of_wires_with_one_hit; 
-  // double number_of_wires_with_one_truehit;
-  //  double colltruehits=0;
-  double collhits=0;
-  //  double true_muon_hits=0;
-  double true_HITS=0;
-
-  std::vector< std::vector< art::Ptr< recob::Hit > > > truehits_vec;
-  std::vector< art::Ptr< recob::Hit > > TrueHitsMuon;
-  std::vector<int> Total_true_trackIDS;
-
-  std::map<int,std::vector< art::Ptr< recob::Hit > > > Total_true_hits_map;
-  std::map<int,int> channelmap;
-  std::map<int,int> truechannelmap;
-
-
-  for(std::map<art::Ptr<recob::Hit>,int >::iterator hitIt = likelyTrackID.begin(); hitIt != likelyTrackID.end(); ++hitIt){                                                      
- 
-    geo::WireID wireid = (hitIt->first)->WireID();                                                                                                                              
-    geo::PlaneID PlaneID = wireid.planeID();
-  
-    //if(plane_it!=2 && wireid.TPC == 0){ int NewPlaneID = PlaneID-1; PlaneID = TMath::Abs(NewPlaneID);}
-    if(PlaneID != plane_it){continue;}
-    channel = wireid.Wire;
-    truechannelmap[channel] = ++truechannelmap[channel];  
-    ++true_HITS;
-  }   
-
-
-
-  
-  // //Find all the hits that come from the truth particle in the plane. Place them in a channel map to look for wires with more than 2 hits associated to the muon (this should not happen).  
-  // for(std::vector<art::Ptr<recob::Hit> >::iterator hitIt = TrueHitsMuon.begin(); hitIt != TrueHitsMuon.end(); ++hitIt){
-    
-  //   art::Ptr<recob::Hit> hit = *hitIt;
-  //   geo::WireID wireid = hit->WireID();
-
-  //   //int Plane = wireid.Plane;
-  //   //    if(wireid.TPC == 0){ 
-  //   //  if(Plane =! 2){ 
-  //   if(wireid.Plane != plane_it){continue;} 
- 
-  //   colltruehits++;
-  //   //  channel = wireid.Wire;
-  //   // truechannelmap[channel] = ++truechannelmap[channel];
-      
-  //   }
-
-  // numberoftruehits = numberoftruehits+colltruehits;
+  //Find the Number of MCHits in the Plane
+  for(std::vector<MCHits>::iterator MChitIt=MC_vec.begin(); MChitIt!=MC_vec.end(); ++MChitIt){
+      if(geom->ChannelToWire(MChitIt->Channel()).at(0).planeID() != plane_it){continue;}
+      ++MCHitNum;
+  }
 
   //Find the number of hits in the plane in total and place in a channel map to look for wires with more than 2 hits.
   for(std::vector<art::Ptr<recob::Hit> >::iterator hitIt = hits.begin(); hitIt != hits.end(); ++hitIt){
     art::Ptr<recob::Hit> hit = *hitIt;
     geo::WireID wireid = hit->WireID();
     geo::PlaneID  PlaneID = wireid.planeID();
-    // if(plane_it!=2 && wireid.TPC == 0){std::cout << "The plane is switched" << std::endl;;int NewPlaneID = PlaneID-1; PlaneID = TMath::Abs(NewPlaneID);}
     if(PlaneID != plane_it){continue;}
-    collhits++;
-     
+    RecoHitNum++;
     channel = wireid.Wire;
+
+    //    std::cout << "channel: " <<  geom->PlaneWireToChannel(wireid.Plane,
+    //			     wireid.Wire,
+    //			     wireid.TPC,
+    //							  wireid.Cryostat) << " wire id: " << wireid << std::endl;
+
+    if(std::find(noise_hits.begin(), noise_hits.end(), hit) != noise_hits.end()){--channelmap[channel];}
     channelmap[channel] = ++channelmap[channel];
-  
    }
 
 
-
-  // //Find the number of channels with more than one hit from the true muon. 
-  // for(std::map<int,int>::iterator channelIt = truechannelmap.begin(); channelIt != truechannelmap.end(); ++channelIt){
-  //    if(channelIt->second != 1){
-  //      ++number_of_wires_with_morethan_one_truehit;
-  //      hits_to_be_removed = hits_to_be_removed + channelIt->second;
-  //      //      std::cout << "The Channel: " << channelIt->first << " has more than one true hit. It has true hits: " << channelIt->second << std::endl;
-  //   }
-  // }
+  for(std::map<int,int>::iterator channelmap_iter=channelmap.begin();channelmap_iter!=channelmap.end();++channelmap_iter){
+    if(channelmap_iter->second==1){++number_of_wires_with_one_hit;}
+  }
 
   std::map<int,int> mt1_channelmap;  
 //Find the number of channels with more than one hit from all the hits.
 for(std::map<int,int>::iterator channelIt = channelmap.begin(); channelIt != channelmap.end(); ++channelIt){
-  if(channelIt->second != 1){
-    
-    mt1_channelmap[channelIt->first] = channelIt->second;
-    if(channelIt->first != 0){mt1_channelmap[(channelIt->first) - 1] = channelIt->second;}
+  if(channelIt->second > 1){
+      mt1_channelmap[channelIt->first] = channelIt->second;
+      if(channelIt->first != 0){mt1_channelmap[(channelIt->first) - 1] = channelIt->second;}
     int channel_map_size_m1 = channelmap.size() - 1;
       if(channelIt->first != channel_map_size_m1){mt1_channelmap[(channelIt->first) + 1] = channelIt->second;}
-  
-    ++number_of_wires_with_morethan_one_hit;
-  }  //    std::cout << "The Channel: " << channelIt->first << " has more than one hit. It has hits: " << channelIt->second << std::endl;
- 
-
+      ++number_of_wires_with_morethan_one_hit;
+  } 
  }
-    
 
 
-
-  double  number_of_wire_that_are_hit = channelmap.size(); 
-  double  wires_that_are_crossed = WiresCrossed_map[plane_it].size();
+//  double  number_of_wire_that_are_hit = channelmap.size(); 
+  // double  wires_that_are_crossed = WiresCrossed_map[plane_it].size();
   
   // number_of_wires_with_one_truehit = number_of_wire_that_are_truehit - number_of_wires_with_morethan_one_truehit;
-  number_of_wires_with_one_hit = number_of_wire_that_are_hit - number_of_wires_with_morethan_one_hit; 
+//  number_of_wires_with_one_hit = number_of_wire_that_are_hit - number_of_wires_with_morethan_one_hit; 
 
-  double number_of_wires_not_excluded =  number_of_wire_that_are_hit-mt1_channelmap.size();
-  std::cout << "number_of_wires_not_excluded = " << number_of_wires_not_excluded << std::endl;
- //Efficiencies 
+
+  //Efficiencies 
 
      //The number of wires which see one hit/ number of wires cross  - number of wires which see more than one hit.
-      Efficiency_wire = (number_of_wires_with_one_hit)/ (wires_that_are_crossed-number_of_wires_with_morethan_one_hit);
-
-     //The number of hits per plane/number of true hits per plane
-       Efficiency_hot        = collhits/true_HITS;
-    
-     // The number of muon hits + noise / number of true muon hits per plane
+     double Efficiency_wire = (number_of_wires_with_one_hit)/ (wires_crossed-number_of_wires_with_morethan_one_hit);
       
-     
-     // The number of muon hits / number of true muon hits per plane (should be the same above unless there are true hits from other particles) 
-  
 
-     
+     //Excluding the wires with delta ray hits. The number of MC hits - number of MC hits not matched to a Reco hit/ number of MCHits
+     double  Efficiency_nodelta        = (n0_MCHits_nodelta-missed_hits_nodelta)/n0_MCHits_nodelta;
+    
+     // The number of Reco hits - noise / number of MC hits per plane
+     double  Efficiency_seperatedelta  = (RecoHitNum -  noise_hits_plane)/MCHitNum;
 
-  
-  
-   E1[plane_it.Plane]= E1[plane_it.Plane]+Efficiency_wire;
-   //E2[plane_it]=E2[plane_it]+Efficency_true;
-   E3[plane_it.Plane]= E3[plane_it.Plane] +Efficiency_hot;
-  
+     if((wires_crossed-number_of_wires_with_morethan_one_hit) !=0){
+       ((Efficiency_wire_map[plane_it])[threshold_pair])[angle].push_back(Efficiency_wire);
+       Efficiency_total_wire_map[threshold_pair][angle].push_back(Efficiency_wire);
+      }
 
- channels_see_hit = channels_see_hit + truechannelmap.size();
+     if(n0_MCHits_nodelta !=0){
+       ((Efficiency_nodelta_map[plane_it])[threshold_pair])[angle].push_back(Efficiency_nodelta);
+       Efficiency_total_nodelta_map[threshold_pair][angle].push_back(Efficiency_nodelta);
+     }
+     if(MCHitNum !=0){
+       ((Efficiency_seperatedelta_map[plane_it])[threshold_pair])[angle].push_back(Efficiency_seperatedelta);
+       Efficiency_total_seperatedelta_map[threshold_pair][angle].push_back(Efficiency_seperatedelta);
+     }
+
+
+    
   
- if(wires_that_are_crossed != 0){
-   // (Efficiency_angle_map[angle])[plane_it].push_back(Efficiency_hot);
- (Efficiency_angle_map[plane_it])[angle].push_back(Efficiency_wire);
- Efficency_para_vec[plane_it.Plane].push_back(Efficiency_wire);
- Efficiency_hot_vec[plane_it.Plane].push_back(Efficiency_hot);
- }
+     test_RecoHits= test_RecoHits+RecoHitNum;
 
 
  std::cout << " #############################################" << std::endl;
  std::cout << "WiresCrossed = " << WiresCrossed_map[plane_it].size() << std::endl;
+ std::cout << "MC Wire Cross = " << wires_crossed << std::endl;
+ std::cout << "Noise_hts per plane: " << noise_hits_plane << std::endl;
  std::cout << "Efficiency Wire = " <<  Efficiency_wire << std::endl; 
+ std::cout << "Efficiency Nodelta = " << Efficiency_nodelta  << std::endl;
+ std::cout << "Efficiency_seperatedelta = " << Efficiency_seperatedelta << std::endl; 
  std::cout << "Number of wires with one hit: " << number_of_wires_with_one_hit << " number_of_wires_with_morethan_one_hit: " << number_of_wires_with_morethan_one_hit << std::endl;
+ std::cout << "MCHitNum: " << MCHitNum << " RecoHitNum: " << RecoHitNum << "  channelmap.size(): " <<   channelmap.size()  <<" n0_MCHits_nodelta.size() " <<  n0_MCHits_nodelta<<std::endl; 
+ std::cout << "num_merged_hits: " << num_merged_hits << " num_merged_n_not : "<< num_merged_n_not << std::endl;
+ std::cout << " missed_hits_nodelta: " << missed_hits_nodelta <<std::endl;
  std::cout << " #############################################" << std::endl;
 
   }//plane loop
- 
+
+  std::cout << "  channel_MCHit_map.size(): " << channel_MCHit_map.size() << std::endl;
+  std::cout << " channels.size(): " << channels.size() << std::endl; 
   std::cout << " MuonMCHits.size(): " << MuonMCHits.size() <<std::endl;
   std::cout << "MC_vec.size() " << MC_vec.size() << std::endl;
-  std::cout << "The channels that see true hits: " << channels_see_hit << " Number of wires truly crossed: " << Wirenum << std::endl;
   std::cout << "The total number of noise hits is: " << noise_hits.size() << std::endl;
   std::cout << "angle: " <<  angle <<std::endl;
+  std::cout << " likelyTrackID.size: " <<  likelyTrackID.size() << " hitssize: " << hits.size() << " mchit num: " << mchit_num <<std::endl;
+  std::cout << "testRecoHits size: " << test_RecoHits <<  "  hits.size(): " <<  hits.size() << std::endl; 
+  
+  }//dtThreshold Loop  
+  }//chargThreshold Loop
 
-    (Efficency_para_map[angle]) = Efficency_para_vec; 
-    (Efficiency_hot_map[angle])   = Efficiency_hot_vec;
-  std::cout << "numberoftruehits:" << numberoftruehits << " TRUEHITS: " <<  TRUEHITS << " likelyTrackID.size: " <<  likelyTrackID.size() << " hitssize: " << hits.size() << " mchit num: " << mchit_num <<std::endl;
-
- 
 return;
-}
+  }
  
 
 void ana::HitEff::endJob() {
-  // std::cout << event << std::endl;
 
-  // for(int i=0; i<3; ++i){
-  //   std::cout << E1[i]/event << " " << i << std::endl;
-  //   std::cout << E2[i]/event << " " << i << std::endl;
-  //   std::cout << E3[i]/event << " " << i << std::endl;
-  //   std::cout << E4[i]/event << " " << i << std::endl;
+
   
-  // }
+  std::string file_string;
+  std::string Theta;
+  std::stringstream sstm_file;
+  sstm_file << "EfficiencyGraphs_";  
+  if(fThetaXZinstead){sstm_file << "ThetaXZ_"; Theta="(XZ)";}
+  else{sstm_file << "_ThetaYZ_"; Theta="(YZ)";}
+  sstm_file << fADC << "ADC_" << fChargeCut.size() << "_" << fdtThreshold.size();
+  file_string = sstm_file.str();
+  const char* namefile = file_string.c_str();
 
-  // TFile *file = new TFile("EfficiencyGraphs","RECREATE");
+  TFile *file = new TFile(namefile,"RECREATE");
 
-  // for( std::map<geo::PlaneID, std::map<double,std::vector<double> > >::iterator i = Efficiency_angle_map.begin(); i != Efficiency_angle_map.end(); ++i){
+  //###########################################                                                                                                                          
+  //### Individual Plane Efficiency Graphs  ###                                                                                                                            
+  //########################################### 
+
+  std::vector<std::map<geo::PlaneID, std::map<std::pair<double,double>, std::map<double,std::vector<double> > > > > Efficiencies = {Efficiency_wire_map,Efficiency_nodelta_map,Efficiency_seperatedelta_map}; 
+
+  
+  std::vector<std::string> Efficiencies_string = {"Efficiency on one Hit Wires","Efficiency Exluding Wires with Delta Rays","Efficiency to Seperate Delta Rays"};
+
+  for(unsigned int l=0; l<Efficiencies.size(); ++l){
+
+    //Loop over the planes 
+   for( std::map<geo::PlaneID, std::map<std::pair<double,double>, std::map<double,std::vector<double> > > >::iterator k = Efficiencies[0].begin(); k != Efficiencies[0].end(); ++k){
+
+      //Create the canvas
+     std::string string_canvas;
+     std::stringstream sstm_canvas;
+     sstm_canvas << Efficiencies_string[l] << " PlaneID:" << (k->first);
+     string_canvas = sstm_canvas.str();
+     const char* name_canvas = string_canvas.c_str();
+     TCanvas *c1 = new TCanvas(name_canvas,name_canvas,900,600);
+     c1->cd();
+
+      //Create the graph.
+      TMultiGraph *mg_Efficiency_wire = new TMultiGraph();
+      std::string string_mg;
+      std::stringstream sstm_mg;
+      sstm_mg << Efficiencies_string[l] << "PlaneID:" << (k->first) <<";Angle"<< Theta << " deg;Efficiency %";
+      string_mg = sstm_mg.str();
+      const char* name_mg = string_mg.c_str();
+
+      //Create the legend 
+      TLegend *leg = new TLegend(0.65, 0.1, 0.9, 0.35);
+      leg->SetFillColor(0);
+      leg->SetHeader("MC ADC Threshold and dtThreshold");
+      leg->SetBorderSize(1);
+      leg->SetTextSize(0.025);
+      
+      //Define the colour for the graphs                                                                                                                                           
+      int colour_int=0;
+
+      //Loop over the threshold.
+      for( std::map<std::pair<double,double>, std::map<double,std::vector<double> > >::iterator i = k->second.begin(); i != k->second.end(); ++i){
+
+	//Create the Graph for angle over Efficiency.
+	TGraphErrors* Efficiency_para_graph = new TGraphErrors(0);
+
+	//Name the legend depending on the threshold.
+	std::string string_legend;
+	std::stringstream sstm1_legend;
+	sstm1_legend << (i->first).first << " ADCs " << (i->first).second << " dt Threshold";
+	string_legend = sstm1_legend.str();
+	const char* name_legend = string_legend.c_str();
+
+	//Loop over the Efficiencys at the angle.
+	for(std::map<double,std::vector<double> >::iterator j = (i->second).begin();  j != (i->second).end(); ++j){
     
-  //   TGraphErrors* Efficiency_para_graph = new TGraphErrors(0);
+	  //Find the mean and standard error on the mean. 
+	  double angle=j->first;
+	  double samplesize = (j->second).size();
+	  double bias;
+	  if(samplesize==1){bias=1;}
+	  else{bias=std::sqrt(1/(samplesize-1));}
+	  double mean   = accumulate( (j->second).begin(), (j->second).end(), 0.0)/samplesize;
+	  double sq_sum = std::inner_product((j->second).begin(), (j->second).end(), (j->second).begin(), 0.0);
+	  double stdev  = std::sqrt(sq_sum /samplesize - mean * mean)*bias;
+	  double stderrmean = stdev/std::sqrt((j->second).size());
+
+	  //Add a point to the graph.
+	  Efficiency_para_graph->SetPoint(Efficiency_para_graph->GetN(),angle, mean);
+	  Efficiency_para_graph->SetPointError(Efficiency_para_graph->GetN()-1,0, stderrmean);
+	  //      std::cout << "angle: " << angle << " mean: " << mean << " stdev: " << stdev << " N: " << (j->second).size() <<std::endl;
+	}//loop over vector
+  
+
+	//if you wish to save every efficiency graph seperately 
+	// std::stringstream sstm1;
+	// sstm1 << "Efficiency on one Hit Wires, PlaneID:" << (k->first);
+	//map_string = sstm1.str();
+	//const char* name = map_string.c_str();
+	//Efficiency_para_graph->SetName(name);
+	//Efficiency_para_graph->SetTitle(name);
+	//Efficiency_para_graph->Draw("A");
+	//Efficiency_para_graph->GetXaxis()->SetTitle("Angle");
+	//Efficiency_para_graph->GetYaxis()->SetTitle("Efficiency");
+	//Efficiency_para_graph->Write();
+
+	//Just in case they are fractions
+	++colour_int;
+
+	Efficiency_para_graph->SetMarkerColor(colour_int);
+	Efficiency_para_graph->SetMarkerStyle(8);
+
+	//Add graph to the mutligraph
+	mg_Efficiency_wire->Add(Efficiency_para_graph);
+	leg->AddEntry(Efficiency_para_graph, name_legend, "p");
+
+      }//loop over thresholds
+ 
+      mg_Efficiency_wire->SetName(name_mg);
+      mg_Efficiency_wire->SetTitle(name_mg);
+      mg_Efficiency_wire->Draw("AP");
+      leg->Draw();
+      c1->Update();
+      c1->Write();
+      mg_Efficiency_wire->Write();
+      mg_Efficiency_wire->Delete();
+      gSystem->ProcessEvents();
+      delete c1;
+
+    }//loop over plane
+
+  }//loop over the efficiencies
+
+
+  // //#################################                                                                                                                                               
+  // //### Efficiency_NoDelta Graph  ###                                                                                                                                              
+  // //#################################   
+
+
+  // for( std::map<geo::PlaneID, std::map<int, std::map<double,std::vector<double> > > >::iterator k = Efficiency_nodelta_map.begin(); k != Efficiency_nodelta_map.end(); ++k){
+  //   std::cout << "tets5.1 " << std::endl;
+
+  //   std::string map_string_canvas;
+  //   std::stringstream sstm1_canvas;
+  //   sstm1_canvas << "Efficiency_nodelta, PlaneID:" << (k->first);
+  //   map_string_canvas = sstm1_canvas.str();
+  //   const char* name_canvas = map_string_canvas.c_str();
+  //   TCanvas *c1 = new TCanvas(name_canvas,name_canvas,900,600);
+  //   c1->cd();
+  //   TMultiGraph *mg_Efficiency_nodelta = new TMultiGraph();
+  //   TLegend *leg = new TLegend(0.7, 0.1, 0.9, 0.3);
+  //   leg->SetFillColor(0);
+  //   leg->SetHeader("MC ADC Threshold");
+
+  //   //std::string map_string_canvas;
+  //   //std::stringstream sstm1_canvas;
+  //   //sstm1_canvas << "PlaneID:" << (k->first);
+  //   //map_string_canvas = sstm1_canvas.str();
+  //   //const char* name_canvas = map_string_canvas.c_str();
+  //   //TCanvas *c1 = new TCanvas(name_canvas,name_canvas,900,600);
+  //   //c1->cd();
+    
+
+  //   for( std::map<int, std::map<double,std::vector<double> > >::iterator i = k->second.begin(); i != k->second.end(); ++i){
+  //     std::cout << "tets5.2 " << std::endl;
+
+  //     std::string map_string_legend;
+  //     std::stringstream sstm1_legend;
+  //     sstm1_legend << (i->first) << " ADCs";
+  //     map_string_legend = sstm1_legend.str();
+  //     const char* name_legend = map_string_legend.c_str();
+  //   TGraphErrors* Efficiency_nodelta_graph = new TGraphErrors(0);
 
   //   for(std::map<double,std::vector<double> >::iterator j = (i->second).begin();  j != (i->second).end(); ++j){
-    
   //     double angle=j->first;
-  //     std::cout << "angle: "<< angle << std::endl;
-  //     double mean   = accumulate( (j->second).begin(), (j->second).end(), 0.0)/ (j->second).size();
+  //     double samplesize = (j->second).size();
+  //     double bias;
+  //     if(samplesize==1){bias=1;}
+  //     else{bias=std::sqrt(1/(samplesize-1));}
+  //     double mean   = accumulate( (j->second).begin(), (j->second).end(), 0.0)/ samplesize;
   //     double sq_sum = std::inner_product((j->second).begin(), (j->second).end(), (j->second).begin(), 0.0);
-  //     double stdev  = std::sqrt(sq_sum / (j->second).size() - mean * mean);
+  //     double stdev  = std::sqrt(sq_sum /samplesize - mean * mean)*bias;
   //     double stderrmean = stdev/std::sqrt((j->second).size());
-  //     std::cout << mean << std::endl;
-  //     std::cout << "stderrmean: " << stderrmean << std::endl;
-  //     Efficiency_para_graph->SetPoint(Efficiency_para_graph->GetN(),angle, mean);
-  //     Efficiency_para_graph->SetPointError(Efficiency_para_graph->GetN(),0, stderrmean);
+  //     std::cout << "angle: " << angle << " mean: " << mean << " stdev: " << stdev << " N: " << (j->second).size() <<std::endl;       
+  //     Efficiency_nodelta_graph->SetPoint(Efficiency_nodelta_graph->GetN(),angle, mean);
+  //     Efficiency_nodelta_graph->SetPointError(Efficiency_nodelta_graph->GetN()-1,0, stderrmean);
   //   }
-  
+
   //   std::string map_string;
   //   std::stringstream sstm1;
-  //   sstm1 << "Efficiency_Para PlaneID:" << (i->first);
+  //   sstm1 << "Efficiency Exluding Wires with Delta Rays, PlaneID:" << (k->first);
   //   map_string = sstm1.str();
   //   const char* name = map_string.c_str();
 
-  //   Efficiency_para_graph->SetMarkerColor(4);
-  //   Efficiency_para_graph->SetMarkerStyle(21);
-  //   Efficiency_para_graph->Draw("AP");
-  //   Efficiency_para_graph->SetName(name);
-  //   Efficiency_para_graph->GetXaxis()->SetTitle("Angle");
-  //   Efficiency_para_graph->GetYaxis()->SetTitle("Efficiency Para");
-  //   Efficiency_para_graph->SetTitle(name);
-  //   Efficiency_para_graph->Write();
+  //   Efficiency_nodelta_graph->SetMarkerColor(i->first);
+  //   Efficiency_nodelta_graph->SetMarkerStyle(8);
+  //   Efficiency_nodelta_graph->SetName(name);
+  //   Efficiency_nodelta_graph->SetTitle(name);
+  //   Efficiency_nodelta_graph->Draw("A");
+  //   Efficiency_nodelta_graph->GetXaxis()->SetTitle("Angle");
+  //   Efficiency_nodelta_graph->GetYaxis()->SetTitle("Efficiency");
+  //   Efficiency_nodelta_graph->Write();
+  //   mg_Efficiency_nodelta->Add(Efficiency_nodelta_graph);
+  //   //    Efficiency_nodelta_graph->Delete();
+  //   leg->AddEntry(Efficiency_nodelta_graph, name_legend, "p");
+  //   }
+  
+  //   std::string map_string_mg;
+  //   std::stringstream sstm1_mg;
+  //   sstm1_mg << "MultiGraph: Efficiency Exluding Wires with Delta Rays PlaneID:" << (k->first) << ";Angle;Efficiency" ;
+  //   map_string_mg = sstm1_mg.str();
+  //   const char* name_mg = map_string_mg.c_str();
+  //   mg_Efficiency_nodelta->SetTitle(name_mg);
+  //   mg_Efficiency_nodelta->Draw("P");
+  //   mg_Efficiency_nodelta->SetName(name_mg);
+  //   leg->Draw();
+  //   c1->Update();
+  //   gPad->Update();
+  //   c1->Write();
+  //   mg_Efficiency_nodelta->Write();
+  //   mg_Efficiency_nodelta->Delete();
+    
+  // }
+  
+  // //#######################################                                                                                                             
+  // //### Efficiency_seperatedelta Graph  ###                                                                                                            
+  // //#######################################                                                                                                             
+              
+                  
 
+  // for( std::map<geo::PlaneID, std::map<int, std::map<double,std::vector<double> > > >::iterator k = Efficiency_seperatedelta_map.begin(); k != Efficiency_seperatedelta_map.end(); ++k){
+
+  //   std::string map_string_canvas;
+  //   std::stringstream sstm1_canvas;
+  //   sstm1_canvas << "seperatedelta PlaneID:" << (k->first);
+  //   map_string_canvas = sstm1_canvas.str();
+  //   const char* name_canvas = map_string_canvas.c_str();
+  //   TCanvas *c1 = new TCanvas(name_canvas,name_canvas,900,600);
+  //   c1->cd();
+  //   TMultiGraph *mg_seperatedelta = new TMultiGraph();
+  //   TLegend *leg = new TLegend(0.7, 0.1, 0.9, 0.3);
+  //   leg->SetFillColor(0);
+  //   leg->SetHeader("MC ADC Threshold");
+  //   for( std::map<int, std::map<double,std::vector<double> > >::iterator i = k->second.begin(); i != k->second.end(); ++i){
+
+  //   TGraphErrors* Efficiency_seperatedelta_graph = new TGraphErrors(0);
+  //   std::string map_string_legend;
+  //   std::stringstream sstm1_legend;
+  //   sstm1_legend << (i->first) << " ADCs";
+  //   map_string_legend = sstm1_legend.str();
+  //   const char* name_legend = map_string_legend.c_str();
+
+  //   for(std::map<double,std::vector<double> >::iterator j = (i->second).begin();  j != (i->second).end(); ++j){
+
+  //     double angle=j->first;
+  //     double samplesize = (j->second).size();
+  //     double bias;
+  //     if(samplesize==1){bias=1;}
+  //     else{bias=std::sqrt(1/(samplesize-1));}
+  //     double mean   = accumulate( (j->second).begin(), (j->second).end(), 0.0)/samplesize;
+  //     double sq_sum = std::inner_product((j->second).begin(), (j->second).end(), (j->second).begin(), 0.0);
+  //     double stdev  = std::sqrt((sq_sum /samplesize)  - mean * mean)*bias;
+  //     double stderrmean = stdev/std::sqrt((j->second).size());
+  //     //std::cout << "angle: " << angle << " mean: " << mean << " stdev: " << stdev << " N: " << (j->second).size() <<std::endl;
+  //     //std::cout << "inner product: " << sq_sum << " sample size: " << samplesize << std::endl;;
+  //     Efficiency_seperatedelta_graph->SetPoint(Efficiency_seperatedelta_graph->GetN(),angle, mean);
+  //     Efficiency_seperatedelta_graph->SetPointError(Efficiency_seperatedelta_graph->GetN()-1,0, stderrmean);
+  //   }
+
+  //   std::string map_string;
+  //   std::stringstream sstm1;
+  //   sstm1 << "Efficiency to Seperate Delta Rays, PlaneID:" << (k->first);
+  //   map_string = sstm1.str();
+  //   const char* name = map_string.c_str();
+
+  //   Efficiency_seperatedelta_graph->SetMarkerColor(i->first);
+  //   Efficiency_seperatedelta_graph->SetMarkerStyle(8);
+  //   Efficiency_seperatedelta_graph->Draw("AP");
+  //   Efficiency_seperatedelta_graph->SetName(name);
+  //   Efficiency_seperatedelta_graph->GetXaxis()->SetTitle("Angle");
+  //   Efficiency_seperatedelta_graph->GetYaxis()->SetTitle("Efficiency");
+  //   Efficiency_seperatedelta_graph->SetTitle(name);
+  //   Efficiency_seperatedelta_graph->Write();
+  //   mg_seperatedelta->Add(Efficiency_seperatedelta_graph);
+  //   leg->AddEntry(Efficiency_seperatedelta_graph, name_legend, "p");
+  //   //Efficiency_seperatedelta_graph->Delete();
+  //   }
+
+  //   std::string map_string_mg;
+  //   std::string map_string_leg1;
+  //   std::stringstream sstm1_mg;
+  //   std::stringstream sstm1_leg1;
+  //   sstm1_mg << "MultiGraph: Efficiency to Seperate Delta Rays, PlaneID:" << (k->first) << ";Angle;Efficiency";
+  //   sstm1_leg1 << "Legend: Efficiency to Seperate Delta Rays, PlaneID:" << (k->first);
+  //   map_string_mg = sstm1_mg.str();
+  //   const char* name_mg = map_string_mg.c_str();
+  //   map_string_leg1 = sstm1_leg1.str();
+  //   const char* name_leg1 = map_string_leg1.c_str();    
+
+  //   mg_seperatedelta->SetTitle(name_mg);
+  //   mg_seperatedelta->Draw("AP");
+  //   leg->Draw();
+  //   mg_seperatedelta->SetName(name_mg);
+  //   leg->SetName(name_leg1);
+  //   //    mg_seperatedelta->GetXaxis()->SetTitle("Angle");
+  //   // mg_seperatedelta->GetYaxis()->SetTitle("Efficiency");
+
+
+  //   //c1->BuildLegend();
+  //   c1->Update();
+  //   gPad->Update();
+    
+  //   std::string map_string_c1;
+  //   std::stringstream sstm1_c1;
+  //     int plane = ((k->first)).Plane;
+      
+  //   //std::cout << "Plane: " << plane << std::endl;
+  //   sstm1_c1 << "Eff3_Plane" << plane <<".png";
+  //   map_string_c1 = sstm1_c1.str();
+  //    const char* name_c1 = map_string_c1.c_str();
+  //   c1->Print(name_c1);
+  //   mg_seperatedelta->Write();
+  //   leg->Write();
+  //   c1->Write();
+  //   mg_seperatedelta->Delete();
   // }
 
-  // file->Close();
 
- //    TCanvas *c1 = new TCanvas("c1","Profile histogram example",200,10,700,500);
-//     TProfile * hprof  = new TProfile("hprof","Profile of pz versus px",100,-4,4,0,20);
+  //################################                                                                                                                           
+  //### Total Efficiency Graphs ###                                                                                                                           
+  //###############################  
 
-//     for std::map<double,std::vector<std::vector<double> > >::iterator it = Efficency_para_map.begin(); it != Efficency_para_map.end(); ++it){
+  std::vector<std::map<std::pair<double,double>, std::map<double,std::vector<double> > > >  Efficiencies_Total =  {Efficiency_total_wire_map, Efficiency_total_nodelta_map, Efficiency_total_seperatedelta_map};
+  //Wire 
 
-//     std::vector<double> Efficiency_para_vec =  (it->second).at(0);
-//     for(int i=0; i<Efficiency_para_vec; ++i){
-//       hprof->Fill(it->second,Efficiency_para_vec[0],1)
-//     }
-//     hprof->Draw();
-// }
+  //Loop over all the defined Efficiencies.
+  for(unsigned int l=0; l<Efficiencies_Total.size(); ++l){
+
+    //Start naming the canvas depending on the Efficiency.                                                                                                              
+    std::string string_canvas;
+    std::stringstream sstm_canvas;
+    sstm_canvas << Efficiencies_string[l];
+    const char* name_canvas = string_canvas.c_str();
+    TCanvas *c1 = new TCanvas(name_canvas,name_canvas,900,600);
+    c1->cd();
+
+    //Create graph.                                                                                                               
+    std::string string_mg;
+    std::stringstream sstm_mg;
+    sstm_mg << "Total " << Efficiencies_string[l];
+    string_mg = sstm_mg.str();
+    const char* name_mg = string_mg.c_str();
+    TMultiGraph *mg_TotalEfficiency_wire = new TMultiGraph();
+
+    //Create the legend.                                                                                                                                                            
+    TLegend *leg = new TLegend(0.7, 0.1, 0.9, 0.3);
+    leg->SetFillColor(0);
+    leg->SetHeader("MC ADC Threshold and dtThreshold");
+
+    //define the colour integer for the legend.                                                                                                                                    
+    int colour_int =0;
+
+    for(std::map<std::pair<double,double>, std::map<double,std::vector<double> > >::iterator k = Efficiencies_Total[l].begin();  k != Efficiencies_Total[l].end(); ++k){
+
+      //Create the The individual efficiency graphs. 
+      TGraphErrors* Efficiency_total_wire_graph = new TGraphErrors(0);
+
+      //Name the legend depending on the threshold.                                                                                                                                
+      std::string string_legend;
+      std::stringstream sstm_legend;
+      sstm_legend << (k->first).first << " ADCs " << (k->first).second << " dt Threshold";
+      string_legend = sstm_legend.str();
+      const char* name_legend = string_legend.c_str();
+
+      //Loop over the angles to create a Efficiency value at that point. 
+      for(std::map<double,std::vector<double> >::iterator j = k->second.begin();  j != k->second.end(); ++j){
+
+	//Caclulate the mean 
+	double angle=j->first;
+	double samplesize = (j->second).size();
+	double bias;
+	if(samplesize==1){bias=1;}
+	else{bias=std::sqrt(1/(samplesize-1));}
+	double mean   = accumulate( (j->second).begin(), (j->second).end(), 0.0)/samplesize;
+	double sq_sum = std::inner_product((j->second).begin(), (j->second).end(), (j->second).begin(), 0.0);
+	double stdev  = std::sqrt(sq_sum /samplesize - mean * mean)*bias;
+	double stderrmean = stdev/std::sqrt((j->second).size());
+	Efficiency_total_wire_graph->SetPoint(Efficiency_total_wire_graph->GetN(),angle, mean);
+	Efficiency_total_wire_graph->SetPointError(Efficiency_total_wire_graph->GetN()-1,0, stderrmean);
+      }
+
+      ++colour_int;
+      Efficiency_total_wire_graph->SetMarkerColor(colour_int);
+      Efficiency_total_wire_graph->SetMarkerStyle(8);
+
+      //Used if you want to save the graphs seperately 
+      // Efficiency_total_wire_graph->Draw("AP");
+      // Efficiency_total_wire_graph->SetName(name);
+      // Efficiency_total_wire_graph->GetXaxis()->SetTitle("Angle");
+      // Efficiency_total_wire_graph->GetYaxis()->SetTitle("Efficiency");
+      // Efficiency_total_wire_graph->SetTitle(name);
+      // Efficiency_total_wire_graph->Write();
+
+      //Add the graph to the multigraph
+      mg_TotalEfficiency_wire->Add(Efficiency_total_wire_graph);
+      leg->AddEntry(Efficiency_total_wire_graph, name_legend, "p");
+
+    }//Loop threshold 
+
+
+    //Save the graph.
+    mg_TotalEfficiency_wire->SetTitle(name_mg);
+    mg_TotalEfficiency_wire->Draw("AP");
+    leg->Draw();
+    c1->Update();
+    mg_TotalEfficiency_wire->SetName(name_mg);
+    c1->Write();
+    mg_TotalEfficiency_wire->Write();
+    mg_TotalEfficiency_wire->Delete();
+    gSystem->ProcessEvents();
+    delete c1;
+    
+  }//Loop over Efficiencies
+
+// //No Delta 
+//   TMultiGraph *mg_TotalEfficiency_nodelta = new TMultiGraph();
+//   for(std::map<int, std::map<double,std::vector<double> > >::iterator k = Efficiency_total_nodelta_map.begin();  k != Efficiency_total_nodelta_map.end(); ++k){
+//     TGraphErrors* Efficiency_total_nodelta_graph = new TGraphErrors(0);
+//     for(std::map<double,std::vector<double> >::iterator j = k->second.begin();  j != k->second.end(); ++j){
+
+
+//   double angle=j->first;
+//   double samplesize = (j->second).size();
+//   double bias;
+//   if(samplesize==1){bias=1;}
+//   else{bias=std::sqrt(1/(samplesize-1));}
+//   double mean   = accumulate( (j->second).begin(), (j->second).end(), 0.0)/samplesize;
+//   double sq_sum = std::inner_product((j->second).begin(), (j->second).end(), (j->second).begin(), 0.0);
+//   double stdev  = std::sqrt(sq_sum /samplesize - mean * mean)*bias;
+//   double stderrmean = stdev/std::sqrt((j->second).size());
+//   Efficiency_total_nodelta_graph->SetPoint(Efficiency_total_nodelta_graph->GetN(),angle, mean);
+//   Efficiency_total_nodelta_graph->SetPointError(Efficiency_total_nodelta_graph->GetN()-1,0, stderrmean);
+//  }
+
+//     std::string map_string;
+// std::stringstream sstm2;
+// sstm2 << "Total Efficiency Exluding Wires with Delta Rays" ;
+// map_string = sstm2.str();
+// const char* name1 = map_string.c_str();
+
+// Efficiency_total_nodelta_graph->SetMarkerColor(fdtThreshold[0]);
+// Efficiency_total_nodelta_graph->SetMarkerStyle(8);
+// Efficiency_total_nodelta_graph->Draw("AP");
+// Efficiency_total_nodelta_graph->SetName(name1);
+// Efficiency_total_nodelta_graph->GetXaxis()->SetTitle("Angle");
+// Efficiency_total_nodelta_graph->GetYaxis()->SetTitle("Efficiency");
+// Efficiency_total_nodelta_graph->SetTitle(name1);
+// Efficiency_total_nodelta_graph->Write();
+// //Efficiency_total_nodelta_graph->Delete();
+// mg_TotalEfficiency_nodelta->Add(Efficiency_total_nodelta_graph);
+//   }
+
+//   mg_TotalEfficiency_nodelta->SetTitle("MultiGraph Total Efficiency Exluding Wires with Delta Rays");
+//   mg_TotalEfficiency_nodelta->Draw("AP");
+//   mg_TotalEfficiency_nodelta->SetName("MultiGraph Total Efficiency Exluding Wires with Delta Rays");
+//   mg_TotalEfficiency_nodelta->GetXaxis()->SetTitle("Angle");
+//   mg_TotalEfficiency_nodelta->GetYaxis()->SetTitle("Efficiency");
+//   mg_TotalEfficiency_nodelta->Write();
+//   mg_TotalEfficiency_nodelta->Delete();
+
+
+
+// //Seperate Delta 
+//   TMultiGraph *mg_TotalEfficiency_seperatedelta = new TMultiGraph();
+//   TCanvas *c1 = new TCanvas("Totalseperatedelta","Totalseperatedelta",900,600);
+//   c1->cd();
+//   TLegend *leg = new TLegend(0.7, 0.1, 0.9, 0.3);
+//   leg->SetFillColor(0);
+//   leg->SetHeader("MC ADC Threshold");
+
+
+//   for(std::map<int, std::map<double,std::vector<double> > >::iterator k = Efficiency_total_seperatedelta_map.begin();  k != Efficiency_total_seperatedelta_map.end(); ++k){
+//     std::string map_string_legend;
+//     std::stringstream sstm1_legend;
+//     sstm1_legend << (k->first) << " ADCs";
+//     map_string_legend = sstm1_legend.str();
+//     const char* name_legend = map_string_legend.c_str();
+
+//     TGraphErrors* Efficiency_total_seperatedelta_graph = new TGraphErrors(0);
+//     for(std::map<double,std::vector<double> >::iterator j = k->second.begin();  j != k->second.end(); ++j){
+
+//   double angle=j->first;
+//   double samplesize = (j->second).size();
+//   double bias;
+//   if(samplesize==1){bias=1;}
+//   else{bias=std::sqrt(1/(samplesize-1));}
+//   double mean   = accumulate( (j->second).begin(), (j->second).end(), 0.0)/samplesize;
+//   double sq_sum = std::inner_product((j->second).begin(), (j->second).end(), (j->second).begin(), 0.0);
+//   double stdev  = std::sqrt(sq_sum /samplesize - mean * mean)*bias;
+//   double stderrmean = stdev/std::sqrt((j->second).size());
+//   Efficiency_total_seperatedelta_graph->SetPoint(Efficiency_total_seperatedelta_graph->GetN(),angle, mean);
+//   Efficiency_total_seperatedelta_graph->SetPointError(Efficiency_total_seperatedelta_graph->GetN()-1,0, stderrmean);
+//  }
+
+// std::string map_string;
+// std::stringstream sstm3;
+// sstm3 << "Total Efficiency to Seperate Delta Rays";
+// map_string = sstm3.str();
+// const char* name2 = map_string.c_str();
+
+
+
+// Efficiency_total_seperatedelta_graph->SetMarkerColor(k->first);
+// Efficiency_total_seperatedelta_graph->SetMarkerStyle(8);
+// Efficiency_total_seperatedelta_graph->Draw("AP");
+// Efficiency_total_seperatedelta_graph->SetName(name2);
+// Efficiency_total_seperatedelta_graph->GetXaxis()->SetTitle("Angle");
+// Efficiency_total_seperatedelta_graph->GetYaxis()->SetTitle("Efficiency");
+// Efficiency_total_seperatedelta_graph->SetTitle(name2);
+// Efficiency_total_seperatedelta_graph->Write();
+// // Efficiency_total_seperatedelta_graph->Delete();
+//  mg_TotalEfficiency_seperatedelta->Add(Efficiency_total_seperatedelta_graph);
+//  leg->AddEntry(Efficiency_total_seperatedelta_graph, name_legend, "p");
+//  }
+
+
+//   mg_TotalEfficiency_seperatedelta->SetTitle("MultiGraph Total Efficiency to Seperate Delta Rays");
+//   mg_TotalEfficiency_seperatedelta->Draw("AP");
+//   leg->Draw();
+//   leg->SetName("Legend: Total Efficiency to Seperate Delta Rays");
+//   c1->Update();
+//   gPad->Update();
+//   mg_TotalEfficiency_seperatedelta->SetName("MultiGraph Total Efficiency to Seperate Delta Rays");
+//   mg_TotalEfficiency_seperatedelta->GetXaxis()->SetTitle("Angle");
+//   mg_TotalEfficiency_seperatedelta->GetYaxis()->SetTitle("Efficiency");
+//   mg_TotalEfficiency_seperatedelta->Write();
+//   leg->Write();
+//   c1->Write();
+//   mg_TotalEfficiency_seperatedelta->Delete();
+  
+    
+
+ delete file;
+
+
   return;  
 }
 

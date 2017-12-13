@@ -2,5 +2,12 @@ standard_HitEff_Para: {
  module_type: "sbndcode/HitEff/HitEff"
  HitsModuleLabel: "gaushit"
  MCHitsModuleLabel: "mchit"
+ Chargecut:      [2, 5, 8, 10]
+ dtThreshold:    [2]
+ GausWidth:      2
+ SigmaGausWidth: 100
+ SigmaTimeWidth: 3
+ ThetaXZinstead: false
+ ADC:10
 }
 
