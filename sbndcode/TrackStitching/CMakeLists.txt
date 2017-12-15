@@ -26,6 +26,9 @@ art_make(
                            ${ROOT_XMLIO}
                            ${ROOT_GDML}
                            ${ROOT_BASIC_LIB_LIST}
+                           ${ROOT_SPECTRUM}
+                           ${ROOT_ROOFIT}
+                           ${ROOT_ROOFITCORE} 
                            sbndcode_RecoUtils 
         )
 
