@@ -53,7 +53,7 @@ physics:
       # The input parameters
       SimulationLabel: "largeant"
       TrackLabel:      "pmalgtrackmaker"
-      StitchAngle:     20.0
+      StitchAngle:     10.0
       DeltaX:          1.0
     }
   }
