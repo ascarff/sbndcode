@@ -12,5 +12,8 @@ add_subdirectory(MCTruthExtractor)
 add_subdirectory(SBNDPandora)
 add_subdirectory(SimulationFilters)
 add_subdirectory(AnalysisTree)
+add_subdirectory(RecoUtils)
 add_subdirectory(Purity)
 
+# subdirectory for gallery stuff
+add_subdirectory(gallery)

@@ -21,7 +21,7 @@
 #include "databaseutil_sbnd.fcl"
 ##include "opticaldetectormodules_sbnd.fcl"
 #include "vertexfindermodules.fcl"
-##include "pandoramodules.fcl"
+#include "pandoramodules_sbnd.fcl"
 ##include "triggeralgo_service.fcl"
 ##include "photpropservices_sbnd.fcl"
 
@@ -81,7 +81,9 @@ physics:
   linemerger:          @local::standard_linemerger
 
   ### pandora
- # pandora:             @local::standard_pandora
+  pandora:             @local::sbnd_pandora
+  pandoraTrack:        @local::sbnd_pandoraTrackCreation
+  pandoraShower:       @local::sbnd_pandoraShowerCreation
   
   ### track-finder producers
   trackkalmanhit:      @local::sbnd_track3Dkalmanhit
@@ -119,7 +121,7 @@ physics:
    # rffhit,
    #      corner,
          fuzzycluster, cccluster, hough, linemerger,
-   #      pandora,
+         pandora, pandoraTrack, pandoraShower,
          trackkalmanhit, spacepointfinder, trackkalsps, stitch, stitchkalmanhit, beziertracker, 
          spacepointfindercc, trackkalspscc, stitchcc, beziertrackercc, 
          trackkalmanhitcalo, trackkalspscalo, stitchcalo, beziercalo
@@ -178,8 +180,9 @@ physics.producers.linemerger.ClusterModuleLabel:                "hough"
 physics.producers.cccluster.CalDataModuleLabel:                 "caldata"
 physics.producers.cccluster.CCHitFinderAlg.CalDataModuleLabel:  "caldata"
 
-#physics.producers.pandora.GeantModuleLabel:                     "largeant"
-#physics.producers.pandora.HitFinderModuleLabel:                 "gaushit"
+physics.producers.pandora.HitFinderModuleLabel:                 "gaushit"
+physics.producers.pandoraTrack.PFParticleLabel:                 "pandora"
+physics.producers.pandoraShower.PFParticleLabel:                "pandora"
 
 physics.producers.trackkalmanhit.HitModuleLabel:                "gaushit"
 physics.producers.trackkalmanhit.ClusterModuleLabel:            "fuzzycluster"
