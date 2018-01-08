@@ -1,6 +1,8 @@
 # A script to run an analysis module: TrackStitching
 
 #include "simulationservices_sbnd.fcl"
+#include "backtrackerservice.fcl"
+#include "particleinventoryservice.fcl"
 #include "messages_sbnd.fcl"
 
 process_name: TrackStitching
@@ -10,7 +12,8 @@ services:
   # Load the service that manages root files for histograms.
   TFileService:           { fileName: "TrackStitching.root" }
 
-  BackTracker:  @local::sbnd_backtracker
+  ParticleInventoryService: @local:standard_particleinventoryservice
+  BackTracker:  @local::sbnd_backtrackerservice
 
   # This constrols the display in the output of how long each job step takes for each event. 
   TimeTracker:            {}
