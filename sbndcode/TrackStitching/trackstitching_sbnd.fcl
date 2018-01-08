@@ -51,10 +51,12 @@ physics:
       module_type:     "TrackStitching"
 
       # The input parameters
-      SimulationLabel: "largeant"
-      TrackLabel:      "pmalgtrackmaker"
-      StitchAngle:     10.0
-      DeltaX:          1.0
+      SimulationLabel: "largeant"           # Simulation producer module label
+      TrackLabel:      "pmalgtrackmaker"    # Track producer module label
+      StitchAngle:     10.0                 # Maximum angle between pairs of tracks (degrees)
+      DeltaX:          1.0                  # Maximum difference between track start/end and cutoff distance (cm)
+      DeltaT:          100.0                # Maximum difference between calculated T0 and CRT T0 (ticks)
+      Verbose:         true                 # Print extra information about what's going on
     }
   }
 

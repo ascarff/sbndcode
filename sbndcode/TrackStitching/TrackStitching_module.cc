@@ -67,11 +67,7 @@ namespace {
   // Temp utility function to determine if a true particle hits a CRT
   bool HitsCRT(simb::MCParticle const& particle);
 
-  // Temp utility function to determine if true particle triggers the PDS
-  //bool HitsPDS(simb::MCParticle const& particle, double lengthLimit);
-
-  int MatchPoints(recob::Track const& track1, recob::Track const& track2, double distLimit, double &cosResult, double &diffResult);
-
+  // Function to calculate the distance between CPA crossing points for two lines
   double distance(const double *input);
 
 }
@@ -98,12 +94,22 @@ namespace sbnd {
 
       fhicl::Atom<double> StitchAngle {
         Name("StitchAngle"),
-        Comment("minimum angle to stitch tracks between TPCs (unit = degrees)")
+        Comment("maximum angle to stitch tracks between TPCs (unit = degrees)")
       };
 
       fhicl::Atom<double> DeltaX {
         Name("DeltaX"),
-        Comment("maximum difference in absolute x positions (unit = cm)")
+        Comment("maximum difference between start/end point and the cutoff (unit = cm)")
+      };
+
+      fhicl::Atom<double> DeltaT {
+        Name("DeltaT"),
+        Comment("maximum difference calculated T0 and CRT T0 (unit = ticks)")
+      };
+
+      fhicl::Atom<bool> Verbose {
+        Name("Verbose"),
+        Comment("Print information about what's going on")
       };
       
     }; // Config
@@ -132,13 +138,18 @@ namespace sbnd {
     std::vector<int> Evaluate(std::vector< std::pair< const recob::Track*, const recob::Track* >> trueMatches,
                               std::vector< std::pair< const recob::Track*, const recob::Track* >> foundMatches);
 
+    // Utility function to match start/end points of two tracks
+    void MatchPoints(recob::Track const& track1, recob::Track const& track2, double &cosResult, double &diffResult1, double &diffResult2);
+
   private:
 
     // fcl file parameters
     art::InputTag         fSimulationProducerLabel; ///< name of detsim producer
     art::InputTag         fTrackProducerLabel;      ///< name of the track producer
-    double                fStitchAngle;             ///< minimum stitching angle between tracks
-    double                fDeltaX;                  ///< maxmum difference in absolute x positions
+    double                fStitchAngle;             ///< maximum stitching angle between tracks
+    double                fDeltaX;                  ///< maximum difference in start/end x positions and cutogg
+    double                fDeltaT;                  ///< maximum difference between calculated T0 and CRT T0
+    bool                  fVerbose;                 ///< print information about what's going on
     
 
     // Pointers to histograms
@@ -148,21 +159,10 @@ namespace sbnd {
     TH1D* fCorrectDeltaXHist;   ///< Difference between min x positions for correctly stitched tracks
     TH1D* fIncorrectDeltaXHist; ///< Difference between min x positions for incorrectly stitched tracks
     TH1D* fMissedDeltaXHist;    ///< Difference between min x positions for missed tracks
-    TH1D* fMissedMinLenHist;    ///< Shortest track length for missed tracks
-    TH1D* fDifferenceHist;
-
-    // The n-tuples
-    TTree* fStitchingNtuple;     ///< tuple with info about stitching
-
-    /// @name the variables that will go into both n-tuples.
-    /// @{
-    int fEvent;  ///< event number
-    int fRun;    ///< run number
-    int fSubRun; ///< sub-run number
-    /// @}
+    TH1D* fDifferenceHist;      ///< Difference between calculated T0 and true T0
 
     // Other variables shared between different methods.
-    geo::GeometryCore const* fGeometryService;                     ///< pointer to Geometry provider
+    geo::GeometryCore const* fGeometryService;              ///< pointer to Geometry provider
     detinfo::DetectorProperties const* fDetectorProperties; ///< pointer to detector properties provider
 
     // Counters for text output
@@ -171,6 +171,7 @@ namespace sbnd {
     int nCorrect         = 0;
     int nIncorrect       = 0;
     int nMissed          = 0;
+
   }; // class TrackStitching
 
   // Constructor
@@ -180,11 +181,12 @@ namespace sbnd {
     , fTrackProducerLabel     (config().TrackLabel())
     , fStitchAngle            (config().StitchAngle())
     , fDeltaX                 (config().DeltaX())
+    , fDeltaT                 (config().DeltaT())
+    , fVerbose                (config().Verbose())
   {
     // Get a pointer to the geometry service provider
     fGeometryService = lar::providerFrom<geo::Geometry>();
-    fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>();
-    
+    fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>(); 
   }
 
   void TrackStitching::beginJob()
@@ -193,41 +195,43 @@ namespace sbnd {
     art::ServiceHandle<art::TFileService> tfs;
 
     // Define histograms
-    fCorrectAngleHist    = tfs->make<TH1D>("correctang",   ";Angle between tracks (rad);", 180, 0, 180);
-    fIncorrectAngleHist  = tfs->make<TH1D>("incorrectang", ";Angle between tracks (rad);", 180, 0, 180);
-    fMissedAngleHist     = tfs->make<TH1D>("missedang",    ";Angle between tracks (rad);", 180, 0, 180);
+    fCorrectAngleHist    = tfs->make<TH1D>("correctang",   ";Angle between tracks (deg);", 180, 0, 180);
+    fIncorrectAngleHist  = tfs->make<TH1D>("incorrectang", ";Angle between tracks (deg);", 180, 0, 180);
+    fMissedAngleHist     = tfs->make<TH1D>("missedang",    ";Angle between tracks (deg);", 180, 0, 180);
     fCorrectDeltaXHist   = tfs->make<TH1D>("correctdx",    ";#Delta x (cm);",              100, 0, 3);
     fIncorrectDeltaXHist = tfs->make<TH1D>("incorrectdx",  ";#Delta x (cm);",              100, 0, 3);
     fMissedDeltaXHist    = tfs->make<TH1D>("misseddx",     ";#Delta x (cm);",              100, 0, 3);
-    fMissedMinLenHist    = tfs->make<TH1D>("missedlen",    ";Min track length (cm);",      100, 0, 200);
     fDifferenceHist      = tfs->make<TH1D>("difference",   ";Difference (ticks);",         100, -100, 100);
 
-    // Define n-tuples
-    fStitchingNtuple = tfs->make<TTree>("TrackStitching", "TrackStitching");
-
-    // Define branches of simulation n-tuple
-    fStitchingNtuple->Branch("Event",           &fEvent,            "Event/I");
-    fStitchingNtuple->Branch("SubRun",          &fSubRun,           "SubRun/I");
-    fStitchingNtuple->Branch("Run",             &fRun,              "Run/I");
-
-    std::cout<<"Drift velocity      = "<<fDetectorProperties->DriftVelocity()<<" cm/us"<<std::endl
+    // Initial output
+    std::cout<<"----------------- Track Stitching Module -------------------"<<std::endl
+             <<"Useful detector numbers:"<<std::endl
+             <<"Drift velocity      = "<<fDetectorProperties->DriftVelocity()<<" cm/us"<<std::endl
              <<"Max drift distance  = "<<2.0*fGeometryService->DetHalfWidth()<<" cm"<<std::endl
              <<"Readout window size = "<<fDetectorProperties->ReadOutWindowSize()<<" ticks"<<std::endl
-             <<"Max drift time      = "<<4.0*fGeometryService->DetHalfWidth()/fDetectorProperties->DriftVelocity()<<" ticks"<<std::endl;
+             <<"Max drift time      = "<<4.0*fGeometryService->DetHalfWidth()/fDetectorProperties->DriftVelocity()<<" ticks"<<std::endl
+             <<"------------------------------------------------------------"<<std::endl;
 
   } // TrackStitchingbeginJob
 
   void TrackStitching::analyze(const art::Event& event)
   {
 
-    std::vector<double> vCrtTimes; // Vector of true start times from cosmic rat trackers (units = ticks)
-    //std::vector<double> vPdsTimes; // Vector of true start times from photon detection system (units = ticks)
+    // Vector of true start times from cosmic ray trackers (units = ticks)
+    std::vector<double> vCrtTimes; 
 
     // Fetch basic event info
-    fEvent  = event.id().event();
-    fRun    = event.run();
-    fSubRun = event.subRun();
+    double fEvent  = event.id().event();
+    double fRun    = event.run();
+    double fSubRun = event.subRun();
 
+    if(fVerbose){
+      std::cout<<"============================================"<<std::endl
+               <<"Run = "<<fRun<<", SubRun = "<<fSubRun<<", Event = "<<fEvent<<std::endl
+               <<"============================================"<<std::endl;
+    }
+
+    // Detector properties
     double readoutWindow  = (double)fDetectorProperties->ReadOutWindowSize();
     double driftTimeTicks = 4.0*fGeometryService->DetHalfWidth()/fDetectorProperties->DriftVelocity();
     double dt = readoutWindow - driftTimeTicks;
@@ -251,13 +255,11 @@ namespace sbnd {
       if (HitsCRT(particle) && startTimeTicks > dt && startTimeTicks < readoutWindow){
         vCrtTimes.push_back(startTimeTicks);
       }
-      // If charged particle has more than 5 cm inside AV and is within reconstructable window add the start time to a vector
-      //if (HitsPDS(particle, 5) && startTimeTicks > -driftTimeTicks && startTimeTicks < readoutWindow){
-        //vPdsTimes.push_back(startTimeTicks);
-      //}
     }
 
-    //std::cout<<"Number of CRT times = "<<vCrtTimes.size()<<", Number of PDS times = "<<vPdsTimes.size()<<std::endl;
+    if(fVerbose){
+      std::cout<<"Number of CRT times = "<<vCrtTimes.size()<<std::endl;
+    }
      
     //------------------------------------------------------------------------------------------------------------------
     //------------------------------------------- SEPARATE TRACKS BY TPC -----------------------------------------------
@@ -294,7 +296,7 @@ namespace sbnd {
       else if (inTpc2 && !inTpc1){
         tracksInTpc2.push_back(&track);
       }
-      // If reconstructed track crossed the cathode (has hits in both tpcs) don't put in map
+      // If reconstructed track crossed the cathode (has hits in both tpcs) don't put in vector
     }
     
     //-------------------------------------------------------------------------------------------------------------------
@@ -304,6 +306,7 @@ namespace sbnd {
     // Case 1 (-drift time < t < 0): Tracks shifted towards anodes
     // Case 2 (0 < t < dt): Tracks shifted into other TPC, crossing points reconstructed (dt = readout window - drift time)
     // Case 3 (dt < t < readout window): Tracks shifted into other TPC, crossing points not reconstructed
+    // Only dealing with case 3, first two solved by larreco module
 
     // Find all the pairs of tracks which should be stitched
     std::vector< std::pair<const recob::Track*, const recob::Track*>> trueMatches;
@@ -322,100 +325,97 @@ namespace sbnd {
           std::cout<<"Track IDs = "<<track1->ID()<<" "<<track2->ID()<<", True time = "<<(particles[tpc1TrueId].T()*10e-9)/(0.5*10e-6)<<std::endl;
           trueTimes.push_back(std::make_pair(std::to_string(track1->ID())+" + "+std::to_string(track2->ID()), (particles[tpc1TrueId].T()*10e-9)/(0.5*10e-6)));
           nCathodeCrossers++;
-          //std::cout<<"Track 1 ID = "<<track1->ID()<<" Track 2 ID = "<<track2->ID()<<std::endl;
-          //std::cout<<(particles[tpc1TrueId].T()*10e-9)/(0.5*10e-6)<<" hits CRT? "<<HitsCRT(particles[tpc1TrueId])<<", length = "<<particles[tpc1TrueId].Trajectory().TotalLength()<<std::endl;
           trueMatches.push_back(std::make_pair(track1, track2));
         }
 
       } // End of loop over TPC 2 tracks
     } // End of loop over TPC 1 tracks
 
-    //auto matches = StitchWithoutT0(tracksInTpc1, tracksInTpc2);
-    //auto crtMatches = StitchWithT0(tracksInTpc1, tracksInTpc2, vCrtTimes);
+    // Find pairs of matched tracks
     std::vector<std::pair<std::string, double>> matchTimes;
-    auto incMatches = StitchIncomplete(tracksInTpc1, tracksInTpc2, matchTimes, vCrtTimes);
-    std::vector<int> Results = Evaluate(trueMatches, incMatches);
-    nStitched += incMatches.size();
+    auto matches = StitchIncomplete(tracksInTpc1, tracksInTpc2, matchTimes, vCrtTimes);
+
+    // Evaluate the performance of the track stitching
+    std::vector<int> Results = Evaluate(trueMatches, matches);
+    nStitched += matches.size();
     nCorrect += Results[0];
     nIncorrect += Results[1];
     nMissed += Results[2];
 
+    // Record the difference between the calculated T0 for correctly stitched tracks and the true times
+    if(fVerbose){
+      std::cout<<"Correctly stitched tracks T0 estimation:"<<std::endl;
+    }
     for (auto const& trueTime : trueTimes){
       for (auto const& matchTime : matchTimes){
         if (trueTime.first == matchTime.first){
-          //std::cout<<"Truth("<<trueTime.first<<") = "<<trueTime.second<<", reco("<<matchTime.first<<") = "<<matchTime.second<<", diff = "<<matchTime.second-trueTime.second<<std::endl;
+          if(fVerbose){
+            std::cout<<"Truth("<<trueTime.first<<") = "<<trueTime.second<<", reco("<<matchTime.first<<") = "<<matchTime.second<<", diff = "<<matchTime.second-trueTime.second<<std::endl;
+          }
           fDifferenceHist->Fill(matchTime.second-trueTime.second);
         }
       }
     }
 
-    fStitchingNtuple->Fill();
-
   } // TrackStitching::analyze()
 
   void TrackStitching::endJob(){
-    // Output some variables
-    std::cout<<"Total number of cathode crossers           = "<<nCathodeCrossers<<std::endl
+
+    // Output the results of the evaluation
+    std::cout<<std::endl
+             <<"Total number of cathode crossers           = "<<nCathodeCrossers<<std::endl
              <<"Total number of stitched reco tracks       = "<<nStitched<<std::endl
              <<"Number of correctly stitched reco tracks   = "<<nCorrect<<std::endl
              <<"Number of incorrectly stitched reco tracks = "<<nIncorrect<<std::endl
              <<"Number of missed reco tracks               = "<<nMissed<<std::endl;
-  }
+
+  } // TrackStitching::endJob()
 
   // Function to match pairs of incomplete tracks
-  std::vector< std::pair< const recob::Track*, const recob::Track* >> TrackStitching::StitchIncomplete(std::vector<const recob::Track*> tracks1,
-                                                                                                       std::vector<const recob::Track*> tracks2,
-                                                                                                       std::vector<std::pair<std::string, double>>& matchTimes,
-                                                                                                       std::vector<double> crtTimes){
-    //
+  std::vector<std::pair<const recob::Track*, const recob::Track*>> TrackStitching::StitchIncomplete(std::vector<const recob::Track*> tracks1,
+                                                                                                    std::vector<const recob::Track*> tracks2,
+                                                                                                    std::vector<std::pair<std::string, double>>& matchTimes,
+                                                                                                    std::vector<double> crtTimes){
+    // Vector of pairs for results
     std::vector< std::pair< const recob::Track*, const recob::Track* >> matches;
 
+    // Convert matching angle limit to radians
     double cosLimit = cos(TMath::Pi() * fStitchAngle / 180.0);
 
+    // Get detector properties
     double readoutWindow  = (double)fDetectorProperties->ReadOutWindowSize();
     double driftVelocity = fDetectorProperties->DriftVelocity();
     double driftTimeTicks = 4.0*fGeometryService->DetHalfWidth()/driftVelocity;
     double dt = readoutWindow - driftTimeTicks;
     double dx = (dt*0.5)*driftVelocity-2.6;
 
+    // Match candidates in each TPC
     std::vector<std::pair<const recob::Track*, TVector3>> track1Candidates;
     std::vector<std::pair<const recob::Track*, TVector3>> track2Candidates;
 
     // Loop over tracks in first TPC
     for (auto const& track1 : tracks1){
-      // If the start or end of the track matches the time, add to a vector
+      // If the start or end of the track matches the cutoff, add to a vector
       if (std::abs(track1->Vertex().X() - dx) < fDeltaX) track1Candidates.push_back(std::make_pair(track1, track1->VertexDirection()));
       if (std::abs(track1->End().X() - dx) < fDeltaX)    track1Candidates.push_back(std::make_pair(track1, track1->EndDirection()));
     }
-
     // Loop over tracks in second TPC
     for (auto const& track2 : tracks2){
-      // If the start or end of the track matches the time, add to a vector
+      // If the start or end of the track matches the cutoff, add to a vector
       if (std::abs(track2->Vertex().X() + dx) < fDeltaX) track2Candidates.push_back(std::make_pair(track2, track2->VertexDirection()));
       if (std::abs(track2->End().X() + dx) < fDeltaX)    track2Candidates.push_back(std::make_pair(track2, track2->EndDirection()));
     }
+
     // If either vector has 0 candidates then there are no matches
     if (track1Candidates.size() == 0 || track2Candidates.size() == 0){}
+
     // If there is one track in each vector match tracks
     else if (track1Candidates.size() == 1 && track2Candidates.size() == 1){ 
       double angle = track1Candidates[0].second.Dot(track2Candidates[0].second);
       if (angle > cosLimit) matches.push_back(std::make_pair(track1Candidates[0].first, track2Candidates[0].first));
     }
-    // If there is more than one, match angles, then match tracks
-   /* 
-    else {
-      for (size_t i = 0; i < track1Candidates.size(); i++){
-        double bestAngle = -1.;
-        double best_j = 0;
-        for (size_t j = 0; j < track2Candidates.size(); j++){
-          double angle = track1Candidates[i].second.Dot(track2Candidates[j].second);
-          if (angle > bestAngle){ bestAngle = angle; best_j = j; }
-        }
-        if (bestAngle > cosLimit) matches.push_back(std::make_pair(track1Candidates[i].first, track2Candidates[best_j].first));
-      }
-    }
-    */
-    
+
+    // If there is more than one in TPC 2 then find the best match in TPC 2
     else if (track1Candidates.size() == 1 && track2Candidates.size() > 1){ 
       for (size_t i = 0; i < track1Candidates.size(); i++){
         double bestAngle = -1.;
@@ -427,6 +427,8 @@ namespace sbnd {
         if (bestAngle > cosLimit) matches.push_back(std::make_pair(track1Candidates[i].first, track2Candidates[best_j].first));
       }
     }
+
+    // If there is more than one in TPC 1 then find the best match in TPC 1
     else if (track2Candidates.size() == 1 && track1Candidates.size() > 1){ 
       for (size_t i = 0; i < track2Candidates.size(); i++){
         double bestAngle = -1.;
@@ -438,6 +440,8 @@ namespace sbnd {
         if (bestAngle > cosLimit) matches.push_back(std::make_pair(track1Candidates[best_j].first, track2Candidates[i].first));
       }
     }
+
+    // If there is more than one track in both TPCs, evaluate all possible pairs and find the best matches
     else {
       // Calculate all possible pairs
       std::vector<std::pair<double,std::pair<const recob::Track*, const recob::Track*>>> allPairs;
@@ -470,18 +474,22 @@ namespace sbnd {
     std::sort(matches.begin(), matches.end());
     matches.erase(std::unique(matches.begin(), matches.end()), matches.end());
 
+    // ------------------------------ T0 Estimation ---------------------------------
     // Loop over matches and try to estimate the start times 
     for (size_t i = 0; i < matches.size(); i++){
+
       TVector3 start1 = matches[i].first->Vertex();
       TVector3 end1 = matches[i].first->End();
       TVector3 start2 = matches[i].second->Vertex();
       TVector3 end2 = matches[i].second->End();
-      // Shift tracks back into their own tpc, record shift
+
+      // Shift tracks back into their own tpc
       start1.SetX(start1.X() - dx);
       end1.SetX(end1.X() - dx);
       start2.SetX(start2.X() + dx);
       end2.SetX(end2.X() + dx);
-      // Calculate vector between start and end point for each track
+
+      // Minimize the distance between CPA crossing points of the two tracks
       ROOT::Math::Minimizer *min = ROOT::Math::Factory::CreateMinimizer("Minuit2", "Migrad");
       min->SetMaxFunctionCalls(100000);
       min->SetMaxIterations(10000);
@@ -489,9 +497,8 @@ namespace sbnd {
       ROOT::Math::Functor f(&distance, 13);
       double step = 1;
       double variable[13] = {0, start1.X(), start1.Y(), start1.Z(), end1.X(), end1.Y(), end1.Z(), start2.X(), start2.Y(), start2.Z(), end2.X(), end2.Y(), end2.Z()};
-      // Calculate point that each vector crosses the cathode plane
-      // Calculate the distance between these points
-      // Minimise this distance and record the time shift required for the min->misation
+
+      // Fix all variables in minimization except from dx
       min->SetFunction(f);
       min->SetVariable(0, "dx", variable[0], step);
       min->SetVariableLowerLimit(0, 0.0);
@@ -507,8 +514,11 @@ namespace sbnd {
       min->SetFixedVariable(10, "ex2", variable[10]);
       min->SetFixedVariable(11, "ey2", variable[11]);
       min->SetFixedVariable(12, "ez2", variable[12]);
+      // Do the minimization
       min->Minimize();
+      // Get the results
       const double *output = min->X();
+      // Shift is from a Gaussian fit to the original results
       double matchTime = dt + (output[0]/(0.5*driftVelocity))-30.3;
       std::cout<<"Track ID = "<<matches[i].first->ID()<<" "<<matches[i].second->ID()<<", Minimized time = "<<matchTime<<std::endl;
 
@@ -517,7 +527,7 @@ namespace sbnd {
       for (size_t j = 0; j < crtTimes.size(); j++){
         // Calculate the difference between the calculated times and the CRT times
         double diff = std::abs(crtTimes[j] - matchTime);
-        if (diff < 100) correctMatch = true;
+        if (diff < fDeltaT) correctMatch = true;
       }
       // If there are no matches within a limit then remove the matched pair
       if (!correctMatch){ 
@@ -525,14 +535,14 @@ namespace sbnd {
         continue;
       }
 
+      // Record the calculated T0's
       matchTimes.push_back(std::make_pair(std::to_string(matches[i].first->ID())+" + "+std::to_string(matches[i].second->ID()), matchTime));
     }
 
     return matches;
-  }
+  } // TrackStitching::StitchIncomplete()
 
   // Function to evaluate the performance of track matching algorithms
-  // If I need to add to histograms I might be able to 
   std::vector<int> TrackStitching::Evaluate(std::vector< std::pair< const recob::Track*, const recob::Track* >> trueMatches,
                                             std::vector< std::pair< const recob::Track*, const recob::Track* >> foundMatches){
 
@@ -550,27 +560,38 @@ namespace sbnd {
         if (foundTrack1Id == trueTrack1Id && foundTrack2Id == trueTrack2Id){ 
           nCorrect++;
           isCorrect = true;
-          //std::cout<<"correct: "<<foundTrack1Id<<" "<<foundTrack2Id<<std::endl;
+          if(fVerbose){
+            std::cout<<"Correct match: Track 1 ID = "<<foundTrack1Id<<", Track 2 ID = "<<foundTrack2Id<<std::endl;
+          }
           //Calculate any variables and fill histograms
           double currentCos;
-          double currentDif;
-          MatchPoints((*trueMatch.first), (*trueMatch.second), fDeltaX, currentCos, currentDif);
+          double currentDif1;
+          double currentDif2;
+          MatchPoints((*trueMatch.first), (*trueMatch.second), currentCos, currentDif1, currentDif2);
           fCorrectAngleHist->Fill(TMath::ACos(currentCos)*180./TMath::Pi());
-          fCorrectDeltaXHist->Fill(currentDif);
+          fCorrectDeltaXHist->Fill(currentDif1);
+          fCorrectDeltaXHist->Fill(currentDif2);
         }
       }
+
+      // Calculate the number of incorrect matches by recording the number of pairs not in true vector
       if (!isCorrect){
         //Calculate any variables and fill histograms for incorrect tracks
         nIncorrect++;
-        //std::cout<<"incorrect: "<<foundTrack1Id<<" "<<foundTrack2Id<<std::endl;
+        if(fVerbose){
+          std::cout<<"Incorrect match: Track 1 ID = "<<foundTrack1Id<<", Track 2 ID = "<<foundTrack2Id<<std::endl;
+        }
         double currentCos;
-        double currentDif;
-        MatchPoints((*foundMatch.first), (*foundMatch.second), fDeltaX, currentCos, currentDif);
+        double currentDif1;
+        double currentDif2;
+        MatchPoints((*foundMatch.first), (*foundMatch.second), currentCos, currentDif1, currentDif2);
         fIncorrectAngleHist->Fill(TMath::ACos(currentCos)*180./TMath::Pi());
-        fIncorrectDeltaXHist->Fill(currentDif);
+        fIncorrectDeltaXHist->Fill(currentDif1);
+        fIncorrectDeltaXHist->Fill(currentDif2);
       }
     }
 
+    // Calculate the number of missed matches by recording the number of pairs not in the found vector
     for (auto const& trueMatch : trueMatches){
       int trueTrack1Id = trueMatch.first->ID();
       int trueTrack2Id = trueMatch.second->ID();
@@ -583,37 +604,96 @@ namespace sbnd {
       if (!isCorrect){
         //Calculate any variables and fill histograms for missed tracks
         nMissed++;
-        //std::cout<<"miss: "<<trueTrack1Id<<" "<<trueTrack2Id<<std::endl;
+        if(fVerbose){
+          std::cout<<"Missed match: Track 1 ID = "<<trueTrack1Id<<", Track 2 ID = "<<trueTrack2Id<<std::endl;
+        }
         double currentCos;
-        double currentDif;
-        MatchPoints((*trueMatch.first), (*trueMatch.second), fDeltaX, currentCos, currentDif);
+        double currentDif1;
+        double currentDif2;
+        MatchPoints((*trueMatch.first), (*trueMatch.second), currentCos, currentDif1, currentDif2);
         fMissedAngleHist->Fill(TMath::ACos(currentCos)*180./TMath::Pi());
-        fMissedDeltaXHist->Fill(currentDif);
-        fMissedMinLenHist->Fill(trueMatch.first->Length()); fMissedMinLenHist->Fill(trueMatch.second->Length()); 
+        fMissedDeltaXHist->Fill(currentDif1);
+        fMissedDeltaXHist->Fill(currentDif2); 
       }
     }
-    // Calculate the number of incorrect matches by recording the number of pairs not in true vector
-    //int nIncorrect = foundMatches.size() - nCorrect;
-    // Calculate the number of missed matches by recording the number of pairs not in the found vector
-    //int nMissed = trueMatches.size() - nCorrect;
 
+    // Fill results vector
     std::vector<int> results{nCorrect, nIncorrect, nMissed};
     return results;
 
   } // TrackStitching::Evaluate()
 
+  // Function to determine if track starts/ends match
+  void TrackStitching::MatchPoints(recob::Track const& track1, recob::Track const& track2, double &cosResult, double &diffResult1, double &diffResult2){
+
+
+    // Get detector properties
+    double readoutWindow  = (double)fDetectorProperties->ReadOutWindowSize();
+    double driftVelocity = fDetectorProperties->DriftVelocity();
+    double driftTimeTicks = 4.0*fGeometryService->DetHalfWidth()/driftVelocity;
+    double dt = readoutWindow - driftTimeTicks;
+    double dx = (dt*0.5)*driftVelocity-2.6;
+    // Convert matching angle limit to radians
+    double cosLimit = cos(TMath::Pi() * fStitchAngle / 180.0);
+
+    double cosComp = 1.;
+    double cos = 1.;
+    double diff1 = -1.;
+    double diff2 = -1.;
+
+    // Compare start and end x positions
+    double difference1 = std::abs(std::abs(track1.Vertex().X())-dx);
+    double difference2 = std::abs(std::abs(track2.Vertex().X())-dx);
+    cosComp = track1.VertexDirection().Dot(track2.VertexDirection());
+    if (difference1 < fDeltaX && difference2 < fDeltaX && cosComp > cosLimit){
+      cos = cosComp;
+      cosLimit = cos;
+      diff1 = difference1;
+      diff2 = difference2;
+    }
+    difference2 = std::abs(std::abs(track2.End().X())-dx);
+    cosComp = track1.VertexDirection().Dot(track2.EndDirection());
+    if (difference2 < fDeltaX && difference1 < fDeltaX && cosComp > cosLimit){
+      cos = cosComp;
+      cosLimit = cos;
+      diff1 = difference1;
+      diff2 = difference2;
+    }
+    difference1 = std::abs(std::abs(track1.End().X())-dx);
+    if (difference1 < fDeltaX && difference2 < fDeltaX && cosComp > cosLimit){
+      cos = cosComp;
+      cosLimit = cos;
+      diff1 = difference1;
+      diff2 = difference2;
+    }
+    difference2 = std::abs(std::abs(track2.End().X())-dx);
+    if (difference1 < fDeltaX && difference2 < fDeltaX && cosComp > cosLimit){
+      cos = cosComp;
+      diff1 = difference1;
+      diff2 = difference2;
+    }
+
+    cosResult = cos;
+    diffResult1 = diff1;
+    diffResult2 = diff2;
+
+  } // TrackStitching::MatchPoints()
+
+
   DEFINE_ART_MODULE(TrackStitching)
 } // namespace sbnd
 
-// Back to our local namespace.
+// Back to local namespace.
 namespace {
 
   // Define a local function to determine if true track crosses cathode
   bool CrossesCathode(simb::MCParticle const& particle){
+
     size_t numTrajPoints = particle.NumberTrajectoryPoints();
     auto mcTrajectory = particle.Trajectory();
     bool inTpc1 = false;
     bool inTpc2 = false;
+
     // Loop over particle trajectory
     for (size_t traj_i = 0; traj_i < numTrajPoints; traj_i++){
       if (RecoUtils::IsInsideTPC(mcTrajectory.Position(traj_i).Vect(), 0.0) && mcTrajectory.X(traj_i) < 0) inTpc1 = true;
@@ -622,6 +702,7 @@ namespace {
       if (inTpc1 && inTpc2) return true;
     }
     return false;
+
   } // CrossesCathode()
 
   // Function to check if particle is charged and crosses the TPC boundary
@@ -660,114 +741,30 @@ namespace {
     return false;
 
   } // HitsCRT()
-/*
-  // Function to check if particle is charged and has a certain length inside TPC
-  bool HitsPDS(const simb::MCParticle& part, double lengthLimit){
 
-    // Check particle is charged first
-    int pdg = std::abs(part.PdgCode());
-    if (!(pdg == 13 || pdg == 11 || pdg == 2212 || pdg == 321 || pdg == 211)) return false;
-
-    // Calculate the length of the track inside the TPC
-    double length = 0.;
-    bool first  = true;
-    TVector3 displacement;
-
-    // Get geometry.
-    art::ServiceHandle<geo::Geometry> geom;
-    // Get active volume boundary. SBND specific
-    double xmin = -2.0 * geom->DetHalfWidth();
-    double xmax = 2.0 * geom->DetHalfWidth();
-    double ymin = -geom->DetHalfHeight();
-    double ymax = geom->DetHalfHeight();
-    double zmin = 0.;
-    double zmax = geom->DetLength();
-
-    // Loop over trajectory points
-    int nTrajPoints = part.NumberTrajectoryPoints();
-    for (int traj_i = 0; traj_i < nTrajPoints; traj_i++){
-      TVector3 trajPoint(part.Vx(traj_i), part.Vy(traj_i), part.Vz(traj_i));
-      // Check if point is within reconstructable volume
-      if (trajPoint[0] >= xmin && trajPoint[0] <= xmax && trajPoint[1] >= ymin && trajPoint[1] <= ymax && trajPoint[2] >= zmin && trajPoint[2] <= zmax){
-        if(!first) {
-          displacement -= trajPoint;
-          length += displacement.Mag();
-        }
-        first = false;
-        displacement = trajPoint;
-      }
-    }
-
-    if (length > lengthLimit) return true;
-    return false;
-
-  } // HitsPDS()
-*/
-  // Function to determine if track starts/ends match
-  int MatchPoints(recob::Track const& track1, recob::Track const& track2, double distLimit, double &cosResult, double &diffResult){
-
-    // RETURN CODES:
-    // 0 = not matched;
-    // 11 = start matched with start
-    // 12 = start matched with end
-    // 21 = end matched with start
-    // 22 = end matched with end
-
-    double cos = 1.;
-    double diff = -1.;
-    int code = 0;
-
-    // Compare start and end x positions
-    double difference = std::abs(std::abs(track1.Vertex().X())-std::abs(track2.Vertex().X()));
-    if (difference < distLimit && track1.Vertex().X()*track2.Vertex().X() < 0.0){
-      distLimit = difference;
-      cos = track1.VertexDirection().Dot(track2.VertexDirection());
-      diff = difference;
-      code = 11;
-    }
-    difference = std::abs(std::abs(track1.Vertex().X())-std::abs(track2.End().X()));
-    if (difference < distLimit && track1.Vertex().X()*track2.End().X() < 0.0){
-      distLimit = difference;
-      cos = track1.VertexDirection().Dot(track2.EndDirection());
-      diff = difference;
-      code = 12;
-    }
-    difference = std::abs(std::abs(track1.End().X())-std::abs(track2.Vertex().X()));
-    if (difference < distLimit && track1.End().X()*track2.Vertex().X() < 0.0){
-      distLimit = difference;
-      cos = track1.EndDirection().Dot(track2.VertexDirection());
-      diff = difference;
-      code = 21;
-    }
-    difference = std::abs(std::abs(track1.End().X())-std::abs(track2.End().X()));
-    if (difference < distLimit && track1.End().X()*track2.End().X() < 0.0){
-      cos = track1.EndDirection().Dot(track2.EndDirection());
-      diff = difference;
-      code = 22;
-    }
-
-    cosResult = cos;
-    diffResult = diff;
-    return code;
-
-  } // MatchPoints()
-
+  // Function to calculate the distance between CPA crossing points for two lines
   double distance(const double *input){
     double dx = input[0];
     TVector3 start1(input[1], input[2], input[3]); 
     TVector3 end1(input[4], input[5], input[6]);
     TVector3 start2(input[7], input[8], input[9]);
     TVector3 end2(input[10], input[11], input[12]);
+
+    // Initial CPA crossing points
     double y01 = (-start1.X() * (end1.Y() - start1.Y())) / (end1.X() - start1.X()) + start1.Y();
     double z01 = (-start1.X() * (end1.Z() - start1.Z())) / (end1.X() - start1.X()) + start1.Z();
     double y02 = (-start2.X() * (end2.Y() - start2.Y())) / (end2.X() - start2.X()) + start2.Y();
     double z02 = (-start2.X() * (end2.Z() - start2.Z())) / (end2.X() - start2.X()) + start2.Z();
+
+    // Gradients for straight lines in 3D
     double m1 = (end1.Y() - start1.Y()) / (end1.X() - start1.X());
     double l1 = (end1.Z() - start1.Z()) / (end1.X() - start1.X());
     double m2 = (end2.Y() - start2.Y()) / (end2.X() - start2.X());
     double l2 = (end2.Z() - start2.Z()) / (end2.X() - start2.X());
+
+    // Distance between CPA crossing points
     return TMath::Sqrt(pow((y01 + dx * m1) - (y02 -dx * m2), 2) + pow((z01 + dx * l1) - (z02 - dx * l2), 2));
-  }
+  } // distance()
  
 } // local namespace
 
