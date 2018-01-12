@@ -30,7 +30,8 @@ art_make(
                            ${ROOT_SPECTRUM}
                            ${ROOT_ROOFIT}
                            ${ROOT_ROOFITCORE} 
-                           sbndcode_RecoUtils 
+                           sbndcode_RecoUtils
+                           sbndcode_CRT
         )
 
 install_headers()

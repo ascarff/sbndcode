@@ -8,6 +8,7 @@
 
 // sbndcode includes
 #include "sbndcode/RecoUtils/RecoUtils.h"
+#include "sbndcode/CRT/CRTData.hh"
 
 // LArSoft includes
 #include "lardataobj/Simulation/SimChannel.h"
@@ -21,7 +22,6 @@
 #include "nusimdata/SimulationBase/MCTruth.h"
 #include "larsim/Simulation/LArG4Parameters.h"
 #include "larsim/MCCheater/BackTrackerService.h"
-#include "larsim/MCCheater/ParticleInventoryService.h"
 
 // Framework includes
 #include "art/Framework/Core/EDAnalyzer.h"
@@ -93,6 +93,11 @@ namespace sbnd {
         Comment("tag of the input data product with reconstructed tracks")
       };
 
+      fhicl::Atom<art::InputTag> CRTLabel {
+        Name("CRTLabel"),
+        Comment("tag of CRT simulation data product")
+      };
+
       fhicl::Atom<double> StitchAngle {
         Name("StitchAngle"),
         Comment("maximum angle to stitch tracks between TPCs (unit = degrees)")
@@ -147,6 +152,7 @@ namespace sbnd {
     // fcl file parameters
     art::InputTag         fSimulationProducerLabel; ///< name of detsim producer
     art::InputTag         fTrackProducerLabel;      ///< name of the track producer
+    art::InputTag         fCRTProducerLabel;        ///< name of CRT producer
     double                fStitchAngle;             ///< maximum stitching angle between tracks
     double                fDeltaX;                  ///< maximum difference in start/end x positions and cutogg
     double                fDeltaT;                  ///< maximum difference between calculated T0 and CRT T0
@@ -180,6 +186,7 @@ namespace sbnd {
     : EDAnalyzer(config)
     , fSimulationProducerLabel(config().SimulationLabel())
     , fTrackProducerLabel     (config().TrackLabel())
+    , fCRTProducerLabel       (config().CRTLabel())
     , fStitchAngle            (config().StitchAngle())
     , fDeltaX                 (config().DeltaX())
     , fDeltaT                 (config().DeltaT())
@@ -252,12 +259,35 @@ namespace sbnd {
 
       double startTimeTicks = (particle.T()*10e-9)/(0.5*10e-6);
 
+      // GET CRT TIMES FROM TRUTH
       // If charged particle crosses CRTs and is within reconstructable window add the start time to a vector
       if (HitsCRT(particle) && startTimeTicks > dt && startTimeTicks < readoutWindow){
         vCrtTimes.push_back(startTimeTicks);
       }
     }
+/*
+    // GET CRT TIMES FROM THE CRT PRODCUER MODULE
+    // Retrieve all the CRTData products in the event
+    auto crtHandle = event.getValidHandle<std::vector<crt::CRTData>>(fCRTProducerLabel);
+    int lastStrip = -1;
+    // Loop over all the CRT hits
+    for (auto const& crtData : (*crtHandle) ){
+      // Get the time, strip and module
+      int crtT = crtData.T0();
+      double crtTime = (double)crtT;
+      crtTime = crtTime/8.;
+      int channel = crtData.Channel();
+      int strip = (channel >> 1) & 15;
+      // If the current strip is the same as the last strip, record the time
+      if (strip == lastStrip && crtTime > -driftTimeTicks && crtTime < readoutWindow) vCrtTimes.push_back(crtTime);
+      // Record the last strip
+      lastStrip = strip;
+    }
 
+    // Remove any duplicate times
+    std::sort(vCrtTimes.begin(), vCrtTimes.end());
+    vCrtTimes.erase(std::unique(vCrtTimes.begin(), vCrtTimes.end()), vCrtTimes.end());
+*/
     if(fVerbose){
       std::cout<<"Number of CRT times = "<<vCrtTimes.size()<<std::endl;
     }

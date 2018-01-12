@@ -11,9 +11,8 @@ services:
 {
   # Load the service that manages root files for histograms.
   TFileService:           { fileName: "TrackStitching.root" }
-
-  ParticleInventoryService: @local:standard_particleinventoryservice
-  BackTracker:  @local::sbnd_backtrackerservice
+  ParticleInventoryService: @local::standard_particleinventoryservice
+  BackTrackerService:  @local::standard_backtrackerservice
 
   # This constrols the display in the output of how long each job step takes for each event. 
   TimeTracker:            {}
@@ -56,6 +55,7 @@ physics:
       # The input parameters
       SimulationLabel: "largeant"           # Simulation producer module label
       TrackLabel:      "pmalgtrackmaker"    # Track producer module label
+      CRTLabel:        "crt"                # CRT producer module label
       StitchAngle:     10.0                 # Maximum angle between pairs of tracks (degrees)
       DeltaX:          1.0                  # Maximum difference between track start/end and cutoff distance (cm)
       DeltaT:          100.0                # Maximum difference between calculated T0 and CRT T0 (ticks)
