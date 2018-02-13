@@ -6,6 +6,8 @@
 // Generated at Fri Jan 19 03:31:19 2018 by Dominic Brailsford using cetskelgen
 // from cetlib version v3_01_01.
 ////////////////////////////////////////////////////////////////////////
+//STL
+#include <map>
 
 #include "art/Framework/Core/EDAnalyzer.h"
 #include "art/Framework/Core/ModuleMacros.h"
@@ -19,6 +21,7 @@
 
 //ROOT
 #include "TTree.h"
+#include "TH1I.h"
 
 //ART
 #include "art/Framework/Services/Optional/TFileService.h"
@@ -66,6 +69,12 @@ private:
   double CalculateLength(std::vector<TVector3> points);
 
   void Reset();
+  void BookParticleCountHistogram(TH1I*& hist, int pdg); //Book count histogram for particular pdg
+  void FillParticleCountHistograms();
+  //Map linking particle flavour to histograms of counts
+  std::map<int,TH1I*> fParticleHistMap;
+  std::map<int,int> fParticleCountMap;
+
   // Declare member data here.
   TTree *fTree;
   /*
@@ -129,6 +138,7 @@ Pileup::Pileup(fhicl::ParameterSet const & p)
 void Pileup::analyze(art::Event const & e)
 {
   CollectTruth(e);
+  FillParticleCountHistograms();
   fTree->Fill();
   Reset();
 }
@@ -140,15 +150,30 @@ void Pileup::CollectTruth(art::Event const & e){
     art::fill_ptr_vector(particleList, particleListHandle);
   }
 
-  std::cout<<"NParticles: " << particleList.size() << std::endl;
+  //std::cout<<"NParticles: " << particleList.size() << std::endl;
   //Loop over particles
   for (unsigned int i_part = 0; i_part < particleList.size(); i_part++){
     art::Ptr<simb::MCParticle> particle = particleList[i_part];
     std::vector<TVector3> particle_tpc_points = CollectTrajectoryPointsInTPC(particle);
     double particle_tpc_length = CalculateLength(particle_tpc_points);
-    std::cout<<"--"<<i_part<<":  PDG: " << particle->PdgCode() << "  TPC length: " << particle_tpc_length << std::endl; 
+    int pdg = particle->PdgCode();
+
+    //Make checks
+    if (std::abs(pdg) == 14 || std::abs(pdg)==12) continue; //No neutrinos
+    if (particle_tpc_length < 0.6) continue; //Need a particle to travel at least 3 wires in the TPC volume
+
+
+    //std::cout<<"--"<<i_part<<":  TrackId: " <<particle->TrackId() << "  Mother: " << particle->Mother() << "  PDG: " << particle->PdgCode() << "  TPC length: " << particle_tpc_length << std::endl; 
+    //Book the histo if necessary
+    if (!fParticleHistMap[pdg]) {
+      BookParticleCountHistogram(fParticleHistMap[pdg], pdg);
+      fParticleCountMap[pdg] = 0;
+    }
+    //Increment the count
+    fParticleCountMap[pdg]++;
 
   }
+
 
   return;
 }
@@ -199,6 +224,9 @@ double Pileup::CalculateLength(std::vector<TVector3> points){
 
 
 void Pileup::Reset(){
+  for (std::map<int,int>::iterator it = fParticleCountMap.begin(); it != fParticleCountMap.end(); it++){
+    it->second = 0;
+  }
   /*
   for (int i = 0; i < kNMaxTrueParticles; i++){
     fTrueID[i] = kDefInt;
@@ -224,6 +252,25 @@ void Pileup::Reset(){
   }
   fNPFParticles = 0;
   */
+  return;
+}
+
+void Pileup::BookParticleCountHistogram(TH1I*& hist, int pdg){
+  art::ServiceHandle<art::TFileService> tfs;
+
+  TString name = Form("ParticleCount_PDG_%i",pdg);
+  hist = tfs->make<TH1I>(name,"",15,0,15);
+  return;
+}
+
+void Pileup::FillParticleCountHistograms(){
+
+  for (std::map<int,int>::iterator it = fParticleCountMap.begin(); it != fParticleCountMap.end(); it++){
+    int pdg = it->first;
+    int count = it->second;
+    fParticleHistMap[pdg]->Fill(count);
+  }
+
   return;
 }
 
