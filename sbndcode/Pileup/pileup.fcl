@@ -1,0 +1,7 @@
+BEGIN_PROLOG
+
+standard_pileup:
+{ 
+ module_type:                 "sbndcode/Pileup/Pileup" 
+}
+END_PROLOG
