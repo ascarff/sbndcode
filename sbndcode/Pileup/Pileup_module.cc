@@ -61,6 +61,7 @@ public:
 
   // Required functions.
   void analyze(art::Event const & e) override;
+  void endJob() override;
 
 private:
 
@@ -74,6 +75,7 @@ private:
   //Map linking particle flavour to histograms of counts
   std::map<int,TH1I*> fParticleHistMap;
   std::map<int,int> fParticleCountMap;
+  TH1I *fHistNParticlesPerSpill;
 
   // Declare member data here.
   TTree *fTree;
@@ -112,6 +114,8 @@ Pileup::Pileup(fhicl::ParameterSet const & p)
 {
   Reset();
   art::ServiceHandle<art::TFileService> tfs;
+  BookParticleCountHistogram(fHistNParticlesPerSpill,0); // book the total as 0
+  fHistNParticlesPerSpill->GetXaxis()->SetTitle("No. particles per spill");
   fTree = tfs->make<TTree>("pileup","pileup tree");
   /*
   fTree->Branch("NPFParticles",&fNPFParticles);
@@ -141,6 +145,20 @@ void Pileup::analyze(art::Event const & e)
   FillParticleCountHistograms();
   fTree->Fill();
   Reset();
+}
+
+void Pileup::endJob(){
+  //Loop through the histograms and make sure that we contain the same number of events in each.  Any absent events should go into the 0 bin.  This discrepancy is an artifact of how the histograms are made during processing and not prior to it
+  //Get the total number of spills
+  int NSpills = fHistNParticlesPerSpill->Integral(0,1000000);
+  for (std::map<int,TH1I*>::iterator it = fParticleHistMap.begin(); it != fParticleHistMap.end(); it++){
+    TH1I *hist = it->second;
+    while (hist->Integral(0,1000000) < NSpills){
+      hist->Fill(0);
+    }
+  }
+
+  return;
 }
 
 void Pileup::CollectTruth(art::Event const & e){
@@ -265,11 +283,14 @@ void Pileup::BookParticleCountHistogram(TH1I*& hist, int pdg){
 
 void Pileup::FillParticleCountHistograms(){
 
+  int total_count = 0;
   for (std::map<int,int>::iterator it = fParticleCountMap.begin(); it != fParticleCountMap.end(); it++){
     int pdg = it->first;
     int count = it->second;
     fParticleHistMap[pdg]->Fill(count);
+    total_count += count;
   }
+  fHistNParticlesPerSpill->Fill(total_count);
 
   return;
 }
