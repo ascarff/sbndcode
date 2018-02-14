@@ -1,4 +1,5 @@
 art_make( MODULE_LIBRARIES larcorealg_Geometry
+   sbndcode_RecoUtils
 	  larcore_Geometry_Geometry_service
 	  larsim_Simulation nutools_ParticleNavigation lardataobj_Simulation
           nusimdata_SimulationBase
