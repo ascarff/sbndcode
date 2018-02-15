@@ -38,6 +38,21 @@ sbnd_clustercrawlermc.CCHitFinderAlg.MinRMSInd: 6.7
 sbnd_clustercrawlermc.CCHitFinderAlg.MinRMSCol: 7.6
 sbnd_clustercrawlermc.CCHitFinderAlg.ChiNorms:  [ 1.6, 7.5 ]
 
+sbnd_blurredclusteralg:                     @local::standard_blurredclusteralg
+sbnd_blurredclusteralg.BlurWire:            6
+sbnd_blurredclusteralg.BlurTick:            12
+sbnd_blurredclusteralg.SigmaWire:           4
+sbnd_blurredclusteralg.SigmaTick:           6
+sbnd_blurredclusteralg.ClusterWireDistance: 2
+sbnd_blurredclusteralg.ClusterTickDistance: 2
+sbnd_blurredclusteralg.MaxTickWidthBlur:    10
+sbnd_blurredclusteralg.NeighboursThreshold: 0
+sbnd_blurredclusteralg.MinNeighbours:       0
+sbnd_blurredclusteralg.MinSize:             2
+sbnd_blurredclusteralg.MinSeed:             0.1
+sbnd_blurredclusteralg.TimeThreshold:       500
+sbnd_blurredclusteralg.ChargeThreshold:     0.07
+
 sbnd_dbcluster:                                 @local::standard_dbcluster          
 sbnd_dbcluster.DBScanAlg:                       @local::sbnd_dbscanalg            
                                                                                       
@@ -60,5 +75,8 @@ sbnd_endpointmod:                               @local::standard_endpointmod
 sbnd_endpointmod.EndPointAlg:                   @local::sbnd_endpointalg          
                                                                                       
 sbnd_showeranglecluster:                        @local::standard_showeranglecluster 
+
+sbnd_blurredcluster:                            @local::standard_blurredcluster
+sbnd_blurredcluster.BlurredClusterAlg:          @local::sbnd_blurredclusteralg
 
 END_PROLOG

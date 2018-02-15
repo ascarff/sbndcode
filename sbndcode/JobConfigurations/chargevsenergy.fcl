@@ -1,0 +1,33 @@
+#include "simulationservices_sbnd.fcl"                                                                                                                                           
+#include "backtrackerservice.fcl"                                                                                                                                                
+#include "particleinventoryservice.fcl" 
+#include "hitfindermodules_sbnd.fcl"                                                                                                                                               
+#include "cluster_sbnd.fcl"                                                                                                                                                         
+#include "energycharge_Para.fcl"
+services:
+{
+  TFileService: { fileName: "dom_analysis.root" }
+  @table::sbnd_services
+  ParticleInventoryService: @local::standard_particleinventoryservice
+  BackTrackerService:  @local::standard_backtrackerservice
+}
+
+source:
+{
+  module_type: RootInput
+  maxEvents:  -1        # Number of events to create                                                                                                                                 
+}
+
+physics:
+{
+  analyzers:
+  {
+     ana: @local::standard_energycharge_Para
+  }
+
+ a1: [ ana ]
+ end_paths: [ a1 ]
+
+}
+
+

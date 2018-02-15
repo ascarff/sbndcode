@@ -1,8 +1,19 @@
 #include "calorimetry.fcl"
 #include "showerfindermodules.fcl"
+#include "showeralgorithms.fcl"
+#include "calorimetry_sbnd.fcl" 
 
 BEGIN_PROLOG
 
 sbnd_shower:     @local::standard_shower
+sbnd_emshower:   @local::standard_emshower
+
+sbnd_emshoweralg:     @local::standard_emshoweralg
+sbnd_showerenergyalg: @local::standard_showerenergyalg
+
+sbnd_emshower.EMShowerAlg: @local::sbnd_emshoweralg
+sbnd_emshower.EMShowerAlg.CalorimetryAlg:  @local::sbnd_calorimetryalgmc                   
+sbnd_emshower.EMShowerAlg.ShowerEnergyAlg: @local::sbnd_showerenergyalg
+
 
 END_PROLOG
