@@ -1,0 +1,115 @@
+#
+# File:    prodgenie_sbnd.fcl
+# Purpose: Produce GENIE events in the SBND detector with spill structure
+# Version: 1.1
+#
+# This configuration runs event generation only
+#
+# Input: no input file required
+#
+# Dependencies:
+# - uses the bundle of SBND simulation services
+#
+#
+
+#
+# services
+#
+
+#include "simulationservices_sbnd.fcl"
+#include "messages_sbnd.fcl"
+
+#
+# modules
+#
+
+#include "genie_sbnd.fcl"
+#include "genieactivefilter.fcl"
+#include "largeantmodules_sbnd.fcl"
+#include "mcreco.fcl"
+#include "rootoutput_sbnd.fcl"
+#include "detsimmodules_sbnd.fcl"
+
+#include "caldata_sbnd.fcl"
+
+
+process_name: GenieGen
+
+services:
+{
+  # Load the service that manages root files for histograms.
+  TFileService: { fileName: "hists_prod_genie_CC_sbnd_%p-%tc.root" }
+                @table::sbnd_simulation_services # load simulation services in bulk
+}
+
+# since this is a configuration typically run as interactive test,
+# we set up message configuration accordingly:
+services.message: @local::sbnd_message_services_interactive # from messages_sbnd.fcl
+
+
+# Start each new event with an empty event.
+source:
+{
+  module_type:     EmptyEvent
+  timestampPlugin: { plugin_type: "GeneratedEventTimestamp" }
+  maxEvents:      10          # Number of events to create
+  firstRun:        1          # Run number to use for this file
+  firstEvent:      1          # number of first event in the file
+}
+
+
+# Define and configure some modules to do work on each event.
+# First modules are defined; they are scheduled later.
+# Modules are grouped by type.
+physics:
+{
+
+  producers:
+  {
+    rns:       { module_type: "RandomNumberSaver" }
+    generator: @local::sbnd_genie_simple
+    largeant:  @local::sbnd_largeant
+    mcreco:    @local::standard_mcreco
+    daq:       @local::sbnd_simwire
+    caldata:   @local::sbnd_calwire
+  }
+  filters:
+  {
+    activeTPC:    @local::sbnd_genieactivefilter
+
+  }
+  #define the producer and filter modules for this path, order matters,
+  simulate:  [ rns, generator, activeTPC, largeant, mcreco, daq, caldata  ]
+
+  #define the output stream, there could be more than one if using filters
+  stream1:   [ out1 ]
+
+  #ie analyzers and output streams.  these all run simultaneously
+  end_paths: [stream1]
+}
+
+# block to define where the output goes.  if you defined a filter in the physics
+# block and put it in the trigger_paths then you need to put a SelectEvents: {SelectEvents: [XXX]}
+# entry in the output stream you want those to go to, where XXX is the label of the filter module(s)
+outputs:
+{
+  out1:
+  {
+    module_type: RootOutput
+    SelectEvents: [simulate]
+    fileName:    "prod_genie_CC_sbnd_%p-%tc.root" # default file name, can override from command line with -o or --output
+    dataTier:    "generated"
+  }
+}
+
+physics.producers.generator.FluxFiles: ["gsimple_microboone-100-onaxis_numintp_4987_65539.root"] #name of file with flux
+physics.producers.generator.TopVolume: 'volCryostat'
+physics.producers.generator.EventsPerSpill : 1
+physics.producers.generator.EventGeneratorList: "CC"
+
+
+
+physics.producers.mcreco.MCShowerRecoAlg.MinShowerEnergy: 2
+
+
+services.LArG4Parameters.KeepEMShowerDaughters: "true"
