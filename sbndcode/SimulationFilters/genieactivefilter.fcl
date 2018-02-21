@@ -1,0 +1,15 @@
+BEGIN_PROLOG
+
+sbnd_genieactivefilter:
+{
+  module_type:      "GenieActiveFilter"
+  HighXFiducialCut: 0.0
+  LowXFiducialCut:  0.0
+  HighYFiducialCut: 0.0
+  LowYFiducialCut:  0.0
+  HighZFiducialCut: 0.0
+  LowZFiducialCut:  0.0
+  GenieProducer:    "generator"
+}
+
+END_PROLOG
