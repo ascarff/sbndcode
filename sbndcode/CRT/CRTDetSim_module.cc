@@ -65,6 +65,7 @@ void CRTDetSim::reconfigure(fhicl::ParameterSet const & p) {
   fQRMS = p.get<double>("QRMS");
   fQThreshold = p.get<double>("QThreshold");
   fStripCoincidenceWindow = p.get<double>("StripCoincidenceWindow");
+  fTaggerPlaneCoincidenceWindow = p.get<double>("TaggerPlaneCoincidenceWindow");
   fAbsLenEff = p.get<double>("AbsLenEff");
 }
 
@@ -118,7 +119,7 @@ uint32_t CRTDetSim::getChannelTriggerTicks(CLHEP::HepRandomEngine* engine,
 
 
 struct Tagger {
-  std::set<unsigned> planesHit;
+  std::vector<std::pair<unsigned, uint32_t> > planesHit;
   std::vector<sbnd::crt::CRTData> data;
 };
 
@@ -252,7 +253,7 @@ void CRTDetSim::produce(art::Event & e) {
           q1 > fQThreshold &&
           abs(t0 - t1) < fStripCoincidenceWindow) {
         Tagger& tagger = taggers[nodeTagger->GetName()];
-        tagger.planesHit.insert(planeID);
+        tagger.planesHit.push_back({planeID, t0});
         tagger.data.push_back(sbnd::crt::CRTData(channel0ID, t0, ppsTicks, q0));
         tagger.data.push_back(sbnd::crt::CRTData(channel1ID, t1, ppsTicks, q1));
       }
@@ -285,8 +286,25 @@ void CRTDetSim::produce(art::Event & e) {
   // Logic: For normal taggers, require at least one hit in each perpendicular
   // plane. For the bottom tagger, any hit triggers read out.
   for (auto trg : taggers) {
-    if (trg.first.find("TaggerBot") != std::string::npos ||
-        trg.second.planesHit.size() > 1) {
+    bool trigger = false;
+
+    // Loop over pairs of hits
+    for (auto t1 : trg.second.planesHit) {
+      for (auto t2 : trg.second.planesHit) {
+        if (t1 == t2) {
+          continue;
+        }
+
+        // Two hits on different planes with proximal t0 times
+        if (t1.first != t2.first && std::abs(t1.second - t2.second) < fTaggerPlaneCoincidenceWindow) {
+          trigger = true;
+          break;
+        }
+      }
+    }
+
+    if (trigger || trg.first.find("TaggerBot") != std::string::npos) {
+      // Write out all hits on a tagger when there is any coincidence
       for (auto d : trg.second.data) {
         triggeredCRTHits->push_back(d);
       }

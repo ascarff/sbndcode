@@ -69,6 +69,7 @@ private:
   double fPropDelay;  //!< Delay in pulse arrival time [ns/m]
   double fPropDelayError;  //!< Delay in pulse arrival time, uncertainty [ns/m]
   double fStripCoincidenceWindow;  //!< Time window for two-fiber coincidence [ns]
+  double fTaggerPlaneCoincidenceWindow;  //!< Time window for two-plane coincidence [ticks]
   double fAbsLenEff;  //!< Effective abs. length for transverse Npe scaling [cm]
   bool fUseEdep;  //!< Use the true G4 energy deposited, assume mip if false.
 };
