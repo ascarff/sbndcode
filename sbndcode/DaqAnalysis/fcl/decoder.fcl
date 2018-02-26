@@ -1,0 +1,33 @@
+physics:
+{
+  producers:
+  {
+    daqDecoder:
+    {
+      module_type: DaqDecoder
+    }
+  }
+
+  my_producer_modules: [daqDecoder]
+
+  outstream: [out1]
+  end_paths: [outstream]
+}
+
+outputs:
+{
+  out1:
+  {
+    module_type: RootOutput
+    fileName: "decoder_out.root"
+  }
+}
+
+source:
+{
+  module_type: RootInput
+  fileNames: ["/home/nfs/gputnam/nevistpc_filedata_test.root"]
+}
+
+process_name: DECODER
+

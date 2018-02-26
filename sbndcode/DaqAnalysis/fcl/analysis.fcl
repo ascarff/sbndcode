@@ -1,0 +1,29 @@
+physics:
+{
+  analyzers:
+  {
+    daqAnalysis:
+    {
+      module_type: SimpleDaqAnalysis
+      producer_name: daq
+    }
+  }
+
+  a: [daqAnalysis]
+  end_paths: [a]
+}
+
+services:
+{
+  TFileService: { fileName: "out.root"}
+} 
+
+source:
+{
+  module_type: RootInput
+  //fileNames: ["/home/nfs/gputnam/nevistpc_filedata_test.root"]
+  fileNames: ["decoder_out.root"]
+}
+
+process_name: DAQANALYSIS
+

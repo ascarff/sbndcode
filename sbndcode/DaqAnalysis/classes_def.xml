@@ -1,0 +1,6 @@
+<lcgdict>
+  <class name="daqAnalysis::ChannelData"/>
+  <class name="std::vector<daqAnalysis::ChannelData>"/>
+  <class name="art::Wrapper<daqAnalysis::ChannelData>"/>
+  <class name="art::Wrapper<std::vector<daqAnalysis::ChannelData>>"/>
+</lcgdict>

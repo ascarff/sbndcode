@@ -1,0 +1,48 @@
+physics:
+{
+  producers:
+  {
+    daq:
+    {
+      module_type: DaqDecoder
+    }
+  }
+
+  analyzers:
+  {
+    daqAnalysis:
+    {
+      module_type: SimpleDaqAnalysis
+      producer_name: daq
+    }
+  }
+
+  my_producer_modules: [daq]
+
+  outstream: [out1]
+  analyze: [daqAnalysis]
+  end_paths: [outstream, analyze]
+}
+
+outputs:
+{
+  out1:
+  {
+    module_type: RootOutput
+    fileName: "decoder_out.root"
+  }
+}
+
+services:
+{
+  TFileService: { fileName: "out.root"}
+} 
+
+source:
+{
+  module_type: RootInput
+  fileNames: ["/home/nfs/gputnam/nevistpc_filedata_test.root"]
+}
+
+process_name: SIMPLEPIPELINE
+
