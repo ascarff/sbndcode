@@ -113,11 +113,11 @@ physics.producers.generator.EventGeneratorList: "NC"
 
 
 physics.producers.corsika.ShowerInputFiles: [
-    "/data/sbnd/corsika/p_showers_*.db",
-    "/data/sbnd/corsika/He_showers_*.db",
-    "/data/sbnd/corsika/N_showers_*.db",
-    "/data/sbnd/corsika/Mg_showers_*.db",
-    "/data/sbnd/corsika/Fe_showers_*.db"
+    "/n/holylfs/LABS/guenette_lab/data/corsika/sqShowers/p_showers_*.db",
+    "/n/holylfs/LABS/guenette_lab/data/corsika/sqShowers/He_showers_*.db",
+    "/n/holylfs/LABS/guenette_lab/data/corsika/sqShowers/N_showers_*.db",
+    "/n/holylfs/LABS/guenette_lab/data/corsika/sqShowers/Mg_showers_*.db",
+    "/n/holylfs/LABS/guenette_lab/data/corsika/sqShowers/Fe_showers_*.db"
   ] # ShowerInputFiles
 
 physics.producers.corsika.SampleTime:       4.04e-3  # 0.2 ms (g4 rise time) + 1.28 ms (1 full drift window) + 3.84 ms (readout) @ -70 kv, 114 cm/ms
