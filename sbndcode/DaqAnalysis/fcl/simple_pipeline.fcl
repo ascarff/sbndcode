@@ -10,7 +10,7 @@ physics:
 
   analyzers:
   {
-    daqAnalysis:
+    SimpleDaqAnalysis:
     {
       module_type: SimpleDaqAnalysis
       producer_name: daq
@@ -20,7 +20,7 @@ physics:
   my_producer_modules: [daq]
 
   outstream: [out1]
-  analyze: [daqAnalysis]
+  analyze: [SimpleDaqAnalysis]
   end_paths: [outstream, analyze]
 }
 

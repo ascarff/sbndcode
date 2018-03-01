@@ -2,14 +2,14 @@ physics:
 {
   analyzers:
   {
-    daqAnalysis:
+    SimpleDaqAnalysis:
     {
       module_type: SimpleDaqAnalysis
       producer_name: daq
     }
   }
 
-  a: [daqAnalysis]
+  a: [SimpleDaqAnalysis]
   end_paths: [a]
 }
 
