@@ -25,6 +25,7 @@
 #include "lardataobj/RawData/RawDigit.h"
 
 #include "ChannelData.hh"
+#include "FFT.hh"
 
 namespace daqAnalysis {
   class SimpleDaqAnalysis;
@@ -57,6 +58,7 @@ public:
     unsigned n_smoothing_samples;
     size_t n_channels;
     art::InputTag daq_tag;
+    int static_input_size;
 
     AnalysisConfig(const fhicl::ParameterSet &param);
     AnalysisConfig() {}
@@ -75,7 +77,7 @@ private:
   std::vector<daqAnalysis::ChannelData> _per_channel_data;
   unsigned _event_ind;
   TTree *_output;
-
+  FFTManager _fft_manager;
 };
 
 #endif /* Analysis_h */

@@ -51,6 +51,9 @@ SimpleDaqAnalysis::SimpleDaqAnalysis(fhicl::ParameterSet const & p) :
   //_output = fs->makeAndRegister<TBranch>("channel_data", "channel_data", "channel_data", "channel_data", &_per_channel_data);
   _output = fs->make<TTree>("channel_data", "channel_data");
   _output->Branch("channel_data", &_per_channel_data);
+
+
+  _fft_manager = (_config.static_input_size > 0) ? FFTManager(_config.static_input_size) : FFTManager();
 }
 
 SimpleDaqAnalysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &param) {
@@ -60,6 +63,7 @@ SimpleDaqAnalysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &par
   n_events = param.get<unsigned>("n_events", 10);
   n_baseline_samples = param.get<unsigned>("n_baseline_samples", 20);
   n_smoothing_samples = param.get<unsigned>("n_smoothing_samples", 1);
+  static_input_size = param.get<int>("static_input_size", -1);
 
   // TODO: how to detect this?
   n_channels = param.get<unsigned>("n_channels", 16 /* currently only the first 16 channels have data */);
@@ -126,14 +130,22 @@ void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
   
   auto channel = digits.Channel();
   if (channel < _config.n_channels) {
+    // re-allocate FFT if necessary
+    if (_fft_manager.InputSize() != digits.NADC()) {
+      _fft_manager.Set(digits.NADC());
+    }
+   
     _per_channel_data[channel].channel_no = channel;
 
     double max = 0;
-    for (unsigned raw_value: digits.ADCs()) {
-      double adc = (double) raw_value;
+    for (unsigned i = 0; i < digits.NADC(); i ++) {
+      double adc = (double) digits.ADCs()[i];
       if (adc > max) max = adc;
     
       _per_channel_data[channel].waveform.push_back(adc);
+      // fill up fftw array
+      double *input = _fft_manager.InputAt(i);
+      *input = adc;
     }
 
     // Baseline calculation assumes baseline is constant and that the first
@@ -145,12 +157,11 @@ void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
     _per_channel_data[channel].max = max;
       
     // calculate FFTs
-    FFT adc_fft(_per_channel_data[channel].waveform);
-    int adc_fft_size = adc_fft.size();
-    fftw_complex *adc_fft_data = adc_fft.data();
+    _fft_manager.Execute();
+    int adc_fft_size = _fft_manager.OutputSize();
     for (int i = 0; i < adc_fft_size; i++) {
-      _per_channel_data[channel].fft_real.push_back(adc_fft_data[i][0]);
-      _per_channel_data[channel].fft_imag.push_back(adc_fft_data[i][1]);
+      _per_channel_data[channel].fft_real.push_back(_fft_manager.ReOutputAt(i));
+      _per_channel_data[channel].fft_imag.push_back(_fft_manager.ImOutputAt(i));
     } 
 
     // get Peaks
