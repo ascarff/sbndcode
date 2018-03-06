@@ -31,7 +31,8 @@
 //#include "lardataobj/AnalysisBase/ParticleID.h"
 #include "larsim/MCCheater/BackTrackerService.h"
 #include "larcore/Geometry/Geometry.h"
-
+#include "larcorealg/Geometry/PlaneGeo.h"
+#include "larcorealg/Geometry/WireGeo.h"
 
 // c++
 #include <vector>
@@ -47,6 +48,15 @@ namespace RecoUtils{
   int TrueParticleIDFromTotalRecoCharge(const std::vector<art::Ptr<recob::Hit> >& hits);  //Returns the geant4 ID which contributes the most to the vector of hits.  The matching method looks for which true particle contributes the most reconstructed charge to the hit selection (the reco charge of each hit is correlated with each maximally contributing true particle and summed)
   int TrueParticleIDFromTotalRecoHits(const std::vector<art::Ptr<recob::Hit> >& hits);  //Returns the geant4 ID which contributes the most to the vector of hits.  The matching method looks for which true particle maximally contributes to the most reco hits
   bool IsInsideTPC(TVector3 position, double distance_buffer); //Checks if a position is within any of the TPCs in the geometry (user can define some distance buffer from the TPC walls)
+
+  float TrueEnergyDepositedFromMCTrack(int TrackID,const std::vector<art::Ptr<sim::SimChannel> >& simchannels); //Returns the total energy deposited from the track id given.
+  std::map<geo::PlaneID,int> NumberofMCWiresHit(int TrackID,const std::vector<art::Ptr<sim::SimChannel> > & simchannels); // Returns the number of Wires that saw an energy deposit in Monte Carlo from a track.Might be useful to add an energy cut on this. 
+
+  std::map<geo::PlaneID,int> NumberofHitsThatContainEnergyDepositedByTrack(int TrackID, const std::vector<art::Ptr<recob::Hit> >& hits); //Returns the number of hits in the reconstruction that saw an energy deposition by the a track. Might be useful to add an energy cut on this. 
+
+
+    
+
 }
 
 #endif

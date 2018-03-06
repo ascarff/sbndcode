@@ -141,3 +141,99 @@ bool RecoUtils::IsInsideTPC(TVector3 position, double distance_buffer){
 
 
 }
+
+
+std::map<geo::PlaneID,int> RecoUtils::NumberofHitsThatContainEnergyDepositedByTrack(int TrackID, const std::vector<art::Ptr<recob::Hit> >& hits){
+
+  //Loop over the planes and create the initial PlaneMap
+  art::ServiceHandle<geo::Geometry> geom;
+  std::map<geo::PlaneID,int> HitPlaneMap;
+  for(geo::PlaneID plane_id: geom->IteratePlaneIDs()){HitPlaneMap[plane_id] = 0;}
+
+  //Loop over the hits and find the IDE
+  for (std::vector<art::Ptr<recob::Hit> >::const_iterator hitIt = hits.begin(); hitIt != hits.end(); ++hitIt) {
+
+    art::Ptr<recob::Hit> hit = *hitIt;
+    //Find the plane id
+    geo::WireID wireid = hit->WireID();
+    geo::PlaneID  PlaneID = wireid.planeID();
+
+    art::ServiceHandle<cheat::BackTrackerService> bt_serv;
+    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(hit);
+    //Loop over the IDEs associated to the Hit
+    for (unsigned int idIt = 0; idIt < trackIDEs.size(); ++idIt) {
+      if (trackIDEs.at(idIt).trackID == TrackID) {++HitPlaneMap[PlaneID];}
+    }
+  }    
+  return HitPlaneMap;
+}
+
+std::map<geo::PlaneID,int> RecoUtils::NumberofMCWiresHit(int TrackID, const std::vector<art::Ptr<sim::SimChannel> >& simchannels){
+
+  //I don't think there is a way to go from TrackID to a list of TrackIDEs. So Instead loop through all the sim channels. Where there is a track IDE fromt th track ID. Count it. 
+
+  art::ServiceHandle<geo::Geometry> geom;
+  std::map<geo::PlaneID,int> WirePlaneMap;
+  for(geo::PlaneID plane_id: geom->IteratePlaneIDs()){WirePlaneMap[plane_id] = 0;}
+
+  // Loop over SimChannel                                     
+  for(size_t simch_index=0; simch_index<simchannels.size(); ++simch_index) {
+
+    //Get the specific simchanel                                     
+    const art::Ptr<sim::SimChannel> simch_ptr = simchannels[simch_index];
+
+    //Get the plane.
+    raw::ChannelID_t Channel = simch_ptr->Channel();
+    std::vector<geo::WireID> Wire = geom->ChannelToWire(Channel);
+    //sbnd is one channel per wire so the vector should be size one.
+    geo::PlaneID  PlaneID = (Wire[0]).planeID();
+
+    //Get the TDCIDEMap (Charge vs Time)   
+    auto tdc_ide_map = simch_ptr->TDCIDEMap();
+
+    //Loop through the map 
+    for(auto const& tdc_ide_pair : tdc_ide_map) {
+
+      //Get the IDEs associated to the TDC?
+      auto const& ide_v = tdc_ide_pair.second;
+
+      //Loop over the IDEs and add the energy.
+      for(auto const& ide : ide_v) {
+  	if(ide.trackID == TrackID)
+	  {++WirePlaneMap[PlaneID];} 
+      }
+    }
+  }
+  return WirePlaneMap;
+}
+
+//Gets the total energy deposited by a track  by looping through the MC info on each wire.
+float RecoUtils::TrueEnergyDepositedFromMCTrack(int TrackID, const std::vector<art::Ptr<sim::SimChannel> > &simchannels ){
+  
+  double total_energy = 0;
+  // Loop over SimChannel                                                                                  
+  for(size_t simch_index=0; simch_index<simchannels.size(); ++simch_index) {
+
+    //Get the specific simchanel
+    const art::Ptr<sim::SimChannel> simch_ptr = simchannels[simch_index];
+
+    //Get the TDCIDEMap (Charge vs Time) 
+    auto tdc_ide_map = simch_ptr->TDCIDEMap();
+
+    //Loop through the map 
+    for(auto const& tdc_ide_pair : tdc_ide_map) {
+
+      //Get the IDEs associated to the TDC?
+      auto const& ide_v = tdc_ide_pair.second;
+
+      //Loop over the IDEs and add the energy.
+      for(auto const& ide : ide_v) {
+        total_energy +=  ide.energy;
+      }
+    }
+  }
+  
+  return total_energy;
+}
+
+
