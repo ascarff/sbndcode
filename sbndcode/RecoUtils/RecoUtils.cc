@@ -244,7 +244,6 @@ float RecoUtils::TrueEnergyDepositedFromMCTrack(int TrackID, const std::vector<a
 
       //Loop over the IDEs and add the energy.
       for(auto const& ide : ide_v) {
-	std::cout << "Track id for ide: " << ide.trackID << std::endl;
 	if(TMath::Abs(ide.trackID) == TrackID){ 
 	total_energy +=  ide.energy;
 	}

@@ -82,11 +82,13 @@ private:
   TH1F* ShowerStart_Y_Hist;
   TH1F* ShowerStart_Z_Hist;
   TH1F* ShowerLength_Hist;
-  TH1F* ShowerEnergy_Hist;
+  TH1F* ShowerEnergyDiff_Hist;
   TH1F* ShowerdEdx_Hist;
   TH1F* EventSeggy_Hist;
   TH1F* ShowerCompleteness_Hist;
   TH1F* ShowerPurity_Hist;
+  TH1F* ShowerEnergy_Hist;
+  TH1F* ShowerHitNum_Hist;
 
   art::ServiceHandle<geo::Geometry> geom;
   art::ServiceHandle<art::TFileService> tfs;
@@ -112,11 +114,13 @@ ana::ShowerValidation::ShowerValidation(const fhicl::ParameterSet& pset) : EDAna
   ShowerStart_Z_Hist  = tfs->make<TH1F>("ShowerStartZ", "ShowerStartZ", 600, -100, 100);
   
   ShowerLength_Hist        = tfs->make<TH1F>("ShowerLength_Hist", "ShowerLength_Hist", 200, -20, 20);
-  ShowerEnergy_Hist        = tfs->make<TH1F>("ShowerEnergy_Hist", "ShowerEnergy_Hist", 100, -5, 5);
+  ShowerEnergyDiff_Hist        = tfs->make<TH1F>("ShowerEnergyDiff_Hist", "ShowerEnergyDiff_Hist", 100, -5, 5);
   ShowerdEdx_Hist          = tfs->make<TH1F>("ShowerdEdx_Hist", "ShowerdEdx_Hist", 100, -5, 5);
   EventSeggy_Hist          = tfs->make<TH1F>("ShowerSeggy_Hist", "ShowerSeggy_Hist", 200, -10, 10);
   ShowerCompleteness_Hist  = tfs->make<TH1F>("ShowerCompleteness_Hist", "ShowerCompleteness_Hist", 10, 0, 1);
   ShowerPurity_Hist        = tfs->make<TH1F>("ShowerPurity_Hist", "ShowerPurity_Hist", 10, 0, 1);
+  ShowerEnergy_Hist        = tfs->make<TH1F>("ShowerEnergy_Hist ", "ShowerEnergy_Hist ", 20, 0, 5000);
+  ShowerHitNum_Hist        = tfs->make<TH1F>("ShowerHitNum_Hist ", "ShowerHitNum_Hist ", 12000, 0, 12000);
 
 }
 
@@ -202,7 +206,6 @@ void ana::ShowerValidation::analyze(const art::Event& evt) {
 	if(Wire_num_map[Hitnum_iter->first] == 0){continue;} 
     	double Hit_num = (Hitnum_iter->second);
     	double Wire_num = Wire_num_map[Hitnum_iter->first];
-	std::cout << "Hit_num: " << Hit_num << " Wire_num: " << Wire_num << std::endl;
     	double Hit_Density = Hit_num/Wire_num;
 	if(Hit_Density > 1){++num_of_showers_viaDensitycut; break;} 
       }
@@ -213,7 +216,8 @@ void ana::ShowerValidation::analyze(const art::Event& evt) {
 
   //Loop over hits associated with the shower add up the IDEs energy for each of the "track ID" and find the purity and compare other properites.
   std::vector< art::Ptr<recob::Hit> > showerhits; //hits in the shower 
-  
+
+  std::cout << "Num of Showers: " << showers.size() << std::endl; 
   //Loop over the showers in the event
   for(unsigned int shower_iter = 0; shower_iter < showers.size(); ++shower_iter){
 
@@ -223,30 +227,26 @@ void ana::ShowerValidation::analyze(const art::Event& evt) {
     //Get the hits vector from the shower                                                          
     showerhits = fmh.at(shower.key());
     if(showerhits.size() == 0) {continue;}
+    //    if(showerhits.size() < 200) {continue;}
 
     //Function from RecoUtils, finds the most probable track ID associated with the set of hits from there true energy depositons. 
     int ShowerTrackID = RecoUtils::TrueParticleIDFromTotalTrueEnergy(showerhits);
-    std::cout << "True Shower ID: " <<  ShowerTrackID << std::endl;
+
 
 
     //For all the particles that orginate from the showering particle add up the energy.
     double TrueEnergyDep_FromShower = 0; 
     for (sim::ParticleList::const_iterator particleIt = particles.begin(); particleIt != particles.end(); ++particleIt){
       const simb::MCParticle *particle = particleIt->second;
-      std::cout << "Test 0.5" << std::endl;
       if(particle->TrackId() == ShowerTrackID){TrueEnergyDep_FromShower += RecoUtils::TrueEnergyDepositedFromMCTrack(particle->TrackId(), simchannels); continue;}
 
       int motherID = particle->Mother();
-      while(motherID != ShowerTrackID || motherID != 0){
-	std::cout << "Test 0.52" << std::endl;
-	std::cout << "motherID: " << motherID << std::endl; 
+      while(motherID != ShowerTrackID &&  motherID != 0){
 	const simb::MCParticle * particle_prev =  trueParticles[motherID]; 
 	
 	//Function from RecoUtils, adds up all the energy deposited from that Track ID.
 	//	double TrueEnergyDep_Fromtrack = RecoUtils::TrueEnergyDepositedFromMCTrack(ShowerTrackID, simchannels);
-	std::cout << "Test 0.53" << std::endl;
 	motherID = particle_prev->Mother();
-	std::cout << "Test 0.54" << std::endl;
 	if(motherID == ShowerTrackID){TrueEnergyDep_FromShower += RecoUtils::TrueEnergyDepositedFromMCTrack(particle->TrackId(), simchannels);}
       }
     }
@@ -268,25 +268,21 @@ void ana::ShowerValidation::analyze(const art::Event& evt) {
   	TrueEnergyDep_WithinShower += trackIDEs.at(idIt).energy;
 	
   	//Add up the contribution from the shower trackID. 
-  	if(trackIDEs.at(idIt).trackID == ShowerTrackID){
-  	  TrueEnergyDep_Fromtrack_WithinShower += trackIDEs.at(idIt).energy;
+  	if(TMath::Abs(trackIDEs.at(idIt).trackID) == ShowerTrackID){
+	  TrueEnergyDep_Fromtrack_WithinShower += trackIDEs.at(idIt).energy;
   	}
       }
     }//Hit Loop
     
-    std::cout << "Test 1" << std::endl;
-
     double completeness =  TrueEnergyDep_Fromtrack_WithinShower/TrueEnergyDep_FromShower;
     double purity       =  TrueEnergyDep_Fromtrack_WithinShower/TrueEnergyDep_WithinShower;
-  
+
     //Add to the respective hitograms.
     ShowerCompleteness_Hist->Fill(completeness);
     ShowerPurity_Hist->Fill(purity);
 
-    std::cout << "Test 1.1" << std::endl;
-
     //Find the MCParticle this shower associates to
-    const simb::MCParticle* MCShowerParticle = trueInitialParticles.at(ShowerTrackID);
+    const simb::MCParticle* MCShowerParticle = trueParticles.at(ShowerTrackID);
     
     //Find the Energy of the particle: 
     //double Energy = MCShowerParticle->E();
@@ -298,15 +294,11 @@ void ana::ShowerValidation::analyze(const art::Event& evt) {
     const TLorentzVector PositionTrajStart =  MCShowerParticle->Position(0);
     const TLorentzVector PositionTrajEnd   =  MCShowerParticle->Position(TrajPoints-1);
 
-    std::cout << "Test 1.2" << std::endl;
-
     //The three vecotor for track length is the shower direction 
     TVector3  TrueShowerDirection = (PositionTrajEnd - PositionTrajStart).Vect();
     
     //Initial track lentgh of the shower.
     double TrueTrackLength = TrueShowerDirection.Mag();
-
-    std::cout << "Test 1.3" << std::endl;
 
     //Get the information for the shower  
     const int ShowerBest_Plane                       = shower->best_plane(); 
@@ -315,8 +307,6 @@ void ana::ShowerValidation::analyze(const art::Event& evt) {
     const double   & ShowerTrackLength               = shower->Length();       
     const std::vector< double > & ShowerEnergyPlanes = shower->Energy();
     const std::vector< double > & ShowerdEdX_vec     = shower->dEdx(); 
-
-    std::cout << "Test 2" << std::endl;
 
     //Get the Fraction off the true value and fill the histograms.
     ShowerDirection_X_Hist->Fill((TrueShowerDirection.X()-ShowerDirection.X())/TrueShowerDirection.X());
@@ -328,8 +318,19 @@ void ana::ShowerValidation::analyze(const art::Event& evt) {
     ShowerStart_Z_Hist->Fill((PositionTrajStart.Z()-ShowerStart.Z())/PositionTrajStart.Z());
 
     ShowerLength_Hist->Fill((TrueTrackLength-ShowerTrackLength)/TrueTrackLength);
-    ShowerEnergy_Hist->Fill((TrueEnergyDep_FromShower-ShowerEnergyPlanes[ShowerBest_Plane])/TrueEnergyDep_FromShower);
-    
+    ShowerEnergyDiff_Hist->Fill((TrueEnergyDep_FromShower-ShowerEnergyPlanes[ShowerBest_Plane])/TrueEnergyDep_FromShower);
+    ShowerEnergy_Hist->Fill(ShowerEnergyPlanes[ShowerBest_Plane]);
+    ShowerHitNum_Hist->Fill(showerhits.size());
+
+    std::cout << "#################################################" << std::endl;
+    std::cout << "True Shower ID: " <<  ShowerTrackID << std::endl;
+    std::cout << "TrueEnergyDep_Fromtrack_WithinShower: " <<  TrueEnergyDep_Fromtrack_WithinShower << std::endl;
+    std::cout << "TrueEnergyDep_FromShower: " << TrueEnergyDep_FromShower << std::endl;
+    std::cout << "Purity: " << purity << " completeness: " << completeness << std::endl;
+    std::cout << "Hit Size: " << showerhits.size() << std::endl;
+    std::cout << "ShowerEnergyPlanes: " << ShowerEnergyPlanes[ShowerBest_Plane] << std::endl;
+    std::cout << "#################################################" <<std::endl;
+
     for(std::vector< double >::const_iterator dEdx=ShowerdEdX_vec.begin();dEdx!=ShowerdEdX_vec.end(); ++dEdx){
       ShowerdEdx_Hist->Fill((*dEdx));
     }
@@ -339,7 +340,6 @@ void ana::ShowerValidation::analyze(const art::Event& evt) {
   //Whats the segementyness of the event. 
   EventSeggy_Hist->Fill(num_of_showers_viaDensitycut - showers.size());
 
-  std::cout << "Test 3" << std::endl;
 
   // //This is for Rhiannon 
   // for(std::vector<art::Ptr<simb::MCTruth> >::const_iterator genielist = mclist.begin(); genielist != mclist.end(); ++genielist){ 
