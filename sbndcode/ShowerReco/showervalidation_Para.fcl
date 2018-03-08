@@ -1,0 +1,11 @@
+BEGIN_PROLOG
+standard_showervalidation_Para: {
+ module_type: "sbndcode/ShowerReco/ShowerValidation"
+ GenieGenModuleLabel:      "generator"
+ LArGeantModuleLabel:      "largeant"
+ HitsModuleLabel:          "gaushit"
+ TrackModuleLabel:         "pmalgtrackmaker"
+ ShowerModuleLabel:        "emshower"
+}
+END_PROLOG
+

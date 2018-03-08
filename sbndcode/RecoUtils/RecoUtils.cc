@@ -17,6 +17,8 @@ int RecoUtils::TrueParticleID(const art::Ptr<recob::Hit>& hit) {
 
 int RecoUtils::TrueParticleIDFromTotalTrueEnergy(const std::vector<art::Ptr<recob::Hit> >& hits) {
   art::ServiceHandle<cheat::BackTrackerService> bt_serv;
+  art::ServiceHandle<cheat::ParticleInventoryService> particleInventory;
+
   std::map<int,double> trackIDToEDepMap;
   for (std::vector<art::Ptr<recob::Hit> >::const_iterator hitIt = hits.begin(); hitIt != hits.end(); ++hitIt) {
     art::Ptr<recob::Hit> hit = *hitIt;
@@ -26,18 +28,26 @@ int RecoUtils::TrueParticleIDFromTotalTrueEnergy(const std::vector<art::Ptr<reco
     }
   }
 
+
   //Loop over the map and find the track which contributes the highest energy to the hit vector
   double maxenergy = -1;
   int objectTrack = -99999;
   for (std::map<int,double>::iterator mapIt = trackIDToEDepMap.begin(); mapIt != trackIDToEDepMap.end(); mapIt++){
     double energy = mapIt->second;
     double trackid = mapIt->first;
+    
     if (energy > maxenergy){
       maxenergy = energy;
       objectTrack = trackid;
+      
+      //All Electrons that deposited charge packets are given the negative of the track id they orginated from but I find the mother just in case this is not true.
+      if(trackid < 0){
+	simb::MCParticle motherparticle = particleInventory->TrackIdToMotherParticle(trackid);
+	objectTrack = motherparticle.TrackId(); 
+      }
     }
-  }
-
+  }    
+  
   return objectTrack;
 }
 
@@ -162,13 +172,15 @@ std::map<geo::PlaneID,int> RecoUtils::NumberofHitsThatContainEnergyDepositedByTr
     std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(hit);
     //Loop over the IDEs associated to the Hit
     for (unsigned int idIt = 0; idIt < trackIDEs.size(); ++idIt) {
-      if (trackIDEs.at(idIt).trackID == TrackID) {++HitPlaneMap[PlaneID];}
+      if (TMath::Abs(trackIDEs.at(idIt).trackID) == TrackID) {++HitPlaneMap[PlaneID];}
     }
   }    
   return HitPlaneMap;
 }
 
 std::map<geo::PlaneID,int> RecoUtils::NumberofMCWiresHit(int TrackID, const std::vector<art::Ptr<sim::SimChannel> >& simchannels){
+
+  int breaking_int;
 
   //I don't think there is a way to go from TrackID to a list of TrackIDEs. So Instead loop through all the sim channels. Where there is a track IDE fromt th track ID. Count it. 
 
@@ -178,6 +190,8 @@ std::map<geo::PlaneID,int> RecoUtils::NumberofMCWiresHit(int TrackID, const std:
 
   // Loop over SimChannel                                     
   for(size_t simch_index=0; simch_index<simchannels.size(); ++simch_index) {
+
+    breaking_int = 0;
 
     //Get the specific simchanel                                     
     const art::Ptr<sim::SimChannel> simch_ptr = simchannels[simch_index];
@@ -199,9 +213,11 @@ std::map<geo::PlaneID,int> RecoUtils::NumberofMCWiresHit(int TrackID, const std:
 
       //Loop over the IDEs and add the energy.
       for(auto const& ide : ide_v) {
-  	if(ide.trackID == TrackID)
-	  {++WirePlaneMap[PlaneID];} 
+  	if(TMath::Abs(ide.trackID) == TrackID)
+	  {++WirePlaneMap[PlaneID];breaking_int=1;} 
       }
+      
+      if(breaking_int==1){break;}
     }
   }
   return WirePlaneMap;
@@ -228,7 +244,10 @@ float RecoUtils::TrueEnergyDepositedFromMCTrack(int TrackID, const std::vector<a
 
       //Loop over the IDEs and add the energy.
       for(auto const& ide : ide_v) {
-        total_energy +=  ide.energy;
+	std::cout << "Track id for ide: " << ide.trackID << std::endl;
+	if(TMath::Abs(ide.trackID) == TrackID){ 
+	total_energy +=  ide.energy;
+	}
       }
     }
   }
