@@ -41,6 +41,8 @@ private:
     std::unique_ptr<std::vector<raw::RawDigit>> &product_collection);
   void validate_header(const sbnddaq::NevisTPCHeader *header); 
   art::InputTag _tag;
+  int _wait_sec;
+  int _wait_usec;
 };
 
 #endif /* DaqDecoder_h */

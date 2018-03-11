@@ -19,6 +19,8 @@
 #include <memory>
 #include <iostream>
 #include <stdlib.h>
+#include <chrono>
+#include <thread>
 
 #include "art/Framework/Core/ModuleMacros.h"
 
@@ -33,15 +35,22 @@
 DEFINE_ART_MODULE(daq::DaqDecoder)
 
 
-daq::DaqDecoder::DaqDecoder(fhicl::ParameterSet const & p)
+daq::DaqDecoder::DaqDecoder(fhicl::ParameterSet const & param)
   : _tag("daq","NEVISTPC")
 {
+  double wait_time = param.get<double>("wait_time", -1 /* units of seconds */);
+  _wait_sec = (int) wait_time;
+  _wait_usec = (int) (wait_time / 1000000);
+  
   // produce stuff
   produces<std::vector<raw::RawDigit>>();
 }
 
 void daq::DaqDecoder::produce(art::Event & event)
 {
+  if (_wait_sec >= 0) {
+    std::this_thread::sleep_for(std::chrono::seconds(_wait_sec) + std::chrono::microseconds(_wait_usec));
+  }
   auto const& daq_handle = event.getValidHandle<std::vector<artdaq::Fragment>>(_tag);
 
   std::unique_ptr<std::vector<raw::RawDigit>> product_collection(new std::vector<raw::RawDigit>);
@@ -53,7 +62,6 @@ void daq::DaqDecoder::produce(art::Event & event)
 
 void daq::DaqDecoder::process_fragment(const artdaq::Fragment &frag, 
   std::unique_ptr<std::vector<raw::RawDigit>> &product_collection) {
-
 
   sbnddaq::NevisTPCFragment fragment(frag);
 
