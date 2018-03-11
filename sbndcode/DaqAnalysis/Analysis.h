@@ -26,6 +26,7 @@
 
 #include "ChannelData.hh"
 #include "FFT.hh"
+#include "Redis.hh"
 
 namespace daqAnalysis {
   class SimpleDaqAnalysis;
@@ -59,6 +60,7 @@ public:
     size_t n_channels;
     art::InputTag daq_tag;
     int static_input_size;
+    bool redis;
 
     AnalysisConfig(const fhicl::ParameterSet &param);
     AnalysisConfig() {}
@@ -67,9 +69,7 @@ public:
   // other functions
   void ProcessChannel(const raw::RawDigit &digits);
 
-  void ReportEvent();
-
-  inline std::vector<daqAnalysis::ChannelData> *ChannelDataRef() { return &_per_channel_data; }
+  void ReportEvent(art::Event const &art_event);
 
 private:
   // Declare member data here.
@@ -78,6 +78,12 @@ private:
   unsigned _event_ind;
   TTree *_output;
   FFTManager _fft_manager;
+  // This is a pointer b.c. art for some reason default constructs 
+  // the Analysis class before constructing it w/ a ParameterSet 
+  // and we don't want Redis() to get default constructed. 
+  // So there might be a better way to do it but I just threw the 
+  // Redis behind a pointer so it gets default constructed to NULL.
+  daqAnalysis::Redis *_redis_manager;
 };
 
 #endif /* Analysis_h */

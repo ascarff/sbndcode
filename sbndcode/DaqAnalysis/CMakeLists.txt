@@ -2,6 +2,10 @@ set (trace_product_version v3_06_06)
 find_ups_product( TRACE v3_06_06 )
 find_ups_product( lardataobj v1_17_00 )
 
+
+include_directories($ENV{HIREDIS_INC})
+link_directories($ENV{HIREDIS_LIB})
+
 art_dictionary(DICTIONARY_LIBRARIES daqAnalysis_VST)
 
 cet_make_library( LIBRARY_NAME daqAnalysis_VST
@@ -9,7 +13,9 @@ cet_make_library( LIBRARY_NAME daqAnalysis_VST
 		FFT.cc
 		Noise.cc
 		PeakFinder.cc
+		Redis.cc
 	LIBRARIES
+		hiredis
 		sbnddaq-datatypes_Overlays
 		sbnddaq-datatypes_NevisTPC
 		${LARDATAOBJ} 

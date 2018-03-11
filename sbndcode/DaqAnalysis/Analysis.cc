@@ -37,6 +37,7 @@
 #include "FFT.hh"
 #include "Noise.hh"
 #include "PeakFinder.hh"
+#include "Redis.hh"
 
 using namespace daqAnalysis;
 
@@ -52,8 +53,10 @@ SimpleDaqAnalysis::SimpleDaqAnalysis(fhicl::ParameterSet const & p) :
   _output = fs->make<TTree>("channel_data", "channel_data");
   _output->Branch("channel_data", &_per_channel_data);
 
-
   _fft_manager = (_config.static_input_size > 0) ? FFTManager(_config.static_input_size) : FFTManager();
+  if (_config.redis) {
+    _redis_manager = new Redis(); 
+  }
 }
 
 SimpleDaqAnalysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &param) {
@@ -64,6 +67,7 @@ SimpleDaqAnalysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &par
   n_baseline_samples = param.get<unsigned>("n_baseline_samples", 20);
   n_smoothing_samples = param.get<unsigned>("n_smoothing_samples", 1);
   static_input_size = param.get<int>("static_input_size", -1);
+  redis = param.get<bool>("redis", false);
 
   // TODO: how to detect this?
   n_channels = param.get<unsigned>("n_channels", 16 /* currently only the first 16 channels have data */);
@@ -101,15 +105,24 @@ void SimpleDaqAnalysis::analyze(art::Event const & event) {
     _per_channel_data[i].rms = last_channel_noise.RMS1();
     _per_channel_data[i].last_channel_correlation = last_channel_noise.Correlation();
     _per_channel_data[i].next_channel_correlation = next_channel_noise.Correlation();
+    // vector assignment copies
+    _per_channel_data[i].noise_sample = *last_channel_noise.NoiseSample1();
   }
-  ReportEvent();
+  ReportEvent(event);
 }
 
-void SimpleDaqAnalysis::ReportEvent() {
+void SimpleDaqAnalysis::ReportEvent(art::Event const &art_event) {
+  // don't need this for now
+  (void) art_event;
   // Fill the output
   _output->Fill();
 
-  // TODO: Send stuff to Redis
+  // Send stuff to Redis
+  Redis::EventDef event;
+  event.per_channel_data = &_per_channel_data;
+  if (_config.redis) {
+    _redis_manager->Send(event);
+  }
 
 }
 
