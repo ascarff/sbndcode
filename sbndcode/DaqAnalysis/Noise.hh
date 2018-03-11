@@ -11,6 +11,8 @@ public:
   inline double CorrelatedRMS() { return CalcRMS(wvfm_diff); }
   inline double Covariance() { return CalcCov(wvfm_1, wvfm_2); }
   inline double Correlation() { return CalcCor(wvfm_1, wvfm_2); }
+  inline std::vector<double> *NoiseSample1() { return &wvfm_1; }
+  inline std::vector<double> *NoiseSample2() { return &wvfm_2; }
 private:
   static double CalcRMS(std::vector<double> &wvfm);
   static double CalcCov(std::vector<double> &wvfm_1, std::vector<double> &wvfm_2);
