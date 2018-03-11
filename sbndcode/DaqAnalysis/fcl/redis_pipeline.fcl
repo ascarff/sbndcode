@@ -1,0 +1,51 @@
+physics:
+{
+  producers:
+  {
+    daq:
+    {
+      module_type: DaqDecoder
+      wait_time: 3
+    }
+  }
+
+  analyzers:
+  {
+    SimpleDaqAnalysis:
+    {
+      module_type: SimpleDaqAnalysis
+      producer_name: daq
+      redis: true
+    }
+  }
+
+  my_producer_modules: [daq]
+
+  outstream: [out1]
+  analyze: [SimpleDaqAnalysis]
+  end_paths: [outstream, analyze]
+}
+
+outputs:
+{
+  out1:
+  {
+    module_type: RootOutput
+    fileName: "pipeline_out.root"
+    compressionLevel: 0
+  }
+}
+
+services:
+{
+  TFileService: { fileName: "out.root"}
+} 
+
+source:
+{
+  module_type: RootInput
+  fileNames: ["/home/nfs/gputnam/nevistpc_filedata_test.root"]
+}
+
+process_name: REDISPIPELINE
+
