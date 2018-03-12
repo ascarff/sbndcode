@@ -78,11 +78,7 @@ private:
   unsigned _event_ind;
   TTree *_output;
   FFTManager _fft_manager;
-  // This is a pointer b.c. art for some reason default constructs 
-  // the Analysis class before constructing it w/ a ParameterSet 
-  // and we don't want Redis() to get default constructed. 
-  // So there might be a better way to do it but I just threw the 
-  // Redis behind a pointer so it gets default constructed to NULL.
+  // use pointer to avoid double-construction
   daqAnalysis::Redis *_redis_manager;
 };
 
