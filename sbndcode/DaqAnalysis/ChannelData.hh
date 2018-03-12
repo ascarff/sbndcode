@@ -2,6 +2,7 @@
 #define _sbnddaq_analysis_WaveformData
 
 #include <vector>
+#include <string>
 
 #include "PeakFinder.hh"
 
@@ -20,6 +21,8 @@ public:
   std::vector<double> fft_real;
   std::vector<double> fft_imag;
   std::vector<PeakFinder::Peak> peaks;
+
+  std::string Jsonify();
   
 };
 

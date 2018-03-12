@@ -3,8 +3,11 @@ find_ups_product( TRACE v3_06_06 )
 find_ups_product( lardataobj v1_17_00 )
 
 
+# setup external non-ups libraries
 include_directories($ENV{HIREDIS_INC})
 link_directories($ENV{HIREDIS_LIB})
+include_directories($ENV{JSONCPP_INC})
+link_directories($ENV{JSONCPP_LIB})
 
 art_dictionary(DICTIONARY_LIBRARIES daqAnalysis_VST)
 
@@ -14,7 +17,9 @@ cet_make_library( LIBRARY_NAME daqAnalysis_VST
 		Noise.cc
 		PeakFinder.cc
 		Redis.cc
+		ChannelData.cc
 	LIBRARIES
+		jsoncpp
 		hiredis
 		sbnddaq-datatypes_Overlays
 		sbnddaq-datatypes_NevisTPC
