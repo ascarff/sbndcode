@@ -16,6 +16,12 @@
 
 #include "sbnddaq-datatypes/Overlays/NevisTPCFragment.hh"
 
+/*
+  * The Decoder module takes as input "NevisTPCFragments" and
+  * outputs raw::RawDigits. It also handles in and all issues
+  * with the passed in header and fragments (or at least it will).
+*/
+
 namespace daq {
   class DaqDecoder;
 }

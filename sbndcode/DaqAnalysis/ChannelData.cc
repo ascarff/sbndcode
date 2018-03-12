@@ -7,6 +7,7 @@
 #include "PeakFinder.hh"
 #include "ChannelData.hh"
 
+// Turn in channel data to a json blob for sending to Redis
 std::string daqAnalysis::ChannelData::Jsonify() {
   Json::Value output;
   output["baseline"] = baseline;

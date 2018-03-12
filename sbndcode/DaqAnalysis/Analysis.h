@@ -28,6 +28,13 @@
 #include "FFT.hh"
 #include "Redis.hh"
 
+/*
+  * Main analysis code of the online Monitoring.
+  * Takes as input raw::RawDigits and produces
+  * a number of useful metrics all defined in 
+  * ChannelData.hh
+*/
+
 namespace daqAnalysis {
   class SimpleDaqAnalysis;
 }

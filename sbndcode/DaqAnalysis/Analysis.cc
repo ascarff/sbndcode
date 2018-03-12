@@ -49,10 +49,11 @@ SimpleDaqAnalysis::SimpleDaqAnalysis(fhicl::ParameterSet const & p) :
   _event_ind = 0;
   art::ServiceHandle<art::TFileService> fs;
 
-  //_output = fs->makeAndRegister<TBranch>("channel_data", "channel_data", "channel_data", "channel_data", &_per_channel_data);
+  // set up tree and the channel data branch for output
   _output = fs->make<TTree>("channel_data", "channel_data");
   _output->Branch("channel_data", &_per_channel_data);
 
+  // subclasses to do FFT's and send stuff to Redis
   _fft_manager = (_config.static_input_size > 0) ? FFTManager(_config.static_input_size) : FFTManager();
   if (_config.redis) {
     _redis_manager = new Redis(); 
@@ -61,24 +62,41 @@ SimpleDaqAnalysis::SimpleDaqAnalysis(fhicl::ParameterSet const & p) :
 
 SimpleDaqAnalysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &param) {
   // set up config
+
+  // conversion of frame number to time
   frame_to_dt = param.get<double>("frame_to_dt", 1.6e-3 /* units of seconds */);
+  // whether to print stuff (currently unused)
   verbose = param.get<bool>("verbose", true);
-  n_events = param.get<unsigned>("n_events", 10);
+  // number of events to take in before exiting
+  // will never exit if set to negative
+  n_events = param.get<unsigned>("n_events", -1);
+
+  // configuring analysis code:
+
+  // Currently the analysis code assumes that the first "n" samples
+  // won't have any signal and can just be used as a baseline. This baseline
+  // is used to calculate noise and use as a threshold for peak finding
   n_baseline_samples = param.get<unsigned>("n_baseline_samples", 20);
+  // number of samples to average in each direction for peak finding
   n_smoothing_samples = param.get<unsigned>("n_smoothing_samples", 1);
+
+  // Number of input adc counts per waveform. Set to negative if unknown.
+  // Setting to some positive number will speed up FFT's.
   static_input_size = param.get<int>("static_input_size", -1);
+  // whether to send stuff to redis
   redis = param.get<bool>("redis", false);
 
+  // number of input channels
   // TODO: how to detect this?
   n_channels = param.get<unsigned>("n_channels", 16 /* currently only the first 16 channels have data */);
 
+  // name of producer of raw::RawDigits
   std::string producer = param.get<std::string>("producer_name");
   daq_tag = art::InputTag(producer, ""); 
 }
 
 void SimpleDaqAnalysis::analyze(art::Event const & event) {
-  //if (_config.n_events >= 0 && _event_ind >= (unsigned)_config.n_events) return false;
-
+  if (_config.n_events >= 0 && _event_ind >= (unsigned)_config.n_events) return false;
 
   _event_ind ++;
 
@@ -92,6 +110,7 @@ void SimpleDaqAnalysis::analyze(art::Event const & event) {
 
   auto const& raw_digits_handle = event.getValidHandle<std::vector<raw::RawDigit>>(_config.daq_tag);
   
+  // calculate per channel stuff
   for (auto const& digits: *raw_digits_handle) {
     ProcessChannel(digits);
   }
@@ -118,9 +137,9 @@ void SimpleDaqAnalysis::ReportEvent(art::Event const &art_event) {
   _output->Fill();
 
   // Send stuff to Redis
-  Redis::EventDef event;
-  event.per_channel_data = &_per_channel_data;
   if (_config.redis) {
+    Redis::EventDef event;
+    event.per_channel_data = &_per_channel_data;
     _redis_manager->Send(event);
   }
 
@@ -155,6 +174,7 @@ void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
       double adc = (double) digits.ADCs()[i];
       if (adc > max) max = adc;
     
+      // fill up waveform
       _per_channel_data[channel].waveform.push_back(adc);
       // fill up fftw array
       double *input = _fft_manager.InputAt(i);

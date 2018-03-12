@@ -14,8 +14,12 @@ public:
   double baseline;
   double max;
   double rms;
+  // TEMPORARY: save the correlation
+  // between "adjacent" channels for debugging purposes
   double last_channel_correlation;
   double next_channel_correlation;
+  // includes the first `n_baseline_samples` with
+  // the mean subtracted for noise calculations
   std::vector<double> noise_sample;
   std::vector<double> waveform;
   std::vector<double> fft_real;

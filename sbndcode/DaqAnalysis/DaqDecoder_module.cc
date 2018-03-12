@@ -38,6 +38,8 @@ DEFINE_ART_MODULE(daq::DaqDecoder)
 daq::DaqDecoder::DaqDecoder(fhicl::ParameterSet const & param)
   : _tag("daq","NEVISTPC")
 {
+  // amount of time to wait in between processing events
+  // useful for debugging redis
   double wait_time = param.get<double>("wait_time", -1 /* units of seconds */);
   _wait_sec = (int) wait_time;
   _wait_usec = (int) (wait_time / 1000000);

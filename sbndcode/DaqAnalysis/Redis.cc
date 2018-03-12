@@ -30,7 +30,9 @@ void Redis::Send(Redis::EventDef &event) {
   std::time_t now = std::time(nullptr);
   void *reply;
   for (auto &channel: *event.per_channel_data) {
-    // add in some basic stuff
+    // TODO: just send json blob
+
+    // Send in some stuff 
     reply = redisCommand(context, "SET stream/1:%i:baseline:%i %f", now, channel.channel_no, channel.baseline);
     freeReplyObject(reply);
     reply = redisCommand(context, "EXPIRE stream/1:%i:baseline:%i %i", now, channel.channel_no, 600);
@@ -53,7 +55,6 @@ void Redis::Send(Redis::EventDef &event) {
     freeReplyObject(reply);
     
     // also push the channel data as a json blob
-    //printf("'%s'\n", channel.Jsonify().c_str());
     reply = redisCommand(context, "Set stream/1:%i:channel_data:%i %s", now, channel.channel_no, channel.Jsonify().c_str());
     freeReplyObject(reply);
     reply = redisCommand(context, "EXPIRE stream/1:%i:channel_data:%i %i", now, channel.channel_no, 600);
