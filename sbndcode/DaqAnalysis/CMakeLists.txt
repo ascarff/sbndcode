@@ -9,6 +9,9 @@ link_directories($ENV{HIREDIS_LIB})
 include_directories($ENV{JSONCPP_INC})
 link_directories($ENV{JSONCPP_LIB})
 
+# add in VST Calibration
+add_subdirectory(VSTCalibration)
+
 art_dictionary(DICTIONARY_LIBRARIES daqAnalysis_VST)
 
 cet_make_library( LIBRARY_NAME daqAnalysis_VST
