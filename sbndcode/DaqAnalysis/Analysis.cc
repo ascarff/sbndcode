@@ -69,6 +69,7 @@ SimpleDaqAnalysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &par
   verbose = param.get<bool>("verbose", true);
   // number of events to take in before exiting
   // will never exit if set to negative
+  // Also--currently does nothing.
   n_events = param.get<unsigned>("n_events", -1);
 
   // configuring analysis code:
@@ -96,7 +97,7 @@ SimpleDaqAnalysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &par
 }
 
 void SimpleDaqAnalysis::analyze(art::Event const & event) {
-  if (_config.n_events >= 0 && _event_ind >= (unsigned)_config.n_events) return false;
+  //if (_config.n_events >= 0 && _event_ind >= (unsigned)_config.n_events) return false;
 
   _event_ind ++;
 
