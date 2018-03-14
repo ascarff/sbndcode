@@ -71,16 +71,16 @@ physics: {
     
     @table::megadump_gen_modules
     @table::megadump_g4_modules
-    @table::megadump_destim_modules
+    @table::megadump_detsim_modules
     @table::megadump_reco_modules
     
   } # analyzers
   
   dumpers: [
-    @sequence::megadump_gen_module_list
-    @sequence::megadump_g4_module_list
-    @sequence::megadump_detsim_module_list
-    @sequence::megadump_reco_module_list
+      @sequence::megadump_gen_module_list
+    , @sequence::megadump_g4_module_list
+    , @sequence::megadump_detsim_module_list
+    , @sequence::megadump_reco_module_list
     ]
   
   trigger_paths: []

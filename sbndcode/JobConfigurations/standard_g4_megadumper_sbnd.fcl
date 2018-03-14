@@ -66,8 +66,8 @@ physics: {
   } # analyzers
   
   dumpers: [
-    @sequence::megadump_gen_module_list
-    @sequence::megadump_g4_module_list
+      @sequence::megadump_gen_module_list
+    , @sequence::megadump_g4_module_list
     ]
   
   trigger_paths: []
