@@ -62,6 +62,13 @@ void daq::DaqDecoder::produce(art::Event & event)
   event.put(std::move(product_collection));
 }
 
+
+raw::ChannelID_t daq::DaqDecoder::get_wire_id(const sbnddaq::NevisTPCHeader *header, uint16_t nevis_channel_id) {
+ // TODO: implement
+ (void) header;
+ return (raw::ChannelID_t) nevis_channel_id;
+}
+
 void daq::DaqDecoder::process_fragment(const artdaq::Fragment &frag, 
   std::unique_ptr<std::vector<raw::RawDigit>> &product_collection) {
 
@@ -75,15 +82,17 @@ void daq::DaqDecoder::process_fragment(const artdaq::Fragment &frag,
 
   for (auto waveform: waveform_map) {
     std::vector<int16_t> raw_digits_waveform;
+    raw::ChannelID_t wire_id = get_wire_id(fragment.header(), waveform.first);
     // TODO: is this too expensive an operation?
     for (auto digit: waveform.second) {
       raw_digits_waveform.push_back( (int16_t) digit);
     }  
-    product_collection->emplace_back(waveform.first, raw_digits_waveform.size(), raw_digits_waveform);
+    product_collection->emplace_back(wire_id, raw_digits_waveform.size(), raw_digits_waveform);
   }
 }
 void daq::DaqDecoder::validate_header(const sbnddaq::NevisTPCHeader *header) {
   // TODO: implement
+  (void) header;
   return; 
 }
 

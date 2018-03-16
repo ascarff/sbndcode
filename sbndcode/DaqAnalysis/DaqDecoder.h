@@ -43,9 +43,16 @@ public:
   void produce(art::Event & e) override;
 
 private:
+  // process an individual fragment inside an art event
   void process_fragment(const artdaq::Fragment &frag,
     std::unique_ptr<std::vector<raw::RawDigit>> &product_collection);
+  // validate Nevis header
+  // TODO: report errors in header
   void validate_header(const sbnddaq::NevisTPCHeader *header); 
+
+  // Gets the WIRE ID of the channel. This wire id can be then passed
+  // to the Lariat geometry.
+  raw::ChannelID_t get_wire_id(const sbnddaq::NevisTPCHeader *header, uint16_t nevis_channel_id);
   art::InputTag _tag;
   int _wait_sec;
   int _wait_usec;
