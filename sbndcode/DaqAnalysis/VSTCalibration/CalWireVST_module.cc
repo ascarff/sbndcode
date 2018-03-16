@@ -85,10 +85,11 @@ namespace caldata {
     art::Handle< std::vector<raw::RawDigit> > digitVecHandle;
     evt.getByLabel(digit_module_label, digitVecHandle);
 
+    unsigned short n_samples = art::Ptr<raw::RawDigit>(digitVecHandle, 0)->Samples();
     // holder for "processed" raw digits
-    std::vector<float> this_raw_digits;
+    std::vector<float> this_raw_digits(n_samples);
     // holder for uncompressed raw digits
-    std::vector<short> rawadc;
+    std::vector<short> rawadc(n_samples);
     for (size_t i = 0; i < digitVecHandle->size(); i++) {
       // clear out containers
       this_raw_digits.clear();
@@ -103,11 +104,11 @@ namespace caldata {
 
       // do pedestal subtraction
       for (size_t j = 0; j < digitVec->Samples(); j++) {
-        this_raw_digits[j] = rawadc[j] - pedestal;
+        this_raw_digits.push_back( rawadc[j] - pedestal);
       }
       // set the "Regions of interest" to the whole waveform
-      RegionsOfInterest_t roi;
-      roi.add_range(0,this_raw_digits.begin(),this_raw_digits.end());
+      RegionsOfInterest_t roi(this_raw_digits);
+      //roi.add_range(0,this_raw_digits.begin(),this_raw_digits.end());
       // get the geometry
       auto view = geom->View(digitVec->Channel());
       // add "Wire" object
