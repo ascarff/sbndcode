@@ -1,0 +1,63 @@
+#include "services_sbnd.fcl"
+#include "calorimetry_sbnd.fcl"
+
+process_name: LArPID
+
+services:
+{
+  # Load the service that manages root files for histograms.
+  TFileService: { fileName: "ntuple.root" }
+                @table::sbnd_services
+}
+
+
+### Define input file format
+source:
+{
+  module_type: RootInput
+}
+
+### Define output file format
+outputs:
+{
+ out1:
+ {
+   module_type: RootOutput
+   fileName:    "standard_pid.root" #default file name, can override from command line with -o or --output
+   dataTier:    "full-reconstructed"
+ }
+}
+
+### Define the modules and create chains
+physics:
+{
+  producers:{
+	pid: {
+    		module_type:		"MVAPID"
+		HitLabel:		"linecluster"
+		TrackLabel:		"pandoraTrack"
+		ShowerLabel:		"pandoraShower"
+		SpacePointLabel:	"pandora"
+                CalorimetryAlg:          @local::sbnd_calorimetryalgmc
+		MVAMethods:		[ "electron","muon","photon","proton" ]
+		WeightFiles:		[
+       "users/dbrailsf/pid_training/weights/electron/TMVAClassification_BDT.weights.xml",
+       "users/dbrailsf/pid_training/weights/mu/TMVAClassification_BDT.weights.xml",
+       "users/dbrailsf/pid_training/weights/pi0/TMVAClassification_BDT.weights.xml",
+       "users/dbrailsf/pid_training/weights/proton/TMVAClassification_BDT.weights.xml"
+       ]
+  }
+}
+
+  ### Set up a chain of Producer modules
+  reco: [ pid ]
+
+  ### Set up the output stream
+  stream1: [ out1 ]
+
+  ### Set up the trigger paths (these are the modules that modify the event) 
+  trigger_paths: [ reco ] 
+
+  ### Set up the end paths (these are the modules that do not modify the event)
+  end_paths: [ stream1 ]
+}
