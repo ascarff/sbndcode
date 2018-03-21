@@ -113,8 +113,7 @@ void PandizzleTreeMaker::analyze(art::Event const & e)
       hits = fmHitFromShower.at(shower.key());
     }
 
-    /*
-    int g4id = RecoUtils::TrueParticleIDFromTotalTrueEnergy(hits);
+    int g4id = RecoUtils::TrueParticleIDFromTotalRecoHits(hits);
     art::Ptr<simb::MCParticle> particle;
     for (unsigned int i_mcp = 0; i_mcp < mcParticleList.size(); i_mcp++){
       if (mcParticleList[i_mcp]->TrackId()==g4id){
@@ -122,9 +121,9 @@ void PandizzleTreeMaker::analyze(art::Event const & e)
         break;
       }
     }
-    if (!particle.isAvailable()) continue;
-    std::cout<<"PDG: " << pfParticle->PdgCode() << "  IsPrim: " << pfParticle->IsPrimary() << "  IsTrack: " << track.isAvailable() << " IsShower: " << shower.isAvailable() << " NHits: " << hits.size() << " TruePDG: " << particle->PdgCode() << std::endl;
-    */
+    int truepdg = -9999;
+    if (particle.isAvailable()) truepdg = particle->PdgCode();
+    std::cout<<"PDG: " << pfParticle->PdgCode() << " ID: " << pfParticle->Self() << "  Parent: " << pfParticle->Parent() << "  IsPrim: " << pfParticle->IsPrimary() << "  IsTrack: " << track.isAvailable() << " IsShower: " << shower.isAvailable() << " NHits: " << hits.size() << " TruePDG: " << truepdg << std::endl;
 
     sbnd::Pandizzle pandizzler(pfParticle,pfParticleList,fmTrackFromPFP, fmShowerFromPFP, fmPIDFromTrack, fmPIDFromShower);
   }
