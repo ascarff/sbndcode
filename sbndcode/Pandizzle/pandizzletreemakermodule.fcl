@@ -4,30 +4,9 @@ sbnd_pandizzletreemaker:
 { 
  module_type:              "PandizzleTreeMaker"
  PFParticleModuleLabel:    "pandora"                            
- RecoTrackModuleLabel:     "pandoraTrack"
- DigitModuleLabel:         "daq"
- HitsModuleLabel:          "gaushit"
- LArGeantModuleLabel:      "largeant"
- CalDataModuleLabel:       "caldata"
- GenieGenModuleLabel:      "generator"
- CryGenModuleLabel:        "generator"
- G4ModuleLabel:            "largeant"
- TrackModuleLabel:         [ "track3d" ]
- VertexModuleLabel:        "vertex3d"
- CalorimetryModuleLabel:   [ "calo" ]
- ParticleIDModuleLabel:    [ "pid" ]
- POTModuleLabel:           "generator"
- UseBuffers:               false
- SaveAuxDetInfo:           false
- SaveCryInfo:              true
- SaveGenieInfo:            true
- SaveGeantInfo:            true
- SaveHitInfo:              false
- SaveTrackInfo:            false
- SaveVertexInfo:           false
- SaveCaloCosmics:          false
- isCosmics:		   false
- G4MinE:                   0.01
+ TrackModuleLabel:         "pandoraTrack"
+ ShowerModuleLabel:        "pandoraShower"
+ PIDModuleLabel:           "pid"
 }
 
 END_PROLOG

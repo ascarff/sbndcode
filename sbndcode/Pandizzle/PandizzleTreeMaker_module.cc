@@ -43,7 +43,9 @@ private:
 
   // Declare member data here.
   std::string fPFParticleModuleLabel;
-  std::string fRecoTrackModuleLabel;
+  std::string fTrackModuleLabel;
+  std::string fShowerModuleLabel;
+  std::string fPIDModuleLabel;
 
 };
 
@@ -52,22 +54,40 @@ PandizzleTreeMaker::PandizzleTreeMaker(fhicl::ParameterSet const & p)
   :
   EDAnalyzer(p),
   fPFParticleModuleLabel       (p.get<std::string>("PFParticleModuleLabel")),
-  fRecoTrackModuleLabel        (p.get<std::string>("RecoTrackModuleLabel"))
-
- // More initializers here.
+  fTrackModuleLabel        (p.get<std::string>("TrackModuleLabel")),
+  fShowerModuleLabel        (p.get<std::string>("ShowerModuleLabel")),
+  fPIDModuleLabel        (p.get<std::string>("PIDModuleLabel"))
 {}
 
 void PandizzleTreeMaker::analyze(art::Event const & e)
 {
 
+  //PFP
   art::Handle<std::vector<recob::PFParticle> > pfParticleListHandle;
   std::vector<art::Ptr<recob::PFParticle> > pfParticleList;
   if (e.getByLabel(fPFParticleModuleLabel, pfParticleListHandle)) art::fill_ptr_vector(pfParticleList, pfParticleListHandle);
-  art::FindManyP<recob::Track> fmTrackFromPFP(pfParticleListHandle,e,fRecoTrackModuleLabel);
+
+  //Track
+  art::Handle<std::vector<recob::Track> > trackListHandle;
+  std::vector<art::Ptr<recob::Track> > trackList;
+  if (e.getByLabel(fTrackModuleLabel, trackListHandle)) art::fill_ptr_vector(trackList, trackListHandle);
+
+  //Shower
+  art::Handle<std::vector<recob::Shower> > showerListHandle;
+  std::vector<art::Ptr<recob::Shower> > showerList;
+  if (e.getByLabel(fShowerModuleLabel, showerListHandle)) art::fill_ptr_vector(showerList, showerListHandle);
+
+
+  art::FindManyP<recob::Track> fmTrackFromPFP(pfParticleListHandle,e,fTrackModuleLabel);
+  art::FindManyP<recob::Shower> fmShowerFromPFP(pfParticleListHandle,e,fShowerModuleLabel);
+  art::FindManyP<anab::MVAPIDResult> fmPIDFromTrack(trackListHandle,e,fTrackModuleLabel);
+  art::FindManyP<anab::MVAPIDResult> fmPIDFromShower(showerListHandle,e,fShowerModuleLabel);
+
+
 
   for (unsigned int i_pfp = 0; i_pfp < pfParticleList.size(); i_pfp++){
     art::Ptr<recob::PFParticle> pfParticle = pfParticleList[i_pfp];
-    sbnd::Pandizzle pandizzler(pfParticle,pfParticleList,fmTrackFromPFP);
+    sbnd::Pandizzle pandizzler(pfParticle,pfParticleList,fmTrackFromPFP, fmShowerFromPFP, fmPIDFromTrack, fmPIDFromShower);
   }
 }
 
