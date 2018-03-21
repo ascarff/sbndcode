@@ -41,20 +41,29 @@ public:
 private:
 
   // Declare member data here.
+  std::string fPFParticleLabel;
 
 };
 
 
 PandizzleTreeMaker::PandizzleTreeMaker(fhicl::ParameterSet const & p)
   :
-  EDAnalyzer(p)  // ,
+  EDAnalyzer(p),
+  fPFParticleLabel       (p.get<std::string>("PFParticleLabel"))
  // More initializers here.
 {}
 
 void PandizzleTreeMaker::analyze(art::Event const & e)
 {
-  sbnd::Pandizzle pandizzler;
-  pandizzler.Test();
+
+  art::Handle<std::vector<recob::PFParticle> > pfParticleListHandle;
+  std::vector<art::Ptr<recob::PFParticle> > pfParticleList;
+  if (e.getByLabel(fPFParticleLabel, pfParticleListHandle)) art::fill_ptr_vector(pfParticleList, pfParticleListHandle);
+
+  for (unsigned int i_pfp = 0; i_pfp < pfParticleList.size(); i_pfp++){
+    art::Ptr<recob::PFParticle> pfParticle = pfParticleList[i_pfp];
+    sbnd::Pandizzle pandizzler(pfParticle,pfParticleList);
+  }
 }
 
 DEFINE_ART_MODULE(PandizzleTreeMaker)
