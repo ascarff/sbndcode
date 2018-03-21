@@ -3,7 +3,8 @@ BEGIN_PROLOG
 sbnd_pandizzletreemaker:
 { 
  module_type:              "PandizzleTreeMaker"
- PFParticleLabel:          "pandora"                            
+ PFParticleModuleLabel:    "pandora"                            
+ RecoTrackModuleLabel:     "pandoraTrack"
  DigitModuleLabel:         "daq"
  HitsModuleLabel:          "gaushit"
  LArGeantModuleLabel:      "largeant"

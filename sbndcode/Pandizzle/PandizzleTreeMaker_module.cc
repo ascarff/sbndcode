@@ -16,6 +16,7 @@
 #include "canvas/Utilities/InputTag.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
+#include "canvas/Persistency/Common/FindManyP.h"
 
 //Custom
 #include "Pandizzle.h"
@@ -41,7 +42,8 @@ public:
 private:
 
   // Declare member data here.
-  std::string fPFParticleLabel;
+  std::string fPFParticleModuleLabel;
+  std::string fRecoTrackModuleLabel;
 
 };
 
@@ -49,7 +51,9 @@ private:
 PandizzleTreeMaker::PandizzleTreeMaker(fhicl::ParameterSet const & p)
   :
   EDAnalyzer(p),
-  fPFParticleLabel       (p.get<std::string>("PFParticleLabel"))
+  fPFParticleModuleLabel       (p.get<std::string>("PFParticleModuleLabel")),
+  fRecoTrackModuleLabel        (p.get<std::string>("RecoTrackModuleLabel"))
+
  // More initializers here.
 {}
 
@@ -58,11 +62,12 @@ void PandizzleTreeMaker::analyze(art::Event const & e)
 
   art::Handle<std::vector<recob::PFParticle> > pfParticleListHandle;
   std::vector<art::Ptr<recob::PFParticle> > pfParticleList;
-  if (e.getByLabel(fPFParticleLabel, pfParticleListHandle)) art::fill_ptr_vector(pfParticleList, pfParticleListHandle);
+  if (e.getByLabel(fPFParticleModuleLabel, pfParticleListHandle)) art::fill_ptr_vector(pfParticleList, pfParticleListHandle);
+  art::FindManyP<recob::Track> fmTrackFromPFP(pfParticleListHandle,e,fRecoTrackModuleLabel);
 
   for (unsigned int i_pfp = 0; i_pfp < pfParticleList.size(); i_pfp++){
     art::Ptr<recob::PFParticle> pfParticle = pfParticleList[i_pfp];
-    sbnd::Pandizzle pandizzler(pfParticle,pfParticleList);
+    sbnd::Pandizzle pandizzler(pfParticle,pfParticleList,fmTrackFromPFP);
   }
 }
 
