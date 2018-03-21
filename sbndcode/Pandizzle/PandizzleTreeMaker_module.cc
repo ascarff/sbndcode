@@ -17,6 +17,9 @@
 #include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
+//Custom
+#include "Pandizzle.h"
+
 class PandizzleTreeMaker;
 
 
@@ -50,7 +53,8 @@ PandizzleTreeMaker::PandizzleTreeMaker(fhicl::ParameterSet const & p)
 
 void PandizzleTreeMaker::analyze(art::Event const & e)
 {
-  std::cout<<"This runs"<<std::endl;
+  sbnd::Pandizzle pandizzler;
+  pandizzler.Test();
 }
 
 DEFINE_ART_MODULE(PandizzleTreeMaker)
