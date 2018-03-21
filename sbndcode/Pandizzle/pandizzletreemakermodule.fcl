@@ -3,10 +3,12 @@ BEGIN_PROLOG
 sbnd_pandizzletreemaker:
 { 
  module_type:              "PandizzleTreeMaker"
- PFParticleModuleLabel:    "pandora"                            
+ PFParticleModuleLabel:    "pandora"
  TrackModuleLabel:         "pandoraTrack"
  ShowerModuleLabel:        "pandoraShower"
  PIDModuleLabel:           "pid"
+ LArGeantModuleLabel:      "largeant"
+
 }
 
 END_PROLOG
