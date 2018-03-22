@@ -98,7 +98,7 @@ void PandizzleTreeMaker::analyze(art::Event const & e)
 
 
 
-  std::cout<<"NPFP: " << pfParticleList.size() << std::endl;
+  std::cout<<"Event: " << e.event() <<"  NPFP: " << pfParticleList.size() << std::endl;
   for (unsigned int i_pfp = 0; i_pfp < pfParticleList.size(); i_pfp++){
     art::Ptr<recob::PFParticle> pfParticle = pfParticleList[i_pfp];
     art::Ptr<recob::Track> track;

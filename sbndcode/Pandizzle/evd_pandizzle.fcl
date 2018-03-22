@@ -1,0 +1,13 @@
+#include "evd_sbnd.fcl"
+
+services.RecoDrawingOptions.TrackModuleLabels: ["pandoraTrack"]
+services.RecoDrawingOptions.DrawTracks: 3
+services.RecoDrawingOptions.DrawTrackTrajectoryPoints: 1
+services.RecoDrawingOptions.ShowerModuleLabels: ["pandoraShower"]
+services.RecoDrawingOptions.DrawShowers: 3
+services.RecoDrawingOptions.SpacePointsModuleLabels: ["pandora"]
+services.RecoDrawingOptions.DrawSpacePoints: 1
+services.RecoDrawingOptions.DrawHits: 0
+services.RecoDrawingOptions.DrawClusters: 0
+services.ColorDrawingOptions.ColorOrGrayScale: 0
+
