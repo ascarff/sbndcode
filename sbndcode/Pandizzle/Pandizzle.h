@@ -14,6 +14,7 @@
 #include "lardataobj/RecoBase/Shower.h"
 #include "lardataobj/RecoBase/Vertex.h"
 #include "lardataobj/AnalysisBase/MVAPIDResult.h"
+#include "lardataobj/RecoBase/Hit.h"
 
 //CUSTOM
 
@@ -26,7 +27,10 @@ namespace sbnd{
       void Assess(const art::Ptr<recob::PFParticle> pfparticle, const art::Event & event);
       void Test();
     private:
+      void AssessAsTrack(const art::Ptr<recob::PFParticle> pfparticle, const art::Ptr<recob::Track> track, const art::Event & event);
+      double CalculateTrackLength(const art::Ptr<recob::Track> track);
       double fLength;
+
 
       //fcl labels
       std::string fPFParticleModuleLabel;

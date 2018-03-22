@@ -82,62 +82,62 @@ void PandizzleTreeMaker::analyze(art::Event const & e)
   std::vector<art::Ptr<recob::PFParticle> > pfParticleList;
   if (e.getByLabel(fPFParticleModuleLabel, pfParticleListHandle)) art::fill_ptr_vector(pfParticleList, pfParticleListHandle);
 
-  //Track
-  art::Handle<std::vector<recob::Track> > trackListHandle;
-  std::vector<art::Ptr<recob::Track> > trackList;
-  if (e.getByLabel(fTrackModuleLabel, trackListHandle)) art::fill_ptr_vector(trackList, trackListHandle);
+  ////Track
+  //art::Handle<std::vector<recob::Track> > trackListHandle;
+  //std::vector<art::Ptr<recob::Track> > trackList;
+  //if (e.getByLabel(fTrackModuleLabel, trackListHandle)) art::fill_ptr_vector(trackList, trackListHandle);
 
-  //Shower
-  art::Handle<std::vector<recob::Shower> > showerListHandle;
-  std::vector<art::Ptr<recob::Shower> > showerList;
-  if (e.getByLabel(fShowerModuleLabel, showerListHandle)) art::fill_ptr_vector(showerList, showerListHandle);
+  ////Shower
+  //art::Handle<std::vector<recob::Shower> > showerListHandle;
+  //std::vector<art::Ptr<recob::Shower> > showerList;
+  //if (e.getByLabel(fShowerModuleLabel, showerListHandle)) art::fill_ptr_vector(showerList, showerListHandle);
 
 
-  art::FindManyP<recob::Track> fmTrackFromPFP(pfParticleListHandle,e,fTrackModuleLabel);
-  art::FindManyP<recob::Shower> fmShowerFromPFP(pfParticleListHandle,e,fShowerModuleLabel);
+  //art::FindManyP<recob::Track> fmTrackFromPFP(pfParticleListHandle,e,fTrackModuleLabel);
+  //art::FindManyP<recob::Shower> fmShowerFromPFP(pfParticleListHandle,e,fShowerModuleLabel);
 
-  art::FindManyP<recob::Vertex> fmVertexFromPFP(pfParticleListHandle,e,fPFParticleModuleLabel);
+  //art::FindManyP<recob::Vertex> fmVertexFromPFP(pfParticleListHandle,e,fPFParticleModuleLabel);
 
-  art::FindManyP<anab::MVAPIDResult> fmPIDFromTrack(trackListHandle,e,fTrackModuleLabel);
-  art::FindManyP<anab::MVAPIDResult> fmPIDFromShower(showerListHandle,e,fShowerModuleLabel);
+  //art::FindManyP<anab::MVAPIDResult> fmPIDFromTrack(trackListHandle,e,fTrackModuleLabel);
+  //art::FindManyP<anab::MVAPIDResult> fmPIDFromShower(showerListHandle,e,fShowerModuleLabel);
 
-  art::FindManyP<recob::Hit> fmHitFromTrack(trackListHandle,e,fTrackModuleLabel);
-  art::FindManyP<recob::Hit> fmHitFromShower(showerListHandle,e,fShowerModuleLabel);
+  //art::FindManyP<recob::Hit> fmHitFromTrack(trackListHandle,e,fTrackModuleLabel);
+  //art::FindManyP<recob::Hit> fmHitFromShower(showerListHandle,e,fShowerModuleLabel);
 
 
 
   std::cout<<"Event: " << e.event() <<"  NPFP: " << pfParticleList.size() << std::endl;
   for (unsigned int i_pfp = 0; i_pfp < pfParticleList.size(); i_pfp++){
     art::Ptr<recob::PFParticle> pfParticle = pfParticleList[i_pfp];
-    art::Ptr<recob::Track> track;
-    art::Ptr<recob::Shower> shower;
-    std::vector<art::Ptr<recob::Vertex> > vertices;
-    std::vector<art::Ptr<recob::Hit> > hits;
-    if (fmTrackFromPFP.at(pfParticle.key()).size() > 0){
-      track = fmTrackFromPFP.at(pfParticle.key())[0];
-      hits = fmHitFromTrack.at(track.key());
-    }
-    else if (fmShowerFromPFP.at(pfParticle.key()).size() > 0) {
-      shower = fmShowerFromPFP.at(pfParticle.key())[0];
-      hits = fmHitFromShower.at(shower.key());
-    }
-
-    vertices = fmVertexFromPFP.at(pfParticle.key());
-
-    int g4id = RecoUtils::TrueParticleIDFromTotalRecoHits(hits);
-    art::Ptr<simb::MCParticle> particle;
-    for (unsigned int i_mcp = 0; i_mcp < mcParticleList.size(); i_mcp++){
-      if (mcParticleList[i_mcp]->TrackId()==g4id){
-        particle=mcParticleList[i_mcp];
-        break;
-      }
-    }
-    int truepdg = -9999;
-    if (particle.isAvailable()) truepdg = particle->PdgCode();
-    std::cout<<"PDG: " << pfParticle->PdgCode() << " ID: " << pfParticle->Self() << "  Parent: " << pfParticle->Parent() << "  IsPrim: " << pfParticle->IsPrimary() << "  IsTrack: " << track.isAvailable() << " IsShower: " << shower.isAvailable() << "  NVertices: " << vertices.size() << " NHits: " << hits.size() << " TruePDG: " << truepdg << std::endl;
-
-
     fPandizzle.Assess(pfParticle,e);
+    //art::Ptr<recob::Track> track;
+    //art::Ptr<recob::Shower> shower;
+    //std::vector<art::Ptr<recob::Vertex> > vertices;
+    //std::vector<art::Ptr<recob::Hit> > hits;
+    //if (fmTrackFromPFP.at(pfParticle.key()).size() > 0){
+    //  track = fmTrackFromPFP.at(pfParticle.key())[0];
+    //  hits = fmHitFromTrack.at(track.key());
+    //}
+    //else if (fmShowerFromPFP.at(pfParticle.key()).size() > 0) {
+    //  shower = fmShowerFromPFP.at(pfParticle.key())[0];
+    //  hits = fmHitFromShower.at(shower.key());
+    //}
+
+    //vertices = fmVertexFromPFP.at(pfParticle.key());
+
+    //int g4id = RecoUtils::TrueParticleIDFromTotalRecoHits(hits);
+    //art::Ptr<simb::MCParticle> particle;
+    //for (unsigned int i_mcp = 0; i_mcp < mcParticleList.size(); i_mcp++){
+    //  if (mcParticleList[i_mcp]->TrackId()==g4id){
+    //    particle=mcParticleList[i_mcp];
+    //    break;
+    //  }
+    //}
+    //int truepdg = -9999;
+    //if (particle.isAvailable()) truepdg = particle->PdgCode();
+    //std::cout<<"PDG: " << pfParticle->PdgCode() << " ID: " << pfParticle->Self() << "  Parent: " << pfParticle->Parent() << "  IsPrim: " << pfParticle->IsPrimary() << "  IsTrack: " << track.isAvailable() << " IsShower: " << shower.isAvailable() << "  NVertices: " << vertices.size() << " NHits: " << hits.size() << " TruePDG: " << truepdg << std::endl;
+
+
     //bnd::Pandizzle pandizzler(pfParticle,pfParticleList,fmTrackFromPFP, fmShowerFromPFP, fmPIDFromTrack, fmPIDFromShower);
   }
 }
