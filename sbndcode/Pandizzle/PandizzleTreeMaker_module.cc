@@ -7,6 +7,9 @@
 // from cetlib version v3_02_00.
 ////////////////////////////////////////////////////////////////////////
 
+#include "TTree.h"
+
+#include "art/Framework/Services/Optional/TFileService.h"
 #include "art/Framework/Core/EDAnalyzer.h"
 #include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Principal/Event.h"
@@ -43,16 +46,22 @@ public:
 
 private:
 
+  void Reset();
+
   sbnd::Pandizzle fPandizzle;
 
-  // Declare member data here.
+  TTree *fTree;
+  int fNHits;
+  double fLength;
+  bool fIsTrackLike;
+  bool fIsShowerLike;
+
   std::string fPFParticleModuleLabel;
   std::string fTrackModuleLabel;
   std::string fShowerModuleLabel;
   std::string fPIDModuleLabel;
   std::string fVertexModuleLabel;
   std::string fLArGeantModuleLabel;
-
 };
 
 
@@ -66,7 +75,15 @@ PandizzleTreeMaker::PandizzleTreeMaker(fhicl::ParameterSet const & p)
   fPIDModuleLabel        (p.get<std::string>("PIDModuleLabel")),
   fVertexModuleLabel     (p.get<std::string>("VertexModuleLabel")),
   fLArGeantModuleLabel   (p.get<std::string>("LArGeantModuleLabel"))
-{}
+{
+  Reset();
+  art::ServiceHandle<art::TFileService> tfs;
+  fTree = tfs->make<TTree>("pt","pandizzle tree");
+  fTree->Branch("length",&fLength);
+  fTree->Branch("nhits",&fNHits);
+  fTree->Branch("istracklike",&fIsTrackLike);
+  fTree->Branch("isshowerlike",&fIsShowerLike);
+}
 
 void PandizzleTreeMaker::analyze(art::Event const & e)
 {
@@ -110,6 +127,13 @@ void PandizzleTreeMaker::analyze(art::Event const & e)
   for (unsigned int i_pfp = 0; i_pfp < pfParticleList.size(); i_pfp++){
     art::Ptr<recob::PFParticle> pfParticle = pfParticleList[i_pfp];
     fPandizzle.Assess(pfParticle,e);
+    std::vector<art::Ptr<recob::Hit> > hits = fPandizzle.GetHits();
+    fLength = fPandizzle.GetLength();
+    fNHits = hits.size();
+    fIsTrackLike = fPandizzle.IsTrackLike();
+    fIsShowerLike = fPandizzle.IsShowerLike();
+
+    fTree->Fill();
     //art::Ptr<recob::Track> track;
     //art::Ptr<recob::Shower> shower;
     //std::vector<art::Ptr<recob::Vertex> > vertices;
@@ -140,6 +164,19 @@ void PandizzleTreeMaker::analyze(art::Event const & e)
 
     //bnd::Pandizzle pandizzler(pfParticle,pfParticleList,fmTrackFromPFP, fmShowerFromPFP, fmPIDFromTrack, fmPIDFromShower);
   }
+  fPandizzle.Reset();
+  Reset();
+}
+
+void  PandizzleTreeMaker::Reset(){
+  int kDefInt = -9999;
+  double kDefDoub = (double)(kDefInt);
+
+  fNHits = kDefInt;
+  fLength = kDefDoub;
+  fIsTrackLike = false;
+  fIsShowerLike = false;
+  return;
 }
 
 DEFINE_ART_MODULE(PandizzleTreeMaker)

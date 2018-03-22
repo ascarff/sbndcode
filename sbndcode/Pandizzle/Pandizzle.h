@@ -26,12 +26,19 @@ namespace sbnd{
       Pandizzle(fhicl::ParameterSet const &p);
       //Pandizzle(const art::Ptr<recob::PFParticle> pfp, const std::vector<art::Ptr<recob::PFParticle> > & pfp_vector, const art::FindManyP<recob::Track> & fmTrackFromPFP, const art::FindManyP<recob::Shower> & fmShowerFromPFP, const art::FindManyP<anab::MVAPIDResult> & fmPIDFromTrack, const art::FindManyP<anab::MVAPIDResult> & fmPIDFromShower);
       void Assess(const art::Ptr<recob::PFParticle> pfparticle, const art::Event & event);
-      void Test();
+      void Reset();
+      bool IsTrackLike() { return fIsTrackLike; };
+      bool IsShowerLike() { return fIsShowerLike; };
+      double GetLength() { return fLength; };
+      std::vector<art::Ptr<recob::Hit> > GetHits() { return fHits; };
     private:
       void AssessAsTrack(const art::Ptr<recob::PFParticle> pfparticle, const art::Ptr<recob::Track> track, const art::Event & event);
-      double CalculateTrackLength(const art::Ptr<recob::Track> track);
+      void AssessAsShower(const art::Ptr<recob::PFParticle> pfparticle, const art::Ptr<recob::Shower> shower, const art::Event & event);
+      bool fIsTrackLike;
+      bool fIsShowerLike;
       double fLength;
 
+      std::vector<art::Ptr<recob::Hit> > fHits;
 
       //fcl labels
       std::string fPFParticleModuleLabel;

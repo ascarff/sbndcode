@@ -12,9 +12,14 @@ sbnd::Pandizzle::Pandizzle::Pandizzle(fhicl::ParameterSet const & p)
   fPIDModuleLabel        (p.get<std::string>("PIDModuleLabel")),
   fVertexModuleLabel     (p.get<std::string>("VertexModuleLabel")),
   fLArGeantModuleLabel   (p.get<std::string>("LArGeantModuleLabel"))
-{}
+{
+  Reset();
+}
 
 void sbnd::Pandizzle::Assess(const art::Ptr<recob::PFParticle> pfparticle, const art::Event & event){
+  //Reset everything
+  Reset();
+
   //Get the containers
   //PFP
   art::Handle<std::vector<recob::PFParticle> > pfParticleListHandle;
@@ -49,51 +54,76 @@ void sbnd::Pandizzle::Assess(const art::Ptr<recob::PFParticle> pfparticle, const
   art::Ptr<recob::Shower> shower;
   //std::vector<art::Ptr<recob::Hit> > hits;
 
-  bool is_track_like = false;
-  bool is_shower_like = false;
+  fIsTrackLike = false;
+  fIsShowerLike = false;
 
   if (fmTrackFromPFP.at(pfparticle.key()).size() > 0){
     track = fmTrackFromPFP.at(pfparticle.key())[0];
     //hits = fmHitFromTrack.at(track.key());
-    is_track_like=true;
+    fIsTrackLike=true;
   }
   if (fmShowerFromPFP.at(pfparticle.key()).size() > 0) {
     shower = fmShowerFromPFP.at(pfparticle.key())[0];
     //hits = fmHitFromShower.at(shower.key());
-    is_shower_like=true;
+    fIsShowerLike=true;
   }
 
-  if (!is_track_like && !is_shower_like){
+  if (!fIsTrackLike && !fIsShowerLike){
     std::cout<<"Pandizzle::Assess - Found a PFP which is neither track-like or shower-like.  There is nothing to do here.  Abort." << std::endl;
     return;
   } 
-  else if (is_track_like && is_shower_like){
+  else if (fIsTrackLike && fIsShowerLike){
     std::cout<<"Pandizzle::Assess - Found a PFP which is both track-like and shower-like.  There is nothing to do here.  Abort." << std::endl;
     return;
   }
-  else if (is_track_like && !is_shower_like){
+  else if (fIsTrackLike && !fIsShowerLike){
     AssessAsTrack(pfparticle,track,event);
+  }
+  else{
+    AssessAsShower(pfparticle,shower,event);
   }
 
 
   return;
 }
 
+void sbnd::Pandizzle::Reset(){
+  int kDefInt = -9999;
+  double kDefDoub = (double)(kDefInt);
 
-void sbnd::Pandizzle::Test(){
-  std::cout<<"Test function runs"<<std::endl;
+  fLength = kDefDoub;
+  fIsTrackLike = false;
+  fIsShowerLike = false;
+  fHits.clear();
   return;
 }
+
 
 void sbnd::Pandizzle::AssessAsTrack(const art::Ptr<recob::PFParticle> pfparticle, const art::Ptr<recob::Track> track, const art::Event & event){
   //Calculate the length
-  double fLength = RecoUtils::CalculateTrackLength(track);
-  std::cout<<"Track length: "<<fLength<<std::endl;
-  std::cout<<"NTracPoints: " << track->NumberTrajectoryPoints()<<std::endl;
-  std::cout<<"Straight length: " << (track->LocationAtPoint(track->NumberTrajectoryPoints()-1)-track->LocationAtPoint(0)).Mag() << std::endl;
-  track->LocationAtPoint(0).Print();
-  track->LocationAtPoint(track->NumberTrajectoryPoints()-1).Print();
+  fLength = RecoUtils::CalculateTrackLength(track);
 
+  //Get the hits
+  art::Handle<std::vector<recob::Track> > trackListHandle;
+  std::vector<art::Ptr<recob::Track> > trackList;
+  if (event.getByLabel(fTrackModuleLabel, trackListHandle)) art::fill_ptr_vector(trackList, trackListHandle);
+  art::FindManyP<recob::Hit> fmHitFromTrack(trackListHandle,event,fTrackModuleLabel);
+  fHits = fmHitFromTrack.at(track.key());
 
   return;
 }
+
+void sbnd::Pandizzle::AssessAsShower(const art::Ptr<recob::PFParticle> pfparticle, const art::Ptr<recob::Shower> shower, const art::Event & event){
+  //Get the length
+  fLength = 0;
+
+  //Get the hits
+  art::Handle<std::vector<recob::Shower> > showerListHandle;
+  std::vector<art::Ptr<recob::Shower> > showerList;
+  if (event.getByLabel(fShowerModuleLabel, showerListHandle)) art::fill_ptr_vector(showerList, showerListHandle);
+  art::FindManyP<recob::Hit> fmHitFromShower(showerListHandle,event,fShowerModuleLabel);
+  fHits = fmHitFromShower.at(shower.key());
+
+  return;
+}
+
