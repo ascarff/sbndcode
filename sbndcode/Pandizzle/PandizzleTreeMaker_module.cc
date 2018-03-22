@@ -182,6 +182,7 @@ void PandizzleTreeMaker::analyze(art::Event const & e)
     }
 
     fTree->Fill();
+    Reset();
     //art::Ptr<recob::Track> track;
     //art::Ptr<recob::Shower> shower;
     //std::vector<art::Ptr<recob::Vertex> > vertices;
