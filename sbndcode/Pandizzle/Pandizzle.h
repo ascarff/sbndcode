@@ -17,6 +17,7 @@
 #include "lardataobj/RecoBase/Hit.h"
 
 //CUSTOM
+#include "sbndcode/RecoUtils/RecoUtils.h"
 
 
 namespace sbnd{

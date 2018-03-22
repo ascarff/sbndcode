@@ -87,8 +87,13 @@ void sbnd::Pandizzle::Test(){
 
 void sbnd::Pandizzle::AssessAsTrack(const art::Ptr<recob::PFParticle> pfparticle, const art::Ptr<recob::Track> track, const art::Event & event){
   //Calculate the length
+  double fLength = RecoUtils::CalculateTrackLength(track);
+  std::cout<<"Track length: "<<fLength<<std::endl;
+  std::cout<<"NTracPoints: " << track->NumberTrajectoryPoints()<<std::endl;
+  std::cout<<"Straight length: " << (track->LocationAtPoint(track->NumberTrajectoryPoints()-1)-track->LocationAtPoint(0)).Mag() << std::endl;
+  track->LocationAtPoint(0).Print();
+  track->LocationAtPoint(track->NumberTrajectoryPoints()-1).Print();
+
 
   return;
 }
-
-
