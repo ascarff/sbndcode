@@ -6,6 +6,7 @@ sbnd_pandizzletreemaker:
  PFParticleModuleLabel:    "pandora"
  TrackModuleLabel:         "pandoraTrack"
  ShowerModuleLabel:        "pandoraShower"
+ VertexModuleLabel:        "pandora"
  PIDModuleLabel:           "pid"
  LArGeantModuleLabel:      "largeant"
 

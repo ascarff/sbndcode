@@ -43,11 +43,14 @@ public:
 
 private:
 
+  sbnd::Pandizzle fPandizzle;
+
   // Declare member data here.
   std::string fPFParticleModuleLabel;
   std::string fTrackModuleLabel;
   std::string fShowerModuleLabel;
   std::string fPIDModuleLabel;
+  std::string fVertexModuleLabel;
   std::string fLArGeantModuleLabel;
 
 };
@@ -56,17 +59,19 @@ private:
 PandizzleTreeMaker::PandizzleTreeMaker(fhicl::ParameterSet const & p)
   :
   EDAnalyzer(p),
+  fPandizzle(p),
   fPFParticleModuleLabel       (p.get<std::string>("PFParticleModuleLabel")),
   fTrackModuleLabel        (p.get<std::string>("TrackModuleLabel")),
   fShowerModuleLabel        (p.get<std::string>("ShowerModuleLabel")),
   fPIDModuleLabel        (p.get<std::string>("PIDModuleLabel")),
+  fVertexModuleLabel     (p.get<std::string>("VertexModuleLabel")),
   fLArGeantModuleLabel   (p.get<std::string>("LArGeantModuleLabel"))
 {}
 
 void PandizzleTreeMaker::analyze(art::Event const & e)
 {
 
-  //PFP
+  //MCParticle
   art::Handle<std::vector<simb::MCParticle> > mcParticleListHandle;
   std::vector<art::Ptr<simb::MCParticle> > mcParticleList;
   if (e.getByLabel(fLArGeantModuleLabel, mcParticleListHandle)) art::fill_ptr_vector(mcParticleList, mcParticleListHandle);
@@ -90,6 +95,9 @@ void PandizzleTreeMaker::analyze(art::Event const & e)
 
   art::FindManyP<recob::Track> fmTrackFromPFP(pfParticleListHandle,e,fTrackModuleLabel);
   art::FindManyP<recob::Shower> fmShowerFromPFP(pfParticleListHandle,e,fShowerModuleLabel);
+
+  art::FindManyP<recob::Vertex> fmVertexFromPFP(pfParticleListHandle,e,fPFParticleModuleLabel);
+
   art::FindManyP<anab::MVAPIDResult> fmPIDFromTrack(trackListHandle,e,fTrackModuleLabel);
   art::FindManyP<anab::MVAPIDResult> fmPIDFromShower(showerListHandle,e,fShowerModuleLabel);
 
@@ -103,6 +111,7 @@ void PandizzleTreeMaker::analyze(art::Event const & e)
     art::Ptr<recob::PFParticle> pfParticle = pfParticleList[i_pfp];
     art::Ptr<recob::Track> track;
     art::Ptr<recob::Shower> shower;
+    std::vector<art::Ptr<recob::Vertex> > vertices;
     std::vector<art::Ptr<recob::Hit> > hits;
     if (fmTrackFromPFP.at(pfParticle.key()).size() > 0){
       track = fmTrackFromPFP.at(pfParticle.key())[0];
@@ -112,6 +121,8 @@ void PandizzleTreeMaker::analyze(art::Event const & e)
       shower = fmShowerFromPFP.at(pfParticle.key())[0];
       hits = fmHitFromShower.at(shower.key());
     }
+
+    vertices = fmVertexFromPFP.at(pfParticle.key());
 
     int g4id = RecoUtils::TrueParticleIDFromTotalRecoHits(hits);
     art::Ptr<simb::MCParticle> particle;
@@ -123,9 +134,11 @@ void PandizzleTreeMaker::analyze(art::Event const & e)
     }
     int truepdg = -9999;
     if (particle.isAvailable()) truepdg = particle->PdgCode();
-    std::cout<<"PDG: " << pfParticle->PdgCode() << " ID: " << pfParticle->Self() << "  Parent: " << pfParticle->Parent() << "  IsPrim: " << pfParticle->IsPrimary() << "  IsTrack: " << track.isAvailable() << " IsShower: " << shower.isAvailable() << " NHits: " << hits.size() << " TruePDG: " << truepdg << std::endl;
+    std::cout<<"PDG: " << pfParticle->PdgCode() << " ID: " << pfParticle->Self() << "  Parent: " << pfParticle->Parent() << "  IsPrim: " << pfParticle->IsPrimary() << "  IsTrack: " << track.isAvailable() << " IsShower: " << shower.isAvailable() << "  NVertices: " << vertices.size() << " NHits: " << hits.size() << " TruePDG: " << truepdg << std::endl;
 
-    sbnd::Pandizzle pandizzler(pfParticle,pfParticleList,fmTrackFromPFP, fmShowerFromPFP, fmPIDFromTrack, fmPIDFromShower);
+
+    fPandizzle.Assess(pfParticle,e);
+    //bnd::Pandizzle pandizzler(pfParticle,pfParticleList,fmTrackFromPFP, fmShowerFromPFP, fmPIDFromTrack, fmPIDFromShower);
   }
 }
 

@@ -10,16 +10,22 @@ art_make(
         lardata_RecoObjects  
         larpandora_LArPandoraInterface
         ${ART_FRAMEWORK_CORE}
-        ${ART_FRAMEWORK_IO_SOURCES}
         ${ART_FRAMEWORK_PRINCIPAL}
-        canvas
         ${ART_FRAMEWORK_SERVICES_REGISTRY}
+        ${ART_FRAMEWORK_SERVICES_OPTIONAL}
+        ${ART_FRAMEWORK_SERVICES_OPTIONAL_TFILESERVICE_SERVICE}
+        art_Persistency_Common canvas
+        art_Persistency_Provenance canvas
+        art_Utilities canvas
         ${MF_MESSAGELOGGER}
         ${MF_UTILITIES}
         ${FHICLCPP}
-        ${ROOT_BASIC_LIB_LIST}
         ${ROOT_GEOM}
-        ${CETLIB}
+        ${ROOT_XMLIO}
+        ${ROOT_GDML}
+        ${ROOT_BASIC_LIB_LIST}
+        sbndcode_RecoUtils
+
 )
 
 
