@@ -46,6 +46,7 @@ public:
 
 private:
 
+  art::Ptr<simb::MCParticle> GetMCParticleFromVector(int g4_id, const std::vector<art::Ptr<simb::MCParticle> > & particles);
   void Reset();
 
   sbnd::Pandizzle fPandizzle;
@@ -55,6 +56,20 @@ private:
   double fLength;
   bool fIsTrackLike;
   bool fIsShowerLike;
+  int fMCID;
+  int fMCPDG;
+  int fMCNDaughters;
+  bool fMCStartInTPC;
+  bool fMCStopInTPC;
+  double fMCStartMomX;
+  double fMCStartMomY;
+  double fMCStartMomZ;
+  double fMCStartMomT;
+  double fMCStartPosX;
+  double fMCStartPosY;
+  double fMCStartPosZ;
+  double fMCStartPosT;
+
 
   std::string fPFParticleModuleLabel;
   std::string fTrackModuleLabel;
@@ -83,6 +98,20 @@ PandizzleTreeMaker::PandizzleTreeMaker(fhicl::ParameterSet const & p)
   fTree->Branch("nhits",&fNHits);
   fTree->Branch("istracklike",&fIsTrackLike);
   fTree->Branch("isshowerlike",&fIsShowerLike);
+  fTree->Branch("mc_id",&fMCID);
+  fTree->Branch("mc_pdg",&fMCPDG);
+  fTree->Branch("mc_ndaughters",&fMCNDaughters);
+  fTree->Branch("mc_startintpc",&fMCStartInTPC);
+  fTree->Branch("mc_stopintpc",&fMCStopInTPC);
+  fTree->Branch("mc_startmomx",&fMCStartMomX);
+  fTree->Branch("mc_startmomy",&fMCStartMomY);
+  fTree->Branch("mc_startmomz",&fMCStartMomZ);
+  fTree->Branch("mc_startmomt",&fMCStartMomT);
+  fTree->Branch("mc_startposx",&fMCStartPosX);
+  fTree->Branch("mc_startposy",&fMCStartPosY);
+  fTree->Branch("mc_startposz",&fMCStartPosZ);
+  fTree->Branch("mc_startpost",&fMCStartPosT);
+
 }
 
 void PandizzleTreeMaker::analyze(art::Event const & e)
@@ -133,6 +162,25 @@ void PandizzleTreeMaker::analyze(art::Event const & e)
     fIsTrackLike = fPandizzle.IsTrackLike();
     fIsShowerLike = fPandizzle.IsShowerLike();
 
+    //Get the MCParticle
+    int g4id = RecoUtils::TrueParticleIDFromTotalRecoHits(hits);
+    art::Ptr<simb::MCParticle> particle = GetMCParticleFromVector(g4id,mcParticleList);
+    if (particle.isAvailable()){
+      fMCID = particle->TrackId();
+      fMCPDG = particle->PdgCode();
+      fMCNDaughters = particle->NumberDaughters();
+      fMCStartInTPC = RecoUtils::IsInsideTPC(particle->Position(0).Vect(),0);
+      fMCStopInTPC = RecoUtils::IsInsideTPC(particle->Position(particle->NumberTrajectoryPoints()-1).Vect(),0);
+      fMCStartMomX = particle->Momentum(0).X();
+      fMCStartMomY = particle->Momentum(0).Y();
+      fMCStartMomZ = particle->Momentum(0).Z();
+      fMCStartMomT = particle->Momentum(0).T();
+      fMCStartPosX = particle->Position(0).X();
+      fMCStartPosY = particle->Position(0).Y();
+      fMCStartPosZ = particle->Position(0).Z();
+      fMCStartPosT = particle->Position(0).T();
+    }
+
     fTree->Fill();
     //art::Ptr<recob::Track> track;
     //art::Ptr<recob::Shower> shower;
@@ -176,7 +224,34 @@ void  PandizzleTreeMaker::Reset(){
   fLength = kDefDoub;
   fIsTrackLike = false;
   fIsShowerLike = false;
+
+  fMCID = kDefInt;
+  fMCPDG = kDefInt;
+  fMCNDaughters = kDefInt;
+  fMCStartInTPC = false;
+  fMCStopInTPC = false;
+  fMCStartMomX = kDefDoub;
+  fMCStartMomY = kDefDoub;
+  fMCStartMomZ = kDefDoub;
+  fMCStartMomT = kDefDoub;
+  fMCStartPosX = kDefDoub;
+  fMCStartPosY = kDefDoub;
+  fMCStartPosZ = kDefDoub;
+  fMCStartPosT = kDefDoub;
+
   return;
+}
+
+art::Ptr<simb::MCParticle> PandizzleTreeMaker::GetMCParticleFromVector(int g4id, const std::vector<art::Ptr<simb::MCParticle> > & particles){
+  art::Ptr<simb::MCParticle> particle;
+
+  for (unsigned i_mcp = 0; i_mcp < particles.size(); i_mcp++){
+    if (g4id == particles[i_mcp]->TrackId()){
+      particle = particles[i_mcp];
+      break;
+    }
+  }
+  return particle;
 }
 
 DEFINE_ART_MODULE(PandizzleTreeMaker)
