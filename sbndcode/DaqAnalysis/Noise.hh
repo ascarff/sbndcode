@@ -1,25 +1,33 @@
 #ifndef _sbnddaq_analysis_Noise
 #define _sbnddaq_analysis_Noise
 #include <vector>
+#include <array>
 
-// Calculate the correlated noise of two waveforms
-class Noise {
+#include "PeakFinder.hh"
+
+// Holds a sample of a given waveform to be used to calculate noise metrics
+namespace daqAnalysis {
+class NoiseSample {
 public:
-  Noise(std::vector<double> &wvfm_1, std::vector<double> &wvfm_2, unsigned n_baseline_samples);
-  inline double RMS1() { return CalcRMS(wvfm_1); }
-  inline double RMS2() { return CalcRMS(wvfm_2); }
-  inline double CorrelatedRMS() { return CalcRMS(wvfm_diff); }
-  inline double Covariance() { return CalcCov(wvfm_1, wvfm_2); }
-  inline double Correlation() { return CalcCor(wvfm_1, wvfm_2); }
-  inline std::vector<double> *NoiseSample1() { return &wvfm_1; }
-  inline std::vector<double> *NoiseSample2() { return &wvfm_2; }
-private:
-  static double CalcRMS(std::vector<double> &wvfm);
-  static double CalcCov(std::vector<double> &wvfm_1, std::vector<double> &wvfm_2);
-  static double CalcCor(std::vector<double> &wvfm_1, std::vector<double> &wvfm_2);
+  NoiseSample(std::vector<PeakFinder::Peak>& peaks, double baseline, unsigned wvfm_size);
+  NoiseSample(std::vector<std::array<unsigned, 2>> ranges, double baseline): _ranges(ranges), _baseline(baseline) {}
+  NoiseSample() {}
 
-  std::vector<double> wvfm_1;
-  std::vector<double> wvfm_2;
-  std::vector<double> wvfm_diff;
+  NoiseSample Intersection(NoiseSample &other);
+
+  double RMS(std::vector<double> &wvfm_self) { return CalcRMS(wvfm_self, *this); } 
+
+  double Covariance(std::vector<double> &wvfm_self, NoiseSample &other, std::vector<double> &wvfm_other);
+  double Correlation(std::vector<double> &wvfm_self, NoiseSample &other, std::vector<double> &wvfm_other);
+  double SumRMS(std::vector<double> &wvfm_self, NoiseSample &other, std::vector<double> &wvfm_other);
+  //double SumRMS(std::vector<double> &wvfm_self, std::vector<std::pair<NoiseSample *, std::vector<double> *>>& other);
+
+  std::vector<std::array<unsigned, 2>> *Ranges() { return &_ranges; }
+private:
+  static double CalcRMS(std::vector<double> &wvfm, NoiseSample &sample);
+
+  std::vector<std::array<unsigned, 2>> _ranges;
+  double _baseline;
 };
+} // namespace daqAnalysis
 #endif

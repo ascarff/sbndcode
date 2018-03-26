@@ -27,6 +27,7 @@
 #include "ChannelData.hh"
 #include "FFT.hh"
 #include "Redis.hh"
+#include "Noise.hh"
 
 /*
   * Main analysis code of the online Monitoring.
@@ -62,12 +63,18 @@ public:
     double frame_to_dt;
     bool verbose;
     int n_events;
-    unsigned n_baseline_samples;
-    unsigned n_smoothing_samples;
     size_t n_channels;
     art::InputTag daq_tag;
     int static_input_size;
+
     bool redis;
+
+    double threshold_hi;
+    double threshold_lo;
+    
+    unsigned noise_range_sampling;
+    unsigned n_noise_samples;
+    unsigned n_smoothing_samples;
 
     AnalysisConfig(const fhicl::ParameterSet &param);
     AnalysisConfig() {}
@@ -78,10 +85,13 @@ public:
 
   void ReportEvent(art::Event const &art_event);
 
+  short Mode(const std::vector<short> &adcs);
+
 private:
   // Declare member data here.
   AnalysisConfig _config;
   std::vector<daqAnalysis::ChannelData> _per_channel_data;
+  std::vector<daqAnalysis::NoiseSample> _noise_samples;
   unsigned _event_ind;
   TTree *_output;
   FFTManager _fft_manager;
