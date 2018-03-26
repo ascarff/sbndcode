@@ -46,14 +46,6 @@ void Redis::Send(Redis::EventDef &event) {
     reply = redisCommand(context, "EXPIRE stream/1:%i:max:%i %i", now, channel.channel_no, 600);
     freeReplyObject(reply);
 
-    // add in noise sample to do calculations on front end
-    for (auto &dat: channel.noise_sample) {
-      reply = redisCommand(context, "RPUSH stream/1:%i:noise_sample:%i %f", now, channel.channel_no, dat);
-      freeReplyObject(reply);
-    }
-    reply = redisCommand(context, "EXPIRE stream/1:%i:noise_sample:%i %i", now, channel.channel_no, 600);
-    freeReplyObject(reply);
-    
     // also push the channel data as a json blob
     reply = redisCommand(context, "Set stream/1:%i:channel_data:%i %s", now, channel.channel_no, channel.Jsonify().c_str());
     freeReplyObject(reply);
