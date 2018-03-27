@@ -2,10 +2,12 @@
 #define Redis_h
 
 #include <vector>
+#include <ctime>
 
 #include <hiredis/hiredis.h>
 
 #include "ChannelData.hh"
+#include "HeaderData.hh"
 
 namespace daqAnalysis {
   class Redis;
@@ -13,17 +15,15 @@ namespace daqAnalysis {
 
 class daqAnalysis::Redis {
 public:
-  // The Event definition as seen by consumers of this analysis outout (i.e. Redis)
-  struct EventDef {
-    std::vector<daqAnalysis::ChannelData> *per_channel_data;
-  };
-
   Redis();
   ~Redis();
-  void Send(EventDef &event);
+  void SendChannelData(std::vector<daqAnalysis::ChannelData> *per_channel_data);
+  void SendHeaderData(std::vector<daqAnalysis::HeaderData> *header_data);
+  void UpdateTime();
 
 protected:
   redisContext *context;
+  std::time_t _now;
 
 };
 #endif /* Redis_h */

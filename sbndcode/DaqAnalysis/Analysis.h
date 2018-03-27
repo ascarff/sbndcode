@@ -25,6 +25,7 @@
 #include "lardataobj/RawData/RawDigit.h"
 
 #include "ChannelData.hh"
+#include "HeaderData.hh"
 #include "FFT.hh"
 #include "Redis.hh"
 #include "Noise.hh"
@@ -68,6 +69,7 @@ public:
     int static_input_size;
 
     bool redis;
+    int n_headers;
 
     double threshold_hi;
     double threshold_lo;
@@ -82,6 +84,7 @@ public:
 
   // other functions
   void ProcessChannel(const raw::RawDigit &digits);
+  void ProcessHeader(const daqAnalysis::HeaderData &header);
 
   void ReportEvent(art::Event const &art_event);
 
@@ -92,6 +95,7 @@ private:
   AnalysisConfig _config;
   std::vector<daqAnalysis::ChannelData> _per_channel_data;
   std::vector<daqAnalysis::NoiseSample> _noise_samples;
+  std::vector<daqAnalysis::HeaderData> _header_data;
   unsigned _event_ind;
   TTree *_output;
   FFTManager _fft_manager;

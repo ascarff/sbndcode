@@ -35,6 +35,7 @@
 #include "Analysis.h"
 
 #include "ChannelData.hh"
+#include "HeaderData.hh"
 #include "FFT.hh"
 #include "Noise.hh"
 #include "PeakFinder.hh"
@@ -46,14 +47,18 @@ SimpleDaqAnalysis::SimpleDaqAnalysis(fhicl::ParameterSet const & p) :
   art::EDAnalyzer{p},
   _config(p),
   _per_channel_data(_config.n_channels),
-  _noise_samples(_config.n_channels)
+  _noise_samples(_config.n_channels),
+  _header_data(std::max(_config.n_headers,0))
 {
   _event_ind = 0;
   art::ServiceHandle<art::TFileService> fs;
 
   // set up tree and the channel data branch for output
-  _output = fs->make<TTree>("channel_data", "channel_data");
+  _output = fs->make<TTree>("event", "event");
   _output->Branch("channel_data", &_per_channel_data);
+  if (_config.n_headers > 0) {
+    _output->Branch("header_data", &_header_data);
+  }
 
   // subclasses to do FFT's and send stuff to Redis
   _fft_manager = (_config.static_input_size > 0) ? FFTManager(_config.static_input_size) : FFTManager();
@@ -97,6 +102,8 @@ SimpleDaqAnalysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &par
   static_input_size = param.get<int>("static_input_size", -1);
   // whether to send stuff to redis
   redis = param.get<bool>("redis", false);
+  // how many headers to expect (set to negative if don't process) 
+  n_headers = param.get<int>("n_headers", -1);
 
   // number of input channels
   // TODO: how to detect this?
@@ -179,6 +186,8 @@ void SimpleDaqAnalysis::analyze(art::Event const & event) {
     ProcessChannel(digits);
   }
 
+  // TODO: better cross-channel calculations
+
   // now calculate stuff that depends on stuff between channels
   for (unsigned i = 0; i < _config.n_channels; i++) {
     unsigned last_channel_ind = i == 0 ? _config.n_channels - 1 : i - 1;
@@ -190,19 +199,28 @@ void SimpleDaqAnalysis::analyze(art::Event const & event) {
     _per_channel_data[i].next_channel_correlation = _noise_samples[i].Correlation(
         _per_channel_data[i].waveform, _noise_samples[next_channel_ind],  _per_channel_data[next_channel_ind].waveform);
 
-    // cross channel correlations
+    // cross channel sum RMS
     _per_channel_data[i].last_channel_sum_rms = _noise_samples[i].SumRMS(
         _per_channel_data[i].waveform, _noise_samples[last_channel_ind],  _per_channel_data[last_channel_ind].waveform);
     _per_channel_data[i].next_channel_sum_rms = _noise_samples[i].SumRMS(
         _per_channel_data[i].waveform, _noise_samples[next_channel_ind],  _per_channel_data[next_channel_ind].waveform);
   }
 
+  // deal with the header
+  if (_config.n_headers > 0) {
+    auto const &headers_handle = event.getValidHandle<std::vector<daqAnalysis::HeaderData>>(_config.daq_tag);
+    for (auto const &header: *headers_handle) {
+      ProcessHeader(header);
+    }
+  }
   ReportEvent(event);
 }
 
+void SimpleDaqAnalysis::ProcessHeader(const daqAnalysis::HeaderData &header) {
+  _header_data[header.Ind()] = header;
+}
+
 void SimpleDaqAnalysis::ReportEvent(art::Event const &art_event) {
-  // don't need this for now
-  (void) art_event;
   // Fill the output
   _output->Fill();
 
@@ -216,15 +234,15 @@ void SimpleDaqAnalysis::ReportEvent(art::Event const &art_event) {
 
   // Send stuff to Redis
   if (_config.redis) {
-    Redis::EventDef event;
-    event.per_channel_data = &_per_channel_data;
-    _redis_manager->Send(event);
+    _redis_manager->UpdateTime();
+    _redis_manager->SendChannelData(&_per_channel_data);
+    if (_config.n_headers > 0) {
+      _redis_manager->SendHeaderData(&_header_data);
+    }
   }
-
 }
 
 void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
-
   /*
   auto fragment_header = fragment.header(); 
   
