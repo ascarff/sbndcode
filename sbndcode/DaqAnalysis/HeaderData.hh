@@ -6,9 +6,11 @@
 // TODO: This should probably have a better name
 
 namespace daqAnalysis {
-// Header Data associated witha NevisTPCHeader
+// Header Data associated with a NevisTPCHeader
 class HeaderData {
   public:
+  uint8_t fem_id;
+  uint8_t slot_id;
   uint32_t event_number;
   uint32_t frame_number;
   uint32_t checksum;
@@ -17,7 +19,9 @@ class HeaderData {
   double frame_time;
   double trig_frame_time;
 
-  HeaderData(const sbnddaq::NevisTPCHeader *raw_header, double frame_to_dt) {
+  HeaderData(const sbnddaq::NevisTPCHeader *raw_header, double frame_to_dt=1.0) {
+    fem_id = raw_header->getFEMID();
+    slot_id = raw_header->getSlot();
     event_number = raw_header->getEventNum();
     frame_number = raw_header->getFrameNum();
     checksum = raw_header->getChecksum();
@@ -28,6 +32,10 @@ class HeaderData {
     trig_frame_time = trig_frame_number * frame_to_dt;
   }
   HeaderData() {}
+  // TODO: implement
+  size_t Ind() const {
+    return 0;
+  }
 
 };
 }
