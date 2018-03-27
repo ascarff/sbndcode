@@ -32,6 +32,8 @@
 #include "sbnddaq-datatypes/NevisTPC/NevisTPCTypes.hh"
 #include "sbnddaq-datatypes/NevisTPC/NevisTPCUtilities.hh"
 
+#include "HeaderData.hh"
+
 DEFINE_ART_MODULE(daq::DaqDecoder)
 
 
@@ -46,6 +48,10 @@ daq::DaqDecoder::DaqDecoder(fhicl::ParameterSet const & param)
   
   // produce stuff
   produces<std::vector<raw::RawDigit>>();
+  _produce_header = param.get<bool>("produce_header", false);
+  if (_produce_header) {
+    produces<std::vector<daqAnalysis::HeaderData>>();
+  }
 }
 
 void daq::DaqDecoder::produce(art::Event & event)
@@ -56,10 +62,14 @@ void daq::DaqDecoder::produce(art::Event & event)
   auto const& daq_handle = event.getValidHandle<std::vector<artdaq::Fragment>>(_tag);
 
   std::unique_ptr<std::vector<raw::RawDigit>> product_collection(new std::vector<raw::RawDigit>);
+  std::unique_ptr<std::vector<daqAnalysis::HeaderData>> header_collection(new std::vector<daqAnalysis::HeaderData>);
   for (auto const &rawfrag: *daq_handle) {
-    process_fragment(rawfrag, product_collection);
+    process_fragment(rawfrag, product_collection, header_collection);
   }
   event.put(std::move(product_collection));
+  if (_produce_header) {
+    event.put(std::move(header_collection));
+  }
 }
 
 
@@ -70,7 +80,8 @@ raw::ChannelID_t daq::DaqDecoder::get_wire_id(const sbnddaq::NevisTPCHeader *hea
 }
 
 void daq::DaqDecoder::process_fragment(const artdaq::Fragment &frag, 
-  std::unique_ptr<std::vector<raw::RawDigit>> &product_collection) {
+  std::unique_ptr<std::vector<raw::RawDigit>> &product_collection,
+  std::unique_ptr<std::vector<daqAnalysis::HeaderData>> &header_collection) {
 
   sbnddaq::NevisTPCFragment fragment(frag);
 
@@ -79,6 +90,10 @@ void daq::DaqDecoder::process_fragment(const artdaq::Fragment &frag,
   std::unordered_map<uint16_t,sbnddaq::NevisTPC_Data_t> waveform_map;
   size_t n_waveforms = fragment.decode_data(waveform_map);
   (void)n_waveforms;
+
+  if (_produce_header) {
+    header_collection->emplace_back(fragment.header());
+  }
 
   for (auto waveform: waveform_map) {
     std::vector<int16_t> raw_digits_waveform;

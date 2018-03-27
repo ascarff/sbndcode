@@ -16,6 +16,8 @@
 
 #include "sbnddaq-datatypes/Overlays/NevisTPCFragment.hh"
 
+#include "HeaderData.hh"
+
 /*
   * The Decoder module takes as input "NevisTPCFragments" and
   * outputs raw::RawDigits. It also handles in and all issues
@@ -45,7 +47,8 @@ public:
 private:
   // process an individual fragment inside an art event
   void process_fragment(const artdaq::Fragment &frag,
-    std::unique_ptr<std::vector<raw::RawDigit>> &product_collection);
+    std::unique_ptr<std::vector<raw::RawDigit>> &product_collection,
+    std::unique_ptr<std::vector<daqAnalysis::HeaderData>> &header_collection);
   // validate Nevis header
   // TODO: report errors in header
   void validate_header(const sbnddaq::NevisTPCHeader *header); 
@@ -56,6 +59,7 @@ private:
   art::InputTag _tag;
   int _wait_sec;
   int _wait_usec;
+  bool _produce_header;
 };
 
 #endif /* DaqDecoder_h */

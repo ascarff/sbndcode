@@ -3,4 +3,9 @@
   <class name="std::vector<daqAnalysis::ChannelData>"/>
   <class name="art::Wrapper<daqAnalysis::ChannelData>"/>
   <class name="art::Wrapper<std::vector<daqAnalysis::ChannelData>>"/>
+
+  <class name="daqAnalysis::HeaderData"/>
+  <class name="std::vector<daqAnalysis::HeaderData>"/>
+  <class name="art::Wrapper<daqAnalysis::HeaderData>"/>
+  <class name="art::Wrapper<std::vector<daqAnalysis::HeaderData>>"/>
 </lcgdict>
