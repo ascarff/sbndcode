@@ -9,6 +9,12 @@ link_directories($ENV{HIREDIS_LIB})
 include_directories($ENV{JSONCPP_INC})
 link_directories($ENV{JSONCPP_LIB})
 
+# include Lariat Geo
+add_subdirectory(LariatGeo)
+
+# include Lariat Data PRoducts
+add_subdirectory(LariatDataProducts)
+
 # add in VST Calibration
 add_subdirectory(VSTCalibration)
 
