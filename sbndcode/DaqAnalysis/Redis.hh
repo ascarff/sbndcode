@@ -15,15 +15,21 @@ namespace daqAnalysis {
 
 class daqAnalysis::Redis {
 public:
-  Redis();
+  Redis(std::vector<unsigned> &stream_take, std::vector<unsigned> &stream_expire, int snapshot_time = -1);
   ~Redis();
   void SendChannelData(std::vector<daqAnalysis::ChannelData> *per_channel_data);
   void SendHeaderData(std::vector<daqAnalysis::HeaderData> *header_data);
-  void UpdateTime();
+  void StartSend();
+  void FinishSend();
+  bool ReadyToSend();
 
 protected:
   redisContext *context;
   std::time_t _now;
-
+  std::time_t _last;
+  std::time_t _start;
+  int _snapshot_time;
+  std::vector<unsigned> _stream_take;
+  std::vector<unsigned> _stream_expire;
 };
 #endif /* Redis_h */

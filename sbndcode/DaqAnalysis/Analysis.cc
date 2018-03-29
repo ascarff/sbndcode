@@ -63,7 +63,10 @@ SimpleDaqAnalysis::SimpleDaqAnalysis(fhicl::ParameterSet const & p) :
   // subclasses to do FFT's and send stuff to Redis
   _fft_manager = (_config.static_input_size > 0) ? FFTManager(_config.static_input_size) : FFTManager();
   if (_config.redis) {
-    _redis_manager = new Redis(); 
+    auto stream_take = p.get<std::vector<unsigned>>("stream_take");
+    auto stream_expire = p.get<std::vector<unsigned>>("stream_expire");
+    int snapshot_time = p.get<int>("snapshot_time", -1);
+    _redis_manager = new Redis(stream_take, stream_expire, snapshot_time);
   }
 }
 
@@ -184,11 +187,14 @@ void SimpleDaqAnalysis::ReportEvent(art::Event const &art_event) {
 
   // Send stuff to Redis
   if (_config.redis) {
-    _redis_manager->UpdateTime();
-    _redis_manager->SendChannelData(&_per_channel_data);
-    if (_config.n_headers > 0) {
-      _redis_manager->SendHeaderData(&_header_data);
+    _redis_manager->StartSend();
+    if (_redis_manager->ReadyToSend()) {
+      _redis_manager->SendChannelData(&_per_channel_data);
+      if (_config.n_headers > 0) {
+        _redis_manager->SendHeaderData(&_header_data);
+      }
     }
+    _redis_manager->FinishSend();
   }
 }
 
