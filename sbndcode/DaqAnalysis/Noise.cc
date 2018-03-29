@@ -13,6 +13,7 @@ daqAnalysis::NoiseSample::NoiseSample(std::vector<PeakFinder::Peak>& peaks, doub
   // that peak[i].end_loose <= peak[i+1].end_loose
   unsigned min = 0;
   unsigned peak_ind = 0;
+  // noise samples are where the peaks aren't
   while (peak_ind < peaks.size()) {
     if (min < peaks[peak_ind].start_loose) {
       _ranges.emplace_back( std::array<unsigned,2>{min, peaks[peak_ind].start_loose-1});
