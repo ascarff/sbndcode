@@ -19,7 +19,6 @@ std::string daqAnalysis::ChannelData::Jsonify() {
 std::string daqAnalysis::ChannelData::JsonifyPretty() {
   Json::StyledWriter writer;
   std::string str = writer.write(GetJson());
-  // erase newline
   return str;
 }
 
