@@ -88,8 +88,6 @@ public:
 
   void ReportEvent(art::Event const &art_event);
 
-  short Mode(const std::vector<short> &adcs);
-
 private:
   // Declare member data here.
   AnalysisConfig _config;

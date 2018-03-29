@@ -72,6 +72,52 @@ void daq::DaqDecoder::produce(art::Event & event)
   }
 }
 
+// Calculate the mode to find a baseline of the passed in waveform.
+// Mode finding algorithm from: http://erikdemaine.org/papers/NetworkStats_ESA2002/paper.pdf (Algorithm FREQUENT)
+int16_t Mode(const std::vector<int16_t> &adcs) {
+  // 10 counters seem good
+  std::array<unsigned, 10> counters {}; // zero-initialize
+  std::array<short, 10> modes {};
+
+  for (auto val: adcs) {
+    int home = -1;
+    // look for a home for the val
+    for (int i = 0; i < (int)modes.size(); i ++) {
+      if (modes[i] == val) {
+        home = i; 
+        break;
+      }
+    }
+    // invade a home if you don't have one
+    if (home < 0) {
+      for (int i = 0; i < (int)modes.size(); i++) {
+        if (counters[i] == 0) {
+          home = i;
+          modes[i] = val;
+          break;
+        }
+      }
+    }
+    // incl if home
+    if (home >= 0) counters[home] ++;
+    // decl if no home
+    else {
+      for (int i = 0; i < (int)counters.size(); i++) {
+        counters[i] = (counters[i]==0) ? 0 : counters[i] - 1;
+      }
+    }
+  }
+  // highest counter has the mode
+  unsigned max_counters = 0;
+  short ret = 0;
+  for (int i = 0; i < (int)counters.size(); i++) {
+    if (counters[i] > max_counters) {
+      max_counters = counters[i];
+      ret = modes[i];
+    }
+  }
+  return ret;
+}
 
 raw::ChannelID_t daq::DaqDecoder::get_wire_id(const sbnddaq::NevisTPCHeader *header, uint16_t nevis_channel_id) {
  // TODO: implement
@@ -103,6 +149,7 @@ void daq::DaqDecoder::process_fragment(const artdaq::Fragment &frag,
       raw_digits_waveform.push_back( (int16_t) digit);
     }  
     product_collection->emplace_back(wire_id, raw_digits_waveform.size(), raw_digits_waveform);
+    (*product_collection)[product_collection->size() - 1].SetPedestal( Mode(raw_digits_waveform) ); 
   }
 }
 void daq::DaqDecoder::validate_header(const sbnddaq::NevisTPCHeader *header) {
