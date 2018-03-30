@@ -8,6 +8,7 @@
 #include "Redis.hh"
 #include "ChannelData.hh"
 #include "HeaderData.hh"
+#include "Noise.hh"
 #include "Analysis.h"
 
 using namespace daqAnalysis;
@@ -24,7 +25,7 @@ Redis::Redis(std::vector<unsigned> &stream_take, std::vector<unsigned> &stream_e
     std::cerr << "Redis error: " <<  context->errstr << std::endl;
     exit(1);
   }
-  _start = std::time(nullptr); 
+  _start = 0;
 }
 
 Redis::~Redis() {
@@ -33,6 +34,7 @@ Redis::~Redis() {
 
 void Redis::StartSend() {
   _now = std::time(nullptr);
+  if (_start == 0) _start = _now;
 }
 
 void Redis::FinishSend() {
@@ -76,7 +78,7 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data) {
   // if there's already data for this time, don't send
   if (_now == _last) return;
 
-  bool take_snapshot = _snapshot_time != 0 && _now % _snapshot_time == 0;
+  bool take_snapshot = _snapshot_time != 0 && (_now - _start) % _snapshot_time == 0;
   // TODO: Report failures
   void *reply;
  
@@ -149,7 +151,7 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data) {
     // The index 'k' into the list of the i-th sample with the j-th sample (where i <= j) is:
     // k = ((n+1)*n/2) - (n-i+1)*(n-i)/2 + j - i
     for (size_t i = 0; i < noise.size(); i++) {
-      for (size_t j = 0; j < noise.size() - i; j++) {
+      for (size_t j = i; j < noise.size(); j++) {
         double correlation = noise[i].Correlation((*per_channel_data)[i].waveform, noise[j], (*per_channel_data)[j].waveform);
         reply = redisCommand(context, "RPUSH snapshot:covariance %f",  correlation);
         freeReplyObject(reply);
