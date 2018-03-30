@@ -15,7 +15,7 @@ public:
 
   NoiseSample Intersection(NoiseSample &other);
 
-  double RMS(std::vector<double> &wvfm_self) { return CalcRMS(wvfm_self, *this); } 
+  double RMS(std::vector<double> &wvfm_self) { return CalcRMS(wvfm_self, _ranges, _baseline); } 
 
   double Covariance(std::vector<double> &wvfm_self, NoiseSample &other, std::vector<double> &wvfm_other);
   double Correlation(std::vector<double> &wvfm_self, NoiseSample &other, std::vector<double> &wvfm_other);
@@ -24,7 +24,7 @@ public:
 
   std::vector<std::array<unsigned, 2>> *Ranges() { return &_ranges; }
 private:
-  static double CalcRMS(std::vector<double> &wvfm, NoiseSample &sample);
+  static double CalcRMS(std::vector<double> &wvfm_self, std::vector<std::array<unsigned,2>> &ranges, double baseline);
 
   std::vector<std::array<unsigned, 2>> _ranges;
   double _baseline;
