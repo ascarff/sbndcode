@@ -10,6 +10,7 @@
 #include "HeaderData.hh"
 #include "Noise.hh"
 #include "Analysis.h"
+#include "ChannelMap.hh"
 
 using namespace daqAnalysis;
 using namespace std;
@@ -78,21 +79,14 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data) {
   // if there's already data for this time, don't send
   if (_now == _last) return;
 
-  bool take_snapshot = _snapshot_time != 0 && (_now - _start) % _snapshot_time == 0;
   // TODO: Report failures
   void *reply;
- 
-  // if you're taking a snapshot, also record the time and event
-  if (take_snapshot) {
-    reply = redisCommand(context, "SET snapshot:time %i", _now);
-    freeReplyObject(reply);
-  }
 
-  // loop over all channels and set streams for important information
-  for (auto &channel: *per_channel_data) {
-    // loop over streams
-    for (size_t i = 0; i < _stream_take.size(); i++) {
-      if ( (_now - _start) % _stream_take[i] == 0) {
+  // loop over streams
+  for (size_t i = 0; i < _stream_take.size(); i++) {
+    if ( (_now - _start) % _stream_take[i] == 0) {
+      // loop over all channels and set streams for important information
+      for (auto &channel: *per_channel_data) {
 	// Send in some stuff 
 	reply = redisCommand(context, "SET stream/%i:%i:baseline:wire:%i %f", _stream_take[i], _now, channel.channel_no, channel.baseline);
 	freeReplyObject(reply);
@@ -114,10 +108,45 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data) {
 	reply = redisCommand(context, "EXPIRE stream/%i:%i:channel_data:wire:%i %i", _stream_take[i], _now, channel.channel_no, _stream_expire[i]);
 	freeReplyObject(reply);
       }
-    }
+      // also store averages over fem, board data
+      for (unsigned board = 0; board < daqAnalysis::ChannelMap::n_boards; board++) {
+        for (unsigned fem = 0; fem < daqAnalysis::ChannelMap::n_fem_per_board; fem++) {
+          double rms = 0;
+          double baseline = 0;
+            for (unsigned channel = 0; channel < daqAnalysis::ChannelMap::n_channel_per_fem; channel++) {
+              daqAnalysis::ChannelMap::board_channel board_channel {board, fem, channel};
+              auto wire = daqAnalysis::ChannelMap::Channel2Wire(board_channel);
+              rms += (*per_channel_data)[wire].rms;
+              baseline += (*per_channel_data)[wire].baseline;
+            }
+            rms = rms / daqAnalysis::ChannelMap::n_channel_per_fem;
+            baseline = baseline / daqAnalysis::ChannelMap::n_channel_per_fem;
+ 
+            reply = redisCommand(context, "SET stream/%i:%i:rms:board:%i:fem:%i %s", _stream_take[i], _now, board, fem, rms);
+            freeReplyObject(reply);       
+            reply = redisCommand(context, "EXPIRE stream/%i:%i:rms:board:%i:fem:%i %i", _stream_take[i], _now, board, fem, _stream_expire[i]);
+            freeReplyObject(reply);       
+         
+            reply = redisCommand(context, "SET stream/%i:%i:baseline:board:%i:fem:%i %s", _stream_take[i], _now, board, fem, baseline);
+            freeReplyObject(reply);       
+            reply = redisCommand(context, "EXPIRE stream/%i:%i:baseline:board:%i:fem:%i %i", _stream_take[i], _now, board, fem, _stream_expire[i]);
+            freeReplyObject(reply);       
 
-    // snapshots
-    if (take_snapshot) {
+          }
+        }
+
+      } /* end if (take_stream) */
+    } /* end for(stream: streams) */
+
+  // snapshots
+  bool take_snapshot = _snapshot_time != 0 && (_now - _start) % _snapshot_time == 0;
+  if (take_snapshot) {
+    // record the time for reference
+    reply = redisCommand(context, "SET snapshot:time %i", _now);
+    freeReplyObject(reply);
+
+    // stuff per channel
+    for (auto &channel: *per_channel_data) { 
       // store the waveform and fft's
       // also delete old lists
       reply = redisCommand(context, "DEL snapshot:waveform:wire:%i", channel.channel_no);
@@ -135,9 +164,8 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data) {
         freeReplyObject(reply);
       }
     }
-  }
-  // also store the noise correlation matrix if taking a snapshot
-  if (take_snapshot) {
+
+    // also store the noise correlation matrix if taking a snapshot
     // re-build the noise objects
     std::vector<daqAnalysis::NoiseSample> noise;
     for (size_t i = 0; i < per_channel_data->size(); i++) {
