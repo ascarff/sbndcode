@@ -82,9 +82,9 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data) {
   // TODO: Report failures
   void *reply;
  
-  // if you're taking a snapshot, also record the time
+  // if you're taking a snapshot, also record the time and event
   if (take_snapshot) {
-    reply = redisCommand(context, "SET snapshot_time %i", _now);
+    reply = redisCommand(context, "SET snapshot:time %i", _now);
     freeReplyObject(reply);
   }
 
@@ -94,24 +94,24 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data) {
     for (size_t i = 0; i < _stream_take.size(); i++) {
       if ( (_now - _start) % _stream_take[i] == 0) {
 	// Send in some stuff 
-	reply = redisCommand(context, "SET stream/%i:%i:baseline:%i %f", _stream_take[i], _now, channel.channel_no, channel.baseline);
+	reply = redisCommand(context, "SET stream/%i:%i:baseline:wire:%i %f", _stream_take[i], _now, channel.channel_no, channel.baseline);
 	freeReplyObject(reply);
-	reply = redisCommand(context, "EXPIRE stream/%i:%i:baseline:%i %i", _stream_take[i], _now, channel.channel_no, _stream_expire[i]);
+	reply = redisCommand(context, "EXPIRE stream/%i:%i:baseline:wire:%i %i", _stream_take[i], _now, channel.channel_no, _stream_expire[i]);
 	freeReplyObject(reply);
-	reply = redisCommand(context, "SET stream/%i:%i:rms:%i %f", _stream_take[i], _now, channel.channel_no, channel.rms);
+	reply = redisCommand(context, "SET stream/%i:%i:rms:wire:%i %f", _stream_take[i], _now, channel.channel_no, channel.rms);
 	freeReplyObject(reply);
-	reply = redisCommand(context, "EXPIRE stream/%i:%i:rms:%i %i", _stream_take[i], _now, channel.channel_no, _stream_expire[i]);
+	reply = redisCommand(context, "EXPIRE stream/%i:%i:rms:wire:%i %i", _stream_take[i], _now, channel.channel_no, _stream_expire[i]);
 	freeReplyObject(reply);
-	reply = redisCommand(context, "SET stream/%i:%i:max:%i %f", _stream_take[i], _now, channel.channel_no, channel.max);
+	reply = redisCommand(context, "SET stream/%i:%i:max:wire:%i %f", _stream_take[i], _now, channel.channel_no, channel.max);
 	freeReplyObject(reply);
-	reply = redisCommand(context, "EXPIRE stream/%i:%i:max:%i %i", _stream_take[i], _now, channel.channel_no, _stream_expire[i]);
+	reply = redisCommand(context, "EXPIRE stream/%i:%i:max:wire:%i %i", _stream_take[i], _now, channel.channel_no, _stream_expire[i]);
 	freeReplyObject(reply);
 	
 	// TODO: Is this too slow on front end?
 	// also push the channel data as a json blob
-	reply = redisCommand(context, "SET stream/%i:%i:channel_data:%i %s", _stream_take[i], _now, channel.channel_no, channel.Jsonify().c_str());
+	reply = redisCommand(context, "SET stream/%i:%i:channel_data:wire:%i %s", _stream_take[i], _now, channel.channel_no, channel.Jsonify().c_str());
 	freeReplyObject(reply);
-	reply = redisCommand(context, "EXPIRE stream/%i:%i:channel_data:%i %i", _stream_take[i], _now, channel.channel_no, _stream_expire[i]);
+	reply = redisCommand(context, "EXPIRE stream/%i:%i:channel_data:wire:%i %i", _stream_take[i], _now, channel.channel_no, _stream_expire[i]);
 	freeReplyObject(reply);
       }
     }
@@ -120,18 +120,18 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data) {
     if (take_snapshot) {
       // store the waveform and fft's
       // also delete old lists
-      reply = redisCommand(context, "DEL snapshot:waveform:%i", channel.channel_no);
+      reply = redisCommand(context, "DEL snapshot:waveform:wire:%i", channel.channel_no);
       freeReplyObject(reply);
       for (auto dat: channel.waveform) {
-        reply = redisCommand(context, "RPUSH snapshot:waveform:%i %f", channel.channel_no, dat);
+        reply = redisCommand(context, "RPUSH snapshot:waveform:wire:%i %f", channel.channel_no, dat);
         freeReplyObject(reply);
       }
       // norm of fft
-      reply = redisCommand(context, "DEL snapshot:fft:%i", channel.channel_no);
+      reply = redisCommand(context, "DEL snapshot:fft:wire:%i", channel.channel_no);
       freeReplyObject(reply);
       for (size_t i = 0; i < channel.fft_real.size(); i++) {
         double dat = channel.fft_real[i]*channel.fft_real[i] + channel.fft_imag[i]*channel.fft_imag[i];
-        reply = redisCommand(context, "RPUSH snapshot:fft:%i %f", channel.channel_no, dat);
+        reply = redisCommand(context, "RPUSH snapshot:fft:wire:%i %f", channel.channel_no, dat);
         freeReplyObject(reply);
       }
     }
@@ -143,7 +143,7 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data) {
     for (size_t i = 0; i < per_channel_data->size(); i++) {
       noise.emplace_back((*per_channel_data)[i].noise_ranges, (*per_channel_data)[i].baseline);
     }
-    reply = redisCommand(context, "DEL snapshot:covariance");
+    reply = redisCommand(context, "DEL snapshot:correlation");
     freeReplyObject(reply);
 
     // Only calculate the upper-right half of the matrix since it is symmetric
@@ -153,7 +153,7 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data) {
     for (size_t i = 0; i < noise.size(); i++) {
       for (size_t j = i; j < noise.size(); j++) {
         double correlation = noise[i].Correlation((*per_channel_data)[i].waveform, noise[j], (*per_channel_data)[j].waveform);
-        reply = redisCommand(context, "RPUSH snapshot:covariance %f",  correlation);
+        reply = redisCommand(context, "RPUSH snapshot:correlation %f",  correlation);
         freeReplyObject(reply);
       }
     }
