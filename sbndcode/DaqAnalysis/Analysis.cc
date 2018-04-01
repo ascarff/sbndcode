@@ -117,7 +117,6 @@ SimpleDaqAnalysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &par
   daq_tag = art::InputTag(producer, ""); 
 }
 
-
 void SimpleDaqAnalysis::analyze(art::Event const & event) {
   //if (_config.n_events >= 0 && _event_ind >= (unsigned)_config.n_events) return false;
 

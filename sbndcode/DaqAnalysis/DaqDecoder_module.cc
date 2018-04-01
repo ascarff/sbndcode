@@ -33,6 +33,7 @@
 #include "sbnddaq-datatypes/NevisTPC/NevisTPCUtilities.hh"
 
 #include "HeaderData.hh"
+#include "ChannelMap.hh"
 
 DEFINE_ART_MODULE(daq::DaqDecoder)
 
@@ -120,9 +121,8 @@ int16_t Mode(const std::vector<int16_t> &adcs) {
 }
 
 raw::ChannelID_t daq::DaqDecoder::get_wire_id(const sbnddaq::NevisTPCHeader *header, uint16_t nevis_channel_id) {
- // TODO: implement
- (void) header;
- return (raw::ChannelID_t) nevis_channel_id;
+ daqAnalysis::ChannelMap::board_channel channel {header->getSlot(), header->getFEMID(), (size_t) nevis_channel_id };
+ return daqAnalysis::ChannelMap::Channel2Wire(channel);
 }
 
 void daq::DaqDecoder::process_fragment(const artdaq::Fragment &frag, 
