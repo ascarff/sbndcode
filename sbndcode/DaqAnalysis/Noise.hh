@@ -11,7 +11,8 @@ class NoiseSample {
 public:
   NoiseSample(std::vector<PeakFinder::Peak>& peaks, double baseline, unsigned wvfm_size);
   NoiseSample(std::vector<std::array<unsigned, 2>> ranges, double baseline): _ranges(ranges), _baseline(baseline) {}
-  NoiseSample() {}
+  // zero initialize
+  NoiseSample(): _baseline(0) {}
 
   NoiseSample Intersection(NoiseSample &other);
 

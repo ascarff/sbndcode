@@ -29,6 +29,7 @@ Json::Value daqAnalysis::ChannelData::GetJson() {
   output["min"] = min;
   output["rms"] = rms;
   output["channel_no"] = channel_no;
+  output["empty"] = empty;
   
   output["last_channel_correlation"] = last_channel_correlation;
   output["last_channel_sum_rms"] = last_channel_sum_rms;

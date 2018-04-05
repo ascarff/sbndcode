@@ -92,6 +92,11 @@ SimpleDaqAnalysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &par
   // 0 == use first `n_baseline_samples`
   // 1 == use peakfinding
   noise_range_sampling = param.get<unsigned>("noise_range_sampling",0);
+
+  // method to calculate baseline:
+  // 0 == assume baseline is 0
+  // 1 == assume baseline is in digits.GetPedestal()
+  baseline_calc = param.get<unsigned>("baseline_calc", 1);
  
   // only used if noise_range_sampling == 0
   // number of samples in noise sample
@@ -145,17 +150,21 @@ void SimpleDaqAnalysis::analyze(art::Event const & event) {
     unsigned last_channel_ind = i == 0 ? _config.n_channels - 1 : i - 1;
     unsigned next_channel_ind = i == _config.n_channels - 1 ? 0 : i + 1;
 
-    // cross channel correlations
-    _per_channel_data[i].last_channel_correlation = _noise_samples[i].Correlation(
+    if (!_per_channel_data[i].empty && !_per_channel_data[last_channel_ind].empty) {
+      // cross channel correlations
+      _per_channel_data[i].last_channel_correlation = _noise_samples[i].Correlation(
+          _per_channel_data[i].waveform, _noise_samples[last_channel_ind],  _per_channel_data[last_channel_ind].waveform);
+      // cross channel sum RMS
+      _per_channel_data[i].last_channel_sum_rms = _noise_samples[i].SumRMS(
         _per_channel_data[i].waveform, _noise_samples[last_channel_ind],  _per_channel_data[last_channel_ind].waveform);
-    _per_channel_data[i].next_channel_correlation = _noise_samples[i].Correlation(
-        _per_channel_data[i].waveform, _noise_samples[next_channel_ind],  _per_channel_data[next_channel_ind].waveform);
+    }
 
-    // cross channel sum RMS
-    _per_channel_data[i].last_channel_sum_rms = _noise_samples[i].SumRMS(
-        _per_channel_data[i].waveform, _noise_samples[last_channel_ind],  _per_channel_data[last_channel_ind].waveform);
-    _per_channel_data[i].next_channel_sum_rms = _noise_samples[i].SumRMS(
-        _per_channel_data[i].waveform, _noise_samples[next_channel_ind],  _per_channel_data[next_channel_ind].waveform);
+    if (!_per_channel_data[i].empty && !_per_channel_data[next_channel_ind].empty) {
+      _per_channel_data[i].next_channel_correlation = _noise_samples[i].Correlation(
+          _per_channel_data[i].waveform, _noise_samples[next_channel_ind],  _per_channel_data[next_channel_ind].waveform);
+      _per_channel_data[i].next_channel_sum_rms = _noise_samples[i].SumRMS(
+          _per_channel_data[i].waveform, _noise_samples[next_channel_ind],  _per_channel_data[next_channel_ind].waveform);
+    }
   }
 
   // deal with the header
@@ -198,21 +207,26 @@ void SimpleDaqAnalysis::ReportEvent(art::Event const &art_event) {
 }
 
 void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
-  /*
-  auto fragment_header = fragment.header(); 
-  
-  //_output_file.cd();
-  
-  if (_config.verbose) {
-    std::cout << "EVENT NUMBER: "  << _header_data.event_number << std::endl;
-    std::cout << "FRAME NUMBER: "  << _header_data.frame_number << std::endl;
-    std::cout << "CHECKSUM: "  << _header_data.checksum << std::endl;
-    std::cout << "ADC WORD COUNT: "  << _header_data.adc_word_count << std::endl;
-    std::cout << "TRIG FRAME NUMBER: "  << _header_data.trig_frame_number << std::endl;
-  }*/
-
   auto channel = digits.Channel();
+  /*
+  std::cout << "CHANNEL: " << channel << std::endl;
+  std::cout << "PEDESTAL: " << digits.GetPedestal() << std::endl;
+  std::cout << "NADC: " << digits.NADC() << std::endl;
+  if (digits.NADC() > 0) {
+    std::cout << "ADC0: " << digits.ADCs()[0] << std::endl;
+  }*/
   if (channel < _config.n_channels) {
+    // handle empty events
+    if (digits.NADC() == 0) {
+      // default constructor handles empty event
+      _per_channel_data[channel] = ChannelData(channel);
+      _noise_samples[channel] = NoiseSample();
+      return;
+    }
+   
+    // if there are ADC's, the channel isn't empty
+    _per_channel_data[channel].empty = false;
+ 
     // re-allocate FFT if necessary
     if (_fft_manager.InputSize() != digits.NADC()) {
       _fft_manager.Set(digits.NADC());
@@ -233,8 +247,12 @@ void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
       double *input = _fft_manager.InputAt(i);
       *input = adc;
     }
-    // use mode to calculate baseline
-    _per_channel_data[channel].baseline = (double) digits.GetPedestal();
+    if (_config.baseline_calc == 0) {
+      _per_channel_data[channel].baseline = 0.;
+    }
+    else if (_config.baseline_calc == 1) {
+      _per_channel_data[channel].baseline = (double) digits.GetPedestal();
+    }
 
     _per_channel_data[channel].max = max;
     _per_channel_data[channel].min = min;

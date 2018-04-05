@@ -13,6 +13,7 @@ namespace daqAnalysis {
 class ChannelData {
 public:
   unsigned channel_no;
+  bool empty;
   double baseline;
   double max;
   double min;
@@ -33,6 +34,34 @@ public:
   Json::Value GetJson(); 
   std::string Jsonify();
   std::string JsonifyPretty();
+
+  // zero initialize
+  ChannelData():
+    channel_no(0),
+    empty(true /* except for empty by default*/),
+    baseline(0),
+    max(0),
+    min(0),
+    rms(0),
+    last_channel_correlation(0),
+    next_channel_correlation(0),
+    last_channel_sum_rms(0),
+    next_channel_sum_rms(0)
+  {}
+
+  ChannelData(unsigned channel):
+    channel_no(channel),
+    empty(true /* except for empty by default*/),
+    baseline(0),
+    max(0),
+    min(0),
+    rms(0),
+    last_channel_correlation(0),
+    next_channel_correlation(0),
+    last_channel_sum_rms(0),
+    next_channel_sum_rms(0)
+  {}
+
   
 };
 

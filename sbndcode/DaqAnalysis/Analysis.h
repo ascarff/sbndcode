@@ -74,6 +74,7 @@ public:
     double threshold_hi;
     double threshold_lo;
     
+    unsigned baseline_calc;
     unsigned noise_range_sampling;
     unsigned n_noise_samples;
     unsigned n_smoothing_samples;
