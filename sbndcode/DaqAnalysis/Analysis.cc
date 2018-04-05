@@ -196,11 +196,9 @@ void SimpleDaqAnalysis::ReportEvent(art::Event const &art_event) {
   // Send stuff to Redis
   if (_config.redis) {
     _redis_manager->StartSend();
-    if (_redis_manager->ReadyToSend()) {
-      _redis_manager->SendChannelData(&_per_channel_data);
-      if (_config.n_headers > 0) {
-        _redis_manager->SendHeaderData(&_header_data);
-      }
+    _redis_manager->SendChannelData(&_per_channel_data);
+    if (_config.n_headers > 0) {
+      _redis_manager->SendHeaderData(&_header_data);
     }
     _redis_manager->FinishSend();
   }

@@ -49,10 +49,6 @@ void Redis::FinishSend() {
   _last = _now;
 }
 
-bool Redis::ReadyToSend() {
-  return _now != _last;
-}
-
 void Redis::SendHeaderData(vector<HeaderData> *header_data) {
   void *reply;
   for (auto &header: *header_data) {

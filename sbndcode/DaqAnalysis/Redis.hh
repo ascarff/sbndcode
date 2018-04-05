@@ -22,7 +22,6 @@ public:
   void SendHeaderData(std::vector<daqAnalysis::HeaderData> *header_data);
   void StartSend();
   void FinishSend();
-  bool ReadyToSend();
 
 protected:
   void SendChannel(unsigned stream_index);
