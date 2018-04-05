@@ -32,6 +32,11 @@ public:
     return Channel2Wire(channel);
   }
 
+  // TODO: Implement
+  static unsigned Board(unsigned fem) {
+    return 0;
+  }
+
   static const size_t n_boards = 1;
   static const size_t n_fem_per_board = 1;
   static const size_t n_channel_per_fem = 16;
