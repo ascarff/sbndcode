@@ -1,0 +1,58 @@
+#
+# File:    prodsingle_sbnd_withcaldata.fcl
+# Purpose: Produce single muon events including full SBND detector simulation
+#          and calibration data
+# Version: 1.1
+# 
+# This configuration runs event generation, simulation of propagation through
+# matter, readout simulation and signal processing (the first reconstruction
+# step).
+# 
+# Input: no input file required
+# 
+# Dependencies:
+# - uses prodsingle_sbnd.fcl as baseline
+#
+# Changes:
+# 20160601 (petrillo@fnal.gov) [v1.1]
+#   - rewritten to be based on prodsingle_sbnd.fcl
+#
+
+
+#include "caldata_sbnd.fcl"
+
+# include the base configuration
+
+#include "prodsingle_sbnd.fcl"
+
+
+# configure the additional module we want to call:
+#physics.producers.caldata: @local::sbnd_calwire
+
+# ... and add it to the standard path
+
+physics.simulate: [ rns, generator, largeant, daq] #, caldata ] 
+
+#
+# at the end of the configuration, we can override single parameters to reflect our needs:
+#
+#services.SignalShapingServiceSBND.ASICGainInMVPerFC: 14
+
+services.LArG4Parameters.UseMisalignment:          true 
+services.LArG4Parameters.MisalignAtTPCFraction:    [0.5]          #Simulate misalignment at this point in TPC length.
+services.LArG4Parameters.MisalignTransVector:      [0.3,0.0,0.0]  #Translation vector of Misalignment 
+services.LArG4Parameters.MisalignRotateAxis:       "Y"   	  #Rotation axis of TPC misalignment.
+services.LArG4Parameters.MisalignRotateAngle:      0.   	  	  #Misalignment through rotation/angle.
+
+
+physics.producers.generator.X0: [ -100.0 ]
+physics.producers.generator.Y0: [ 0.0 ]
+physics.producers.generator.Z0: [ -1. ]
+physics.producers.generator.T0: [ 0.0 ]
+physics.producers.generator.SigmaX: [ 0.0 ]      # x = (0, 256)
+physics.producers.generator.SigmaY: [ 0.0 ]      # y = (-116.5, 116.5)
+physics.producers.generator.SigmaZ: [ 0 ]      # z = (0, 1037)
+physics.producers.generator.SigmaT: [ 0.0 ]        # In time
+physics.producers.generator.AngleDist: 0           # Flat angle dist.
+physics.producers.generator.Theta0XZ: [ 0. ]       # y-azimuth
+physics.producers.generator.Theta0YZ: [ 0. ]       # y-latitude
