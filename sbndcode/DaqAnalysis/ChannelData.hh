@@ -34,6 +34,7 @@ public:
   Json::Value GetJson(); 
   std::string Jsonify();
   std::string JsonifyPretty();
+  double meanPeakHeight();
 
   // zero initialize
   ChannelData():

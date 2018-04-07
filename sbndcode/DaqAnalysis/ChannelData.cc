@@ -7,6 +7,19 @@
 #include "PeakFinder.hh"
 #include "ChannelData.hh"
 
+double daqAnalysis::ChannelData::meanPeakHeight() {
+  double ret = 0;
+  for (unsigned i = 0; i < peaks.size(); i++) {
+    if (peaks[i].is_up) {
+      ret += peaks[i].amplitude - baseline;
+    }
+    else {
+      ret += baseline - peaks[i].amplitude;
+    }
+  }
+  return ret / peaks.size();
+}
+
 // Turn in channel data to a json blob for sending to Redis
 std::string daqAnalysis::ChannelData::Jsonify() {
   Json::FastWriter fastWriter;

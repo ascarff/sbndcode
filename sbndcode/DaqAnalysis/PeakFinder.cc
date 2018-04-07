@@ -36,6 +36,7 @@ PeakFinder::PeakFinder(std::vector<double> waveform, double baseline, unsigned n
         peak.start_tight = i;
         inside_peak = true;
         up_peak = true;
+        peak.is_up = true;
       }
       else assert(up_peak);
 
@@ -51,6 +52,7 @@ PeakFinder::PeakFinder(std::vector<double> waveform, double baseline, unsigned n
         peak.start_tight = i;
         inside_peak = true;
         up_peak = false;
+        peak.is_up = false;
       }
       else assert(!up_peak);
 

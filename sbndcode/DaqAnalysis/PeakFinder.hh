@@ -17,6 +17,7 @@ public:
     unsigned start_loose;
     unsigned end_tight;
     unsigned end_loose;
+    bool is_up;
 
     Peak() {
       reset();

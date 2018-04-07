@@ -43,15 +43,18 @@ protected:
   std::vector<daqAnalysis::StreamDataMean> _channel_rms;
   std::vector<daqAnalysis::StreamDataMean> _channel_baseline;
   std::vector<daqAnalysis::StreamDataMean> _channel_hit_occupancy;
+  std::vector<daqAnalysis::StreamDataMean> _channel_pulse_height;
 
   std::vector<daqAnalysis::StreamDataMean> _fem_rms;
   std::vector<daqAnalysis::StreamDataMean> _fem_scaled_sum_rms;
   std::vector<daqAnalysis::StreamDataMean> _fem_baseline;
   std::vector<daqAnalysis::StreamDataMean> _fem_hit_occupancy;
+  std::vector<daqAnalysis::StreamDataMean> _fem_pulse_height;
 
   std::vector<daqAnalysis::StreamDataMean> _board_rms;
   std::vector<daqAnalysis::StreamDataMean> _board_baseline;
   std::vector<daqAnalysis::StreamDataMean> _board_hit_occupancy;
+  std::vector<daqAnalysis::StreamDataMean> _board_pulse_height;
 
   std::vector<daqAnalysis::StreamDataMax> _frame_no;
   std::vector<daqAnalysis::StreamDataMax> _trigframe_no;
