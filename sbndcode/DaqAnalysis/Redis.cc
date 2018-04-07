@@ -84,24 +84,24 @@ void Redis::SendHeader(unsigned stream_index) {
     unsigned fem = fem_ind % ChannelMap::n_fem_per_board;
     unsigned board = fem_ind / ChannelMap::n_fem_per_board;
 
-    reply = redisCommand(context, "SET stream/%i:%i:frameno:board:%i:fem:%i %i", 
+    reply = redisCommand(context, "SET stream/%i:%i:frame_no:board:%i:fem:%i %f", 
       _stream_take[stream_index], _now/_stream_take[stream_index], fem, board, _frame_no[stream_index].Take(fem_ind));
     freeReplyObject(reply);
-    reply = redisCommand(context, "EXPIRE stream/%i:%i:frameno:board:%i:fem:%i %i", 
+    reply = redisCommand(context, "EXPIRE stream/%i:%i:frame_no:board:%i:fem:%i %i", 
       _stream_take[stream_index], _now/_stream_take[stream_index], fem, board, _stream_expire[stream_index]);
     freeReplyObject(reply);
 
-    reply = redisCommand(context, "SET stream/%i:%i:eventno:board:%i:fem:%i %i", 
+    reply = redisCommand(context, "SET stream/%i:%i:event_no:board:%i:fem:%i %f", 
       _stream_take[stream_index], _now/_stream_take[stream_index], fem, board, _event_no[stream_index].Take(fem_ind));
     freeReplyObject(reply);
-    reply = redisCommand(context, "EXPIRE stream/%i:%i:eventno:board:%i:fem:%i %i", 
+    reply = redisCommand(context, "EXPIRE stream/%i:%i:event_no:board:%i:fem:%i %i", 
       _stream_take[stream_index], _now/_stream_take[stream_index], fem, board, _stream_expire[stream_index]);
     freeReplyObject(reply);
 
-    reply = redisCommand(context, "SET stream/%i:%i:trigframeno:board:%i:fem:%i %i", 
+    reply = redisCommand(context, "SET stream/%i:%i:trigframe_no:board:%i:fem:%i %f", 
       _stream_take[stream_index], _now/_stream_take[stream_index], fem, board, _trigframe_no[stream_index].Take(fem_ind));
     freeReplyObject(reply);
-    reply = redisCommand(context, "EXPIRE stream/%i:%i:trigframeno:board:%i:fem:%i %i", 
+    reply = redisCommand(context, "EXPIRE stream/%i:%i:trigframe_no:board:%i:fem:%i %i", 
       _stream_take[stream_index], _now/_stream_take[stream_index], fem, board, _stream_expire[stream_index]);
     freeReplyObject(reply);
   }
