@@ -19,12 +19,22 @@ Redis::Redis(std::vector<unsigned> &stream_take, std::vector<unsigned> &stream_e
   _snapshot_time(snapshot_time),
   _stream_take(stream_take),
   _stream_expire(stream_expire),
-  _channel_rms(stream_take.size(), StreamDataCache(ChannelMap::n_channel_per_fem * ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
-  _channel_baseline(stream_take.size(), StreamDataCache(ChannelMap::n_channel_per_fem * ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
-  _channel_hit_occupancy(stream_take.size(), StreamDataCache(ChannelMap::n_channel_per_fem * ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
-  _fem_rms(stream_take.size(), StreamDataCache(ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
-  _fem_baseline(stream_take.size(), StreamDataCache(ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
-  _fem_hit_occupancy(stream_take.size(), StreamDataCache(ChannelMap::n_fem_per_board* ChannelMap::n_boards))
+
+  _channel_rms(stream_take.size(), StreamDataMean(ChannelMap::n_channel_per_fem * ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
+  _channel_baseline(stream_take.size(), StreamDataMean(ChannelMap::n_channel_per_fem * ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
+  _channel_hit_occupancy(stream_take.size(), StreamDataMean(ChannelMap::n_channel_per_fem * ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
+
+  _fem_rms(stream_take.size(), StreamDataMean(ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
+  _fem_baseline(stream_take.size(), StreamDataMean(ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
+  _fem_hit_occupancy(stream_take.size(), StreamDataMean(ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
+
+  _board_rms(stream_take.size(), StreamDataMean(ChannelMap::n_boards)),
+  _board_baseline(stream_take.size(), StreamDataMean(ChannelMap::n_boards)),
+  _board_hit_occupancy(stream_take.size(), StreamDataMean(ChannelMap::n_boards)),
+
+  _frame_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
+  _trigframe_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
+  _event_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_board* ChannelMap::n_boards))
 {
   context = redisConnect("127.0.0.1", 6379);
   std::cout << "REDIS CONTEXT: " << context << std::endl;
@@ -50,28 +60,50 @@ void Redis::FinishSend() {
 }
 
 void Redis::SendHeaderData(vector<HeaderData> *header_data) {
-  void *reply;
   for (auto &header: *header_data) {
     for (size_t i = 0; i < _stream_take.size(); i++) {
-      if ( (_now - _start) % _stream_take[i] == 0) {
-	reply = redisCommand(context, "SET stream/%i:%i:checksum:fem%i:slot%i %i", _stream_take[i], _now/_stream_take[i], header.fem_id, header.slot_id, header.checksum);
-	freeReplyObject(reply);
-	reply = redisCommand(context, "EXPIRE stream/%i:%i:checksum:fem%i:slot%i %i", _stream_take[i], _now/_stream_take[i], header.fem_id, header.slot_id, _stream_expire[i]);
-	freeReplyObject(reply);
-	reply = redisCommand(context, "SET stream/%i:%i:frameno:fem%i:slot%i %i", _stream_take[i], _now/_stream_take[i], header.fem_id, header.slot_id, header.frame_number);
-	freeReplyObject(reply);
-	reply = redisCommand(context, "EXPIRE stream/%i:%i:frameno:fem%i:slot%i %i", _stream_take[i], _now/_stream_take[i], header.fem_id, header.slot_id, _stream_expire[i]);
-	freeReplyObject(reply);
-	reply = redisCommand(context, "SET stream/%i:%i:eventno:fem%i:slot%i %i", _stream_take[i], _now/_stream_take[i], header.fem_id, header.slot_id, header.event_number);
-	freeReplyObject(reply);
-	reply = redisCommand(context, "EXPIRE stream/%i:%i:eventno:fem%i:slot%i %i", _stream_take[i], _now/_stream_take[i], header.fem_id, header.slot_id, _stream_expire[i]);
-	freeReplyObject(reply);
-	reply = redisCommand(context, "SET stream/%i:%i:trigframeno:fem%i:slot%i %i", _stream_take[i], _now/_stream_take[i], header.fem_id, header.slot_id, header.trig_frame_number);
-	freeReplyObject(reply);
-	reply = redisCommand(context, "EXPIRE stream/%i:%i:trigframeno:fem%i:slot%i %i", _stream_take[i], _now/_stream_take[i], header.fem_id, header.slot_id, _stream_expire[i]);
-	freeReplyObject(reply);
-      }
+      // TODO: Change
+      // index into the fem data cache
+      //unsigned fem_ind = header.slot_id * ChannelMap::n_fem_per_board + header.fem_id;
+      unsigned fem_ind = 0;
+      _event_no[i].Add(fem_ind, header.event_number);
+      _frame_no[i].Add(fem_ind, header.frame_number);
+      _trigframe_no[i].Add(fem_ind, header.trig_frame_number);
     }
+  }
+  for (size_t i = 0; i < _stream_take.size(); i++) {
+    if ( (_now - _start) % _stream_take[i] == 0) {
+      SendHeader(i);
+    }
+  }
+}
+
+void Redis::SendHeader(unsigned stream_index) {
+  void *reply;
+  for (size_t fem_ind = 0; fem_ind < ChannelMap::n_fem_per_board* ChannelMap::n_boards; fem_ind++) {
+    unsigned fem = fem_ind % ChannelMap::n_fem_per_board;
+    unsigned board = fem_ind / ChannelMap::n_fem_per_board;
+
+    reply = redisCommand(context, "SET stream/%i:%i:frameno:board:%i:fem:%i %i", 
+      _stream_take[stream_index], _now/_stream_take[stream_index], fem, board, _frame_no[stream_index].Take(fem_ind));
+    freeReplyObject(reply);
+    reply = redisCommand(context, "EXPIRE stream/%i:%i:frameno:board:%i:fem:%i %i", 
+      _stream_take[stream_index], _now/_stream_take[stream_index], fem, board, _stream_expire[stream_index]);
+    freeReplyObject(reply);
+
+    reply = redisCommand(context, "SET stream/%i:%i:eventno:board:%i:fem:%i %i", 
+      _stream_take[stream_index], _now/_stream_take[stream_index], fem, board, _event_no[stream_index].Take(fem_ind));
+    freeReplyObject(reply);
+    reply = redisCommand(context, "EXPIRE stream/%i:%i:eventno:board:%i:fem:%i %i", 
+      _stream_take[stream_index], _now/_stream_take[stream_index], fem, board, _stream_expire[stream_index]);
+    freeReplyObject(reply);
+
+    reply = redisCommand(context, "SET stream/%i:%i:trigframeno:board:%i:fem:%i %i", 
+      _stream_take[stream_index], _now/_stream_take[stream_index], fem, board, _trigframe_no[stream_index].Take(fem_ind));
+    freeReplyObject(reply);
+    reply = redisCommand(context, "EXPIRE stream/%i:%i:trigframeno:board:%i:fem:%i %i", 
+      _stream_take[stream_index], _now/_stream_take[stream_index], fem, board, _stream_expire[stream_index]);
+    freeReplyObject(reply);
   }
 }
 
@@ -100,20 +132,47 @@ void Redis::SendChannel(unsigned stream_index) {
 void Redis::SendFem(unsigned stream_index) {
   // TODO: Report failures
   void *reply;
-  for (unsigned i = 0; i < _fem_rms[stream_index].Size(); i++) {
-    unsigned fem = i;
-    unsigned board = ChannelMap::Board(fem);
-    reply = redisCommand(context, "SET stream/%i:%i:rms:board:%i:fem:%i %f", _stream_take[stream_index], _now/_stream_take[stream_index], board, fem, _fem_rms[stream_index].Take(fem));
+  for (unsigned fem_ind = 0; fem_ind < _fem_rms[stream_index].Size(); fem_ind++) {
+    unsigned fem = fem_ind % ChannelMap::n_fem_per_board;
+    unsigned board = ChannelMap::Board(fem_ind);
+    reply = redisCommand(context, "SET stream/%i:%i:rms:board:%i:fem:%i %f", _stream_take[stream_index], _now/_stream_take[stream_index], board, fem, _fem_rms[stream_index].Take(fem_ind));
     freeReplyObject(reply);       
     reply = redisCommand(context, "EXPIRE stream/%i:%i:rms:board:%i:fem:%i %i", _stream_take[stream_index], _now/_stream_take[stream_index], board, fem, _stream_expire[stream_index]);
     freeReplyObject(reply);       
-    reply = redisCommand(context, "SET stream/%i:%i:baseline:board:%i:fem:%i %f", _stream_take[stream_index], _now/_stream_take[stream_index], board, fem, _fem_baseline[stream_index].Take(fem));
+    reply = redisCommand(context, "SET stream/%i:%i:baseline:board:%i:fem:%i %f", _stream_take[stream_index], _now/_stream_take[stream_index], board, fem, _fem_baseline[stream_index].Take(fem_ind));
     freeReplyObject(reply);       
     reply = redisCommand(context, "EXPIRE stream/%i:%i:baseline:board:%i:fem:%i %i", _stream_take[stream_index], _now/_stream_take[stream_index], board, fem, _stream_expire[stream_index]);
     freeReplyObject(reply);       
-    reply = redisCommand(context, "SET stream/%i:%i:hit_occupancy:board:%i:fem:%i %f", _stream_take[stream_index], _now/_stream_take[stream_index], board, fem, _fem_hit_occupancy[stream_index].Take(fem));
+    reply = redisCommand(context, "SET stream/%i:%i:hit_occupancy:board:%i:fem:%i %f", _stream_take[stream_index], _now/_stream_take[stream_index], board, fem, _fem_hit_occupancy[stream_index].Take(fem_ind));
     freeReplyObject(reply);       
     reply = redisCommand(context, "EXPIRE stream/%i:%i:hit_occupancy:board:%i:fem:%i %i", _stream_take[stream_index], _now/_stream_take[stream_index], board, fem, _stream_expire[stream_index]);
+    freeReplyObject(reply);       
+  }
+}
+
+void Redis::SendBoard(unsigned stream_index) {
+  // TODO: Report failures
+  void *reply;
+  for (unsigned board = 0; board < _board_rms[stream_index].Size(); board++) {
+    reply = redisCommand(context, "SET stream/%i:%i:rms:board:%i %f", 
+      _stream_take[stream_index], _now/_stream_take[stream_index], board, _board_rms[stream_index].Take(board));
+    freeReplyObject(reply);       
+    reply = redisCommand(context, "EXPIRE stream/%i:%i:rms:board:%i %i", 
+      _stream_take[stream_index], _now/_stream_take[stream_index], board, _stream_expire[stream_index]);
+    freeReplyObject(reply);       
+
+    reply = redisCommand(context, "SET stream/%i:%i:baseline:board:%i %f", 
+      _stream_take[stream_index], _now/_stream_take[stream_index], board, _board_baseline[stream_index].Take(board));
+    freeReplyObject(reply);       
+    reply = redisCommand(context, "EXPIRE stream/%i:%i:baseline:board:%i %i", 
+      _stream_take[stream_index], _now/_stream_take[stream_index], board, _stream_expire[stream_index]);
+    freeReplyObject(reply);       
+
+    reply = redisCommand(context, "SET stream/%i:%i:hit_occupancy:board:%i %f", 
+      _stream_take[stream_index], _now/_stream_take[stream_index], board, _board_hit_occupancy[stream_index].Take(board));
+    freeReplyObject(reply);       
+    reply = redisCommand(context, "EXPIRE stream/%i:%i:hit_occupancy:board:%i %i", 
+      _stream_take[stream_index], _now/_stream_take[stream_index], board, _stream_expire[stream_index]);
     freeReplyObject(reply);       
   }
 }
@@ -180,11 +239,16 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data) {
 
   // also store averages over fem, board data
   for (unsigned board = 0; board < daqAnalysis::ChannelMap::n_boards; board++) {
+    double board_rms = 0;
+    double board_baseline = 0;
+    double board_hit_occupancy = 0;
+
+    double rms = 0;
+    double baseline = 0;
+    double hit_occupancy = 0;
+    // fem average
     for (unsigned fem = 0; fem < daqAnalysis::ChannelMap::n_fem_per_board; fem++) {
       // Calculate average of metrics and store them
-      double rms = 0;
-      double baseline = 0;
-      double hit_occupancy = 0;
       for (unsigned channel = 0; channel < daqAnalysis::ChannelMap::n_channel_per_fem; channel++) {
 	daqAnalysis::ChannelMap::board_channel board_channel {board, fem, channel};
 	auto wire = daqAnalysis::ChannelMap::Channel2Wire(board_channel);
@@ -205,14 +269,29 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data) {
         _fem_baseline[i].Add(fem_ind, baseline);
         _fem_hit_occupancy[i].Add(fem_ind, hit_occupancy);
       }
+      // board average
+      board_rms += rms;
+      board_baseline += baseline;
+      board_hit_occupancy += hit_occupancy; 
+    }
+
+    board_rms = board_rms / daqAnalysis::ChannelMap::n_boards;
+    board_baseline = board_baseline / daqAnalysis::ChannelMap::n_boards;
+    board_hit_occupancy = board_hit_occupancy / daqAnalysis::ChannelMap::n_boards;
+    // update board streams
+    for (size_t i = 0; i < _stream_take.size(); i++) {
+      _board_rms[i].Add(board, board_rms);
+      _board_baseline[i].Add(board, board_baseline);
+      _board_hit_occupancy[i].Add(board, board_hit_occupancy);
     }
   }
 
   for (size_t i = 0; i < _stream_take.size(); i++) {
     // send stuff (maybe)
     if ( (_now - _start) % _stream_take[i] == 0) {
-        SendChannel(i);
-        SendFem(i);
+      SendChannel(i);
+      SendFem(i);
+      SendBoard(i);
       // clear data caches
       _channel_rms[i].Clear();
       _channel_baseline[i].Clear();
@@ -220,6 +299,9 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data) {
       _fem_rms[i].Clear();
       _fem_baseline[i].Clear();
       _fem_hit_occupancy[i].Clear();
+      _board_rms[i].Clear();
+      _board_baseline[i].Clear();
+      _board_hit_occupancy[i].Clear();
     }
     else {
       // increment data caches
@@ -229,6 +311,9 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data) {
       _fem_rms[i].Incl();
       _fem_baseline[i].Incl();
       _fem_hit_occupancy[i].Incl();
+      _board_rms[i].Incl();
+      _board_baseline[i].Incl();
+      _board_hit_occupancy[i].Incl();
     }
   }
 
@@ -239,22 +324,31 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data) {
   }
 }
 
-void daqAnalysis::StreamDataCache::Add(unsigned index, double dat) {
+void daqAnalysis::StreamDataMean::Add(unsigned index, double dat) {
   _data[index] = (_n_values * _data[index] + dat) / (_n_values + 1);
 }
 
-void daqAnalysis::StreamDataCache::Incl() {
+void daqAnalysis::StreamDataMean::Incl() {
   _n_values ++;
 }
 
-void daqAnalysis::StreamDataCache::Clear() {
+void daqAnalysis::StreamDataMean::Clear() {
   _n_values = 0;
 }
 
-double daqAnalysis::StreamDataCache::Take(unsigned index) {
+double daqAnalysis::StreamDataMean::Take(unsigned index) {
   double ret = _data[index];
   _data[index] = 0;
   return ret;
 }
 
+void daqAnalysis::StreamDataMax::Add(unsigned index, double dat) {
+  if (_data[index] < dat) _data[index] = dat;
+}
+
+double daqAnalysis::StreamDataMax::Take(unsigned index) {
+  double ret = _data[index];
+  _data[index] = 0;
+  return ret;
+}
 
