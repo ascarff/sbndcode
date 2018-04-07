@@ -134,7 +134,6 @@ void SimpleDaqAnalysis::analyze(art::Event const & event) {
     _per_channel_data[i].fft_imag.clear();
     _per_channel_data[i].peaks.clear();
   }
-  _noise_samples.clear();
 
   auto const& raw_digits_handle = event.getValidHandle<std::vector<raw::RawDigit>>(_config.daq_tag);
   

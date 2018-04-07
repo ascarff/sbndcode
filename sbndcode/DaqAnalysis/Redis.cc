@@ -185,7 +185,7 @@ void Redis::SendBoard(unsigned stream_index) {
   }
 }
 
-void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> noise) {
+void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> *noise) {
   void *reply;
    
   // record the time for reference
@@ -217,12 +217,11 @@ void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> 
   freeReplyObject(reply);
   
   // Only calculate the upper-right half of the matrix since it is symmetric
-  
   // The index 'k' into the list of the i-th sample with the j-th sample (where i <= j) is:
   // k = ((n+1)*n/2) - (n-i+1)*(n-i)/2 + j - i
-  for (size_t i = 0; i < noise.size(); i++) {
-    for (size_t j = i; j < noise.size(); j++) {
-      double correlation = noise[i].Correlation((*per_channel_data)[i].waveform, noise[j], (*per_channel_data)[j].waveform);
+  for (size_t i = 0; i < noise->size(); i++) {
+    for (size_t j = i; j < noise->size(); j++) {
+      double correlation = (*noise)[i].Correlation((*per_channel_data)[i].waveform, (*noise)[j], (*per_channel_data)[j].waveform);
       reply = redisCommand(context, "RPUSH snapshot:correlation %f",  correlation);
       freeReplyObject(reply);
     }
@@ -339,7 +338,7 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
   // snapshots
   bool take_snapshot = _snapshot_time != 0 && (_now - _start) % _snapshot_time == 0;
   if (take_snapshot) {
-    Snapshot(per_channel_data, *noise_samples);
+    Snapshot(per_channel_data, noise_samples);
   }
 }
 

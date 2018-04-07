@@ -30,7 +30,7 @@ protected:
   void SendFem(unsigned stream_index);
   void SendBoard(unsigned stream_index);
   void SendHeader(unsigned stream_index);
-  void Snapshot(std::vector<ChannelData> *per_channel_data, std::vector<daqAnalysis::NoiseSample> noise);
+  void Snapshot(std::vector<ChannelData> *per_channel_data, std::vector<daqAnalysis::NoiseSample> *noise);
 
   redisContext *context;
   std::time_t _now;
