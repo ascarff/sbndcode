@@ -8,6 +8,7 @@
 
 #include "ChannelData.hh"
 #include "HeaderData.hh"
+#include "Noise.hh"
 
 namespace daqAnalysis {
   class Redis;
@@ -19,7 +20,7 @@ class daqAnalysis::Redis {
 public:
   Redis(std::vector<unsigned> &stream_take, std::vector<unsigned> &stream_expire, int snapshot_time = -1);
   ~Redis();
-  void SendChannelData(std::vector<daqAnalysis::ChannelData> *per_channel_data);
+  void SendChannelData(std::vector<daqAnalysis::ChannelData> *per_channel_data, std::vector<daqAnalysis::NoiseSample> *noise_samples);
   void SendHeaderData(std::vector<daqAnalysis::HeaderData> *header_data);
   void StartSend();
   void FinishSend();
@@ -29,7 +30,7 @@ protected:
   void SendFem(unsigned stream_index);
   void SendBoard(unsigned stream_index);
   void SendHeader(unsigned stream_index);
-  void Snapshot(std::vector<ChannelData> *per_channel_data);
+  void Snapshot(std::vector<ChannelData> *per_channel_data, std::vector<daqAnalysis::NoiseSample> noise);
 
   redisContext *context;
   std::time_t _now;
@@ -44,6 +45,7 @@ protected:
   std::vector<daqAnalysis::StreamDataMean> _channel_hit_occupancy;
 
   std::vector<daqAnalysis::StreamDataMean> _fem_rms;
+  std::vector<daqAnalysis::StreamDataMean> _fem_scaled_sum_rms;
   std::vector<daqAnalysis::StreamDataMean> _fem_baseline;
   std::vector<daqAnalysis::StreamDataMean> _fem_hit_occupancy;
 

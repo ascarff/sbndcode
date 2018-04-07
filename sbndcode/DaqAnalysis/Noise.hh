@@ -14,18 +14,19 @@ public:
   // zero initialize
   NoiseSample(): _baseline(0) {}
 
-  NoiseSample Intersection(NoiseSample &other);
+  NoiseSample Intersection(NoiseSample &other) { return DoIntersection(*this, other, _baseline); }
 
   double RMS(std::vector<double> &wvfm_self) { return CalcRMS(wvfm_self, _ranges, _baseline); } 
 
   double Covariance(std::vector<double> &wvfm_self, NoiseSample &other, std::vector<double> &wvfm_other);
   double Correlation(std::vector<double> &wvfm_self, NoiseSample &other, std::vector<double> &wvfm_other);
   double SumRMS(std::vector<double> &wvfm_self, NoiseSample &other, std::vector<double> &wvfm_other);
-  //double SumRMS(std::vector<double> &wvfm_self, std::vector<std::pair<NoiseSample *, std::vector<double> *>>& other);
+  static double ScaledSumRMS(std::vector<NoiseSample *>& other, std::vector<std::vector<double> *>& wvfm_other);
 
   std::vector<std::array<unsigned, 2>> *Ranges() { return &_ranges; }
 private:
   static double CalcRMS(std::vector<double> &wvfm_self, std::vector<std::array<unsigned,2>> &ranges, double baseline);
+  static NoiseSample DoIntersection(NoiseSample &me, NoiseSample &other, double baseline=0.);
 
   std::vector<std::array<unsigned, 2>> _ranges;
   double _baseline;

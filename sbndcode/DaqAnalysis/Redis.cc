@@ -25,6 +25,7 @@ Redis::Redis(std::vector<unsigned> &stream_take, std::vector<unsigned> &stream_e
   _channel_hit_occupancy(stream_take.size(), StreamDataMean(ChannelMap::n_channel_per_fem * ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
 
   _fem_rms(stream_take.size(), StreamDataMean(ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
+  _fem_scaled_sum_rms(stream_take.size(), StreamDataMean(ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
   _fem_baseline(stream_take.size(), StreamDataMean(ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
   _fem_hit_occupancy(stream_take.size(), StreamDataMean(ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
 
@@ -147,6 +148,13 @@ void Redis::SendFem(unsigned stream_index) {
     freeReplyObject(reply);       
     reply = redisCommand(context, "EXPIRE stream/%i:%i:hit_occupancy:board:%i:fem:%i %i", _stream_take[stream_index], _now/_stream_take[stream_index], board, fem, _stream_expire[stream_index]);
     freeReplyObject(reply);       
+
+    reply = redisCommand(context, "SET stream/%i:%i:scaled_sum_rms:board:%i:fem:%i %f", 
+      _stream_take[stream_index], _now/_stream_take[stream_index], board, fem, _fem_scaled_sum_rms[stream_index].Take(fem_ind));
+    freeReplyObject(reply);       
+    reply = redisCommand(context, "EXPIRE stream/%i:%i:scaled_sum_rms:board:%i:fem:%i %i", 
+      _stream_take[stream_index], _now/_stream_take[stream_index], board, fem, _stream_expire[stream_index]);
+    freeReplyObject(reply);       
   }
 }
 
@@ -177,7 +185,7 @@ void Redis::SendBoard(unsigned stream_index) {
   }
 }
 
-void Redis::Snapshot(vector<ChannelData> *per_channel_data) {
+void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> noise) {
   void *reply;
    
   // record the time for reference
@@ -205,11 +213,6 @@ void Redis::Snapshot(vector<ChannelData> *per_channel_data) {
   }
 
   // also store the noise correlation matrix if taking a snapshot
-  // re-build the noise objects
-  std::vector<daqAnalysis::NoiseSample> noise;
-  for (size_t i = 0; i < per_channel_data->size(); i++) {
-    noise.emplace_back((*per_channel_data)[i].noise_ranges, (*per_channel_data)[i].baseline);
-  }
   reply = redisCommand(context, "DEL snapshot:correlation");
   freeReplyObject(reply);
   
@@ -226,7 +229,7 @@ void Redis::Snapshot(vector<ChannelData> *per_channel_data) {
   }
 }
 
-void Redis::SendChannelData(vector<ChannelData> *per_channel_data) {
+void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseSample> *noise_samples) {
   // loop over all channels and set streams for important information
   for (auto &channel: *per_channel_data) {
     // loop over streams
@@ -246,19 +249,34 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data) {
     double rms = 0;
     double baseline = 0;
     double hit_occupancy = 0;
+    double ssum_rms;
     // fem average
     for (unsigned fem = 0; fem < daqAnalysis::ChannelMap::n_fem_per_board; fem++) {
+      std::vector<std::vector<double> *> waveforms {};
+      std::vector<daqAnalysis::NoiseSample *> this_noise_samples {};
+
       // Calculate average of metrics and store them
       for (unsigned channel = 0; channel < daqAnalysis::ChannelMap::n_channel_per_fem; channel++) {
 	daqAnalysis::ChannelMap::board_channel board_channel {board, fem, channel};
 	auto wire = daqAnalysis::ChannelMap::Channel2Wire(board_channel);
+
 	rms += (*per_channel_data)[wire].rms;
 	baseline += (*per_channel_data)[wire].baseline;
 	hit_occupancy += (*per_channel_data)[wire].peaks.size();
+
+        // collect waveforms for sum rms calculation
+        waveforms.push_back(&(*per_channel_data)[wire].waveform);
+        this_noise_samples.push_back(&(*noise_samples)[wire]);
       }
       rms = rms / daqAnalysis::ChannelMap::n_channel_per_fem;
       baseline = baseline / daqAnalysis::ChannelMap::n_channel_per_fem;
       hit_occupancy = hit_occupancy / daqAnalysis::ChannelMap::n_channel_per_fem;
+
+      // sum rms!
+      ssum_rms = NoiseSample::ScaledSumRMS(this_noise_samples, waveforms); 
+      // and then clear out containers
+      waveforms.clear();
+      this_noise_samples.clear();
 
       // index into the fem data cache
       unsigned fem_ind = board * ChannelMap::n_fem_per_board + fem;
@@ -268,6 +286,7 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data) {
         _fem_rms[i].Add(fem_ind, rms);
         _fem_baseline[i].Add(fem_ind, baseline);
         _fem_hit_occupancy[i].Add(fem_ind, hit_occupancy);
+        _fem_scaled_sum_rms[i].Add(fem_ind, ssum_rms);
       }
       // board average
       board_rms += rms;
@@ -320,7 +339,7 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data) {
   // snapshots
   bool take_snapshot = _snapshot_time != 0 && (_now - _start) % _snapshot_time == 0;
   if (take_snapshot) {
-    Snapshot(per_channel_data);
+    Snapshot(per_channel_data, *noise_samples);
   }
 }
 
