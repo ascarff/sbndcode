@@ -22,6 +22,8 @@ public:
   // between "adjacent" channels for debugging purposes
   double last_channel_correlation;
   double next_channel_correlation;
+  // thresholds
+  double threshold;
   // and their sum-rms
   double last_channel_sum_rms;
   double next_channel_sum_rms;
@@ -46,6 +48,7 @@ public:
     rms(0),
     last_channel_correlation(0),
     next_channel_correlation(0),
+    threshold(0),
     last_channel_sum_rms(0),
     next_channel_sum_rms(0)
   {}
@@ -59,6 +62,7 @@ public:
     rms(0),
     last_channel_correlation(0),
     next_channel_correlation(0),
+    threshold(0),
     last_channel_sum_rms(0),
     next_channel_sum_rms(0)
   {}

@@ -32,12 +32,35 @@ public:
     }
   };
 
-  PeakFinder(std::vector<double> waveform, double baseline, unsigned n_smoothing_samples=1, double threshold_hi=100., double threshold_lo=-1);
+  PeakFinder(std::vector<double> &waveform, double baseline, double threshold, unsigned n_smoothing_samples=1, unsigned plane_type=0);
   inline std::vector<Peak> *Peaks() { return &_peaks; }
 private:
   Peak FinishPeak(Peak peak, unsigned n_smoothing_samples, double baseline, bool up_peak, unsigned index);
+  void matchPeaks(unsigned match_range);
   std::vector<double> _smoothed_waveform;
   std::vector<Peak> _peaks;
-
 };
+
+class Threshold {
+public:
+  Threshold(std::vector<double> &waveform, double baseline, double n_sigma=5., bool verbose=true);
+
+  inline double Val() { return _threshold; }
+private:
+  double _threshold;
+};
+
+class RunningThreshold {
+public:
+  RunningThreshold(): _rms_ind(0), _n_past_rms(0) { std::fill(_past_rms.begin(), _past_rms.end(), 0); }
+
+  double Threshold(std::vector<double> &waveform, double baseline, double n_sigma);
+  void AddRMS(double rms);
+
+private:
+  std::array<double, 10> _past_rms;
+  unsigned _rms_ind;
+  unsigned _n_past_rms;
+};
+
 #endif

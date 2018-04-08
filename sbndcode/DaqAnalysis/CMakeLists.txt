@@ -20,6 +20,11 @@ add_subdirectory(VSTCalibration)
 
 art_dictionary(DICTIONARY_LIBRARIES daqAnalysis_VST)
 
+cet_make_library( LIBRARY_NAME daqAnalysis_MODE
+	SOURCE
+		Mode.cc
+)
+
 cet_make_library( LIBRARY_NAME daqAnalysis_VST
 	SOURCE  Analysis.cc
 		FFT.cc
@@ -28,6 +33,7 @@ cet_make_library( LIBRARY_NAME daqAnalysis_VST
 		Redis.cc
 		ChannelData.cc
 	LIBRARIES
+		daqAnalysis_MODE
 		jsoncpp
 		hiredis
 		sbnddaq-datatypes_Overlays
@@ -80,6 +86,7 @@ simple_plugin( SimpleDaqAnalysis module
 )
 
 simple_plugin( DaqDecoder module
+  daqAnalysis_MODE
   sbnddaq-datatypes_Overlays 
   sbnddaq-datatypes_NevisTPC
   ${LARDATAOBJ}

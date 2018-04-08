@@ -35,11 +35,13 @@
 #include "Analysis.h"
 
 #include "ChannelData.hh"
+#include "ChannelMap.hh"
 #include "HeaderData.hh"
 #include "FFT.hh"
 #include "Noise.hh"
 #include "PeakFinder.hh"
 #include "Redis.hh"
+#include "Mode.hh"
 
 using namespace daqAnalysis;
 
@@ -48,7 +50,8 @@ SimpleDaqAnalysis::SimpleDaqAnalysis(fhicl::ParameterSet const & p) :
   _config(p),
   _per_channel_data(_config.n_channels),
   _noise_samples(_config.n_channels),
-  _header_data(std::max(_config.n_headers,0))
+  _header_data(std::max(_config.n_headers,0)),
+  _thresholds( (_config.threshold_calc == 3) ? _config.n_channels : 0)
 {
   _event_ind = 0;
   art::ServiceHandle<art::TFileService> fs;
@@ -85,17 +88,26 @@ SimpleDaqAnalysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &par
   // configuring analysis code:
 
   // thresholds for peak finding
-  threshold_hi = param.get<double>("threshold_hi", 100);
-  threshold_lo = param.get<double>("threshold_lo", -1);
+  // 0 == use static threshold
+  // 1 == use gauss fitter rms
+  // 2 == use raw rms
+  // 3 == use rolling average of rms
+  threshold_calc = param.get<unsigned>("threshold_calc", 0);
+  threshold_sigma = param.get<double>("threshold_sigma", 5.);
+  threshold = param.get<double>("threshold", 100);
 
   // determine method to get noise sample
   // 0 == use first `n_baseline_samples`
   // 1 == use peakfinding
   noise_range_sampling = param.get<unsigned>("noise_range_sampling",0);
 
+  // whether to use plane data in peakfinding
+  use_planes = param.get<bool>("use_planes", false);
+
   // method to calculate baseline:
   // 0 == assume baseline is 0
   // 1 == assume baseline is in digits.GetPedestal()
+  // 2 == use mode finding to get baseline
   baseline_calc = param.get<unsigned>("baseline_calc", 1);
  
   // only used if noise_range_sampling == 0
@@ -250,6 +262,9 @@ void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
     else if (_config.baseline_calc == 1) {
       _per_channel_data[channel].baseline = (double) digits.GetPedestal();
     }
+    else if (_config.baseline_calc == 2) {
+      _per_channel_data[channel].baseline = (double) Mode(digits.ADCs());
+    }
 
     _per_channel_data[channel].max = max;
     _per_channel_data[channel].min = min;
@@ -262,10 +277,42 @@ void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
       _per_channel_data[channel].fft_imag.push_back(_fft_manager.ImOutputAt(i));
     } 
 
+    // get thresholds 
+    double threshold = DBL_MAX;
+    if (_config.threshold_calc == 0) {
+      threshold = _config.threshold;
+    }
+    else if (_config.threshold_calc == 1) {
+      auto thresholds = Threshold(_per_channel_data[channel].waveform, _per_channel_data[channel].baseline, _config.threshold_sigma, _config.verbose);
+      threshold = thresholds.Val();
+    }
+    else if (_config.threshold_calc == 2) {
+      NoiseSample temp({{0, (unsigned)digits.NADC()-1}}, _per_channel_data[channel].baseline);
+      double raw_rms = temp.RMS(_per_channel_data[channel].waveform);
+      threshold = raw_rms * _config.threshold_sigma;
+    }
+    else if (_config.threshold_calc == 3) {
+      // if using plane data, make collection planes reach a higher threshold
+      double n_sigma = _config.threshold_sigma;
+      if (_config.use_planes && ChannelMap::PlaneType(channel) == 2) n_sigma = n_sigma * 1.5;
+
+      threshold = _thresholds[channel].Threshold(_per_channel_data[channel].waveform, _per_channel_data[channel].baseline, n_sigma);
+    }
+
+    _per_channel_data[channel].threshold = threshold;
+
     // get Peaks
-    PeakFinder peaks(_per_channel_data[channel].waveform, _per_channel_data[channel].baseline, 
-         _config.n_smoothing_samples, _config.threshold_hi, _config.threshold_lo);
-    _per_channel_data[channel].peaks.assign(peaks.Peaks()->begin(), peaks.Peaks()->end());
+    if (_config.use_planes) {
+      PeakFinder peaks(_per_channel_data[channel].waveform, _per_channel_data[channel].baseline, 
+           threshold, _config.n_smoothing_samples, ChannelMap::PlaneType(channel));
+      _per_channel_data[channel].peaks.assign(peaks.Peaks()->begin(), peaks.Peaks()->end());
+    }
+    else {
+      PeakFinder peaks(_per_channel_data[channel].waveform, _per_channel_data[channel].baseline, 
+           threshold, _config.n_smoothing_samples, 0);
+      _per_channel_data[channel].peaks.assign(peaks.Peaks()->begin(), peaks.Peaks()->end());
+
+    }
 
     // get noise samples
     if (_config.noise_range_sampling == 0) {
@@ -279,6 +326,12 @@ void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
 
     _per_channel_data[channel].rms = _noise_samples[channel].RMS(_per_channel_data[channel].waveform);
     _per_channel_data[channel].noise_ranges = *_noise_samples[channel].Ranges();
+
+    // register rms if using running threshold
+    if (_config.threshold_calc == 3) {
+      _thresholds[channel].AddRMS(_per_channel_data[channel].rms);
+    }
+
   }
 
 }

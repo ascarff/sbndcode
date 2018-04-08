@@ -43,6 +43,7 @@ Json::Value daqAnalysis::ChannelData::GetJson() {
   output["rms"] = rms;
   output["channel_no"] = channel_no;
   output["empty"] = empty;
+  output["threshold"] = threshold;
   
   output["last_channel_correlation"] = last_channel_correlation;
   output["last_channel_sum_rms"] = last_channel_sum_rms;
@@ -57,6 +58,7 @@ Json::Value daqAnalysis::ChannelData::GetJson() {
     json_peak["start_loose"] = peak.start_loose;
     json_peak["end_loose"] = peak.end_loose;
     json_peak["end_tight"] = peak.end_tight;
+    json_peak["is_up"] = peak.is_up;
     output["peaks"].append(json_peak);
   }
   output["noise_ranges"] = Json::arrayValue;

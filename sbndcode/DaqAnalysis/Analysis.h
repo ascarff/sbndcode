@@ -71,11 +71,13 @@ public:
     bool redis;
     int n_headers;
 
-    double threshold_hi;
-    double threshold_lo;
+    double threshold;
+    double threshold_sigma;
     
     unsigned baseline_calc;
     unsigned noise_range_sampling;
+    bool use_planes;
+    unsigned threshold_calc;
     unsigned n_noise_samples;
     unsigned n_smoothing_samples;
 
@@ -95,6 +97,7 @@ private:
   std::vector<daqAnalysis::ChannelData> _per_channel_data;
   std::vector<daqAnalysis::NoiseSample> _noise_samples;
   std::vector<daqAnalysis::HeaderData> _header_data;
+  std::vector<RunningThreshold> _thresholds;
   unsigned _event_ind;
   TTree *_output;
   FFTManager _fft_manager;

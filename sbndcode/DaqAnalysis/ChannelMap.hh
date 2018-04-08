@@ -37,6 +37,19 @@ public:
     return 0;
   }
 
+  // TODO: Implement
+  // 1 == induction plane
+  // 2 == collection plane
+  static unsigned PlaneType(unsigned wire_no) {
+    bool is_induction = wire_no < 240;
+    if (is_induction) {
+      return 1;
+    }
+    else {
+      return 2;
+    }
+  }
+
   static const size_t n_boards = 1;
   static const size_t n_fem_per_board = 1;
   static const size_t n_channel_per_fem = 16;
