@@ -82,7 +82,7 @@ SimpleDaqAnalysis::SimpleDaqAnalysis(fhicl::ParameterSet const & p) :
     // have Redis alloc fft if you don't calculate them and you know the input size
     int waveform_input_size = (!_config.fft_per_channel && _config.static_input_size > 0) ?
       _config.static_input_size : -1;
-    _redis_manager = new Redis(stream_take, stream_expire, snapshot_time, waveform_input_size);
+    _redis_manager = new Redis(stream_take, stream_expire, snapshot_time, waveform_input_size, _config.timing);
   }
 }
 
@@ -146,6 +146,7 @@ SimpleDaqAnalysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &par
   fft_per_channel = param.get<bool>("fft_per_channel", false);
   reduce_data = param.get<bool>("reduce_data", false);
   write_to_file = param.get<bool>("write_to_file", false);
+  timing = param.get<bool>("timing", false);
 
   // name of producer of raw::RawDigits
   std::string producer = param.get<std::string>("producer_name");
@@ -172,13 +173,22 @@ void SimpleDaqAnalysis::analyze(art::Event const & event) {
     ProcessChannel(digits);
   }
 
+  if (_config.timing) {
+    _timing.StartTime();
+  }
   // make the reduced channel data stuff if need be
   if (_config.reduce_data) {
     for (size_t i = 0; i < _per_channel_data.size(); i++) {
       _per_channel_data_reduced[i] = daqAnalysis::ReducedChannelData(_per_channel_data[i]);
     }
   }
+  if (_config.timing) {
+    _timing.EndTime(&_timing.reduce_data);
+  }
 
+  if (_config.timing) {
+    _timing.StartTime();
+  }
   // TODO: better cross-channel calculations
   // now calculate stuff that depends on stuff between channels
   for (unsigned i = 0; i < _config.n_channels; i++) {
@@ -201,7 +211,13 @@ void SimpleDaqAnalysis::analyze(art::Event const & event) {
           _per_channel_data[i].waveform, _noise_samples[next_channel_ind],  _per_channel_data[next_channel_ind].waveform);
     }
   }
+  if (_config.timing) {
+    _timing.EndTime(&_timing.coherent_noise_calc);
+  }
 
+  if (_config.timing) {
+    _timing.StartTime();
+  }
   // deal with the header
   if (_config.n_headers > 0) {
     auto const &headers_handle = event.getValidHandle<std::vector<daqAnalysis::HeaderData>>(_config.daq_tag);
@@ -209,7 +225,14 @@ void SimpleDaqAnalysis::analyze(art::Event const & event) {
       ProcessHeader(header);
     }
   }
+  if (_config.timing) {
+    _timing.EndTime(&_timing.copy_headers);
+  }
   ReportEvent(event);
+
+  if (_config.timing) {
+    _timing.Print();
+  }
 }
 
 void SimpleDaqAnalysis::ProcessHeader(const daqAnalysis::HeaderData &header) {
@@ -219,7 +242,13 @@ void SimpleDaqAnalysis::ProcessHeader(const daqAnalysis::HeaderData &header) {
 void SimpleDaqAnalysis::ReportEvent(art::Event const &art_event) {
   // Fill the output
   if (_config.write_to_file) {
+   if (_config.timing) {
+     _timing.StartTime();
+   }
     _output->Fill();
+   if (_config.timing) {
+     _timing.EndTime(&_timing.write_to_file);
+   }
   }
 
   // print stuff out
@@ -235,9 +264,21 @@ void SimpleDaqAnalysis::ReportEvent(art::Event const &art_event) {
     // only do if event isn't empty
     if (!_per_channel_data[0].empty) {
       _redis_manager->StartSend();
+      if (_config.timing) {
+        _timing.StartTime();
+       }
       _redis_manager->SendChannelData(&_per_channel_data, &_noise_samples);
+      if (_config.timing) {
+        _timing.EndTime(&_timing.redis_channel_data);
+       }
       if (_config.n_headers > 0) {
+        if (_config.timing) {
+          _timing.StartTime();
+         }
         _redis_manager->SendHeaderData(&_header_data);
+        if (_config.timing) {
+          _timing.EndTime(&_timing.redis_header_data);
+         }
       }
       _redis_manager->FinishSend();
     }
@@ -275,6 +316,9 @@ void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
     int16_t max = INT16_MAX;
     int16_t min = -INT16_MAX;
     auto adv_vec = digits.ADCs();
+    if (_config.timing) {
+      _timing.StartTime();
+    }
     for (unsigned i = 0; i < digits.NADC(); i ++) {
       int16_t adc = adv_vec[i];
       if (adc > max) max = adc;
@@ -288,6 +332,12 @@ void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
         *input = (double) adc;
       }
     }
+    if (_config.timing) {
+      _timing.EndTime(&_timing.fill_waveform);
+    }
+    if (_config.timing) {
+      _timing.StartTime();
+    }
     if (_config.baseline_calc == 0) {
       _per_channel_data[channel].baseline = 0;
     }
@@ -297,10 +347,16 @@ void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
     else if (_config.baseline_calc == 2) {
       _per_channel_data[channel].baseline = Mode(digits.ADCs());
     }
+    if (_config.timing) {
+      _timing.EndTime(&_timing.baseline_calc);
+    }
 
     _per_channel_data[channel].max = max;
     _per_channel_data[channel].min = min;
       
+    if (_config.timing) {
+      _timing.StartTime();
+    }
     // calculate FFTs
     if (_config.fft_per_channel) {
       _fft_manager.Execute();
@@ -310,7 +366,13 @@ void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
         _per_channel_data[channel].fft_imag.push_back(_fft_manager.ImOutputAt(i));
       } 
     }
+    if (_config.timing) {
+      _timing.EndTime(&_timing.execute_fft);
+    }
 
+    if (_config.timing) {
+      _timing.StartTime();
+    }
     // get thresholds 
     int16_t threshold = INT16_MAX;
     if (_config.threshold_calc == 0) {
@@ -332,9 +394,15 @@ void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
 
       threshold = _thresholds[channel].Threshold(_per_channel_data[channel].waveform, _per_channel_data[channel].baseline, n_sigma);
     }
+    if (_config.timing) {
+      _timing.EndTime(&_timing.calc_threshold);
+    }
 
     _per_channel_data[channel].threshold = threshold;
 
+    if (_config.timing) {
+      _timing.StartTime();
+    }
     // get Peaks
     if (_config.use_planes) {
       PeakFinder peaks(_per_channel_data[channel].waveform, _per_channel_data[channel].baseline, 
@@ -347,7 +415,13 @@ void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
       _per_channel_data[channel].peaks.assign(peaks.Peaks()->begin(), peaks.Peaks()->end());
 
     }
+    if (_config.timing) {
+      _timing.EndTime(&_timing.find_peaks);
+    }
 
+    if (_config.timing) {
+      _timing.StartTime();
+    }
     // get noise samples
     if (_config.noise_range_sampling == 0) {
       // use first n_noise_samples
@@ -360,6 +434,9 @@ void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
 
     _per_channel_data[channel].rms = _noise_samples[channel].RMS(_per_channel_data[channel].waveform);
     _per_channel_data[channel].noise_ranges = *_noise_samples[channel].Ranges();
+    if (_config.timing) {
+      _timing.EndTime(&_timing.calc_noise);
+    }
 
     // register rms if using running threshold
     if (_config.threshold_calc == 3) {
@@ -367,5 +444,27 @@ void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
     }
 
   }
-
 }
+
+void Timing::StartTime() {
+  start = clock();
+}
+void Timing::EndTime(float *field) {
+  *field += float(clock() - start)/CLOCKS_PER_SEC;
+}
+void Timing::Print() {
+   std::cout << "FILL WAVEFORM: " << fill_waveform << std::endl;
+   std::cout << "CALC BASELINE: " << baseline_calc << std::endl;
+   std::cout << "FFT   EXECUTE: " << execute_fft << std::endl;
+   std::cout << "CALC THRESHOLD " << calc_threshold << std::endl;
+   std::cout << "CALC PEAKS   : " << find_peaks << std::endl;
+   std::cout << "CALC NOISE   : " << calc_noise << std::endl;
+   std::cout << "REDUCE DATA  : " << reduce_data << std::endl;
+   std::cout << "COHERENT NOISE " << coherent_noise_calc << std::endl;
+   std::cout << "COPY HEADERS : " << copy_headers << std::endl;
+   std::cout << "WRITE TO FILE: " << write_to_file << std::endl;
+   std::cout << "REDIS CHANNEL: " << redis_channel_data << std::endl;
+   std::cout << "REDIS HEADER : " << redis_header_data << std::endl;
+}
+
+

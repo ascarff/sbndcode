@@ -5,6 +5,7 @@
 #include <ctime>
 
 #include <hiredis/hiredis.h>
+#include <hiredis/async.h>
 
 #include "ChannelData.hh"
 #include "HeaderData.hh"
@@ -13,13 +14,48 @@
 
 namespace daqAnalysis {
   class Redis;
+  class RedisTiming;
   class StreamDataMean;
   class StreamDataMax;
 }
 
+// keep track of timing information
+class daqAnalysis::RedisTiming {
+public:
+  clock_t start;
+  float copy_channel_data;
+  float board_and_fem_data;
+  float send_channel_data;
+  float send_fem_data;
+  float send_board_data;
+  float send_header_data;
+  float send_waveform;
+  float send_fft;
+  float correlation;
+  float clear_pipeline;
+
+  RedisTiming():
+    copy_channel_data(0),
+    board_and_fem_data(0),
+    send_channel_data(0),
+    send_fem_data(0),
+    send_board_data(0),
+    send_header_data(0),
+    send_waveform(0),
+    send_fft(0),
+    correlation(0),
+    clear_pipeline(0)
+  {}
+  
+  void StartTime();
+  void EndTime(float *field);
+
+  void Print();
+};
+
 class daqAnalysis::Redis {
 public:
-  Redis(std::vector<unsigned> &stream_take, std::vector<unsigned> &stream_expire, int snapshot_time = -1, int static_waveform_size = -1);
+  Redis(std::vector<unsigned> &stream_take, std::vector<unsigned> &stream_expire, int snapshot_time = -1, int static_waveform_size = -1, bool timing=false);
   ~Redis();
   void SendChannelData(std::vector<daqAnalysis::ChannelData> *per_channel_data, std::vector<daqAnalysis::NoiseSample> *noise_samples);
   void SendHeaderData(std::vector<daqAnalysis::HeaderData> *header_data);
@@ -32,14 +68,17 @@ protected:
   void SendBoard(unsigned stream_index);
   void SendHeader(unsigned stream_index);
   void Snapshot(std::vector<ChannelData> *per_channel_data, std::vector<daqAnalysis::NoiseSample> *noise);
+  void FinishPipeline(size_t n_commands);
 
   redisContext *context;
   std::time_t _now;
-  std::time_t _last;
   std::time_t _start;
   int _snapshot_time;
   std::vector<unsigned> _stream_take;
   std::vector<unsigned> _stream_expire;
+  std::vector<std::time_t> _stream_last;
+  std::vector<bool> _stream_send;
+  std::time_t _last_snapshot;
 
   std::vector<daqAnalysis::StreamDataMean> _channel_rms;
   std::vector<daqAnalysis::StreamDataMean> _channel_baseline;
@@ -62,7 +101,9 @@ protected:
   std::vector<daqAnalysis::StreamDataMax> _event_no;
 
   FFTManager _fft_manager;
-  
+
+  bool _do_timing;
+  daqAnalysis::RedisTiming _timing;
 };
 
 class daqAnalysis::StreamDataMean {
