@@ -11,7 +11,7 @@ class PeakFinder {
 public:
   class Peak {
   public:
-    double amplitude;
+    int16_t amplitude;
     unsigned peak_index;
     unsigned start_tight;
     unsigned start_loose;
@@ -23,7 +23,7 @@ public:
       reset();
     }
     void reset() {
-      amplitude = -DBL_MAX;
+      amplitude = -INT16_MAX;
       peak_index = 0;
       start_tight = 0;
       start_loose = 0;
@@ -32,33 +32,33 @@ public:
     }
   };
 
-  PeakFinder(std::vector<double> &waveform, double baseline, double threshold, unsigned n_smoothing_samples=1, unsigned plane_type=0);
+  PeakFinder(std::vector<int16_t> &waveform, int16_t baseline, int16_t threshold, unsigned n_smoothing_samples=1, unsigned plane_type=0);
   inline std::vector<Peak> *Peaks() { return &_peaks; }
 private:
-  Peak FinishPeak(Peak peak, unsigned n_smoothing_samples, double baseline, bool up_peak, unsigned index);
+  Peak FinishPeak(Peak peak, unsigned n_smoothing_samples, int16_t baseline, bool up_peak, unsigned index);
   void matchPeaks(unsigned match_range);
-  std::vector<double> _smoothed_waveform;
+  std::vector<int16_t> _smoothed_waveform;
   std::vector<Peak> _peaks;
 };
 
 class Threshold {
 public:
-  Threshold(std::vector<double> &waveform, double baseline, double n_sigma=5., bool verbose=true);
+  Threshold(std::vector<int16_t> &waveform, int16_t baseline, float n_sigma=5., bool verbose=true);
 
-  inline double Val() { return _threshold; }
+  inline int16_t Val() { return _threshold; }
 private:
-  double _threshold;
+  int16_t _threshold;
 };
 
 class RunningThreshold {
 public:
   RunningThreshold(): _rms_ind(0), _n_past_rms(0) { std::fill(_past_rms.begin(), _past_rms.end(), 0); }
 
-  double Threshold(std::vector<double> &waveform, double baseline, double n_sigma);
-  void AddRMS(double rms);
+  int16_t Threshold(std::vector<int16_t> &waveform, int16_t baseline, float n_sigma=5.);
+  void AddRMS(float rms);
 
 private:
-  std::array<double, 10> _past_rms;
+  std::array<float, 10> _past_rms;
   unsigned _rms_ind;
   unsigned _n_past_rms;
 };

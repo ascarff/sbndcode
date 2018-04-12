@@ -10,6 +10,11 @@ namespace {
     art::Wrapper<daqAnalysis::ChannelData> c_w;
     art::Wrapper<std::vector<daqAnalysis::ChannelData>> c_v_w;
 
+    daqAnalysis::ReducedChannelData rc;
+    std::vector<daqAnalysis::ReducedChannelData> rc_v;
+    art::Wrapper<daqAnalysis::ReducedChannelData> rc_w;
+    art::Wrapper<std::vector<daqAnalysis::ReducedChannelData>> rc_v_w;
+
     daqAnalysis::HeaderData h;
     std::vector<daqAnalysis::HeaderData> h_v;
     art::Wrapper<daqAnalysis::HeaderData> h_w;

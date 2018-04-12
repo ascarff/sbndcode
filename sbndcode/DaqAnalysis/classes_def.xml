@@ -4,6 +4,11 @@
   <class name="art::Wrapper<daqAnalysis::ChannelData>"/>
   <class name="art::Wrapper<std::vector<daqAnalysis::ChannelData>>"/>
 
+  <class name="daqAnalysis::ReducedChannelData"/>
+  <class name="std::vector<daqAnalysis::ReducedChannelData>"/>
+  <class name="art::Wrapper<daqAnalysis::ReducedChannelData>"/>
+  <class name="art::Wrapper<std::vector<daqAnalysis::ReducedChannelData>>"/>
+
   <class name="daqAnalysis::HeaderData"/>
   <class name="std::vector<daqAnalysis::HeaderData>"/>
   <class name="art::Wrapper<daqAnalysis::HeaderData>"/>

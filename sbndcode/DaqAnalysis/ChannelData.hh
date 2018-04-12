@@ -9,25 +9,24 @@
 #include "PeakFinder.hh"
 
 namespace daqAnalysis {
-
 class ChannelData {
 public:
   unsigned channel_no;
   bool empty;
-  double baseline;
-  double max;
-  double min;
-  double rms;
+  int16_t baseline;
+  int16_t max;
+  int16_t min;
+  float rms;
   // TEMPORARY: save the correlation
   // between "adjacent" channels for debugging purposes
-  double last_channel_correlation;
-  double next_channel_correlation;
-  // thresholds
-  double threshold;
+  float last_channel_correlation;
+  float next_channel_correlation;
   // and their sum-rms
-  double last_channel_sum_rms;
-  double next_channel_sum_rms;
-  std::vector<double> waveform;
+  float last_channel_sum_rms;
+  float next_channel_sum_rms;
+  // thresholds
+  int16_t threshold;
+  std::vector<int16_t> waveform;
   std::vector<double> fft_real;
   std::vector<double> fft_imag;
   std::vector<PeakFinder::Peak> peaks;
@@ -36,7 +35,7 @@ public:
   Json::Value GetJson(); 
   std::string Jsonify();
   std::string JsonifyPretty();
-  double meanPeakHeight();
+  float meanPeakHeight();
 
   // zero initialize
   ChannelData():
@@ -48,9 +47,9 @@ public:
     rms(0),
     last_channel_correlation(0),
     next_channel_correlation(0),
-    threshold(0),
     last_channel_sum_rms(0),
-    next_channel_sum_rms(0)
+    next_channel_sum_rms(0),
+    threshold(0)
   {}
 
   ChannelData(unsigned channel):
@@ -62,12 +61,39 @@ public:
     rms(0),
     last_channel_correlation(0),
     next_channel_correlation(0),
-    threshold(0),
     last_channel_sum_rms(0),
-    next_channel_sum_rms(0)
+    next_channel_sum_rms(0),
+    threshold(0)
+  {}
+};
+
+class ReducedChannelData {
+public:
+  unsigned channel_no;
+  bool empty;
+  int16_t baseline;
+  float rms;
+  unsigned n_peaks;
+  float mean_peak_amplitude;
+
+  // zero initialize
+  ReducedChannelData():
+    channel_no(0),
+    empty(true /* except for empty by default*/),
+    baseline(0),
+    rms(0),
+    n_peaks(0),
+    mean_peak_amplitude(0)
   {}
 
-  
+  ReducedChannelData(ChannelData &channel_data) {
+    channel_no = channel_data.channel_no;
+    empty = channel_data.empty;
+    baseline = channel_data.baseline;
+    rms = channel_data.rms;
+    n_peaks = channel_data.peaks.size();
+    mean_peak_amplitude = channel_data.meanPeakHeight();
+  }
 };
 
 }

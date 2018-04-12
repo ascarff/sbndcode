@@ -61,7 +61,7 @@ public:
   struct AnalysisConfig {
     public:
     std::string output_file_name;
-    double frame_to_dt;
+    float frame_to_dt;
     bool verbose;
     int n_events;
     size_t n_channels;
@@ -71,8 +71,8 @@ public:
     bool redis;
     int n_headers;
 
-    double threshold;
-    double threshold_sigma;
+    int16_t threshold;
+    float threshold_sigma;
     
     unsigned baseline_calc;
     unsigned noise_range_sampling;
@@ -80,6 +80,10 @@ public:
     unsigned threshold_calc;
     unsigned n_noise_samples;
     unsigned n_smoothing_samples;
+
+    bool fft_per_channel;
+    bool reduce_data;
+    bool write_to_file;
 
     AnalysisConfig(const fhicl::ParameterSet &param);
     AnalysisConfig() {}
@@ -95,6 +99,7 @@ private:
   // Declare member data here.
   AnalysisConfig _config;
   std::vector<daqAnalysis::ChannelData> _per_channel_data;
+  std::vector<daqAnalysis::ReducedChannelData> _per_channel_data_reduced;
   std::vector<daqAnalysis::NoiseSample> _noise_samples;
   std::vector<daqAnalysis::HeaderData> _header_data;
   std::vector<RunningThreshold> _thresholds;

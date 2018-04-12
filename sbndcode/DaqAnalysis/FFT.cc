@@ -7,7 +7,10 @@
 #include "FFT.hh"
 
 FFTManager::FFTManager(unsigned input_size) {
-  Set(input_size);
+  _is_allocated = false;
+  if (input_size != 0) { 
+    Set(input_size);
+  }
 }
 
 void FFTManager::Set(unsigned input_size) {

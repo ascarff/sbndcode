@@ -11,11 +11,12 @@
 #include "Noise.hh"
 #include "Analysis.h"
 #include "ChannelMap.hh"
+#include "FFT.hh"
 
 using namespace daqAnalysis;
 using namespace std;
 
-Redis::Redis(std::vector<unsigned> &stream_take, std::vector<unsigned> &stream_expire, int snapshot_time): 
+Redis::Redis(std::vector<unsigned> &stream_take, std::vector<unsigned> &stream_expire, int snapshot_time, int waveform_input_size): 
   _snapshot_time(snapshot_time),
   _stream_take(stream_take),
   _stream_expire(stream_expire),
@@ -38,7 +39,8 @@ Redis::Redis(std::vector<unsigned> &stream_take, std::vector<unsigned> &stream_e
 
   _frame_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
   _trigframe_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
-  _event_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_board* ChannelMap::n_boards))
+  _event_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
+  _fft_manager((waveform_input_size > 0) ? waveform_input_size: 0)
 {
   context = redisConnect("127.0.0.1", 6379);
   std::cout << "REDIS CONTEXT: " << context << std::endl;
@@ -145,7 +147,7 @@ void Redis::SendFem(unsigned stream_index) {
   void *reply;
   for (unsigned fem_ind = 0; fem_ind < _fem_rms[stream_index].Size(); fem_ind++) {
     unsigned fem = fem_ind % ChannelMap::n_fem_per_board;
-    unsigned board = ChannelMap::Board(fem_ind);
+    unsigned board = fem_ind / ChannelMap::n_fem_per_board;
     reply = redisCommand(context, "SET stream/%i:%i:rms:board:%i:fem:%i %f", _stream_take[stream_index], _now/_stream_take[stream_index], board, fem, _fem_rms[stream_index].Take(fem_ind));
     freeReplyObject(reply);       
     reply = redisCommand(context, "EXPIRE stream/%i:%i:rms:board:%i:fem:%i %i", _stream_take[stream_index], _now/_stream_take[stream_index], board, fem, _stream_expire[stream_index]);
@@ -209,6 +211,12 @@ void Redis::SendBoard(unsigned stream_index) {
   }
 }
 
+void pushFFTDat(redisContext *context, unsigned channel, float re, float im) {
+  float dat = re * im;
+  void *reply = redisCommand(context, "RPUSH snapshot:fft:wire:%i %f", channel, dat);
+  freeReplyObject(reply);
+}
+
 void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> *noise) {
   void *reply;
    
@@ -223,16 +231,34 @@ void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> 
     reply = redisCommand(context, "DEL snapshot:waveform:wire:%i", channel.channel_no);
     freeReplyObject(reply);
     for (auto dat: channel.waveform) {
-      reply = redisCommand(context, "RPUSH snapshot:waveform:wire:%i %f", channel.channel_no, dat);
+      reply = redisCommand(context, "RPUSH snapshot:waveform:wire:%i %i", channel.channel_no, dat);
       freeReplyObject(reply);
     }
 
     reply = redisCommand(context, "DEL snapshot:fft:wire:%i", channel.channel_no);
     freeReplyObject(reply);
-    for (size_t i = 0; i < channel.fft_real.size(); i++) {
-      double dat = channel.fft_real[i]*channel.fft_real[i] + channel.fft_imag[i]*channel.fft_imag[i];
-      reply = redisCommand(context, "RPUSH snapshot:fft:wire:%i %f", channel.channel_no, dat);
-      freeReplyObject(reply);
+
+    // use already calculated FFT if there
+    if (channel.fft_real.size() != 0) {
+      for (size_t i = 0; i < channel.fft_real.size(); i++) {
+        pushFFTDat(context, channel.channel_no, channel.fft_real[i], channel.fft_imag[i]);
+      }
+    }
+    // otherwise calculate it yourself
+    else {
+      // re-allocate if necessary
+      if (_fft_manager.InputSize() != channel.waveform.size()) {
+        _fft_manager.Set(channel.waveform.size());
+      }
+      for (size_t i = 0; i < channel.waveform.size(); i++) {
+        double *input = _fft_manager.InputAt(i);
+        *input = (double) channel.waveform[i];
+      }
+      _fft_manager.Execute();
+      int adc_fft_size = _fft_manager.OutputSize();
+      for (int i = 0; i < adc_fft_size; i++) {
+        pushFFTDat(context, channel.channel_no, _fft_manager.ReOutputAt(i), _fft_manager.ImOutputAt(i));
+      }
     }
   }
 
@@ -245,7 +271,7 @@ void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> 
   // k = ((n+1)*n/2) - (n-i+1)*(n-i)/2 + j - i
   for (size_t i = 0; i < noise->size(); i++) {
     for (size_t j = i; j < noise->size(); j++) {
-      double correlation = (*noise)[i].Correlation((*per_channel_data)[i].waveform, (*noise)[j], (*per_channel_data)[j].waveform);
+      float correlation = (*noise)[i].Correlation((*per_channel_data)[i].waveform, (*noise)[j], (*per_channel_data)[j].waveform);
       reply = redisCommand(context, "RPUSH snapshot:correlation %f",  correlation);
       freeReplyObject(reply);
     }
@@ -258,27 +284,27 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
     // loop over streams
     for (size_t i = 0; i < _stream_take.size(); i++) {
       _channel_rms[i].Add(channel.channel_no, channel.rms);
-      _channel_baseline[i].Add(channel.channel_no, (double)channel.baseline);
-      _channel_hit_occupancy[i].Add(channel.channel_no, (double)channel.peaks.size());
+      _channel_baseline[i].Add(channel.channel_no, (float)channel.baseline);
+      _channel_hit_occupancy[i].Add(channel.channel_no, (float)channel.peaks.size());
       _channel_pulse_height[i].Add(channel.channel_no, channel.meanPeakHeight());
     }
   }
 
   // also store averages over fem, board data
   for (unsigned board = 0; board < daqAnalysis::ChannelMap::n_boards; board++) {
-    double board_rms = 0;
-    double board_baseline = 0;
-    double board_hit_occupancy = 0;
-    double board_pulse_height = 0;
+    float board_rms = 0;
+    float board_baseline = 0;
+    float board_hit_occupancy = 0;
+    float board_pulse_height = 0;
 
-    double rms = 0;
-    double baseline = 0;
-    double hit_occupancy = 0;
-    double pulse_height = 0;
-    double ssum_rms;
+    float rms = 0;
+    float baseline = 0;
+    float hit_occupancy = 0;
+    float pulse_height = 0;
+    float ssum_rms;
     // fem average
     for (unsigned fem = 0; fem < daqAnalysis::ChannelMap::n_fem_per_board; fem++) {
-      std::vector<std::vector<double> *> waveforms {};
+      std::vector<std::vector<int16_t> *> waveforms {};
       std::vector<daqAnalysis::NoiseSample *> this_noise_samples {};
 
       // Calculate average of metrics and store them
@@ -383,7 +409,7 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
   }
 }
 
-void daqAnalysis::StreamDataMean::Add(unsigned index, double dat) {
+void daqAnalysis::StreamDataMean::Add(unsigned index, float dat) {
   _data[index] = (_n_values * _data[index] + dat) / (_n_values + 1);
 }
 
@@ -395,18 +421,18 @@ void daqAnalysis::StreamDataMean::Clear() {
   _n_values = 0;
 }
 
-double daqAnalysis::StreamDataMean::Take(unsigned index) {
-  double ret = _data[index];
+float daqAnalysis::StreamDataMean::Take(unsigned index) {
+  float ret = _data[index];
   _data[index] = 0;
   return ret;
 }
 
-void daqAnalysis::StreamDataMax::Add(unsigned index, double dat) {
+void daqAnalysis::StreamDataMax::Add(unsigned index, float dat) {
   if (_data[index] < dat) _data[index] = dat;
 }
 
-double daqAnalysis::StreamDataMax::Take(unsigned index) {
-  double ret = _data[index];
+float daqAnalysis::StreamDataMax::Take(unsigned index) {
+  float ret = _data[index];
   _data[index] = 0;
   return ret;
 }

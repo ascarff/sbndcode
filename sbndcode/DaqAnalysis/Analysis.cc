@@ -49,27 +49,40 @@ SimpleDaqAnalysis::SimpleDaqAnalysis(fhicl::ParameterSet const & p) :
   art::EDAnalyzer{p},
   _config(p),
   _per_channel_data(_config.n_channels),
+  _per_channel_data_reduced((_config.reduce_data) ? _config.n_channels : 0), // setup reduced event vector if we need it
   _noise_samples(_config.n_channels),
   _header_data(std::max(_config.n_headers,0)),
-  _thresholds( (_config.threshold_calc == 3) ? _config.n_channels : 0)
+  _thresholds( (_config.threshold_calc == 3) ? _config.n_channels : 0),
+  _fft_manager(  (_config.static_input_size > 0) ? _config.static_input_size: 0)
 {
   _event_ind = 0;
-  art::ServiceHandle<art::TFileService> fs;
 
   // set up tree and the channel data branch for output
-  _output = fs->make<TTree>("event", "event");
-  _output->Branch("channel_data", &_per_channel_data);
-  if (_config.n_headers > 0) {
-    _output->Branch("header_data", &_header_data);
+  if (_config.write_to_file) {
+    art::ServiceHandle<art::TFileService> fs;
+    _output = fs->make<TTree>("event", "event");
+    // which data to use
+    if (_config.reduce_data) {
+      _output->Branch("channel_data", &_per_channel_data_reduced);
+    }
+    else {
+      _output->Branch("channel_data", &_per_channel_data);
+    }
+    if (_config.n_headers > 0) {
+      _output->Branch("header_data", &_header_data);
+    }
   }
 
   // subclasses to do FFT's and send stuff to Redis
-  _fft_manager = (_config.static_input_size > 0) ? FFTManager(_config.static_input_size) : FFTManager();
   if (_config.redis) {
     auto stream_take = p.get<std::vector<unsigned>>("stream_take");
     auto stream_expire = p.get<std::vector<unsigned>>("stream_expire");
     int snapshot_time = p.get<int>("snapshot_time", -1);
-    _redis_manager = new Redis(stream_take, stream_expire, snapshot_time);
+
+    // have Redis alloc fft if you don't calculate them and you know the input size
+    int waveform_input_size = (!_config.fft_per_channel && _config.static_input_size > 0) ?
+      _config.static_input_size : -1;
+    _redis_manager = new Redis(stream_take, stream_expire, snapshot_time, waveform_input_size);
   }
 }
 
@@ -77,7 +90,7 @@ SimpleDaqAnalysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &par
   // set up config
 
   // conversion of frame number to time (currently unused)
-  frame_to_dt = param.get<double>("frame_to_dt", 1.6e-3 /* units of seconds */);
+  frame_to_dt = param.get<float>("frame_to_dt", 1.6e-3 /* units of seconds */);
   // whether to print stuff
   verbose = param.get<bool>("verbose", false);
   // number of events to take in before exiting
@@ -93,8 +106,8 @@ SimpleDaqAnalysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &par
   // 2 == use raw rms
   // 3 == use rolling average of rms
   threshold_calc = param.get<unsigned>("threshold_calc", 0);
-  threshold_sigma = param.get<double>("threshold_sigma", 5.);
-  threshold = param.get<double>("threshold", 100);
+  threshold_sigma = param.get<float>("threshold_sigma", 5.);
+  threshold = param.get<int16_t>("threshold", 100);
 
   // determine method to get noise sample
   // 0 == use first `n_baseline_samples`
@@ -129,6 +142,11 @@ SimpleDaqAnalysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &par
   // TODO: how to detect this?
   n_channels = param.get<unsigned>("n_channels", 16 /* currently only the first 16 channels have data */);
 
+  // whether to calculate/save certain things
+  fft_per_channel = param.get<bool>("fft_per_channel", false);
+  reduce_data = param.get<bool>("reduce_data", false);
+  write_to_file = param.get<bool>("write_to_file", false);
+
   // name of producer of raw::RawDigits
   std::string producer = param.get<std::string>("producer_name");
   daq_tag = art::InputTag(producer, ""); 
@@ -154,8 +172,14 @@ void SimpleDaqAnalysis::analyze(art::Event const & event) {
     ProcessChannel(digits);
   }
 
-  // TODO: better cross-channel calculations
+  // make the reduced channel data stuff if need be
+  if (_config.reduce_data) {
+    for (size_t i = 0; i < _per_channel_data.size(); i++) {
+      _per_channel_data_reduced[i] = daqAnalysis::ReducedChannelData(_per_channel_data[i]);
+    }
+  }
 
+  // TODO: better cross-channel calculations
   // now calculate stuff that depends on stuff between channels
   for (unsigned i = 0; i < _config.n_channels; i++) {
     unsigned last_channel_ind = i == 0 ? _config.n_channels - 1 : i - 1;
@@ -194,7 +218,9 @@ void SimpleDaqAnalysis::ProcessHeader(const daqAnalysis::HeaderData &header) {
 
 void SimpleDaqAnalysis::ReportEvent(art::Event const &art_event) {
   // Fill the output
-  _output->Fill();
+  if (_config.write_to_file) {
+    _output->Fill();
+  }
 
   // print stuff out
   if (_config.verbose) {
@@ -206,12 +232,15 @@ void SimpleDaqAnalysis::ReportEvent(art::Event const &art_event) {
 
   // Send stuff to Redis
   if (_config.redis) {
-    _redis_manager->StartSend();
-    _redis_manager->SendChannelData(&_per_channel_data, &_noise_samples);
-    if (_config.n_headers > 0) {
-      _redis_manager->SendHeaderData(&_header_data);
+    // only do if event isn't empty
+    if (!_per_channel_data[0].empty) {
+      _redis_manager->StartSend();
+      _redis_manager->SendChannelData(&_per_channel_data, &_noise_samples);
+      if (_config.n_headers > 0) {
+        _redis_manager->SendHeaderData(&_header_data);
+      }
+      _redis_manager->FinishSend();
     }
-    _redis_manager->FinishSend();
   }
 }
 
@@ -243,42 +272,47 @@ void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
    
     _per_channel_data[channel].channel_no = channel;
 
-    double max = 0;
-    double min = DBL_MAX;
+    int16_t max = INT16_MAX;
+    int16_t min = -INT16_MAX;
+    auto adv_vec = digits.ADCs();
     for (unsigned i = 0; i < digits.NADC(); i ++) {
-      double adc = (double) digits.ADCs()[i];
+      int16_t adc = adv_vec[i];
       if (adc > max) max = adc;
       if (adc < min) min = adc;
     
       // fill up waveform
       _per_channel_data[channel].waveform.push_back(adc);
-      // fill up fftw array
-      double *input = _fft_manager.InputAt(i);
-      *input = adc;
+      if (_config.fft_per_channel) {
+        // fill up fftw array
+        double *input = _fft_manager.InputAt(i);
+        *input = (double) adc;
+      }
     }
     if (_config.baseline_calc == 0) {
-      _per_channel_data[channel].baseline = 0.;
+      _per_channel_data[channel].baseline = 0;
     }
     else if (_config.baseline_calc == 1) {
-      _per_channel_data[channel].baseline = (double) digits.GetPedestal();
+      _per_channel_data[channel].baseline = digits.GetPedestal();
     }
     else if (_config.baseline_calc == 2) {
-      _per_channel_data[channel].baseline = (double) Mode(digits.ADCs());
+      _per_channel_data[channel].baseline = Mode(digits.ADCs());
     }
 
     _per_channel_data[channel].max = max;
     _per_channel_data[channel].min = min;
       
     // calculate FFTs
-    _fft_manager.Execute();
-    int adc_fft_size = _fft_manager.OutputSize();
-    for (int i = 0; i < adc_fft_size; i++) {
-      _per_channel_data[channel].fft_real.push_back(_fft_manager.ReOutputAt(i));
-      _per_channel_data[channel].fft_imag.push_back(_fft_manager.ImOutputAt(i));
-    } 
+    if (_config.fft_per_channel) {
+      _fft_manager.Execute();
+      int adc_fft_size = _fft_manager.OutputSize();
+      for (int i = 0; i < adc_fft_size; i++) {
+        _per_channel_data[channel].fft_real.push_back(_fft_manager.ReOutputAt(i));
+        _per_channel_data[channel].fft_imag.push_back(_fft_manager.ImOutputAt(i));
+      } 
+    }
 
     // get thresholds 
-    double threshold = DBL_MAX;
+    int16_t threshold = INT16_MAX;
     if (_config.threshold_calc == 0) {
       threshold = _config.threshold;
     }
@@ -288,12 +322,12 @@ void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
     }
     else if (_config.threshold_calc == 2) {
       NoiseSample temp({{0, (unsigned)digits.NADC()-1}}, _per_channel_data[channel].baseline);
-      double raw_rms = temp.RMS(_per_channel_data[channel].waveform);
+      float raw_rms = temp.RMS(_per_channel_data[channel].waveform);
       threshold = raw_rms * _config.threshold_sigma;
     }
     else if (_config.threshold_calc == 3) {
       // if using plane data, make collection planes reach a higher threshold
-      double n_sigma = _config.threshold_sigma;
+      float n_sigma = _config.threshold_sigma;
       if (_config.use_planes && ChannelMap::PlaneType(channel) == 2) n_sigma = n_sigma * 1.5;
 
       threshold = _thresholds[channel].Threshold(_per_channel_data[channel].waveform, _per_channel_data[channel].baseline, n_sigma);

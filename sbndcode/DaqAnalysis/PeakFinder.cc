@@ -22,7 +22,7 @@ inline bool doMatchPeaks(unsigned plane_type) {
 // plane_type == 0 means fit up and down peaks and don't match (i.e. debug mode)
 // plane_type == 1 means fit up and down peaks and match (induction planes)
 // plane_type == 2 means fit up peaks only (collection planes)
-PeakFinder::PeakFinder(std::vector<double> &waveform, double baseline, double threshold, unsigned n_smoothing_samples, unsigned plane_type ) {
+PeakFinder::PeakFinder(std::vector<int16_t> &waveform, int16_t baseline, int16_t threshold, unsigned n_smoothing_samples, unsigned plane_type ) {
   // number of smoothing samples must be odd to make sense
   assert(n_smoothing_samples % 2 == 1);
 
@@ -31,7 +31,7 @@ PeakFinder::PeakFinder(std::vector<double> &waveform, double baseline, double th
   for (unsigned i = smoothing_per_direction; i < waveform.size() - smoothing_per_direction; i++) {
     unsigned begin = i - smoothing_per_direction;
     unsigned end = i + smoothing_per_direction + 1;
-    double average = std::accumulate(waveform.begin() + begin, waveform.begin() + end, 0.0) / n_smoothing_samples;
+    int16_t average = std::accumulate(waveform.begin() + begin, waveform.begin() + end, 0.0) / n_smoothing_samples;
    
     _smoothed_waveform.push_back(average); 
   }
@@ -42,7 +42,7 @@ PeakFinder::PeakFinder(std::vector<double> &waveform, double baseline, double th
   bool up_peak = false;
   PeakFinder::Peak peak;
   for (unsigned i = 0; i < _smoothed_waveform.size(); i++) {
-    double dat = _smoothed_waveform[i];
+    int16_t dat = _smoothed_waveform[i];
     // detect a new peak, or continue on the current one
 
     // up-peak
@@ -65,7 +65,7 @@ PeakFinder::PeakFinder(std::vector<double> &waveform, double baseline, double th
     // down-peak
     else if (fitDownPeak(plane_type) && dat < baseline - threshold) {
       if (!inside_peak) {
-        peak.amplitude = DBL_MAX;
+        peak.amplitude = INT16_MAX;
         peak.start_tight = i;
         inside_peak = true;
         up_peak = false;
@@ -103,7 +103,7 @@ PeakFinder::PeakFinder(std::vector<double> &waveform, double baseline, double th
 }
 
 
-PeakFinder::Peak PeakFinder::FinishPeak(PeakFinder::Peak peak, unsigned n_smoothing_samples, double baseline, bool up_peak, unsigned index) {
+PeakFinder::Peak PeakFinder::FinishPeak(PeakFinder::Peak peak, unsigned n_smoothing_samples, int16_t baseline, bool up_peak, unsigned index) {
   peak.end_tight = index;
   // find the upper and lower bounds to determine the max width
   peak.start_loose = peak.start_tight;
@@ -165,13 +165,13 @@ void PeakFinder::matchPeaks(unsigned match_range) {
 }
 
 
-Threshold::Threshold(std::vector<double> &waveform, double baseline, double n_sigma, bool verbose) {
-  double min = *std::min_element(waveform.begin(), waveform.end());
-  double max = *std::max_element(waveform.begin(), waveform.end());
+Threshold::Threshold(std::vector<int16_t> &waveform, int16_t baseline, float n_sigma, bool verbose) {
+  int16_t min = *std::min_element(waveform.begin(), waveform.end());
+  int16_t max = *std::max_element(waveform.begin(), waveform.end());
   size_t length = waveform.size();
 
   TH1D hist("waveform", "waveform", length/100, min, max);
-  for (double dat: waveform) {
+  for (int16_t dat: waveform) {
     hist.Fill(dat);
   }
   if (verbose) {
@@ -197,17 +197,18 @@ Threshold::Threshold(std::vector<double> &waveform, double baseline, double n_si
   _threshold = baseline + n_sigma*fit.GetParameter(2);
 }
 
-double rawRMS(std::vector<double> &waveform, double baseline) {
+float rawRMS(std::vector<int16_t> &waveform, int16_t baseline) {
   daqAnalysis::NoiseSample temp({{0, (unsigned)waveform.size() -1}}, baseline);
   return temp.RMS(waveform);
 }
 
-double RunningThreshold::Threshold(std::vector<double> &waveform, double baseline, double n_sigma) {
+int16_t RunningThreshold::Threshold(std::vector<int16_t> &waveform, int16_t baseline, float n_sigma) {
   if (_n_past_rms == 0) {
-    return rawRMS(waveform, baseline) * n_sigma;
+    // 2x penalty since rawRMS will overestimate the true RMS
+    return rawRMS(waveform, baseline) * n_sigma / 2;
   }
   else {
-    double rms = 0;
+    float rms = 0;
     for (unsigned i = 0; i < _n_past_rms; i++) {
       rms += _past_rms[i];
     }
@@ -216,7 +217,7 @@ double RunningThreshold::Threshold(std::vector<double> &waveform, double baselin
   }
 }
 
-void RunningThreshold::AddRMS(double rms) {
+void RunningThreshold::AddRMS(float rms) {
   if (_n_past_rms < 10) _n_past_rms ++;
   _past_rms[_rms_ind] = rms;
   _rms_ind = (_rms_ind + 1 ) % _past_rms.size();

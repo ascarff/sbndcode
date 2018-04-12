@@ -9,6 +9,7 @@
 #include "ChannelData.hh"
 #include "HeaderData.hh"
 #include "Noise.hh"
+#include "FFT.hh"
 
 namespace daqAnalysis {
   class Redis;
@@ -18,7 +19,7 @@ namespace daqAnalysis {
 
 class daqAnalysis::Redis {
 public:
-  Redis(std::vector<unsigned> &stream_take, std::vector<unsigned> &stream_expire, int snapshot_time = -1);
+  Redis(std::vector<unsigned> &stream_take, std::vector<unsigned> &stream_expire, int snapshot_time = -1, int static_waveform_size = -1);
   ~Redis();
   void SendChannelData(std::vector<daqAnalysis::ChannelData> *per_channel_data, std::vector<daqAnalysis::NoiseSample> *noise_samples);
   void SendHeaderData(std::vector<daqAnalysis::HeaderData> *header_data);
@@ -59,6 +60,8 @@ protected:
   std::vector<daqAnalysis::StreamDataMax> _frame_no;
   std::vector<daqAnalysis::StreamDataMax> _trigframe_no;
   std::vector<daqAnalysis::StreamDataMax> _event_no;
+
+  FFTManager _fft_manager;
   
 };
 
@@ -66,15 +69,15 @@ class daqAnalysis::StreamDataMean {
 public:
   StreamDataMean(unsigned n_data): _data(n_data, 0.), _n_values(0) {}
 
-  void Add(unsigned index, double dat);
+  void Add(unsigned index, float dat);
   void Incl();
   void Clear();
-  double Take(unsigned index);
-  double Peak(unsigned index) { return _data[index]; }
+  float Take(unsigned index);
+  float Peak(unsigned index) { return _data[index]; }
   unsigned Size() { return _data.size(); }
 
 protected:
-  std::vector<double> _data;
+  std::vector<float> _data;
   unsigned _n_values;
 
 };
@@ -83,13 +86,13 @@ class daqAnalysis::StreamDataMax {
 public:
   StreamDataMax(unsigned n_data): _data(n_data, 0.) {}
 
-  void Add(unsigned index, double dat);
-  double Take(unsigned index);
-  double Peak(unsigned index) { return _data[index]; }
+  void Add(unsigned index, float dat);
+  float Take(unsigned index);
+  float Peak(unsigned index) { return _data[index]; }
   unsigned Size() { return _data.size(); }
 
 protected:
-  std::vector<double> _data;
+  std::vector<float> _data;
 };
 
 #endif /* Redis_h */
