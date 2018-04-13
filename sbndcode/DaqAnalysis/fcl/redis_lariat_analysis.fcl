@@ -1,11 +1,18 @@
 physics:
 {
+
   analyzers:
   {
     SimpleDaqAnalysis:
     {
       module_type: SimpleDaqAnalysis
       producer_name: daq
+      redis: true
+      snapshot_time: 100
+      stream_take: [1, 10]
+      stream_expire: [1000, 10000]
+      n_headers: 0
+
       threshold_calc: 3
       threshold_sigma: 5
       noise_range_sampling: 1
@@ -13,22 +20,17 @@ physics:
       use_planes: true
       verbose: false
       baseline_calc: 2
-      n_channels: 480
+      n_channels: 480      
 
-      write_to_file: true
+      write_to_file: false
       fft_per_channel: false
       timing: false
     }
   }
 
-  a: [SimpleDaqAnalysis]
-  end_paths: [a]
+  analyze: [SimpleDaqAnalysis]
+  end_paths: [analyze]
 }
-
-services:
-{
-  TFileService: { fileName: "out.root"}
-} 
 
 source:
 {
@@ -36,5 +38,5 @@ source:
   fileNames: ["/home/nfs/gputnam/lariat_data.root"]
 }
 
-process_name: DAQANALYSIS
+process_name: REDISPIPELINE
 

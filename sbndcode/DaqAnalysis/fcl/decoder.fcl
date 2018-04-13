@@ -2,13 +2,13 @@ physics:
 {
   producers:
   {
-    daqDecoder:
+    daq:
     {
       module_type: DaqDecoder
     }
   }
 
-  my_producer_modules: [daqDecoder]
+  my_producer_modules: [daq]
 
   outstream: [out1]
   end_paths: [outstream]

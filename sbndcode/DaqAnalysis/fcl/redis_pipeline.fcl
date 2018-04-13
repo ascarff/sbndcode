@@ -5,7 +5,8 @@ physics:
     daq:
     {
       module_type: DaqDecoder
-      wait_time: 3
+      wait_time: 1
+      produce_header: true
     }
   }
 
@@ -15,7 +16,13 @@ physics:
     {
       module_type: SimpleDaqAnalysis
       producer_name: daq
+      threshold_lo: 100
+      noise_range_sampling: 1
       redis: true
+      n_headers: 1
+      snapshot_time: 100
+      stream_take: [1, 10]
+      stream_expire: [1000, 10000]
     }
   }
 
