@@ -8,6 +8,10 @@
 #include "ChannelData.hh"
 
 float daqAnalysis::ChannelData::meanPeakHeight() {
+  if (peaks.size() == 0) {
+    return 0;
+  } 
+
   int total = 0;
   for (unsigned i = 0; i < peaks.size(); i++) {
     if (peaks[i].is_up) {
@@ -18,6 +22,16 @@ float daqAnalysis::ChannelData::meanPeakHeight() {
     }
   }
   return ((float) total) / peaks.size();
+}
+
+float daqAnalysis::ChannelData::Occupancy() {
+  float n_peaks = 0;
+  for (unsigned i = 0; i < peaks.size(); i++) {
+    if (peaks[i].is_up) {
+      n_peaks += 1;
+    }
+  }
+  return n_peaks;
 }
 
 // Turn in channel data to a json blob for sending to Redis

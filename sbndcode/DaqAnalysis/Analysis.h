@@ -111,7 +111,7 @@ public:
     bool redis;
     int n_headers;
 
-    int16_t threshold;
+    float threshold;
     float threshold_sigma;
     
     unsigned baseline_calc;

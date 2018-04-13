@@ -16,6 +16,7 @@ namespace daqAnalysis {
   class Redis;
   class RedisTiming;
   class StreamDataMean;
+  class StreamDataVariableMean;
   class StreamDataMax;
 }
 
@@ -83,18 +84,18 @@ protected:
   std::vector<daqAnalysis::StreamDataMean> _channel_rms;
   std::vector<daqAnalysis::StreamDataMean> _channel_baseline;
   std::vector<daqAnalysis::StreamDataMean> _channel_hit_occupancy;
-  std::vector<daqAnalysis::StreamDataMean> _channel_pulse_height;
+  std::vector<daqAnalysis::StreamDataVariableMean> _channel_pulse_height;
 
   std::vector<daqAnalysis::StreamDataMean> _fem_rms;
   std::vector<daqAnalysis::StreamDataMean> _fem_scaled_sum_rms;
   std::vector<daqAnalysis::StreamDataMean> _fem_baseline;
   std::vector<daqAnalysis::StreamDataMean> _fem_hit_occupancy;
-  std::vector<daqAnalysis::StreamDataMean> _fem_pulse_height;
+  std::vector<daqAnalysis::StreamDataVariableMean> _fem_pulse_height;
 
   std::vector<daqAnalysis::StreamDataMean> _board_rms;
   std::vector<daqAnalysis::StreamDataMean> _board_baseline;
   std::vector<daqAnalysis::StreamDataMean> _board_hit_occupancy;
-  std::vector<daqAnalysis::StreamDataMean> _board_pulse_height;
+  std::vector<daqAnalysis::StreamDataVariableMean> _board_pulse_height;
 
   std::vector<daqAnalysis::StreamDataMax> _frame_no;
   std::vector<daqAnalysis::StreamDataMax> _trigframe_no;
@@ -123,13 +124,28 @@ protected:
 
 };
 
+class daqAnalysis::StreamDataVariableMean {
+public:
+  StreamDataVariableMean(unsigned n_data): _data(n_data, 0.), _n_values(n_data, 0) {}
+
+  void Add(unsigned index, float dat);
+  float Take(unsigned index);
+  float Peek(unsigned index) { return _data[index]; }
+  unsigned Size() { return _data.size(); }
+
+protected:
+  std::vector<float> _data;
+  std::vector<unsigned> _n_values;
+};
+
+
 class daqAnalysis::StreamDataMax {
 public:
   StreamDataMax(unsigned n_data): _data(n_data, 0.) {}
 
   void Add(unsigned index, float dat);
   float Take(unsigned index);
-  float Peak(unsigned index) { return _data[index]; }
+  float Peek(unsigned index) { return _data[index]; }
   unsigned Size() { return _data.size(); }
 
 protected:

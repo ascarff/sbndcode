@@ -13,7 +13,7 @@ class ChannelData {
 public:
   unsigned channel_no;
   bool empty;
-  int16_t baseline;
+  float baseline;
   int16_t max;
   int16_t min;
   float rms;
@@ -36,6 +36,7 @@ public:
   std::string Jsonify();
   std::string JsonifyPretty();
   float meanPeakHeight();
+  float Occupancy();
 
   // zero initialize
   ChannelData():

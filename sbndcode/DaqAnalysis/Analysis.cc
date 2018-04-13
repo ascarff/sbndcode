@@ -107,7 +107,7 @@ SimpleDaqAnalysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &par
   // 3 == use rolling average of rms
   threshold_calc = param.get<unsigned>("threshold_calc", 0);
   threshold_sigma = param.get<float>("threshold_sigma", 5.);
-  threshold = param.get<int16_t>("threshold", 100);
+  threshold = param.get<float>("threshold", 100);
 
   // determine method to get noise sample
   // 0 == use first `n_baseline_samples`
@@ -313,8 +313,8 @@ void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
    
     _per_channel_data[channel].channel_no = channel;
 
-    int16_t max = INT16_MAX;
-    int16_t min = -INT16_MAX;
+    int16_t max = -INT16_MAX;
+    int16_t min = INT16_MAX;
     auto adv_vec = digits.ADCs();
     if (_config.timing) {
       _timing.StartTime();
@@ -374,7 +374,7 @@ void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
       _timing.StartTime();
     }
     // get thresholds 
-    int16_t threshold = INT16_MAX;
+    float threshold = _config.threshold;
     if (_config.threshold_calc == 0) {
       threshold = _config.threshold;
     }

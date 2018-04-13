@@ -22,7 +22,7 @@ inline bool doMatchPeaks(unsigned plane_type) {
 // plane_type == 0 means fit up and down peaks and don't match (i.e. debug mode)
 // plane_type == 1 means fit up and down peaks and match (induction planes)
 // plane_type == 2 means fit up peaks only (collection planes)
-PeakFinder::PeakFinder(std::vector<int16_t> &waveform, int16_t baseline, int16_t threshold, unsigned n_smoothing_samples, unsigned plane_type ) {
+PeakFinder::PeakFinder(std::vector<int16_t> &waveform, int16_t baseline, float threshold, unsigned n_smoothing_samples, unsigned plane_type ) {
   // number of smoothing samples must be odd to make sense
   assert(n_smoothing_samples % 2 == 1);
 
@@ -202,7 +202,7 @@ float rawRMS(std::vector<int16_t> &waveform, int16_t baseline) {
   return temp.RMS(waveform);
 }
 
-int16_t RunningThreshold::Threshold(std::vector<int16_t> &waveform, int16_t baseline, float n_sigma) {
+float RunningThreshold::Threshold(std::vector<int16_t> &waveform, int16_t baseline, float n_sigma) {
   if (_n_past_rms == 0) {
     // 2x penalty since rawRMS will overestimate the true RMS
     return rawRMS(waveform, baseline) * n_sigma / 2;

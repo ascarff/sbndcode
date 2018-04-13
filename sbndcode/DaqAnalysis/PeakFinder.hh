@@ -32,7 +32,7 @@ public:
     }
   };
 
-  PeakFinder(std::vector<int16_t> &waveform, int16_t baseline, int16_t threshold, unsigned n_smoothing_samples=1, unsigned plane_type=0);
+  PeakFinder(std::vector<int16_t> &waveform, int16_t baseline, float threshold, unsigned n_smoothing_samples=1, unsigned plane_type=0);
   inline std::vector<Peak> *Peaks() { return &_peaks; }
 private:
   Peak FinishPeak(Peak peak, unsigned n_smoothing_samples, int16_t baseline, bool up_peak, unsigned index);
@@ -45,16 +45,16 @@ class Threshold {
 public:
   Threshold(std::vector<int16_t> &waveform, int16_t baseline, float n_sigma=5., bool verbose=true);
 
-  inline int16_t Val() { return _threshold; }
+  inline float Val() { return _threshold; }
 private:
-  int16_t _threshold;
+  float _threshold;
 };
 
 class RunningThreshold {
 public:
   RunningThreshold(): _rms_ind(0), _n_past_rms(0) { std::fill(_past_rms.begin(), _past_rms.end(), 0); }
 
-  int16_t Threshold(std::vector<int16_t> &waveform, int16_t baseline, float n_sigma=5.);
+  float Threshold(std::vector<int16_t> &waveform, int16_t baseline, float n_sigma=5.);
   void AddRMS(float rms);
 
 private:
