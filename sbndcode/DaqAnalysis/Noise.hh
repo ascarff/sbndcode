@@ -22,6 +22,7 @@ public:
   float Correlation(std::vector<int16_t> &wvfm_self, NoiseSample &other, std::vector<int16_t> &wvfm_other);
   float SumRMS(std::vector<int16_t> &wvfm_self, NoiseSample &other, std::vector<int16_t> &wvfm_other);
   static float ScaledSumRMS(std::vector<NoiseSample *>& other, std::vector<std::vector<int16_t> *>& wvfm_other);
+  float DNoise(std::vector<int16_t> &wvfm_self, NoiseSample &other, std::vector<int16_t> &wvfm_other);
 
   std::vector<std::array<unsigned, 2>> *Ranges() { return &_ranges; }
 private:

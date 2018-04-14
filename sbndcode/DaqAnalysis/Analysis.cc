@@ -129,6 +129,8 @@ SimpleDaqAnalysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &par
 
   // number of samples to average in each direction for peak finding
   n_smoothing_samples = param.get<unsigned>("n_smoothing_samples", 1);
+  // number of consecutive samples that must be above threshold to count as a peak
+  n_above_threshold = param.get<unsigned>("n_above_threshold", 1);
 
   // Number of input adc counts per waveform. Set to negative if unknown.
   // Setting to some positive number will speed up FFT's.
@@ -189,26 +191,15 @@ void SimpleDaqAnalysis::analyze(art::Event const & event) {
   if (_config.timing) {
     _timing.StartTime();
   }
-  // TODO: better cross-channel calculations
+
   // now calculate stuff that depends on stuff between channels
-  for (unsigned i = 0; i < _config.n_channels; i++) {
-    unsigned last_channel_ind = i == 0 ? _config.n_channels - 1 : i - 1;
-    unsigned next_channel_ind = i == _config.n_channels - 1 ? 0 : i + 1;
+  for (unsigned i = 0; i < _config.n_channels - 1; i++) {
+    unsigned next_channel = i + 1; 
 
-    if (!_per_channel_data[i].empty && !_per_channel_data[last_channel_ind].empty) {
-      // cross channel correlations
-      _per_channel_data[i].last_channel_correlation = _noise_samples[i].Correlation(
-          _per_channel_data[i].waveform, _noise_samples[last_channel_ind],  _per_channel_data[last_channel_ind].waveform);
-      // cross channel sum RMS
-      _per_channel_data[i].last_channel_sum_rms = _noise_samples[i].SumRMS(
-        _per_channel_data[i].waveform, _noise_samples[last_channel_ind],  _per_channel_data[last_channel_ind].waveform);
-    }
-
-    if (!_per_channel_data[i].empty && !_per_channel_data[next_channel_ind].empty) {
-      _per_channel_data[i].next_channel_correlation = _noise_samples[i].Correlation(
-          _per_channel_data[i].waveform, _noise_samples[next_channel_ind],  _per_channel_data[next_channel_ind].waveform);
-      _per_channel_data[i].next_channel_sum_rms = _noise_samples[i].SumRMS(
-          _per_channel_data[i].waveform, _noise_samples[next_channel_ind],  _per_channel_data[next_channel_ind].waveform);
+    if (!_per_channel_data[i].empty && !_per_channel_data[next_channel].empty) {
+      // dnoise 
+      _per_channel_data[i].next_channel_dnoise = _noise_samples[i].DNoise(
+          _per_channel_data[i].waveform, _noise_samples[next_channel],  _per_channel_data[next_channel].waveform);
     }
   }
   if (_config.timing) {
@@ -404,17 +395,11 @@ void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
       _timing.StartTime();
     }
     // get Peaks
-    if (_config.use_planes) {
-      PeakFinder peaks(_per_channel_data[channel].waveform, _per_channel_data[channel].baseline, 
-           threshold, _config.n_smoothing_samples, ChannelMap::PlaneType(channel));
-      _per_channel_data[channel].peaks.assign(peaks.Peaks()->begin(), peaks.Peaks()->end());
-    }
-    else {
-      PeakFinder peaks(_per_channel_data[channel].waveform, _per_channel_data[channel].baseline, 
-           threshold, _config.n_smoothing_samples, 0);
-      _per_channel_data[channel].peaks.assign(peaks.Peaks()->begin(), peaks.Peaks()->end());
+    unsigned peak_plane = (_config.use_planes) ? ChannelMap::PlaneType(channel) : 0;
+    PeakFinder peaks(_per_channel_data[channel].waveform, _per_channel_data[channel].baseline, 
+         threshold, _config.n_smoothing_samples, _config.n_above_threshold, peak_plane);
+    _per_channel_data[channel].peaks.assign(peaks.Peaks()->begin(), peaks.Peaks()->end());
 
-    }
     if (_config.timing) {
       _timing.EndTime(&_timing.find_peaks);
     }

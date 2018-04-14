@@ -59,10 +59,7 @@ Json::Value daqAnalysis::ChannelData::GetJson() {
   output["empty"] = empty;
   output["threshold"] = threshold;
   
-  output["last_channel_correlation"] = last_channel_correlation;
-  output["last_channel_sum_rms"] = last_channel_sum_rms;
-  output["next_channel_correlation"] = next_channel_correlation;
-  output["next_channel_sum_rms"] = next_channel_sum_rms;
+  output["next_channel_dnoise"] = next_channel_dnoise;
 
   output["peaks"] = Json::arrayValue;
   for (auto &peak: peaks) {

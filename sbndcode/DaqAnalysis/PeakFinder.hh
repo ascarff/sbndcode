@@ -32,10 +32,10 @@ public:
     }
   };
 
-  PeakFinder(std::vector<int16_t> &waveform, int16_t baseline, float threshold, unsigned n_smoothing_samples=1, unsigned plane_type=0);
+  PeakFinder(std::vector<int16_t> &waveform, int16_t baseline, float threshold, unsigned n_smoothing_samples=1, unsigned n_above_threshold=0, unsigned plane_type=0);
   inline std::vector<Peak> *Peaks() { return &_peaks; }
 private:
-  Peak FinishPeak(Peak peak, unsigned n_smoothing_samples, int16_t baseline, bool up_peak, unsigned index);
+  Peak FinishPeak(Peak peak, std::vector<int16_t> *waveform, unsigned n_smoothing_samples, int16_t baseline, bool up_peak, unsigned index);
   void matchPeaks(unsigned match_range);
   std::vector<int16_t> _smoothed_waveform;
   std::vector<Peak> _peaks;

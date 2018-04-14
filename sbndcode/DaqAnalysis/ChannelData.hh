@@ -17,13 +17,7 @@ public:
   int16_t max;
   int16_t min;
   float rms;
-  // TEMPORARY: save the correlation
-  // between "adjacent" channels for debugging purposes
-  float last_channel_correlation;
-  float next_channel_correlation;
-  // and their sum-rms
-  float last_channel_sum_rms;
-  float next_channel_sum_rms;
+  float next_channel_dnoise;
   // thresholds
   int16_t threshold;
   std::vector<int16_t> waveform;
@@ -39,31 +33,14 @@ public:
   float Occupancy();
 
   // zero initialize
-  ChannelData():
-    channel_no(0),
-    empty(true /* except for empty by default*/),
-    baseline(0),
-    max(0),
-    min(0),
-    rms(0),
-    last_channel_correlation(0),
-    next_channel_correlation(0),
-    last_channel_sum_rms(0),
-    next_channel_sum_rms(0),
-    threshold(0)
-  {}
-
-  ChannelData(unsigned channel):
+  ChannelData(unsigned channel=0):
     channel_no(channel),
     empty(true /* except for empty by default*/),
     baseline(0),
     max(0),
     min(0),
     rms(0),
-    last_channel_correlation(0),
-    next_channel_correlation(0),
-    last_channel_sum_rms(0),
-    next_channel_sum_rms(0),
+    next_channel_dnoise(0),
     threshold(0)
   {}
 };

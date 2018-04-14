@@ -8,14 +8,14 @@
 int16_t Mode(const std::vector<int16_t> &adcs) {
   // 10 counters seem good
   std::array<unsigned, 10> counters {}; // zero-initialize
-  std::array<short, 10> modes {};
+  std::array<int16_t, 10> modes {};
 
   for (auto val: adcs) {
     int home = -1;
     // look for a home for the val
-    for (int i = 0; i < (int)modes.size(); i ++) {
+    for (size_t i = 0; i < modes.size(); i ++) {
       if (modes[i] == val) {
-        home = i; 
+        home = (int)i; 
         break;
       }
     }

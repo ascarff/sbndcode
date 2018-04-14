@@ -22,76 +22,109 @@ inline bool doMatchPeaks(unsigned plane_type) {
 // plane_type == 0 means fit up and down peaks and don't match (i.e. debug mode)
 // plane_type == 1 means fit up and down peaks and match (induction planes)
 // plane_type == 2 means fit up peaks only (collection planes)
-PeakFinder::PeakFinder(std::vector<int16_t> &waveform, int16_t baseline, float threshold, unsigned n_smoothing_samples, unsigned plane_type ) {
+PeakFinder::PeakFinder(std::vector<int16_t> &inp_waveform, int16_t baseline, float threshold, unsigned n_smoothing_samples, unsigned n_above_threshold, unsigned plane_type ) {
   // number of smoothing samples must be odd to make sense
   assert(n_smoothing_samples % 2 == 1);
 
-  // smooth out input waveform
-  unsigned smoothing_per_direction = n_smoothing_samples / 2;
-  for (unsigned i = smoothing_per_direction; i < waveform.size() - smoothing_per_direction; i++) {
-    unsigned begin = i - smoothing_per_direction;
-    unsigned end = i + smoothing_per_direction + 1;
-    int16_t average = std::accumulate(waveform.begin() + begin, waveform.begin() + end, 0.0) / n_smoothing_samples;
-   
-    _smoothed_waveform.push_back(average); 
+  // smooth out input waveform if need be
+  if (n_smoothing_samples > 1) {
+    unsigned smoothing_per_direction = n_smoothing_samples / 2;
+    for (unsigned i = smoothing_per_direction; i < inp_waveform.size() - smoothing_per_direction; i++) {
+      unsigned begin = i - smoothing_per_direction;
+      unsigned end = i + smoothing_per_direction + 1;
+      int16_t average = std::accumulate(inp_waveform.begin() + begin, inp_waveform.begin() + end, 0.0) / n_smoothing_samples;
+      
+      _smoothed_waveform.push_back(average); 
+    } 
   }
+
+  // use the smoothed waveform or the passed in waveform
+  std::vector<int16_t> *waveform = (n_smoothing_samples > 1) ? &_smoothed_waveform : &inp_waveform;
 
   // iterate through smoothed samples
   bool inside_peak = false;
   // whether peak points up or down
   bool up_peak = false;
   PeakFinder::Peak peak;
-  for (unsigned i = 0; i < _smoothed_waveform.size(); i++) {
-    int16_t dat = _smoothed_waveform[i];
+  // keep track of how many points above threshold
+  unsigned n_points = 0;
+
+  for (unsigned i = 0; i < waveform->size(); i++) {
+    int16_t dat = (*waveform)[i];
     // detect a new peak, or continue on the current one
 
     // up-peak
     if (dat > baseline + threshold) {
-      // it's a new peak!
       if (!inside_peak) {
-        peak.start_tight = i;
-        inside_peak = true;
-        up_peak = true;
-        peak.is_up = true;
+        // increment above threshold
+        n_points ++;
+        // it's a new peak!
+        if (n_points == n_above_threshold) {
+          // reset points above threshold counting
+          n_points = 0;
+          // setup peak
+	  peak.start_tight = i;
+	  inside_peak = true;
+	  up_peak = true;
+	  peak.is_up = true;
+        }
       }
+      // already inside peak
       else assert(up_peak);
 
-      // use original waveform to determine amplitude
-      if (waveform[i] > peak.amplitude) {
-        peak.amplitude = waveform[i];
-        peak.peak_index = i;
+      if (inside_peak) {
+        // always use original waveform to determine amplitude
+        if (inp_waveform[i] > peak.amplitude) {
+          peak.amplitude = inp_waveform[i];
+          peak.peak_index = i;
+        }
       }
     }
     // down-peak
     else if (fitDownPeak(plane_type) && dat < baseline - threshold) {
       if (!inside_peak) {
-        peak.amplitude = INT16_MAX;
-        peak.start_tight = i;
-        inside_peak = true;
-        up_peak = false;
-        peak.is_up = false;
+        // increment above threshold
+        n_points ++;
+        // it's a new peak!
+        if (n_points == n_above_threshold) {
+          // reset points above threshold counting
+          n_points = 0;
+          // setup peak
+	  peak.amplitude = INT16_MAX;
+	  peak.start_tight = i;
+	  inside_peak = true;
+	  up_peak = false;
+	  peak.is_up = false;
+        }
       }
+      // already inside peak
       else assert(!up_peak);
 
-      // use original waveform to determine amplitude
-      if (waveform[i] < peak.amplitude) {
-        peak.amplitude = waveform[i];
-        peak.peak_index = i;
+      if (inside_peak) {
+        // always use original waveform to determine amplitude
+        if (inp_waveform[i] < peak.amplitude) {
+          peak.amplitude = inp_waveform[i];
+          peak.peak_index = i;
+        }
       }
     }
     // this means we're at the end of a peak. 
     // process it and set up the next one
     else if (inside_peak) {
       inside_peak = false;
-      peak = FinishPeak(peak, n_smoothing_samples, baseline, up_peak, i);
+      peak = FinishPeak(peak, waveform, n_smoothing_samples, baseline, up_peak, i);
       _peaks.emplace_back(peak);
       peak = PeakFinder::Peak();
     }
-    else { /* not inside peak, not at end of peak, nothing to do */ }
+    else { 
+      // not inside peak, not at end of peak
+      // reset points above threshold counter
+      n_points = 0;
+    }
   }
   // finish peak if we're inside one at the end
   if (inside_peak) {
-    peak = FinishPeak(peak, n_smoothing_samples, baseline, up_peak, _smoothed_waveform.size()-1);
+    peak = FinishPeak(peak, waveform, n_smoothing_samples, baseline, up_peak, waveform->size()-1);
     _peaks.emplace_back(peak);
   }
 
@@ -103,14 +136,14 @@ PeakFinder::PeakFinder(std::vector<int16_t> &waveform, int16_t baseline, float t
 }
 
 
-PeakFinder::Peak PeakFinder::FinishPeak(PeakFinder::Peak peak, unsigned n_smoothing_samples, int16_t baseline, bool up_peak, unsigned index) {
+PeakFinder::Peak PeakFinder::FinishPeak(PeakFinder::Peak peak, std::vector<int16_t> *waveform, unsigned n_smoothing_samples, int16_t baseline, bool up_peak, unsigned index) {
   peak.end_tight = index;
   // find the upper and lower bounds to determine the max width
   peak.start_loose = peak.start_tight;
   unsigned n_at_baseline = 0;
   while (peak.start_loose > 0) {
-    if ((up_peak && _smoothed_waveform[peak.start_loose] < baseline) ||
-       (!up_peak && _smoothed_waveform[peak.start_loose] > baseline)) {
+    if ((up_peak && (*waveform)[peak.start_loose] < baseline) ||
+       (!up_peak && (*waveform)[peak.start_loose] > baseline)) {
 
       n_at_baseline ++;
     }
@@ -127,9 +160,9 @@ PeakFinder::Peak PeakFinder::FinishPeak(PeakFinder::Peak peak, unsigned n_smooth
   // now find upper bound on end
   peak.end_loose = peak.end_tight;
   n_at_baseline = 0;
-  while (peak.end_loose < _smoothed_waveform.size()-1) {
-    if ((up_peak && _smoothed_waveform[peak.end_loose] < baseline) ||
-       (!up_peak && _smoothed_waveform[peak.end_loose] > baseline)) {
+  while (peak.end_loose < waveform->size()-1) {
+    if ((up_peak && (*waveform)[peak.end_loose] < baseline) ||
+       (!up_peak && (*waveform)[peak.end_loose] > baseline)) {
       n_at_baseline ++;
     }
     if (n_at_baseline > 2) {
@@ -138,7 +171,7 @@ PeakFinder::Peak PeakFinder::FinishPeak(PeakFinder::Peak peak, unsigned n_smooth
     peak.end_loose ++;
   }
   // set end_loose such that it isn't under the influence of any points inside peak
-  peak.end_loose = std::min(peak.end_loose + n_smoothing_samples/2, (unsigned)_smoothed_waveform.size()-1);
+  peak.end_loose = std::min(peak.end_loose + n_smoothing_samples/2, (unsigned)waveform->size()-1);
   return peak;
 }
 

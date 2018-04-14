@@ -137,5 +137,20 @@ float daqAnalysis::NoiseSample::ScaledSumRMS(std::vector<daqAnalysis::NoiseSampl
   return (sum_rms - scale_sub) / scale_div; 
 }
 
+float daqAnalysis::NoiseSample::DNoise(std::vector<int16_t> &wvfm_self, NoiseSample &other, std::vector<int16_t> &wvfm_other) {
+  daqAnalysis::NoiseSample joint = Intersection(other);
+
+  unsigned n_samples = 0;
+  int noise = 0;
+  for (auto &range: joint._ranges) {
+    for (unsigned i = range[0]; i <= range[1]; i ++) {
+      n_samples ++;
+      int16_t val = (wvfm_self[i] - _baseline) - (wvfm_other[i] - other._baseline);
+      noise += val * val;
+    }
+  }
+  return ((float) noise) / n_samples;
+
+}
 
 

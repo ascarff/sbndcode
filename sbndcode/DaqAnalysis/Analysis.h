@@ -120,6 +120,7 @@ public:
     unsigned threshold_calc;
     unsigned n_noise_samples;
     unsigned n_smoothing_samples;
+    unsigned n_above_threshold;
 
     bool fft_per_channel;
     bool reduce_data;
