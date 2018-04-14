@@ -429,6 +429,9 @@ void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
       _thresholds[channel].AddRMS(_per_channel_data[channel].rms);
     }
 
+    // calculate derived quantities
+    _per_channel_data[channel].occupancy = _per_channel_data[channel].Occupancy();
+    _per_channel_data[channel].mean_peak_height = _per_channel_data[channel].meanPeakHeight();
   }
 }
 

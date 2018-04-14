@@ -10,7 +10,7 @@ namespace daqAnalysis {
 // maps wire id's to and from card no, fem no, channel index
 class daqAnalysis::ChannelMap {
 public:
-  typedef raw::ChannelID_t wire_id_t;
+  typedef int16_t wire_id_t;
   struct board_channel {
     size_t slot_no;
     size_t fem_no;
@@ -34,7 +34,11 @@ public:
   //TODO: Imeplement
   static wire_id_t Channel2Wire(board_channel channel) {
     // TEMPORARY IMPLEMENTATION FOR TEST ON LARIAT DATA
-    return (wire_id_t) channel.slot_no * ChannelMap::n_fem_per_board * ChannelMap::n_boards + channel.fem_no * ChannelMap::n_channel_per_fem + channel.channel_ind;
+    wire_id_t wire = channel.slot_no * ChannelMap::n_fem_per_board * ChannelMap::n_boards + channel.fem_no * ChannelMap::n_channel_per_fem + channel.channel_ind;
+    if ((size_t)wire >= n_wire) {
+      return -1;
+    }
+    return wire;
   }
 
   static wire_id_t Channel2Wire(size_t card_no, size_t fem_no, size_t channel_id) {
@@ -61,6 +65,7 @@ public:
   static const size_t n_boards = 8;
   static const size_t n_fem_per_board = 4;
   static const size_t n_channel_per_fem = 16;
+  static const size_t n_wire = 480;
 };
 #endif
 

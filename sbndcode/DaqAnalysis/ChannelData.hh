@@ -28,6 +28,9 @@ public:
   Json::Value GetJson(); 
   std::string Jsonify();
   std::string JsonifyPretty();
+
+  float mean_peak_height;
+  float occupancy;
   float meanPeakHeight();
   float Occupancy();
 
@@ -50,7 +53,7 @@ public:
   bool empty;
   int16_t baseline;
   float rms;
-  unsigned n_peaks;
+  float occupancy;
   float mean_peak_amplitude;
 
   // zero initialize
@@ -59,7 +62,7 @@ public:
     empty(true /* except for empty by default*/),
     baseline(0),
     rms(0),
-    n_peaks(0),
+    occupancy(0),
     mean_peak_amplitude(0)
   {}
 
@@ -68,8 +71,8 @@ public:
     empty = channel_data.empty;
     baseline = channel_data.baseline;
     rms = channel_data.rms;
-    n_peaks = channel_data.peaks.size();
-    mean_peak_amplitude = channel_data.meanPeakHeight();
+    occupancy = channel_data.occupancy;
+    mean_peak_amplitude = channel_data.mean_peak_height;
   }
 };
 
