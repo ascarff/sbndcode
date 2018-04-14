@@ -13,7 +13,7 @@ public:
   FFTManager(unsigned input_size);
   // Make a new FFT manager and don't allocate
   FFTManager() {}
-  // allocate a setup for an input array of size input_size
+  // allocate a setup for an input array of size input_size (NOTE: is idempotent)
   void Set(unsigned input_size);
   // execute the FFT
   void Execute();

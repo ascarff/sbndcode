@@ -18,7 +18,6 @@ public:
   int16_t min;
   float rms;
   float next_channel_dnoise;
-  // thresholds
   int16_t threshold;
   std::vector<int16_t> waveform;
   std::vector<double> fft_real;
@@ -55,8 +54,8 @@ public:
   float mean_peak_amplitude;
 
   // zero initialize
-  ReducedChannelData():
-    channel_no(0),
+  ReducedChannelData(unsigned channel=0):
+    channel_no(channel),
     empty(true /* except for empty by default*/),
     baseline(0),
     rms(0),

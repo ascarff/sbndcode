@@ -198,11 +198,13 @@ void PeakFinder::matchPeaks(unsigned match_range) {
 }
 
 
+// Calculate the threshold by fitting a gaussian to a histogram of ADC values from the waveform
 Threshold::Threshold(std::vector<int16_t> &waveform, int16_t baseline, float n_sigma, bool verbose) {
   int16_t min = *std::min_element(waveform.begin(), waveform.end());
   int16_t max = *std::max_element(waveform.begin(), waveform.end());
   size_t length = waveform.size();
 
+  // histogram of adc values
   TH1D hist("waveform", "waveform", length/100, min, max);
   for (int16_t dat: waveform) {
     hist.Fill(dat);
@@ -217,9 +219,11 @@ Threshold::Threshold(std::vector<int16_t> &waveform, int16_t baseline, float n_s
   fit.SetParameter(1, hist.GetMean());
   fit.SetParameter(2, hist.GetRMS());
 
+  // only hit over a logical region
   fit.SetRange( hist.GetMean() - n_sigma*hist.GetRMS(), hist.GetMean() + n_sigma*hist.GetRMS() );
 
   if (verbose) {
+    // if verbose, print out info associated w/fit
     hist.Fit(&fit, "R");
   }
   else {
@@ -230,12 +234,16 @@ Threshold::Threshold(std::vector<int16_t> &waveform, int16_t baseline, float n_s
   _threshold = baseline + n_sigma*fit.GetParameter(2);
 }
 
+// gets the RMS from a wavefrom including any present signal 
+// i.e. will always overestimate the "true" RMS unless no signal is present
 float rawRMS(std::vector<int16_t> &waveform, int16_t baseline) {
   daqAnalysis::NoiseSample temp({{0, (unsigned)waveform.size() -1}}, baseline);
   return temp.RMS(waveform);
 }
 
+// get the threshold from a running average of rms values
 float RunningThreshold::Threshold(std::vector<int16_t> &waveform, int16_t baseline, float n_sigma) {
+  // if there's no history, just use the raw RMS
   if (_n_past_rms == 0) {
     // 2x penalty since rawRMS will overestimate the true RMS
     return rawRMS(waveform, baseline) * n_sigma / 2;
@@ -250,6 +258,7 @@ float RunningThreshold::Threshold(std::vector<int16_t> &waveform, int16_t baseli
   }
 }
 
+// add to running average
 void RunningThreshold::AddRMS(float rms) {
   if (_n_past_rms < 10) _n_past_rms ++;
   _past_rms[_rms_ind] = rms;

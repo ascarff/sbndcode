@@ -41,6 +41,9 @@ private:
   std::vector<Peak> _peaks;
 };
 
+// Classes for different types of threshold calculation
+
+// gets threshold from gaussian fit to histogram of ADC values
 class Threshold {
 public:
   Threshold(std::vector<int16_t> &waveform, int16_t baseline, float n_sigma=5., bool verbose=true);
@@ -50,6 +53,7 @@ private:
   float _threshold;
 };
 
+// gets threshold from running average of rms values
 class RunningThreshold {
 public:
   RunningThreshold(): _rms_ind(0), _n_past_rms(0) { std::fill(_past_rms.begin(), _past_rms.end(), 0); }

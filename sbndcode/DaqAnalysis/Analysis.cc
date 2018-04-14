@@ -315,6 +315,7 @@ void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
       if (adc > max) max = adc;
       if (adc < min) min = adc;
     
+      // TODO: is it possible to do analysis w/out copying waveform?
       // fill up waveform
       _per_channel_data[channel].waveform.push_back(adc);
       if (_config.fft_per_channel) {

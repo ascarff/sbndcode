@@ -15,6 +15,7 @@ FFTManager::FFTManager(unsigned input_size) {
 
 void FFTManager::Set(unsigned input_size) {
   _input_size = input_size;
+  // output size of a 1d real FFT
   _output_size = input_size/2 + 1;
   Alloc();
 }
@@ -44,6 +45,7 @@ void FFTManager::Execute() {
   fftw_execute(_plan);
 }
 
+// get pointer to ith input
 double *FFTManager::InputAt(const int index) {
   assert(_is_allocated);
   assert(index < _input_size);

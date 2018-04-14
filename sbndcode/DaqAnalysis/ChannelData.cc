@@ -14,6 +14,7 @@ float daqAnalysis::ChannelData::meanPeakHeight() {
 
   int total = 0;
   for (unsigned i = 0; i < peaks.size(); i++) {
+    // account fot up/down peaks
     if (peaks[i].is_up) {
       total += peaks[i].amplitude - baseline;
     }
@@ -24,6 +25,7 @@ float daqAnalysis::ChannelData::meanPeakHeight() {
   return ((float) total) / peaks.size();
 }
 
+// only count up peaks
 float daqAnalysis::ChannelData::Occupancy() {
   float n_peaks = 0;
   for (unsigned i = 0; i < peaks.size(); i++) {

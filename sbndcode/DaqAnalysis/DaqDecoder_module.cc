@@ -63,7 +63,9 @@ void daq::DaqDecoder::produce(art::Event & event)
   }
   auto const& daq_handle = event.getValidHandle<std::vector<artdaq::Fragment>>(_tag);
 
+  // storage for waveform
   std::unique_ptr<std::vector<raw::RawDigit>> product_collection(new std::vector<raw::RawDigit>);
+  // storage for header info
   std::unique_ptr<std::vector<daqAnalysis::HeaderData>> header_collection(new std::vector<daqAnalysis::HeaderData>);
   for (auto const &rawfrag: *daq_handle) {
     process_fragment(rawfrag, product_collection, header_collection);
@@ -77,6 +79,7 @@ void daq::DaqDecoder::produce(art::Event & event)
 
 raw::ChannelID_t daq::DaqDecoder::get_wire_id(const sbnddaq::NevisTPCHeader *header, uint16_t nevis_channel_id) {
  daqAnalysis::ChannelMap::board_channel channel {header->getSlot(), header->getFEMID(), (size_t) nevis_channel_id };
+ // rely on ChannelMap for implementation
  return daqAnalysis::ChannelMap::Channel2Wire(channel);
 }
 
@@ -84,6 +87,7 @@ void daq::DaqDecoder::process_fragment(const artdaq::Fragment &frag,
   std::unique_ptr<std::vector<raw::RawDigit>> &product_collection,
   std::unique_ptr<std::vector<daqAnalysis::HeaderData>> &header_collection) {
 
+  // convert fragment to Nevis fragment
   sbnddaq::NevisTPCFragment fragment(frag);
 
   validate_header(fragment.header());
@@ -93,6 +97,7 @@ void daq::DaqDecoder::process_fragment(const artdaq::Fragment &frag,
   (void)n_waveforms;
 
   if (_produce_header) {
+    // Construct HeaderData from the Nevis Header and throw it in the collection
     header_collection->emplace_back(fragment.header());
   }
 
@@ -103,7 +108,9 @@ void daq::DaqDecoder::process_fragment(const artdaq::Fragment &frag,
     for (auto digit: waveform.second) {
       raw_digits_waveform.push_back( (int16_t) digit);
     }  
+    // construct the next RawDigit object
     product_collection->emplace_back(wire_id, raw_digits_waveform.size(), raw_digits_waveform);
+    // calculate the mode and set it as the pedestal
     (*product_collection)[product_collection->size() - 1].SetPedestal( Mode(raw_digits_waveform) ); 
   }
 }

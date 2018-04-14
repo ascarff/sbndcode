@@ -19,6 +19,7 @@ class HeaderData {
   double frame_time;
   double trig_frame_time;
 
+  // construct from a nevis header
   HeaderData(const sbnddaq::NevisTPCHeader *raw_header, double frame_to_dt=1.0) {
     fem_id = raw_header->getFEMID();
     slot_id = raw_header->getSlot();
@@ -32,6 +33,7 @@ class HeaderData {
     trig_frame_time = trig_frame_number * frame_to_dt;
   }
   HeaderData() {}
+  // Returns the logical index of the header
   // TODO: implement
   size_t Ind() const {
     return 0;

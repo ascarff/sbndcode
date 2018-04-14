@@ -25,6 +25,7 @@ Redis::Redis(std::vector<unsigned> &stream_take, std::vector<unsigned> &stream_e
   _stream_send(stream_take.size(), false),
   _last_snapshot(0),
 
+  // allocate and zero-initalize all of the metrics
   _channel_rms(stream_take.size(), StreamDataMean(ChannelMap::n_channel_per_fem * ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
   _channel_baseline(stream_take.size(), StreamDataMean(ChannelMap::n_channel_per_fem * ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
   _channel_hit_occupancy(stream_take.size(), StreamDataMean(ChannelMap::n_channel_per_fem * ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
@@ -44,6 +45,7 @@ Redis::Redis(std::vector<unsigned> &stream_take, std::vector<unsigned> &stream_e
   _frame_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
   _trigframe_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
   _event_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
+
   _fft_manager((waveform_input_size > 0) ? waveform_input_size: 0),
   _do_timing(timing)
 {
@@ -65,6 +67,7 @@ Redis::~Redis() {
 void Redis::StartSend() {
   _now = std::time(nullptr);
   for (size_t i = 0; i < _stream_send.size(); i++) {
+    // calculate whether each stream is sending to redis on this event
     _stream_send[i] = _stream_last[i] != _now && (_now - _start) % _stream_take[i] == 0;
     if (_stream_send[i]) {
       _stream_last[i] = _now;
@@ -82,17 +85,17 @@ void Redis::FinishSend() {
 
 void Redis::SendHeaderData(vector<HeaderData> *header_data) {
   for (auto &header: *header_data) {
+    // update header info in each stream
     for (size_t i = 0; i < _stream_take.size(); i++) {
-      // TODO: Change
       // index into the fem data cache
-      //unsigned fem_ind = header.slot_id * ChannelMap::n_fem_per_board + header.fem_id;
-      unsigned fem_ind = 0;
+      unsigned fem_ind = header.Ind();
       _event_no[i].Add(fem_ind, header.event_number);
       _frame_no[i].Add(fem_ind, header.frame_number);
       _trigframe_no[i].Add(fem_ind, header.trig_frame_number);
     }
   }
   for (size_t i = 0; i < _stream_take.size(); i++) {
+    // send headers to redis if need be
     if (_stream_send[i]) {
       SendHeader(i);
     }
@@ -105,6 +108,8 @@ void Redis::SendHeader(unsigned stream_index) {
     _timing.StartTime();
   }
   for (size_t fem_ind = 0; fem_ind < ChannelMap::n_fem_per_board* ChannelMap::n_boards; fem_ind++) {
+    // TODO: implement translation from fem_ind to fem/board
+    // TEMPORARY IMPLEMENTATION
     unsigned fem = fem_ind % ChannelMap::n_fem_per_board;
     unsigned board = fem_ind / ChannelMap::n_fem_per_board;
 
@@ -187,6 +192,8 @@ void Redis::SendFem(unsigned stream_index) {
     _timing.StartTime();
   }
   for (unsigned fem_ind = 0; fem_ind < _fem_rms[stream_index].Size(); fem_ind++) {
+    // TODO: implement translation from fem_ind to fem/board
+    // TEMPORARY IMPLEMENTATION
     unsigned fem = fem_ind % ChannelMap::n_fem_per_board;
     unsigned board = fem_ind / ChannelMap::n_fem_per_board;
     reply = redisCommand(context, "SET stream/%i:%i:rms:board:%i:fem:%i %f", _stream_take[stream_index], _now/_stream_take[stream_index], board, fem, _fem_rms[stream_index].Take(fem_ind));
@@ -233,7 +240,6 @@ void Redis::SendFem(unsigned stream_index) {
 
 void Redis::SendBoard(unsigned stream_index) {
   // TODO: Report failures
-  
   void *reply;
   if (_do_timing) {
     _timing.StartTime();
@@ -327,6 +333,7 @@ void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> 
       if (_fft_manager.InputSize() != channel.waveform.size()) {
         _fft_manager.Set(channel.waveform.size());
       }
+      // fill up the fft data in
       for (size_t i = 0; i < channel.waveform.size(); i++) {
         double *input = _fft_manager.InputAt(i);
         *input = (double) channel.waveform[i];
@@ -469,6 +476,7 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
       }   
     }
 
+    // board average
     board_rms = board_rms / daqAnalysis::ChannelMap::n_boards;
     board_baseline = board_baseline / daqAnalysis::ChannelMap::n_boards;
     board_hit_occupancy = board_hit_occupancy / daqAnalysis::ChannelMap::n_boards;
@@ -491,13 +499,9 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
   for (size_t i = 0; i < _stream_take.size(); i++) {
     // send stuff (maybe)
     if (_stream_send[i]) {
-      // let redis use as much memory as it needs
-      //context->c.reader->maxbuf = 0;
       SendChannel(i);
       SendFem(i);
       SendBoard(i);
-      // turn back on memory limiting
-      //context->c.reader->maxbuf = REDIS_READER_MAX_BUF;
       // clear data caches
       _channel_rms[i].Clear();
       _channel_baseline[i].Clear();
