@@ -11,24 +11,20 @@
 #include "HeaderData.hh"
 #include "Noise.hh"
 #include "FFT.hh"
+#include "RedisData.hh"
 
 namespace daqAnalysis {
   class Redis;
   class RedisTiming;
-  class StreamDataMean;
-  class StreamDataVariableMean;
-  class StreamDataMax;
-}
 
+}
 // keep track of timing information
 class daqAnalysis::RedisTiming {
 public:
   clock_t start;
-  float copy_channel_data;
-  float board_and_fem_data;
-  float send_channel_data;
+  float copy_data;
+  float send_metrics;
   float send_fem_data;
-  float send_board_data;
   float send_header_data;
   float send_waveform;
   float send_fft;
@@ -36,11 +32,9 @@ public:
   float clear_pipeline;
 
   RedisTiming():
-    copy_channel_data(0),
-    board_and_fem_data(0),
-    send_channel_data(0),
+    copy_data(0),
+    send_metrics(0),
     send_fem_data(0),
-    send_board_data(0),
     send_header_data(0),
     send_waveform(0),
     send_fft(0),
@@ -68,12 +62,8 @@ public:
   void FinishSend();
 
 protected:
-  // actually send per-channel data to Redis
-  void SendChannel(unsigned stream_index);
-  // per-fem data to Redis
+  // per-fem data to Redis (currently just ssum_rms, may remove later)
   void SendFem(unsigned stream_index);
-  // per-board data to Redis
-  void SendBoard(unsigned stream_index);
   // per-header (each associated w/ an fem) data to Redis
   void SendHeader(unsigned stream_index);
   // snapshot stuff
@@ -99,22 +89,16 @@ protected:
   std::time_t _last_snapshot;
 
   // running averates of Redis metrics per stream
-  std::vector<daqAnalysis::StreamDataMean> _channel_rms;
-  std::vector<daqAnalysis::StreamDataMean> _channel_baseline;
-  std::vector<daqAnalysis::StreamDataMean> _channel_hit_occupancy;
-  std::vector<daqAnalysis::StreamDataVariableMean> _channel_pulse_height;
+  std::vector<daqAnalysis::RedisRMS> _rms;
+  std::vector<daqAnalysis::RedisBaseline> _baseline;
+  std::vector<daqAnalysis::RedisDNoise> _dnoise;
+  std::vector<daqAnalysis::RedisPulseHeight> _pulse_height;
+  std::vector<daqAnalysis::RedisOccupancy> _occupancy;
 
-  std::vector<daqAnalysis::StreamDataMean> _fem_rms;
+  // TODO: what to do with this?
   std::vector<daqAnalysis::StreamDataMean> _fem_scaled_sum_rms;
-  std::vector<daqAnalysis::StreamDataMean> _fem_baseline;
-  std::vector<daqAnalysis::StreamDataMean> _fem_hit_occupancy;
-  std::vector<daqAnalysis::StreamDataVariableMean> _fem_pulse_height;
 
-  std::vector<daqAnalysis::StreamDataMean> _board_rms;
-  std::vector<daqAnalysis::StreamDataMean> _board_baseline;
-  std::vector<daqAnalysis::StreamDataMean> _board_hit_occupancy;
-  std::vector<daqAnalysis::StreamDataVariableMean> _board_pulse_height;
-
+  // header info
   std::vector<daqAnalysis::StreamDataMax> _frame_no;
   std::vector<daqAnalysis::StreamDataMax> _trigframe_no;
   std::vector<daqAnalysis::StreamDataMax> _event_no;
@@ -124,68 +108,6 @@ protected:
 
   bool _do_timing;
   daqAnalysis::RedisTiming _timing;
-};
-
-// keeps a running mean of a metric w/ n_data instances
-class daqAnalysis::StreamDataMean {
-public:
-  StreamDataMean(unsigned n_data): _data(n_data, 0.), _n_values(0) {}
-
-  // add in a new value
-  void Add(unsigned index, float dat);
-  // incl the number of values
-  void Incl();
-  // clear the number of values
-  void Clear();
-  // take the data value and reset it
-  float Take(unsigned index);
-  // just take a peek at the data value
-  float Peak(unsigned index) { return _data[index]; }
-  // returns n_data
-  unsigned Size() { return _data.size(); }
-
-protected:
-  // internal data
-  std::vector<float> _data;
-  // number of values averaged together in each data point
-  unsigned _n_values;
-
-};
-
-// keeps a running mean of a metric w/ n_data instances where each metric may have a different
-// number of entries
-class daqAnalysis::StreamDataVariableMean {
-public:
-  StreamDataVariableMean(unsigned n_data): _data(n_data, 0.), _n_values(n_data, 0) {}
-
-  // add in a new value
-  void Add(unsigned index, float dat);
-  // take the data value and reset it
-  float Take(unsigned index);
-  // just take a peek at the data value
-  float Peak(unsigned index) { return _data[index]; }
-  // returns n_data
-  unsigned Size() { return _data.size(); }
-
-protected:
-  // internal data
-  std::vector<float> _data;
-  // number of values averaged together in each data point
-  std::vector<unsigned> _n_values;
-};
-
-// keeps running max value of a metric w/ n instances
-class daqAnalysis::StreamDataMax {
-public:
-  StreamDataMax(unsigned n_data): _data(n_data, 0.) {}
-
-  void Add(unsigned index, float dat);
-  float Take(unsigned index);
-  float Peek(unsigned index) { return _data[index]; }
-  unsigned Size() { return _data.size(); }
-
-protected:
-  std::vector<float> _data;
 };
 
 #endif /* Redis_h */

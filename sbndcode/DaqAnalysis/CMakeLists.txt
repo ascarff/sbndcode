@@ -31,6 +31,7 @@ cet_make_library( LIBRARY_NAME daqAnalysis_VST
 		Noise.cc
 		PeakFinder.cc
 		Redis.cc
+		RedisData.cc
 		ChannelData.cc
 	LIBRARIES
 		daqAnalysis_MODE
