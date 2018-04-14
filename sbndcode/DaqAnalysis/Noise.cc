@@ -149,7 +149,7 @@ float daqAnalysis::NoiseSample::DNoise(std::vector<int16_t> &wvfm_self, NoiseSam
       noise += val * val;
     }
   }
-  return ((float) noise) / n_samples;
+  return sqrt(((float) noise) / n_samples);
 
 }
 
