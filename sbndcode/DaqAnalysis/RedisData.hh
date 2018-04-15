@@ -199,20 +199,15 @@ public:
   }
 
   // send stuff to Redis
-  void Send(redisContext *context, std::time_t now, unsigned stream_no, unsigned stream_expire) {
-    // TODO: implement error reporting
-    void *reply;
-    
+  unsigned Send(redisContext *context, std::time_t now, unsigned stream_no, unsigned stream_expire) {
     // send all the wire stuff
     unsigned n_wires = _wire_data.Size();
     for (unsigned wire = 0; wire < n_wires; wire++) {
-      reply = redisCommand(context, "SET stream/%i:%i:%s:wire:%i %f",
+      redisAppendCommand(context, "SET stream/%i:%i:%s:wire:%i %f",
         stream_no, now/stream_no, REDIS_NAME,wire, TakeWire(wire)); 
-      freeReplyObject(reply);
 
-      reply = redisCommand(context, "EXPIRE stream/%i:%i:%s:wire:%i %i",
+      redisAppendCommand(context, "EXPIRE stream/%i:%i:%s:wire:%i %i",
         stream_no, now/stream_no, REDIS_NAME,wire, stream_expire); 
-      freeReplyObject(reply);
     } 
     // and the fem stuff
     unsigned n_fem = _fem_data.Size();
@@ -221,25 +216,23 @@ public:
       // TEMPORARY IMPLEMENTATION
       unsigned fem = fem_ind % ChannelMap::n_fem_per_board;
       unsigned board = fem_ind / ChannelMap::n_fem_per_board;
-      reply = redisCommand(context, "SET stream/%i:%i:%s:board:%i:fem:%i %f",
+      redisAppendCommand(context, "SET stream/%i:%i:%s:board:%i:fem:%i %f",
         stream_no, now/stream_no, REDIS_NAME, board, fem, TakeFEM(fem_ind)); 
-      freeReplyObject(reply);
 
-      reply = redisCommand(context, "EXPIRE stream/%i:%i:%s:board:%i:fem:%i %i",
+      redisAppendCommand(context, "EXPIRE stream/%i:%i:%s:board:%i:fem:%i %i",
         stream_no, now/stream_no, REDIS_NAME, board, fem, stream_expire); 
-      freeReplyObject(reply);
     } 
     // and the board stuff
     unsigned n_board = _board_data.Size();
     for (unsigned board = 0; board < n_board; board++) {
-      reply = redisCommand(context, "SET stream/%i:%i:%s:board:%i %f",
+      redisAppendCommand(context, "SET stream/%i:%i:%s:board:%i %f",
          stream_no, now/stream_no, REDIS_NAME, board, TakeBoard(board));
-      freeReplyObject(reply);
 
-      reply = redisCommand(context, "EXPIRE stream/%i:%i:%s:board:%i %i",
+      redisAppendCommand(context, "EXPIRE stream/%i:%i:%s:board:%i %i",
          stream_no, now/stream_no, REDIS_NAME, board, stream_expire);
-      freeReplyObject(reply);
     }
+    // return number of commands sent
+    return 2*(n_wires + n_fem + n_board);
   }
 
 protected:

@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <cassert>
 #include <ctime>
+#include <numeric>
+#include <chrono>
 
 #include <hiredis/hiredis.h>
 #include <hiredis/async.h>
@@ -337,6 +339,7 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
     _timing.EndTime(&_timing.copy_data);
   }
 
+  unsigned n_commands = 0;
   for (size_t i = 0; i < _stream_take.size(); i++) {
     // Send stuff to redis if it's time
     if (_stream_send[i]) {
@@ -346,11 +349,11 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
         _timing.StartTime();
       }
       // metrics control the sending of everything else
-      _rms[i].Send(context, _now, _stream_take[i], _stream_expire[i]);
-      _baseline[i].Send(context, _now, _stream_take[i], _stream_expire[i]);
-      _dnoise[i].Send(context, _now, _stream_take[i], _stream_expire[i]);
-      _occupancy[i].Send(context, _now, _stream_take[i], _stream_expire[i]);
-      _pulse_height[i].Send(context, _now, _stream_take[i], _stream_expire[i]);
+      n_commands += _rms[i].Send(context, _now, _stream_take[i], _stream_expire[i]);
+      n_commands += _baseline[i].Send(context, _now, _stream_take[i], _stream_expire[i]);
+      n_commands += _dnoise[i].Send(context, _now, _stream_take[i], _stream_expire[i]);
+      n_commands += _occupancy[i].Send(context, _now, _stream_take[i], _stream_expire[i]);
+      n_commands += _pulse_height[i].Send(context, _now, _stream_take[i], _stream_expire[i]);
       if (_do_timing) {
         _timing.EndTime(&_timing.send_metrics);
       }
@@ -367,6 +370,9 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
     // and sum rms
     _fem_scaled_sum_rms[i].Update(taken);
   }
+
+  // actually send the commands out of the pipeline
+  FinishPipeline(n_commands);
 
   if (_do_timing) {
     _timing.StartTime();
@@ -390,10 +396,11 @@ void Redis::FinishPipeline(size_t n_commands) {
 }
 
 void RedisTiming::StartTime() {
-  start = clock();
+  start = std::chrono::high_resolution_clock::now(); 
 }
 void RedisTiming::EndTime(float *field) {
-  *field += float(clock() - start)/CLOCKS_PER_SEC;
+  auto now = std::chrono::high_resolution_clock::now();
+  *field += std::chrono::duration<float, std::milli>(now- start).count();
 }
 void RedisTiming::Print() {
   std::cout << "COPY DATA: " << copy_data << std::endl;

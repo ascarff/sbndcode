@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <ctime>
+#include <numeric>
+#include <chrono>
 
 #include <hiredis/hiredis.h>
 #include <hiredis/async.h>
@@ -21,7 +23,7 @@ namespace daqAnalysis {
 // keep track of timing information
 class daqAnalysis::RedisTiming {
 public:
-  clock_t start;
+  std::chrono::time_point<std::chrono::high_resolution_clock> start;
   float copy_data;
   float send_metrics;
   float send_fem_data;
