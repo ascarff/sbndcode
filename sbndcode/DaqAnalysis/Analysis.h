@@ -12,6 +12,8 @@
 #include <vector>
 #include <string>
 #include <ctime>
+#include <chrono>
+#include <numeric>
 
 #include "TROOT.h"
 #include "TTree.h"
@@ -46,7 +48,7 @@ namespace daqAnalysis {
 // keep track of timing information
 class daqAnalysis::Timing {
 public:
-  clock_t start;
+  std::chrono::time_point<std::chrono::high_resolution_clock> start;
   float fill_waveform;
   float baseline_calc;
   float execute_fft;

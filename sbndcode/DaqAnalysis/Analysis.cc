@@ -5,6 +5,7 @@
 #include <vector>
 #include <numeric>
 #include <getopt.h>
+#include <chrono>
 #include <float.h>
 
 //some ROOT includes
@@ -436,24 +437,25 @@ void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
 }
 
 void Timing::StartTime() {
-  start = clock();
+  start = std::chrono::high_resolution_clock::now(); 
 }
 void Timing::EndTime(float *field) {
-  *field += float(clock() - start)/CLOCKS_PER_SEC;
+  auto now = std::chrono::high_resolution_clock::now();
+  *field += std::chrono::duration<float, std::milli>(now- start).count();
 }
 void Timing::Print() {
-   std::cout << "FILL WAVEFORM: " << fill_waveform << std::endl;
-   std::cout << "CALC BASELINE: " << baseline_calc << std::endl;
-   std::cout << "FFT   EXECUTE: " << execute_fft << std::endl;
-   std::cout << "CALC THRESHOLD " << calc_threshold << std::endl;
-   std::cout << "CALC PEAKS   : " << find_peaks << std::endl;
-   std::cout << "CALC NOISE   : " << calc_noise << std::endl;
-   std::cout << "REDUCE DATA  : " << reduce_data << std::endl;
-   std::cout << "COHERENT NOISE " << coherent_noise_calc << std::endl;
-   std::cout << "COPY HEADERS : " << copy_headers << std::endl;
-   std::cout << "WRITE TO FILE: " << write_to_file << std::endl;
-   std::cout << "REDIS CHANNEL: " << redis_channel_data << std::endl;
-   std::cout << "REDIS HEADER : " << redis_header_data << std::endl;
+  std::cout << "FILL WAVEFORM: " << fill_waveform << std::endl;
+  std::cout << "CALC BASELINE: " << baseline_calc << std::endl;
+  std::cout << "FFT   EXECUTE: " << execute_fft << std::endl;
+  std::cout << "CALC THRESHOLD " << calc_threshold << std::endl;
+  std::cout << "CALC PEAKS   : " << find_peaks << std::endl;
+  std::cout << "CALC NOISE   : " << calc_noise << std::endl;
+  std::cout << "REDUCE DATA  : " << reduce_data << std::endl;
+  std::cout << "COHERENT NOISE " << coherent_noise_calc << std::endl;
+  std::cout << "COPY HEADERS : " << copy_headers << std::endl;
+  std::cout << "WRITE TO FILE: " << write_to_file << std::endl;
+  std::cout << "REDIS CHANNEL: " << redis_channel_data << std::endl;
+  std::cout << "REDIS HEADER : " << redis_header_data << std::endl;
 }
 
 
