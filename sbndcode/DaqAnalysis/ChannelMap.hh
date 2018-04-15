@@ -10,14 +10,14 @@ namespace daqAnalysis {
 // maps wire id's to and from card no, fem no, channel index
 class daqAnalysis::ChannelMap {
 public:
-  typedef int16_t wire_id_t;
+  typedef uint16_t wire_id_t;
   struct board_channel {
     size_t slot_no;
     size_t fem_no;
     size_t channel_ind;
   };
 
-  // TODO: Implement for VST
+  // TODO @INSTALLATION: Implement for VST
   static board_channel Wire2Channel(wire_id_t wire) {
     // TEMPORARY IMPLEMENTATION FOR TEST ON LARIAT DATA
 
@@ -31,13 +31,10 @@ public:
     return board_channel {slot_no, fem_no, channel_ind};
   }
 
-  //TODO: Imeplement
+  //TODO @INSTALLATION: Imeplement
   static wire_id_t Channel2Wire(board_channel channel) {
     // TEMPORARY IMPLEMENTATION FOR TEST ON LARIAT DATA
-    wire_id_t wire = channel.slot_no * ChannelMap::n_fem_per_board * ChannelMap::n_boards + channel.fem_no * ChannelMap::n_channel_per_fem + channel.channel_ind;
-    if ((size_t)wire >= n_wire) {
-      return -1;
-    }
+    wire_id_t wire = channel.slot_no * ChannelMap::n_fem_per_board * ChannelMap::n_channel_per_fem + channel.fem_no * ChannelMap::n_channel_per_fem + channel.channel_ind;
     return wire;
   }
 
@@ -46,7 +43,7 @@ public:
     return Channel2Wire(channel);
   }
 
-  // TODO: Implement
+  // TODO @INSTALLATION: Implement
   // 1 == induction plane
   // 2 == collection plane
   static unsigned PlaneType(unsigned wire_no) {
@@ -60,7 +57,13 @@ public:
     }
   }
 
-  // TODO: Implement
+  // TODO @INSTALLATION: Implement
+  // TEMPORARY IMPLEMENTATION FOR TEST ON LARIAT DATA
+  inline static constexpr unsigned NFEM() {
+    return (n_wire / n_channel_per_fem) + ((n_wire % n_channel_per_fem == 0) ? 0:1);
+  }
+
+  // TODO @INSTALLATION: Implement
   // TEMPORARY IMPLEMENTATION FOR TEST ON LARIAT DATA
   static const size_t n_boards = 8;
   static const size_t n_fem_per_board = 4;

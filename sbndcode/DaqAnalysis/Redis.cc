@@ -27,11 +27,11 @@ Redis::Redis(std::vector<unsigned> &stream_take, std::vector<unsigned> &stream_e
   _last_snapshot(0),
 
   // allocate and zero-initalize all of the metrics
-  _rms(stream_take.size(), RedisRMS(ChannelMap::n_boards, ChannelMap::n_fem_per_board, ChannelMap::n_channel_per_fem, ChannelMap::n_wire)),
-  _baseline(stream_take.size(), RedisBaseline(ChannelMap::n_boards, ChannelMap::n_fem_per_board, ChannelMap::n_channel_per_fem, ChannelMap::n_wire)),
-  _dnoise(stream_take.size(), RedisDNoise(ChannelMap::n_boards, ChannelMap::n_fem_per_board, ChannelMap::n_channel_per_fem, ChannelMap::n_wire)),
-  _pulse_height(stream_take.size(), RedisPulseHeight(ChannelMap::n_boards, ChannelMap::n_fem_per_board, ChannelMap::n_channel_per_fem, ChannelMap::n_wire)),
-  _occupancy(stream_take.size(), RedisOccupancy(ChannelMap::n_boards, ChannelMap::n_fem_per_board, ChannelMap::n_channel_per_fem, ChannelMap::n_wire)),
+  _rms(stream_take.size(), RedisRMS()),
+  _baseline(stream_take.size(), RedisBaseline()),
+  _dnoise(stream_take.size(), RedisDNoise()),
+  _pulse_height(stream_take.size(), RedisPulseHeight()),
+  _occupancy(stream_take.size(), RedisOccupancy()),
 
   _fem_scaled_sum_rms(stream_take.size(), StreamDataMean(ChannelMap::n_fem_per_board* ChannelMap::n_boards, 1)),
 
@@ -60,6 +60,9 @@ Redis::~Redis() {
 
 void Redis::StartSend() {
   _now = std::time(nullptr);
+  // first time startup
+  if (_start == 0) _start = _now;
+
   for (size_t i = 0; i < _stream_send.size(); i++) {
     // calculate whether each stream is sending to redis on this event
     _stream_send[i] = _stream_last[i] != _now && (_now - _start) % _stream_take[i] == 0;
@@ -67,8 +70,6 @@ void Redis::StartSend() {
       _stream_last[i] = _now;
     }
   }
-  // first time startup
-  if (_start == 0) _start = _now;
 }
 
 void Redis::FinishSend() {
@@ -102,7 +103,7 @@ void Redis::SendHeader(unsigned stream_index) {
     _timing.StartTime();
   }
   for (size_t fem_ind = 0; fem_ind < ChannelMap::n_fem_per_board* ChannelMap::n_boards; fem_ind++) {
-    // TODO: implement translation from fem_ind to fem/board
+    // TODO @INSTALLATION: implement translation from fem_ind to fem/board
     // TEMPORARY IMPLEMENTATION
     unsigned fem = fem_ind % ChannelMap::n_fem_per_board;
     unsigned board = fem_ind / ChannelMap::n_fem_per_board;
@@ -149,7 +150,7 @@ void Redis::SendFem(unsigned stream_index) {
     _timing.StartTime();
   }
   for (unsigned fem_ind = 0; fem_ind < _fem_scaled_sum_rms[stream_index].Size(); fem_ind++) {
-    // TODO: implement translation from fem_ind to fem/board
+    // TODO @INSTALLATION: implement translation from fem_ind to fem/board
     // TEMPORARY IMPLEMENTATION
     unsigned fem = fem_ind % ChannelMap::n_fem_per_board;
     unsigned board = fem_ind / ChannelMap::n_fem_per_board;
@@ -265,9 +266,23 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
   if (_do_timing) {
     _timing.StartTime();
   }
+
+  unsigned n_channels = per_channel_data->size();
+  unsigned n_fem = ChannelMap::NFEM();
+  bool at_end_of_detector = false;
+
   // iterate over boards and fems
   for (unsigned board = 0; board < daqAnalysis::ChannelMap::n_boards; board++) {
     for (unsigned fem = 0; fem < daqAnalysis::ChannelMap::n_fem_per_board; fem++) {
+      // TODO @INSTALLATION: Will this still work?
+      // index into the fem data cache
+      unsigned fem_ind = board * ChannelMap::n_fem_per_board + fem;
+
+      // detect if at end of fem's
+      if (fem_ind >= n_fem) {
+        at_end_of_detector = true;
+        break;
+      }
       // keeping track of stuff to calculate sum rms
       std::vector<std::vector<int16_t> *> waveforms {};
       std::vector<daqAnalysis::NoiseSample *> this_noise_samples {};
@@ -275,17 +290,20 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
       for (unsigned channel = 0; channel < daqAnalysis::ChannelMap::n_channel_per_fem; channel++) {
         // get the wire number
 	daqAnalysis::ChannelMap::board_channel board_channel {board, fem, channel};
-	int16_t wire = daqAnalysis::ChannelMap::Channel2Wire(board_channel);
-        // if wire is negative, we're at the end of the detector
-        if (wire < 0) break;
+	uint16_t wire = daqAnalysis::ChannelMap::Channel2Wire(board_channel);
+        // detect if at end of detector
+        if (wire >= n_channels) {
+          at_end_of_detector = true;
+          break;
+        }
  
         // fill metrics for each stream
         for (size_t i = 0; i < _stream_take.size(); i++) {
-          _rms[i].Add((*per_channel_data)[wire], board, fem, wire);
-          _baseline[i].Add((*per_channel_data)[wire], board, fem, wire);
-          _dnoise[i].Add((*per_channel_data)[wire], board, fem, wire);
-          _pulse_height[i].Add((*per_channel_data)[wire], board, fem, wire);
-          _occupancy[i].Add((*per_channel_data)[wire], board, fem, wire);
+          _rms[i].Add((*per_channel_data)[wire], board, fem_ind, wire);
+          _baseline[i].Add((*per_channel_data)[wire], board, fem_ind, wire);
+          _dnoise[i].Add((*per_channel_data)[wire], board, fem_ind, wire);
+          _pulse_height[i].Add((*per_channel_data)[wire], board, fem_ind, wire);
+          _occupancy[i].Add((*per_channel_data)[wire], board, fem_ind, wire);
         }
 
         // collect waveforms for sum rms calculation
@@ -299,13 +317,20 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
       waveforms.clear();
       this_noise_samples.clear();
 
-      // index into the fem data cache
-      unsigned fem_ind = board * ChannelMap::n_fem_per_board + fem;
 
       // update all the streams for sum rms
       for (size_t i = 0; i < _stream_take.size(); i++) {
         _fem_scaled_sum_rms[i].Add(fem_ind, ssum_rms);
       }
+      // if at end, break
+      if (at_end_of_detector) {
+        break;
+      }
+  
+    }
+    // if at end, break
+    if (at_end_of_detector) {
+      break;
     }
   }
   if (_do_timing) {

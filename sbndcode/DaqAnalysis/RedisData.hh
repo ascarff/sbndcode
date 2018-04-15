@@ -29,7 +29,7 @@ namespace daqAnalysis {
 // keeps a running mean of a metric w/ n_data instances and n_points_per_time data points per each time instance
 class daqAnalysis::StreamDataMean {
 public:
-  StreamDataMean(unsigned n_data, unsigned n_points_per_time): _data(n_data, 0.), _n_values(0), _n_points_per_time(n_data, n_points_per_time) {}
+  StreamDataMean(unsigned n_data, unsigned n_points_per_time): _data(n_data, 0.), _n_values(0), _instance_data(n_data, 0.), _n_points_per_time(n_data, n_points_per_time) {}
 
   // add in a new value
   void Add(unsigned index, float dat);
@@ -50,11 +50,16 @@ public:
     { _n_points_per_time[index] = points; }
 
 protected:
+  // add data from this time instance into the main data container
+  void AddInstance(unsigned index);
+
   // internal data
   std::vector<float> _data;
   // number of values averaged together in each data point
   unsigned _n_values;
 
+  // average of values for this time instance
+  std::vector<float> _instance_data;
   // number of values averaged together in each time instance
   // can be different per data point
   std::vector<unsigned> _n_points_per_time;
@@ -127,39 +132,50 @@ public:
   // implementing templated functions in header (because cpp is bad)
 
   // constructor
-  DetectorMetric(unsigned n_board, unsigned n_fem_per_board, unsigned n_channel_per_fem, unsigned n_wire):
-    _wire_data(n_wire, 1),
-    _fem_data(n_wire/n_channel_per_fem + ((n_wire % n_channel_per_fem == 0) ? 0 : 1), n_channel_per_fem),
-    _board_data(n_board, n_fem_per_board)
+  DetectorMetric() :
+    _wire_data(ChannelMap::n_wire, 1),
+    _fem_data(ChannelMap::NFEM(), ChannelMap::n_channel_per_fem),
+    _board_data(ChannelMap::n_boards, ChannelMap::n_fem_per_board*ChannelMap::n_channel_per_fem)
   {
-    // if numbers don't add up, the last board might not have n_fem_per_board and the last fem might not have n_channel_per_fem
-    unsigned n_fem = n_wire/n_channel_per_fem + ((n_wire % n_channel_per_fem == 0) ? 0 : 1);
-    if (n_fem % n_fem_per_board != 0) {
-      // shouldn't be missing a whole board
-      assert(n_board * n_fem_per_board - n_fem < n_fem_per_board);
+    // TODO @INSTALLATION: Make sure that this implementation also works for the VST installation
 
-      unsigned n_fem_last_board = n_fem_per_board - (n_board * n_fem_per_board - n_fem);
-      // last board has fewer fem
-      _board_data.SetPointsPerTime(n_board - 1, n_fem_last_board);
-    }
+    unsigned n_fem = ChannelMap::NFEM();
+    unsigned n_board = ChannelMap::n_boards;
+    unsigned n_wire = ChannelMap::n_wire;
+    unsigned n_fem_per_board = ChannelMap::n_fem_per_board;
+    unsigned n_channel_per_fem = ChannelMap::n_channel_per_fem;
+
+    unsigned n_channel_last_fem = n_channel_per_fem;
     // last fem might have fewer channels
     if (n_wire % n_channel_per_fem != 0) {
       // shouldn't be missing a whole fem
       assert(n_channel_per_fem * n_fem - n_wire < n_channel_per_board);
 
-      unsigned n_channel_last_fem = n_channel_per_fem - (n_fem * n_channel_per_fem - n_wire);
       // last fem has fewer channels
-      _fem_data.SetPointsPerTime(n_fem - 1, n_channel_last_fem); 
+      n_channel_last_fem = n_channel_per_fem - (n_fem * n_channel_per_fem - n_wire);
     }
+
+    unsigned n_fem_last_board = n_fem_per_board;
+    // if numbers don't add up, the last board might not have n_fem_per_board and the last fem might not have n_channel_per_fem
+    if (n_fem % n_fem_per_board != 0) {
+      // shouldn't be missing a whole board
+      assert(n_board * n_fem_per_board - n_fem < n_fem_per_board);
+
+      // last board has fewer fem
+      n_fem_last_board = n_fem_per_board - (n_board * n_fem_per_board - n_fem);
+    }
+
+    _fem_data.SetPointsPerTime(n_fem - 1, n_channel_last_fem); 
+    _board_data.SetPointsPerTime(n_board - 1, (n_fem_last_board-1)*n_channel_per_fem + n_channel_last_fem);
   }
 
   // add in data
-  void Add(daqAnalysis::ChannelData &channel, unsigned board, unsigned fem, unsigned wire) {
+  void Add(daqAnalysis::ChannelData &channel, unsigned board, unsigned fem_ind, unsigned wire) {
     // calculate and add to each container
     float dat = Calculate(channel);
     // each container is aware of how often it is filled per time instance
     _board_data.Add(board, dat);
-    _fem_data.Add(fem, dat);
+    _fem_data.Add(fem_ind, dat);
     _wire_data.Add(wire, dat);
   }
 
@@ -190,26 +206,38 @@ public:
     // send all the wire stuff
     unsigned n_wires = _wire_data.Size();
     for (unsigned wire = 0; wire < n_wires; wire++) {
-      reply = redisCommand(context, "SET STREAM/%i:%i:%s:wire:%i %f",
-        stream_no, now/stream_expire, REDIS_NAME,wire, TakeWire(wire)); 
+      reply = redisCommand(context, "SET stream/%i:%i:%s:wire:%i %f",
+        stream_no, now/stream_no, REDIS_NAME,wire, TakeWire(wire)); 
+      freeReplyObject(reply);
+
+      reply = redisCommand(context, "EXPIRE stream/%i:%i:%s:wire:%i %i",
+        stream_no, now/stream_no, REDIS_NAME,wire, stream_expire); 
       freeReplyObject(reply);
     } 
     // and the fem stuff
     unsigned n_fem = _fem_data.Size();
     for (unsigned fem_ind = 0; fem_ind < n_fem; fem_ind++) {
-      // TODO: implement translation from fem_ind to fem/board
+      // TODO @INSTALLATION: implement translation from fem_ind to fem/board
       // TEMPORARY IMPLEMENTATION
       unsigned fem = fem_ind % ChannelMap::n_fem_per_board;
       unsigned board = fem_ind / ChannelMap::n_fem_per_board;
-      reply = redisCommand(context, "SET STREAM/%i:%i:%s:board:%i:fem:%i",
-        stream_no, now/stream_expire, REDIS_NAME, fem, board, TakeFEM(fem_ind)); 
+      reply = redisCommand(context, "SET stream/%i:%i:%s:board:%i:fem:%i %f",
+        stream_no, now/stream_no, REDIS_NAME, board, fem, TakeFEM(fem_ind)); 
+      freeReplyObject(reply);
+
+      reply = redisCommand(context, "EXPIRE stream/%i:%i:%s:board:%i:fem:%i %i",
+        stream_no, now/stream_no, REDIS_NAME, board, fem, stream_expire); 
       freeReplyObject(reply);
     } 
     // and the board stuff
     unsigned n_board = _board_data.Size();
     for (unsigned board = 0; board < n_board; board++) {
       reply = redisCommand(context, "SET stream/%i:%i:%s:board:%i %f",
-         stream_no, now/stream_expire, REDIS_NAME, board, TakeBoard(board));
+         stream_no, now/stream_no, REDIS_NAME, board, TakeBoard(board));
+      freeReplyObject(reply);
+
+      reply = redisCommand(context, "EXPIRE stream/%i:%i:%s:board:%i %i",
+         stream_no, now/stream_no, REDIS_NAME, board, stream_expire);
       freeReplyObject(reply);
     }
   }
@@ -264,7 +292,7 @@ class daqAnalysis::RedisBaseline: public daqAnalysis::DetectorMetric<StreamDataM
 
   // implement calculate
  inline float Calculate(daqAnalysis::ChannelData &channel) override
-   { return channel.next_channel_dnoise; }
+   { return channel.baseline; }
 };
 
 class daqAnalysis::RedisPulseHeight: public daqAnalysis::DetectorMetric<StreamDataVariableMean, REDIS_NAME_PULSE_HEIGHT> {

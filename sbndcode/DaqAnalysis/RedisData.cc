@@ -14,7 +14,7 @@
 
 // Implementing StreamDataMean
 void daqAnalysis::StreamDataMean::Add(unsigned index, float dat) {
-  _data[index] = (_n_values * _data[index] + dat/_n_points_per_time[index]) / (_n_values + 1);
+  _instance_data[index] += dat/_n_points_per_time[index];
 }
 
 void daqAnalysis::StreamDataMean::Incl() {
@@ -26,6 +26,7 @@ void daqAnalysis::StreamDataMean::Clear() {
 }
 
 float daqAnalysis::StreamDataMean::Take(unsigned index) {
+  AddInstance(index);
   float ret = _data[index];
   _data[index] = 0;
   return ret;
@@ -33,9 +34,26 @@ float daqAnalysis::StreamDataMean::Take(unsigned index) {
 
 void daqAnalysis::StreamDataMean::Update(bool taken) {
   // clear out _n_values if taken
-  if (taken) Clear();
-  // otherwise increment it
-  else Incl();
+  if (taken) {
+    Clear();
+  }
+  else {
+    // update instance data if not taken
+    for (unsigned index = 0; index < _instance_data.size(); index++) {
+      AddInstance(index);
+    }
+    // increment _n_values
+    Incl();
+  }
+}
+
+// takes new data value out of instance and puts it in _data (not idempotent)
+void daqAnalysis::StreamDataMean::AddInstance(unsigned index) {
+  // add instance data to data
+  _data[index] = (_data[index] * _n_values + _instance_data[index]) / (_n_values + 1);
+
+  // clear instance data
+  _instance_data[index] = 0;
 }
 
 // Implementing StreamDataVariableMean
