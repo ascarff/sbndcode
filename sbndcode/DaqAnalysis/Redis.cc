@@ -169,9 +169,9 @@ void Redis::SendFem(unsigned stream_index) {
   }
 }
 
-inline void pushFFTDat(redisContext *context, unsigned channel, float re, float im) {
+inline size_t pushFFTDat(char *buffer, float re, float im) {
   float dat = re * im;
-  redisAppendCommand(context, "RPUSH snapshot:fft:wire:%i %f", channel, dat);
+  return sprintf(buffer, " %f", dat);
 }
 
 void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> *noise) {
@@ -190,10 +190,51 @@ void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> 
     // also delete old lists
     redisAppendCommand(context, "DEL snapshot:waveform:wire:%i", channel.channel_no);
     
-    for (auto dat: channel.waveform) {
-      redisAppendCommand(context, "RPUSH snapshot:waveform:wire:%i %i", channel.channel_no, dat);
+    // we're gonna put the whole waveform into one very large list 
+    // allocate enough space for it 
+    // Assume at max 4 chars per int plus a space each plus another 50 chars to store the base of the command
+    {
+      size_t buffer_len = channel.waveform.size() * 5 + 50;
+      char *buffer = new char[buffer_len];
+
+      // print in the base of the command
+      size_t print_len = sprintf(buffer, "RPUSH snapshot:waveform:wire:%i", channel.channel_no);
+      char *buffer_index = buffer + print_len;
+      // throw in all of the data points
+      for (int16_t dat: channel.waveform) {
+	/* IGNORE: Possible evil way of pushing stuff to redis to be possibly used later */
+	// add the space from the previous command
+	//*buffer_index = ' ';
+	//print_len ++;
+	//buffer_index = buffer + print_len;
+	
+	// add the number in binary:
+	// coerce the integer into a char[2]:
+	//char *binary_dat = (char *) &dat;
+	// to avoid null-termination, mask w/ 
+	//buffer_index[0] = binary_dat[0];
+	//buffer_index[1] = binary_dat[1];
+	
+	// 2 bytes
+	//print_len += 2;
+	
+	print_len += sprintf(buffer_index, " %i", dat); 
+	
+	buffer_index = buffer + print_len;
+	
+	if (print_len >= buffer_len - 1) {
+          std::cerr << "ERROR: BUFFER OVERFLOW IN WAVEFORM DATA" << std::endl;
+          std::exit(1);
+        }
+      }
+      // null terminate the string
+      //*buffer_index = '\0';
+      
+      redisAppendCommand(context, buffer);
+      n_commands += 2;
+      // delete the buffer
+      delete buffer;
     }
-    n_commands += channel.waveform.size() + 1;
 
     if (_do_timing) {
       _timing.EndTime(&_timing.send_waveform);
@@ -204,31 +245,50 @@ void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> 
     }
 
     redisAppendCommand(context, "DEL snapshot:fft:wire:%i", channel.channel_no);
-    // use already calculated FFT if there
-    if (channel.fft_real.size() != 0) {
-      for (size_t i = 0; i < channel.fft_real.size(); i++) {
-        pushFFTDat(context, channel.channel_no, channel.fft_real[i], channel.fft_imag[i]);
+
+    {
+      // allocate buffer for fft storage command
+      // FFT's are comprised of floats, which can get pretty big
+      // so assume you need ~25 digits per float to be on the safe side
+      size_t buffer_len = (channel.waveform.size()/2 +1) * 25 + 50;
+      char *buffer = new char[buffer_len];
+      
+      // print in the base of the command
+      size_t print_len = sprintf(buffer, "RPUSH snapshot:fft:wire:%i", channel.channel_no);
+      char *buffer_index = buffer + print_len;
+      // throw in all of the data points
+      
+      // use already calculated FFT if there
+      if (channel.fft_real.size() != 0) {
+        for (size_t i = 0; i < channel.fft_real.size(); i++) {
+          print_len += pushFFTDat(buffer_index, channel.fft_real[i], channel.fft_imag[i]);
+          buffer_index = buffer + print_len;
+        }
       }
-      n_commands += channel.fft_real.size() + 1;
+      // otherwise calculate it yourself
+      else {
+        // re-allocate if necessary
+        if (_fft_manager.InputSize() != channel.waveform.size()) {
+          _fft_manager.Set(channel.waveform.size());
+        }
+        // fill up the fft data in
+        for (size_t i = 0; i < channel.waveform.size(); i++) {
+          double *input = _fft_manager.InputAt(i);
+          *input = (double) channel.waveform[i];
+        }
+        _fft_manager.Execute();
+        int adc_fft_size = _fft_manager.OutputSize();
+        for (int i = 0; i < adc_fft_size; i++) {
+          print_len += pushFFTDat(buffer_index, _fft_manager.ReOutputAt(i), _fft_manager.ImOutputAt(i));
+          buffer_index = buffer + print_len;
+        }
+      }
+      redisAppendCommand(context, buffer);
+      n_commands += 2;
+      // delete the buffer
+      delete buffer;
     }
-    // otherwise calculate it yourself
-    else {
-      // re-allocate if necessary
-      if (_fft_manager.InputSize() != channel.waveform.size()) {
-        _fft_manager.Set(channel.waveform.size());
-      }
-      // fill up the fft data in
-      for (size_t i = 0; i < channel.waveform.size(); i++) {
-        double *input = _fft_manager.InputAt(i);
-        *input = (double) channel.waveform[i];
-      }
-      _fft_manager.Execute();
-      int adc_fft_size = _fft_manager.OutputSize();
-      for (int i = 0; i < adc_fft_size; i++) {
-        pushFFTDat(context, channel.channel_no, _fft_manager.ReOutputAt(i), _fft_manager.ImOutputAt(i));
-      }
-      n_commands += adc_fft_size + 1;
-    }
+
     if (_do_timing) {
       _timing.EndTime(&_timing.send_fft);
     }
@@ -240,16 +300,30 @@ void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> 
   // also store the noise correlation matrix if taking a snapshot
   redisAppendCommand(context, "DEL snapshot:correlation");
   
-  // Only calculate the upper-right half of the matrix since it is symmetric
-  // The index 'k' into the list of the i-th sample with the j-th sample (where i <= j) is:
-  // k = ((n+1)*n/2) - (n-i+1)*(n-i)/2 + j - i
-  for (size_t i = 0; i < noise->size(); i++) {
-    for (size_t j = i; j < noise->size(); j++) {
-      float correlation = (*noise)[i].Correlation((*per_channel_data)[i].waveform, (*noise)[j], (*per_channel_data)[j].waveform);
-      redisAppendCommand(context, "RPUSH snapshot:correlation %f",  correlation);
+  {
+    // allocate for the covariance matrix command
+    // again, get ~25 digits for each float
+    size_t buffer_len = ((noise->size() + 1) * noise->size() / 2) * 25 + 50;
+    char *buffer = new char[buffer_len];
+    
+    // print in the base of the command
+    size_t print_len = sprintf(buffer, "RPUSH snapshot:correlation");
+    char *buffer_index = buffer + print_len;
+    // Only calculate the upper-right half of the matrix since it is symmetric
+    // The index 'k' into the list of the i-th sample with the j-th sample (where i <= j) is:
+    // k = ((n+1)*n/2) - (n-i+1)*(n-i)/2 + j - i
+    for (size_t i = 0; i < noise->size(); i++) {
+      for (size_t j = i; j < noise->size(); j++) {
+        float correlation = (*noise)[i].Correlation((*per_channel_data)[i].waveform, (*noise)[j], (*per_channel_data)[j].waveform);
+        print_len += sprintf(buffer_index, " %f", correlation);
+        buffer_index = buffer + print_len;
+      }
     }
+    redisAppendCommand(context, buffer);
+    n_commands += 2;
+    delete buffer;
   }
-  n_commands += 1 +(noise->size() + 1) * noise->size() / 2;
+
   if (_do_timing) {
     _timing.EndTime(&_timing.correlation);
   }
