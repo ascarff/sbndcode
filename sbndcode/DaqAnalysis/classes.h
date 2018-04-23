@@ -19,6 +19,10 @@ namespace {
     std::vector<daqAnalysis::HeaderData> h_v;
     art::Wrapper<daqAnalysis::HeaderData> h_w;
     art::Wrapper<std::vector<daqAnalysis::HeaderData>> h_v_w;
+
+    std::vector<std::vector<short>> vs_v;
+    art::Wrapper<std::vector<std::vector<short>>> vs_v_w;
+    
   };
 }
 

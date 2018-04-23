@@ -12,9 +12,9 @@ physics:
 
   analyzers:
   {
-    SimpleDaqAnalysis:
+    OnlineAnalysis:
     {
-      module_type: SimpleDaqAnalysis
+      module_type: OnlineAnalysis
       producer_name: daq
       threshold_lo: 100
       noise_range_sampling: 1
@@ -29,7 +29,7 @@ physics:
   my_producer_modules: [daq]
 
   outstream: [out1]
-  analyze: [SimpleDaqAnalysis]
+  analyze: [OnlineAnalysis]
   end_paths: [outstream, analyze]
 }
 

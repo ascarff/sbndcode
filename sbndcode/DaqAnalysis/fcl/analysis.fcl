@@ -2,9 +2,9 @@ physics:
 {
   analyzers:
   {
-    SimpleDaqAnalysis:
+    VSTAnalysis:
     {
-      module_type: SimpleDaqAnalysis
+      module_type: VSTAnalysis
       producer_name: daq
       threshold_calc: 3
       threshold_sigma: 5
@@ -13,15 +13,14 @@ physics:
       use_planes: true
       verbose: false
       baseline_calc: 2
-      n_channels: 480
 
-      write_to_file: true
       fft_per_channel: false
       timing: false
+      sum_waveforms: false
     }
   }
 
-  a: [SimpleDaqAnalysis]
+  a: [VSTAnalysis]
   end_paths: [a]
 }
 

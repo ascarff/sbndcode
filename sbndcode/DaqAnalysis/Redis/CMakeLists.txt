@@ -1,34 +1,15 @@
-find_ups_product( lardataobj v1_17_00 )
+# setup external non-ups libraries
+include_directories($ENV{HIREDIS_INC})
+link_directories($ENV{HIREDIS_LIB})
 
-# include Lariat Geo
-add_subdirectory(LariatGeo)
-
-# include Lariat Data PRoducts
-add_subdirectory(LariatDataProducts)
-
-# add in VST Calibration
-add_subdirectory(VSTCalibration)
-
-# add in Redis stuff
-add_subdirectory(Redis)
-
-# add header-decoder stuff
-
-art_dictionary(DICTIONARY_LIBRARIES daqAnalysis_VST)
-
-cet_make_library( LIBRARY_NAME daqAnalysis_MODE
+cet_make_library( LIBRARY_NAME daqAnalysis_Redis
 	SOURCE
-		Mode.cc
-)
-
-cet_make_library( LIBRARY_NAME daqAnalysis_VST
-	SOURCE  Analysis.cc
-		FFT.cc
-		Noise.cc
-		PeakFinder.cc
-		ChannelData.cc
+		Redis.cc
+		RedisData.cc
 	LIBRARIES
+		daqAnalysis_VST
 		daqAnalysis_MODE
+		hiredis
 		sbnddaq-datatypes_Overlays
 		sbnddaq-datatypes_NevisTPC
 		${LARDATAOBJ} 
@@ -65,9 +46,10 @@ cet_make_library( LIBRARY_NAME daqAnalysis_VST
                            cetlib cetlib_except
                            ${CLHEP}
                            ${ROOT_BASIC_LIB_LIST}
-		)
+)
 
-simple_plugin( VSTAnalysis module
+simple_plugin( OnlineAnalysis module
+  daqAnalysis_Redis
   daqAnalysis_VST
   ${LARDATAOBJ}
   lardataobj_RawData

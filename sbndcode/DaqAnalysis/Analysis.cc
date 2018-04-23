@@ -33,21 +33,18 @@
 #include "art/Framework/Services/Optional/TFileService.h"
 #include "lardataobj/RawData/RawDigit.h"
 
-#include "Analysis.h"
-
+#include "Analysis.hh"
 #include "ChannelData.hh"
 #include "ChannelMap.hh"
 #include "HeaderData.hh"
 #include "FFT.hh"
 #include "Noise.hh"
 #include "PeakFinder.hh"
-#include "Redis.hh"
 #include "Mode.hh"
 
 using namespace daqAnalysis;
 
-SimpleDaqAnalysis::SimpleDaqAnalysis(fhicl::ParameterSet const & p) :
-  art::EDAnalyzer{p},
+Analysis::Analysis(fhicl::ParameterSet const & p) :
   _config(p),
   _per_channel_data(ChannelMap::n_wire),
   _per_channel_data_reduced((_config.reduce_data) ? ChannelMap::n_wire : 0), // setup reduced event vector if we need it
@@ -55,40 +52,13 @@ SimpleDaqAnalysis::SimpleDaqAnalysis(fhicl::ParameterSet const & p) :
   _header_data(std::max(_config.n_headers,0)),
   _thresholds( (_config.threshold_calc == 3) ? ChannelMap::n_wire : 0),
   _fem_summed_waveforms((_config.sum_waveforms) ? ChannelMap::NFEM() : 0),
-  _fft_manager(  (_config.static_input_size > 0) ? _config.static_input_size: 0)
+  _fft_manager(  (_config.static_input_size > 0) ? _config.static_input_size: 0),
+  _analyzed(false)
 {
   _event_ind = 0;
-
-  // set up tree and the channel data branch for output
-  if (_config.write_to_file) {
-    art::ServiceHandle<art::TFileService> fs;
-    _output = fs->make<TTree>("event", "event");
-    // which data to use
-    if (_config.reduce_data) {
-      _output->Branch("channel_data", &_per_channel_data_reduced);
-    }
-    else {
-      _output->Branch("channel_data", &_per_channel_data);
-    }
-    if (_config.n_headers > 0) {
-      _output->Branch("header_data", &_header_data);
-    }
-  }
-
-  // subclasses to do FFT's and send stuff to Redis
-  if (_config.redis) {
-    auto stream_take = p.get<std::vector<unsigned>>("stream_take");
-    auto stream_expire = p.get<std::vector<unsigned>>("stream_expire");
-    int snapshot_time = p.get<int>("snapshot_time", -1);
-
-    // have Redis alloc fft if you don't calculate them and you know the input size
-    int waveform_input_size = (!_config.fft_per_channel && _config.static_input_size > 0) ?
-      _config.static_input_size : -1;
-    _redis_manager = new Redis(stream_take, stream_expire, snapshot_time, waveform_input_size, _config.timing);
-  }
 }
 
-SimpleDaqAnalysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &param) {
+Analysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &param) {
   // set up config
 
   // conversion of frame number to time (currently unused)
@@ -137,8 +107,6 @@ SimpleDaqAnalysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &par
   // Number of input adc counts per waveform. Set to negative if unknown.
   // Setting to some positive number will speed up FFT's.
   static_input_size = param.get<int>("static_input_size", -1);
-  // whether to send stuff to redis
-  redis = param.get<bool>("redis", false);
   // how many headers to expect (set to negative if don't process) 
   n_headers = param.get<int>("n_headers", -1);
 
@@ -146,7 +114,6 @@ SimpleDaqAnalysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &par
   sum_waveforms = param.get<bool>("sum_waveforms", false);
   fft_per_channel = param.get<bool>("fft_per_channel", false);
   reduce_data = param.get<bool>("reduce_data", false);
-  write_to_file = param.get<bool>("write_to_file", false);
   timing = param.get<bool>("timing", false);
 
   // name of producer of raw::RawDigits
@@ -154,7 +121,7 @@ SimpleDaqAnalysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &par
   daq_tag = art::InputTag(producer, ""); 
 }
 
-void SimpleDaqAnalysis::analyze(art::Event const & event) {
+void Analysis::AnalyzeEvent(art::Event const & event) {
   //if (_config.n_events >= 0 && _event_ind >= (unsigned)_config.n_events) return false;
 
   _event_ind ++;
@@ -167,9 +134,12 @@ void SimpleDaqAnalysis::analyze(art::Event const & event) {
     _per_channel_data[i].peaks.clear();
   }
   // also for summed waveforms
-  for (unsigned i = 0; i < ChannelMap::NFEM(); i++) {
-    _fem_summed_waveforms[i].clear();
+  if (_config.sum_waveforms) {
+    for (unsigned i = 0; i < ChannelMap::NFEM(); i++) {
+      _fem_summed_waveforms[i].clear();
+    }
   }
+  _analyzed = true;
 
   auto const& raw_digits_handle = event.getValidHandle<std::vector<raw::RawDigit>>(_config.daq_tag);
   
@@ -240,73 +210,25 @@ void SimpleDaqAnalysis::analyze(art::Event const & event) {
   if (_config.timing) {
     _timing.EndTime(&_timing.copy_headers);
   }
-  ReportEvent(event);
-
+  // print stuff out
+  if (_config.verbose) {
+    std::cout << "EVENT NUMBER: " << _event_ind << std::endl;
+    for (auto &channel_data: _per_channel_data) {
+      std::cout << channel_data.Print();
+    }
+  }
   if (_config.timing) {
     _timing.Print();
   }
 }
 
-void SimpleDaqAnalysis::ProcessHeader(const daqAnalysis::HeaderData &header) {
+void Analysis::ProcessHeader(const daqAnalysis::HeaderData &header) {
   _header_data[header.Ind()] = header;
 }
 
-void SimpleDaqAnalysis::ReportEvent(art::Event const &art_event) {
-  // Fill the output
-  if (_config.write_to_file) {
-   if (_config.timing) {
-     _timing.StartTime();
-   }
-    _output->Fill();
-   if (_config.timing) {
-     _timing.EndTime(&_timing.write_to_file);
-   }
-  }
-
-  // print stuff out
-  if (_config.verbose) {
-    std::cout << "EVENT NUMBER: " << _event_ind << std::endl;
-    for (auto &channel_data: _per_channel_data) {
-      std::cout << channel_data.JsonifyPretty();
-    }
-  }
-
-  // Send stuff to Redis
-  if (_config.redis) {
-    // only do if event isn't empty
-    if (!_per_channel_data[0].empty) {
-      _redis_manager->StartSend();
-      if (_config.timing) {
-        _timing.StartTime();
-       }
-      _redis_manager->SendChannelData(&_per_channel_data, &_noise_samples);
-      if (_config.timing) {
-        _timing.EndTime(&_timing.redis_channel_data);
-       }
-      if (_config.n_headers > 0) {
-        if (_config.timing) {
-          _timing.StartTime();
-         }
-        _redis_manager->SendHeaderData(&_header_data);
-        if (_config.timing) {
-          _timing.EndTime(&_timing.redis_header_data);
-         }
-      }
-      _redis_manager->FinishSend();
-    }
-  }
-}
-
-void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
+void Analysis::ProcessChannel(const raw::RawDigit &digits) {
   auto channel = digits.Channel();
-  /*
-  std::cout << "CHANNEL: " << channel << std::endl;
-  std::cout << "PEDESTAL: " << digits.GetPedestal() << std::endl;
-  std::cout << "NADC: " << digits.NADC() << std::endl;
-  if (digits.NADC() > 0) {
-    std::cout << "ADC0: " << digits.ADCs()[0] << std::endl;
-  }*/
-  if (channel < _config.n_channels) {
+  if (channel < ChannelMap::n_wire) {
     // handle empty events
     if (digits.NADC() == 0) {
       // default constructor handles empty event
@@ -456,6 +378,10 @@ void SimpleDaqAnalysis::ProcessChannel(const raw::RawDigit &digits) {
   }
 }
 
+bool Analysis::ReadyToProcess() {
+  return _analyzed && !_per_channel_data[0].empty;
+}
+
 void Timing::StartTime() {
   start = std::chrono::high_resolution_clock::now(); 
 }
@@ -473,9 +399,6 @@ void Timing::Print() {
   std::cout << "REDUCE DATA  : " << reduce_data << std::endl;
   std::cout << "COHERENT NOISE " << coherent_noise_calc << std::endl;
   std::cout << "COPY HEADERS : " << copy_headers << std::endl;
-  std::cout << "WRITE TO FILE: " << write_to_file << std::endl;
-  std::cout << "REDIS CHANNEL: " << redis_channel_data << std::endl;
-  std::cout << "REDIS HEADER : " << redis_header_data << std::endl;
 }
 
 

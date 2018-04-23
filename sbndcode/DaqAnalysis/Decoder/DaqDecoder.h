@@ -16,7 +16,7 @@
 
 #include "sbnddaq-datatypes/Overlays/NevisTPCFragment.hh"
 
-#include "HeaderData.hh"
+#include "../HeaderData.hh"
 
 /*
   * The Decoder module takes as input "NevisTPCFragments" and

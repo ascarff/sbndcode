@@ -20,9 +20,9 @@ physics:
 
   analyzers:
   {
-    daqAnalysis:
+    VSTAnalysis:
     {
-      module_type: SimpleDaqAnalysis
+      module_type: VSTAnalysis
       producer_name: daq
     }
   }
@@ -30,7 +30,7 @@ physics:
   my_producer_modules: [daq, caldata, gaushit]
 
   outstream: [out1]
-  analyze: [daqAnalysis]
+  analyze: [VSTAnalysis]
   end_paths: [outstream, analyze]
 }
 

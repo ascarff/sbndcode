@@ -9,10 +9,11 @@
 #include <hiredis/hiredis.h>
 #include <hiredis/async.h>
 
-#include "ChannelData.hh"
-#include "HeaderData.hh"
-#include "Noise.hh"
-#include "FFT.hh"
+#include "../ChannelData.hh"
+#include "../HeaderData.hh"
+#include "../Noise.hh"
+#include "../FFT.hh"
+
 #include "RedisData.hh"
 
 namespace daqAnalysis {

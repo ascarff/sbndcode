@@ -7,9 +7,9 @@
 #include <hiredis/hiredis.h>
 #include <hiredis/async.h>
 
-#include "ChannelData.hh"
-#include "HeaderData.hh"
-#include "ChannelMap.hh"
+#include "../ChannelData.hh"
+#include "../HeaderData.hh"
+#include "../ChannelMap.hh"
 
 namespace daqAnalysis {
   class StreamDataMean;

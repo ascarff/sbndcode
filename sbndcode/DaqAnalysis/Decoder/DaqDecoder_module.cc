@@ -32,12 +32,30 @@
 #include "sbnddaq-datatypes/NevisTPC/NevisTPCTypes.hh"
 #include "sbnddaq-datatypes/NevisTPC/NevisTPCUtilities.hh"
 
-#include "HeaderData.hh"
-#include "ChannelMap.hh"
-#include "Mode.hh"
+#include "../HeaderData.hh"
+#include "../ChannelMap.hh"
+#include "../Mode.hh"
 
 DEFINE_ART_MODULE(daq::DaqDecoder)
 
+// constructs a header data object from a nevis header
+// construct from a nevis header
+daqAnalysis::HeaderData Nevis2HeaderData(const sbnddaq::NevisTPCHeader *raw_header, double frame_to_dt=1.0) {
+  daqAnalysis::HeaderData ret;
+
+  ret.fem_id = raw_header->getFEMID();
+  ret.slot_id = raw_header->getSlot();
+  ret.event_number = raw_header->getEventNum();
+  ret.frame_number = raw_header->getFrameNum();
+  ret.checksum = raw_header->getChecksum();
+  ret.adc_word_count = raw_header->getADCWordCount();
+  ret.trig_frame_number = raw_header->getTrigFrame();
+  
+  ret.frame_time = frame_number * frame_to_dt;
+  ret.trig_frame_time = trig_frame_number * frame_to_dt;
+
+  return ret;
+}
 
 daq::DaqDecoder::DaqDecoder(fhicl::ParameterSet const & param)
   : _tag("daq","NEVISTPC")
@@ -98,7 +116,7 @@ void daq::DaqDecoder::process_fragment(const artdaq::Fragment &frag,
 
   if (_produce_header) {
     // Construct HeaderData from the Nevis Header and throw it in the collection
-    header_collection->emplace_back(fragment.header());
+    header_collection->push_back(Nevis2HederData(fragment.header()));
   }
 
   for (auto waveform: waveform_map) {

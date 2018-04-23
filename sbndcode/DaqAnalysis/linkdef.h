@@ -8,6 +8,7 @@
 #pragma link C++ class std::vector<PeakFinder::Peak>+;
 #pragma link C++ class ChannelData+;
 #pragma link C++ class std::vector<ChannelData>+;
+#pragma link C++ class std::vector<std::vector<short>>+;
 #pragma link C++ class ReducedChannelData+;
 #pragma link C++ class std::vector<ReducedChannelData>+;
 #pragma link C++ class HeaderData+;

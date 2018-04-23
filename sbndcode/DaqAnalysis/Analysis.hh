@@ -1,13 +1,5 @@
-#ifndef Analysis_h
-#define Analysis_h
-////////////////////////////////////////////////////////////////////////
-// Class:       SimpleDaqAnalysis
-// Plugin Type: analyzer (art v2_07_03)
-// File:        Analysis.h
-//
-// Generated at Tue Feb 20 14:22:21 2018 by Gray Putnam using cetskelgen
-// from cetlib version v3_00_01.
-////////////////////////////////////////////////////////////////////////
+#ifndef Analysis_hh
+#define Analysis_hh
 
 #include <vector>
 #include <string>
@@ -30,7 +22,6 @@
 #include "ChannelData.hh"
 #include "HeaderData.hh"
 #include "FFT.hh"
-#include "Redis.hh"
 #include "Noise.hh"
 
 /*
@@ -41,7 +32,7 @@
 */
 
 namespace daqAnalysis {
-  class SimpleDaqAnalysis;
+  class Analysis;
   class Timing;
 }
 
@@ -58,9 +49,6 @@ public:
   float reduce_data;
   float coherent_noise_calc;
   float copy_headers;
-  float write_to_file;
-  float redis_channel_data;
-  float redis_header_data;
 
   Timing():
     fill_waveform(0),
@@ -71,10 +59,7 @@ public:
     calc_noise(0),
     reduce_data(0),
     coherent_noise_calc(0),
-    copy_headers(0),
-    write_to_file(0),
-    redis_channel_data(0),
-    redis_header_data(0)
+    copy_headers(0)
   {}
   
   void StartTime();
@@ -84,20 +69,13 @@ public:
 };
 
 
-class daqAnalysis::SimpleDaqAnalysis : public art::EDAnalyzer {
+class daqAnalysis::Analysis {
 public:
-  explicit SimpleDaqAnalysis(fhicl::ParameterSet const & p);
-  // The compiler-generated destructor is fine for non-base
-  // classes without bare pointers or other resource use.
+  explicit Analysis(fhicl::ParameterSet const & p);
 
-  // Plugins should not be copied or assigned.
-  SimpleDaqAnalysis(SimpleDaqAnalysis const &) = delete;
-  SimpleDaqAnalysis(SimpleDaqAnalysis &&) = delete;
-  SimpleDaqAnalysis & operator = (SimpleDaqAnalysis const &) = delete;
-  SimpleDaqAnalysis & operator = (SimpleDaqAnalysis &&) = delete;
+  // actually analyze stuff
+  void AnalyzeEvent(art::Event const & e);
 
-  // Required functions.
-  void analyze(art::Event const & e) override;
 
   // configuration
   struct AnalysisConfig {
@@ -109,7 +87,6 @@ public:
     art::InputTag daq_tag;
     int static_input_size;
 
-    bool redis;
     int n_headers;
 
     float threshold;
@@ -126,7 +103,6 @@ public:
     bool sum_waveforms;
     bool fft_per_channel;
     bool reduce_data;
-    bool write_to_file;
     bool timing;
 
     AnalysisConfig(const fhicl::ParameterSet &param);
@@ -137,11 +113,12 @@ public:
   void ProcessChannel(const raw::RawDigit &digits);
   void ProcessHeader(const daqAnalysis::HeaderData &header);
 
-  void ReportEvent(art::Event const &art_event);
+  // if the containers filled by the analysis are ready to be processed
+  bool ReadyToProcess();
 
-private:
-  // Declare member data here.
+  // configuration is available publicly
   AnalysisConfig _config;
+  // output containers of analysis code. Only use after calling ReadyToProcess()
   std::vector<daqAnalysis::ChannelData> _per_channel_data;
   std::vector<daqAnalysis::ReducedChannelData> _per_channel_data_reduced;
   std::vector<daqAnalysis::NoiseSample> _noise_samples;
@@ -151,16 +128,14 @@ private:
 
 private:
   // Declare member data here.
-  AnalysisConfig _config;
   unsigned _event_ind;
-  TTree *_output;
   FFTManager _fft_manager;
-  // use pointer to avoid double-construction
-  daqAnalysis::Redis *_redis_manager;
   // keep track of timing data (maybe)
   daqAnalysis::Timing _timing;
+  // whether we have analyzed stuff
+  bool _analyzed;
 };
 
 
 
-#endif /* Analysis_h */
+#endif /* Analysis_hh */

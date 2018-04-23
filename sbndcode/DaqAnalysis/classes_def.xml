@@ -13,4 +13,7 @@
   <class name="std::vector<daqAnalysis::HeaderData>"/>
   <class name="art::Wrapper<daqAnalysis::HeaderData>"/>
   <class name="art::Wrapper<std::vector<daqAnalysis::HeaderData>>"/>
+
+  <class name="std::vector<std::vector<short>>"/>
+  <class name="art::Wrapper<std::vector<std::vector<short>>>"/>
 </lcgdict>

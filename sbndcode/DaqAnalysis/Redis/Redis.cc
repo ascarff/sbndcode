@@ -4,17 +4,18 @@
 #include <ctime>
 #include <numeric>
 #include <chrono>
+#include <iostream>
 
 #include <hiredis/hiredis.h>
 #include <hiredis/async.h>
 
+#include "../ChannelData.hh"
+#include "../HeaderData.hh"
+#include "../Noise.hh"
+#include "../ChannelMap.hh"
+#include "../FFT.hh"
+
 #include "Redis.hh"
-#include "ChannelData.hh"
-#include "HeaderData.hh"
-#include "Noise.hh"
-#include "Analysis.h"
-#include "ChannelMap.hh"
-#include "FFT.hh"
 #include "RedisData.hh"
 
 using namespace daqAnalysis;

@@ -5,22 +5,27 @@ physics:
     daq:
     {
       module_type: DaqDecoder
+      produce_header: true
     }
   }
 
   analyzers:
   {
-    SimpleDaqAnalysis:
+    VSTAnalysis:
     {
-      module_type: SimpleDaqAnalysis
+      module_type: VSTAnalysis
       producer_name: daq
+      threshold_lo: 100
+      noise_range_sampling: 1
+      n_headers: 1
+      verbose: true
     }
   }
 
   my_producer_modules: [daq]
 
   outstream: [out1]
-  analyze: [SimpleDaqAnalysis]
+  analyze: [VSTAnalysis]
   end_paths: [outstream, analyze]
 }
 

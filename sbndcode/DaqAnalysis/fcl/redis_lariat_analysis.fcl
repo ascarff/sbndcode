@@ -3,12 +3,12 @@ physics:
 
   analyzers:
   {
-    SimpleDaqAnalysis:
+    OnlineAnalysis:
     {
-      module_type: SimpleDaqAnalysis
+      module_type: OnlineAnalysis
       producer_name: daq
       redis: true
-      snapshot_time: 100
+      snapshot_time: -1
       stream_take: [1, 10]
       stream_expire: [1000, 10000]
       n_headers: 0
@@ -16,19 +16,19 @@ physics:
       threshold_calc: 3
       threshold_sigma: 5
       noise_range_sampling: 1
-      n_smoothing_samples: 9
+      n_smoothing_samples: 1
+      n_above_threshold: 2
       use_planes: true
       verbose: false
       baseline_calc: 2
-      n_channels: 480      
 
       write_to_file: false
       fft_per_channel: false
-      timing: false
+      timing: true
     }
   }
 
-  analyze: [SimpleDaqAnalysis]
+  analyze: [OnlineAnalysis]
   end_paths: [analyze]
 }
 

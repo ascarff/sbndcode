@@ -1,6 +1,7 @@
 #ifndef _sbnddaq_analysis_PeakFinder
 #define _sbnddaq_analysis_PeakFinder
 #include <vector>
+#include <array>
 #include <float.h>
 
 // Reinventing the wheel: search for a bunch of peaks in a set of data
