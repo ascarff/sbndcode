@@ -13,6 +13,7 @@ add_subdirectory(VSTCalibration)
 add_subdirectory(Redis)
 
 # add header-decoder stuff
+add_subdirectory(Decoder)
 
 art_dictionary(DICTIONARY_LIBRARIES daqAnalysis_VST)
 
