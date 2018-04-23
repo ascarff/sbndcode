@@ -63,14 +63,13 @@ daqAnalysis::OnlineAnalysis::OnlineAnalysis(fhicl::ParameterSet const & p):
   // setup redis
   _redis_manager = new Redis(stream_take, stream_expire, snapshot_time, waveform_input_size, _analysis._config.timing);
 
-  std::cout << "CONSTRUCTED" << std::endl;
 }
 
 void daqAnalysis::OnlineAnalysis::analyze(art::Event const & e) {
   _analysis.AnalyzeEvent(e);
   if (_analysis.ReadyToProcess()) {
     _redis_manager->StartSend();
-    _redis_manager->SendChannelData(&_analysis._per_channel_data, &_analysis._noise_samples);
+    _redis_manager->SendChannelData(&_analysis._per_channel_data, &_analysis._noise_samples, &_analysis._fem_summed_waveforms);
     // send headers if _analysis was configured to copy them
     if (_analysis._config.n_headers > 0) {
         _redis_manager->SendHeaderData(&_analysis._header_data);

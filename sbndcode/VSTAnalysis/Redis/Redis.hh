@@ -33,6 +33,7 @@ public:
   float send_fft;
   float correlation;
   float clear_pipeline;
+  float fem_waveforms;
 
   RedisTiming():
     copy_data(0),
@@ -42,7 +43,8 @@ public:
     send_waveform(0),
     send_fft(0),
     correlation(0),
-    clear_pipeline(0)
+    clear_pipeline(0),
+    fem_waveforms(0)
   {}
   
   void StartTime();
@@ -56,7 +58,8 @@ public:
   Redis(std::vector<unsigned> &stream_take, std::vector<unsigned> &stream_expire, int snapshot_time = -1, int static_waveform_size = -1, bool timing=false);
   ~Redis();
   // send info associated w/ ChannelData
-  void SendChannelData(std::vector<daqAnalysis::ChannelData> *per_channel_data, std::vector<daqAnalysis::NoiseSample> *noise_samples);
+  void SendChannelData(std::vector<daqAnalysis::ChannelData> *per_channel_data, std::vector<daqAnalysis::NoiseSample> *noise_samples, 
+      std::vector<std::vector<short>> *fem_summed_waveforms);
   // send info associated w/ HeaderData
   void SendHeaderData(std::vector<daqAnalysis::HeaderData> *header_data);
   // must be called before calling Send functions
@@ -70,7 +73,7 @@ protected:
   // per-header (each associated w/ an fem) data to Redis
   void SendHeader(unsigned stream_index);
   // snapshot stuff
-  void Snapshot(std::vector<ChannelData> *per_channel_data, std::vector<daqAnalysis::NoiseSample> *noise);
+  void Snapshot(std::vector<ChannelData> *per_channel_data, std::vector<daqAnalysis::NoiseSample> *noise, std::vector<std::vector<short>> *fem_summed_waveforms);
   // clear out a pipeline of n_commands commands
   void FinishPipeline(size_t n_commands);
 

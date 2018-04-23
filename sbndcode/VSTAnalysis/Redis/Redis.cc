@@ -48,7 +48,6 @@ Redis::Redis(std::vector<unsigned> &stream_take, std::vector<unsigned> &stream_e
 {
   //context = redisAsyncConnect("127.0.0.1", 6379);
   context = redisConnect("127.0.0.1", 6379);
-  std::cout << "REDIS CONTEXT: " << context << std::endl;
   if (context != NULL && context->err) {
     std::cerr << "Redis error: " <<  context->errstr << std::endl;
     exit(1);
@@ -175,12 +174,45 @@ inline size_t pushFFTDat(char *buffer, float re, float im) {
   return sprintf(buffer, " %f", dat);
 }
 
-void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> *noise) {
+void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> *noise, vector<vector<short>> *fem_summed_waveforms) {
   size_t n_commands = 0;
 
   // record the time for reference
   redisAppendCommand(context, "SET snapshot:time %i", _now);
   n_commands ++;
+
+  if (_do_timing) _timing.StartTime();
+
+  // stuff per fem
+  for (unsigned fem_ind = 0; fem_ind < ChannelMap::NFEM(); fem_ind++) {
+    // sending the summed waveforms to redis
+    // delete old list
+    redisAppendCommand(context, "DEL snapshot:waveform:fem:%i", fem_ind);
+    {
+      // buffer for writing out waveform
+      size_t buffer_len = (*fem_summed_waveforms)[fem_ind].size() * 5 + 50;
+      char *buffer = new char[buffer_len];
+
+      // print in the base of the command
+      // assumes fem_summed_waveforms are already sorted by id
+      size_t print_len = sprintf(buffer, "RPUSH snapshot:waveform:fem:%i", fem_ind);
+      char *buffer_index = buffer + print_len;
+      for (short dat: (*fem_summed_waveforms)[fem_ind]) {
+	print_len += sprintf(buffer_index, " %i", dat); 
+	buffer_index = buffer + print_len;
+	if (print_len >= buffer_len - 1) {
+          std::cerr << "ERROR: BUFFER OVERFLOW IN WAVEFORM DATA" << std::endl;
+          std::exit(1);
+        }
+      }
+      // submit the command
+      redisAppendCommand(context, buffer);
+      n_commands += 2;
+
+      delete buffer;
+    }
+  }
+  if (_do_timing) _timing.EndTime(&_timing.fem_waveforms);
 
   // stuff per channel
   for (auto &channel: *per_channel_data) { 
@@ -339,7 +371,7 @@ void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> 
   
 }
 
-void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseSample> *noise_samples) {
+void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseSample> *noise_samples, vector<vector<short>> *fem_summed_waveforms) {
   if (_do_timing) {
     _timing.StartTime();
   }
@@ -455,7 +487,7 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
   // snapshots
   bool take_snapshot = _snapshot_time > 0 && (_now - _start) % _snapshot_time == 0 && _last_snapshot != _now;
   if (take_snapshot) {
-    Snapshot(per_channel_data, noise_samples);
+    Snapshot(per_channel_data, noise_samples, fem_summed_waveforms);
     _last_snapshot = _now;
   }
 }
@@ -486,5 +518,6 @@ void RedisTiming::Print() {
   std::cout << "SEND FFT    : " << send_fft << std::endl;
   std::cout << "CORRELATION : " << correlation << std::endl;
   std::cout << "CLEAR PIPE  : " << clear_pipeline << std::endl;
+  std::cout << "FEM WAVEFORM: " << fem_waveforms << std::endl;
 }
 
