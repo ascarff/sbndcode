@@ -9,12 +9,6 @@ add_subdirectory(LariatDataProducts)
 # add in VST Calibration
 add_subdirectory(VSTCalibration)
 
-# add in Redis stuff
-add_subdirectory(Redis)
-
-# add header-decoder stuff
-add_subdirectory(Decoder)
-
 art_dictionary(DICTIONARY_LIBRARIES daqAnalysis_VST)
 
 cet_make_library( LIBRARY_NAME daqAnalysis_MODE
