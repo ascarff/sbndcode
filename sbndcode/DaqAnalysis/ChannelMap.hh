@@ -22,7 +22,7 @@ public:
     // TEMPORARY IMPLEMENTATION FOR TEST ON LARIAT DATA
 
     // slots count up from 0 -> 480. 64 channels per board. 8 boards total.
-    size_t slot_no = wire / ChannelMap::n_boards;
+    size_t slot_no = wire / (ChannelMap::n_fem_per_board * ChannelMap::n_channel_per_fem);
     // fems count up from 0 -> 480. 16 channels per fem. 4 fem per board.
     size_t fem_no = (wire / ChannelMap::n_channel_per_fem) % ChannelMap::n_fem_per_board;
     // channel ind counts up from 0 -> 480. 64 channels per reset (board)
