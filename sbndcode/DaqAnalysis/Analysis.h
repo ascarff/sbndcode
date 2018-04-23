@@ -106,7 +106,6 @@ public:
     float frame_to_dt;
     bool verbose;
     int n_events;
-    size_t n_channels;
     art::InputTag daq_tag;
     int static_input_size;
 
@@ -124,6 +123,7 @@ public:
     unsigned n_smoothing_samples;
     unsigned n_above_threshold;
 
+    bool sum_waveforms;
     bool fft_per_channel;
     bool reduce_data;
     bool write_to_file;
@@ -147,6 +147,11 @@ private:
   std::vector<daqAnalysis::NoiseSample> _noise_samples;
   std::vector<daqAnalysis::HeaderData> _header_data;
   std::vector<RunningThreshold> _thresholds;
+  std::vector<std::vector<int16_t>> _fem_summed_waveforms;
+
+private:
+  // Declare member data here.
+  AnalysisConfig _config;
   unsigned _event_ind;
   TTree *_output;
   FFTManager _fft_manager;

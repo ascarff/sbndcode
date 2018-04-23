@@ -40,5 +40,9 @@ private:
   std::vector<std::array<unsigned, 2>> _ranges;
   int16_t _baseline;
 };
+
+// helper function to sum a group of waveforms looking for e.g. coherent noise
+void SumWaveforms(std::vector<int16_t> &output, std::vector<std::vector<int16_t>*> waveforms);
+
 } // namespace daqAnalysis
 #endif

@@ -49,11 +49,12 @@ using namespace daqAnalysis;
 SimpleDaqAnalysis::SimpleDaqAnalysis(fhicl::ParameterSet const & p) :
   art::EDAnalyzer{p},
   _config(p),
-  _per_channel_data(_config.n_channels),
-  _per_channel_data_reduced((_config.reduce_data) ? _config.n_channels : 0), // setup reduced event vector if we need it
-  _noise_samples(_config.n_channels),
+  _per_channel_data(ChannelMap::n_wire),
+  _per_channel_data_reduced((_config.reduce_data) ? ChannelMap::n_wire : 0), // setup reduced event vector if we need it
+  _noise_samples(ChannelMap::n_wire),
   _header_data(std::max(_config.n_headers,0)),
-  _thresholds( (_config.threshold_calc == 3) ? _config.n_channels : 0),
+  _thresholds( (_config.threshold_calc == 3) ? ChannelMap::n_wire : 0),
+  _fem_summed_waveforms((_config.sum_waveforms) ? ChannelMap::NFEM() : 0),
   _fft_manager(  (_config.static_input_size > 0) ? _config.static_input_size: 0)
 {
   _event_ind = 0;
@@ -141,11 +142,8 @@ SimpleDaqAnalysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &par
   // how many headers to expect (set to negative if don't process) 
   n_headers = param.get<int>("n_headers", -1);
 
-  // number of input channels
-  // TODO: how to detect this?
-  n_channels = param.get<unsigned>("n_channels", 16 /* currently only the first 16 channels have data */);
-
   // whether to calculate/save certain things
+  sum_waveforms = param.get<bool>("sum_waveforms", false);
   fft_per_channel = param.get<bool>("fft_per_channel", false);
   reduce_data = param.get<bool>("reduce_data", false);
   write_to_file = param.get<bool>("write_to_file", false);
@@ -162,11 +160,15 @@ void SimpleDaqAnalysis::analyze(art::Event const & event) {
   _event_ind ++;
 
   // clear out containers from last iter
-  for (unsigned i = 0; i < _config.n_channels; i++) {
+  for (unsigned i = 0; i < ChannelMap::n_wire; i++) {
     _per_channel_data[i].waveform.clear();
     _per_channel_data[i].fft_real.clear();
     _per_channel_data[i].fft_imag.clear();
     _per_channel_data[i].peaks.clear();
+  }
+  // also for summed waveforms
+  for (unsigned i = 0; i < ChannelMap::NFEM(); i++) {
+    _fem_summed_waveforms[i].clear();
   }
 
   auto const& raw_digits_handle = event.getValidHandle<std::vector<raw::RawDigit>>(_config.daq_tag);
@@ -194,17 +196,35 @@ void SimpleDaqAnalysis::analyze(art::Event const & event) {
   }
 
   // now calculate stuff that depends on stuff between channels
-  for (unsigned i = 0; i < _config.n_channels - 1; i++) {
+
+  // DNoise
+  for (unsigned i = 0; i < ChannelMap::n_wire - 1; i++) {
     unsigned next_channel = i + 1; 
 
     if (!_per_channel_data[i].empty && !_per_channel_data[next_channel].empty) {
-      // dnoise 
       _per_channel_data[i].next_channel_dnoise = _noise_samples[i].DNoise(
           _per_channel_data[i].waveform, _noise_samples[next_channel],  _per_channel_data[next_channel].waveform);
     }
   }
   if (_config.timing) {
     _timing.EndTime(&_timing.coherent_noise_calc);
+  }
+ 
+  // summed waveforms
+  // TODO @INSTALLATION: Make sure this still works
+  if (_config.sum_waveforms) {
+    size_t n_fem = ChannelMap::NFEM();
+    std::vector<std::vector<std::vector<int16_t> *>> channel_waveforms_per_fem(n_fem);
+    // collect the waveforms
+    for (unsigned i = 0; i < ChannelMap::n_wire; i++) {
+      daqAnalysis::ChannelMap::board_channel info = daqAnalysis::ChannelMap::Wire2Channel(i);
+      size_t fem_ind = info.fem_no + info.slot_no * ChannelMap::n_fem_per_board; 
+      channel_waveforms_per_fem[fem_ind].push_back(&_per_channel_data[i].waveform);
+    }
+    // sum all of them
+    for (unsigned i = 0; i < n_fem; i++) {
+      daqAnalysis::SumWaveforms(_fem_summed_waveforms[i] ,channel_waveforms_per_fem[i]);
+    }
   }
 
   if (_config.timing) {
