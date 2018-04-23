@@ -1,7 +1,7 @@
 #include "canvas/Persistency/Common/Wrapper.h"
 #include <vector>
-#include "sbndcode/DaqAnalysis/ChannelData.hh"
-#include "sbndcode/DaqAnalysis/HeaderData.hh"
+#include "sbndcode/VSTAnalysis/ChannelData.hh"
+#include "sbndcode/VSTAnalysis/HeaderData.hh"
 
 namespace {
   struct dictionary {
