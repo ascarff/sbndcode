@@ -1,8 +1,9 @@
 #include <vector>
 #include <algorithm>
 #include <string>
-
-#include <json/writer.h>
+#include <iostream>
+#include <sstream> 
+#include <stdlib.h>
 
 #include "PeakFinder.hh"
 #include "ChannelData.hh"
@@ -36,53 +37,36 @@ float daqAnalysis::ChannelData::Occupancy() {
   return n_peaks;
 }
 
-// Turn in channel data to a json blob for sending to Redis
-std::string daqAnalysis::ChannelData::Jsonify() {
-  Json::FastWriter fastWriter;
-  std::string str = fastWriter.write(GetJson());
-  // erase newline
-  str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
-  return str;
-}
+std::string daqAnalysis::ChannelData::Print() {
+  std::stringstream buffer;
+  buffer << "baseline: " << baseline << std::endl;
+  buffer << "max: " << max << std::endl;
+  buffer << "min: " << min << std::endl;
+  buffer << "rms: " << rms << std::endl;
+  buffer << "channel_no: " << channel_no << std::endl;
+  buffer << "empty: " << empty << std::endl;
+  buffer << "threshold: " << threshold << std::endl; 
+  buffer << "next_channel_dnoise: " << next_channel_dnoise << std::endl;
 
-std::string daqAnalysis::ChannelData::JsonifyPretty() {
-  Json::StyledWriter writer;
-  std::string str = writer.write(GetJson());
-  return str;
-}
-
-Json::Value daqAnalysis::ChannelData::GetJson() {
-  Json::Value output;
-  output["baseline"] = baseline;
-  output["max"] = max;
-  output["min"] = min;
-  output["rms"] = rms;
-  output["channel_no"] = channel_no;
-  output["empty"] = empty;
-  output["threshold"] = threshold;
-  
-  output["next_channel_dnoise"] = next_channel_dnoise;
-
-  output["peaks"] = Json::arrayValue;
+  buffer << "peaks: [" << std::endl;
   for (auto &peak: peaks) {
-    Json::Value json_peak;
-    json_peak["amplitude"] = peak.amplitude;
-    json_peak["start_tight"] = peak.start_tight;
-    json_peak["start_loose"] = peak.start_loose;
-    json_peak["end_loose"] = peak.end_loose;
-    json_peak["end_tight"] = peak.end_tight;
-    json_peak["is_up"] = peak.is_up;
-    output["peaks"].append(json_peak);
+    buffer << "  {" << std::endl;
+    buffer << "    amplitude: " << peak.amplitude << std::endl;
+    buffer << "    start_tight: " << peak.start_tight << std::endl;
+    buffer << "    start_loose: " << peak.start_loose << std::endl;
+    buffer << "    end_loose: " << peak.end_loose << std::endl;
+    buffer << "    end_tight: " << peak.end_tight << std::endl;
+    buffer << "    is_up: " << peak.is_up << std::endl;
+    buffer << "  }" << std::endl;
   }
-  output["noise_ranges"] = Json::arrayValue;
+  buffer << "]" << std::endl;
+
+  buffer << "noise_ranges: [" << std::endl;
   for (auto &range: noise_ranges) {
-    Json::Value json_range = Json::arrayValue;
-    json_range.append(range[0]);
-    json_range.append(range[1]);
-    output["noise_ranges"].append(json_range);
-  } 
+    buffer << "  [ " <<  range[0] << ", " << range[1] << "],"<< std::endl;
+  }
+  buffer << "]" << std::endl;
 
-  return output;
+  return buffer.str();
 }
-
 

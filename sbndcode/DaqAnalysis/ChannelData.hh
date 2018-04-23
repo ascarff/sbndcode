@@ -4,7 +4,6 @@
 #include <vector>
 #include <array>
 #include <string>
-#include <json/writer.h>
 
 #include "PeakFinder.hh"
 
@@ -25,9 +24,7 @@ public:
   std::vector<PeakFinder::Peak> peaks;
   std::vector<std::array<unsigned, 2>> noise_ranges;
 
-  Json::Value GetJson(); 
-  std::string Jsonify();
-  std::string JsonifyPretty();
+  std::string Print();
 
   float mean_peak_height;
   float occupancy;
