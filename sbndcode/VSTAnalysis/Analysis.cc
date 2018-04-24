@@ -172,8 +172,13 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
     unsigned next_channel = i + 1; 
 
     if (!_per_channel_data[i].empty && !_per_channel_data[next_channel].empty) {
-      _per_channel_data[i].next_channel_dnoise = _noise_samples[i].DNoise(
+      float unscaled_dnoise = _noise_samples[i].DNoise(
           _per_channel_data[i].waveform, _noise_samples[next_channel],  _per_channel_data[next_channel].waveform);
+      // Doon't use same noise sample to scale dnoise
+      // This should probably be ok, as long as the dnoise sample is large enough
+      float dnoise_scale = sqrt(_per_channel_data[i].rms * _per_channel_data[i].rms + 
+                                _per_channel_data[next_channel].rms * _per_channel_data[next_channel].rms);
+      _per_channel_data[i].next_channel_dnoise = unscaled_dnoise / dnoise_scale; 
     }
   }
   if (_config.timing) {
