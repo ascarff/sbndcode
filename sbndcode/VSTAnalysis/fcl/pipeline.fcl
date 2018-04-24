@@ -1,21 +1,13 @@
-#include "hitfindermodules_sbnd.fcl"
-#include "caldata_sbnd.fcl"
-#include "larfft_sbnd.fcl"
-#include "services_sbnd.fcl"
-#include "signalservices_sbnd.fcl"
-
+#include "geometry_lariat.fcl"
 physics:
 {
   producers:
   {
-    daq:
+    caldata:
     {
-      module_type: DaqDecoder
+      module_type: CalWireVST
+      digit_producer_name: daq 
     }
-
-    caldata: @local::sbnd_calwire
-
-    gaushit: @local::sbnd_gaushitfinder
   }
 
   analyzers:
@@ -24,10 +16,21 @@ physics:
     {
       module_type: VSTAnalysis
       producer_name: daq
+      threshold_calc: 3
+      threshold_sigma: 5
+      noise_range_sampling: 1
+      n_smoothing_samples: 9
+      use_planes: true
+      verbose: false
+      baseline_calc: 2
+
+      fft_per_channel: false
+      timing: false
+      sum_waveforms: false 
     }
   }
 
-  my_producer_modules: [daq, caldata, gaushit]
+  my_producer_modules: [caldata]
 
   outstream: [out1]
   analyze: [VSTAnalysis]
@@ -46,22 +49,14 @@ outputs:
 services:
 {
   TFileService: { fileName: "out.root"}
-  @table::sbnd_services
-  LArFFT: @local::sbnd_larfft
-
-  SignalShapingServiceSBND: @local::sbnd_signalshapingservice
-
-  // @table::sbnd_geometry_services
-  // NOTE: This table has:
-  //
-  // Geometry: @local::sbnd_geo
-  // ExptGeoHelperInterface: @local::sbnd_geometry_helper
+  Geometry: @local::lariat_geo
+  ExptGeoHelperInterface: @local::lariat_geometry_helper
 } 
 
 source:
 {
   module_type: RootInput
-  fileNames: ["/home/nfs/gputnam/nevistpc_filedata_test.root"]
+  fileNames: ["/home/nfs/gputnam/lariat_data.root"]
 }
 
 process_name: PIPELINE

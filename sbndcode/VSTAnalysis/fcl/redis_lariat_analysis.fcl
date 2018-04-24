@@ -8,7 +8,7 @@ physics:
       module_type: OnlineAnalysis
       producer_name: daq
       redis: true
-      snapshot_time: 100
+      snapshot_time: -1
       stream_take: [1, 10]
       stream_expire: [1000, 10000]
       n_headers: 0
@@ -24,7 +24,7 @@ physics:
 
       sum_waveforms: true
       fft_per_channel: false
-      timing: true
+      timing: false
     }
   }
 
