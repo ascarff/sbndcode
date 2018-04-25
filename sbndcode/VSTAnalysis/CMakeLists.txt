@@ -9,6 +9,8 @@ add_subdirectory(LariatDataProducts)
 # add in VST Calibration
 add_subdirectory(VSTCalibration)
 
+link_directories($ENV{FFTW_LIBRARY})
+
 art_dictionary(DICTIONARY_LIBRARIES daqAnalysis_VST)
 
 cet_make_library( LIBRARY_NAME daqAnalysis_MODE
@@ -24,8 +26,6 @@ cet_make_library( LIBRARY_NAME daqAnalysis_VST
 		ChannelData.cc
 	LIBRARIES
 		daqAnalysis_MODE
-		sbnddaq-datatypes_Overlays
-		sbnddaq-datatypes_NevisTPC
 		${LARDATAOBJ} 
 		lardataobj_RawData
 		lardata_Utilities
