@@ -119,7 +119,7 @@ protected:
 };
 
 // holds a StreamDataMean or StreamDataVariableMean across all instances of the detector
-// i.e. per board, fem, wire, etc.
+// i.e. per crate, fem, wire, etc.
 template<class Stream, char const *REDIS_NAME>
 class daqAnalysis::DetectorMetric {
 public:
@@ -135,52 +135,52 @@ public:
   DetectorMetric() :
     _wire_data(ChannelMap::n_wire, 1),
     _fem_data(ChannelMap::NFEM(), ChannelMap::n_channel_per_fem),
-    _board_data(ChannelMap::n_boards, ChannelMap::n_fem_per_board*ChannelMap::n_channel_per_fem)
+    _crate_data(ChannelMap::n_crates, ChannelMap::n_fem_per_crate*ChannelMap::n_channel_per_fem)
   {
     // TODO @INSTALLATION: Make sure that this implementation also works for the VST installation
 
     unsigned n_fem = ChannelMap::NFEM();
-    unsigned n_board = ChannelMap::n_boards;
+    unsigned n_crate = ChannelMap::n_crates;
     unsigned n_wire = ChannelMap::n_wire;
-    unsigned n_fem_per_board = ChannelMap::n_fem_per_board;
+    unsigned n_fem_per_crate = ChannelMap::n_fem_per_crate;
     unsigned n_channel_per_fem = ChannelMap::n_channel_per_fem;
 
     unsigned n_channel_last_fem = n_channel_per_fem;
     // last fem might have fewer channels
     if (n_wire % n_channel_per_fem != 0) {
       // shouldn't be missing a whole fem
-      assert(n_channel_per_fem * n_fem - n_wire < n_channel_per_board);
+      assert(n_channel_per_fem * n_fem - n_wire < n_channel_per_crate);
 
       // last fem has fewer channels
       n_channel_last_fem = n_channel_per_fem - (n_fem * n_channel_per_fem - n_wire);
     }
 
-    unsigned n_fem_last_board = n_fem_per_board;
-    // if numbers don't add up, the last board might not have n_fem_per_board and the last fem might not have n_channel_per_fem
-    if (n_fem % n_fem_per_board != 0) {
-      // shouldn't be missing a whole board
-      assert(n_board * n_fem_per_board - n_fem < n_fem_per_board);
+    unsigned n_fem_last_crate = n_fem_per_crate;
+    // if numbers don't add up, the last crate might not have n_fem_per_crate and the last fem might not have n_channel_per_fem
+    if (n_fem % n_fem_per_crate != 0) {
+      // shouldn't be missing a whole crate
+      assert(n_crate * n_fem_per_crate - n_fem < n_fem_per_crate);
 
-      // last board has fewer fem
-      n_fem_last_board = n_fem_per_board - (n_board * n_fem_per_board - n_fem);
+      // last crate has fewer fem
+      n_fem_last_crate = n_fem_per_crate - (n_crate * n_fem_per_crate - n_fem);
     }
 
     _fem_data.SetPointsPerTime(n_fem - 1, n_channel_last_fem); 
-    _board_data.SetPointsPerTime(n_board - 1, (n_fem_last_board-1)*n_channel_per_fem + n_channel_last_fem);
+    _crate_data.SetPointsPerTime(n_crate - 1, (n_fem_last_crate-1)*n_channel_per_fem + n_channel_last_fem);
   }
 
   // add in data
-  void Add(daqAnalysis::ChannelData &channel, unsigned board, unsigned fem_ind, unsigned wire) {
+  void Add(daqAnalysis::ChannelData &channel, unsigned crate, unsigned fem_ind, unsigned wire) {
     // calculate and add to each container
     float dat = Calculate(channel);
     // each container is aware of how often it is filled per time instance
-    _board_data.Add(board, dat);
+    _crate_data.Add(crate, dat);
     _fem_data.Add(fem_ind, dat);
     _wire_data.Add(wire, dat);
   }
 
-  float TakeBoard(unsigned index) {
-    return _board_data.Take(index);
+  float TakeCrate(unsigned index) {
+    return _crate_data.Take(index);
   }
 
   float TakeFEM(unsigned index) {
@@ -193,7 +193,7 @@ public:
 
   // to be called once per time instance
   void Update(bool taken) {
-    _board_data.Update(taken);
+    _crate_data.Update(taken);
     _fem_data.Update(taken);
     _wire_data.Update(taken);
   }
@@ -212,33 +212,33 @@ public:
     // and the fem stuff
     unsigned n_fem = _fem_data.Size();
     for (unsigned fem_ind = 0; fem_ind < n_fem; fem_ind++) {
-      // TODO @INSTALLATION: implement translation from fem_ind to fem/board
+      // TODO @INSTALLATION: implement translation from fem_ind to fem/crate
       // TEMPORARY IMPLEMENTATION
-      unsigned fem = fem_ind % ChannelMap::n_fem_per_board;
-      unsigned board = fem_ind / ChannelMap::n_fem_per_board;
-      redisAppendCommand(context, "SET stream/%i:%i:%s:board:%i:fem:%i %f",
-        stream_no, now/stream_no, REDIS_NAME, board, fem, TakeFEM(fem_ind)); 
+      unsigned fem = fem_ind % ChannelMap::n_fem_per_crate;
+      unsigned crate = fem_ind / ChannelMap::n_fem_per_crate;
+      redisAppendCommand(context, "SET stream/%i:%i:%s:crate:%i:fem:%i %f",
+        stream_no, now/stream_no, REDIS_NAME, crate, fem, TakeFEM(fem_ind)); 
 
-      redisAppendCommand(context, "EXPIRE stream/%i:%i:%s:board:%i:fem:%i %i",
-        stream_no, now/stream_no, REDIS_NAME, board, fem, stream_expire); 
+      redisAppendCommand(context, "EXPIRE stream/%i:%i:%s:crate:%i:fem:%i %i",
+        stream_no, now/stream_no, REDIS_NAME, crate, fem, stream_expire); 
     } 
-    // and the board stuff
-    unsigned n_board = _board_data.Size();
-    for (unsigned board = 0; board < n_board; board++) {
-      redisAppendCommand(context, "SET stream/%i:%i:%s:board:%i %f",
-         stream_no, now/stream_no, REDIS_NAME, board, TakeBoard(board));
+    // and the crate stuff
+    unsigned n_crate = _crate_data.Size();
+    for (unsigned crate = 0; crate < n_crate; crate++) {
+      redisAppendCommand(context, "SET stream/%i:%i:%s:crate:%i %f",
+         stream_no, now/stream_no, REDIS_NAME, crate, TakeCrate(crate));
 
-      redisAppendCommand(context, "EXPIRE stream/%i:%i:%s:board:%i %i",
-         stream_no, now/stream_no, REDIS_NAME, board, stream_expire);
+      redisAppendCommand(context, "EXPIRE stream/%i:%i:%s:crate:%i %i",
+         stream_no, now/stream_no, REDIS_NAME, crate, stream_expire);
     }
     // return number of commands sent
-    return 2*(n_wires + n_fem + n_board);
+    return 2*(n_wires + n_fem + n_crate);
   }
 
 protected:
   Stream _wire_data;
   Stream _fem_data;
-  Stream _board_data;
+  Stream _crate_data;
 };
 
 // string literals can't be template arguments for some reason, so declare them here

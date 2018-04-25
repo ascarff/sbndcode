@@ -36,12 +36,12 @@ Redis::Redis(std::vector<unsigned> &stream_take, std::vector<unsigned> &stream_e
   _pulse_height(stream_take.size(), RedisPulseHeight()),
   _occupancy(stream_take.size(), RedisOccupancy()),
 
-  _fem_scaled_sum_rms(stream_take.size(), StreamDataMean(ChannelMap::n_fem_per_board* ChannelMap::n_boards, 1)),
+  _fem_scaled_sum_rms(stream_take.size(), StreamDataMean(ChannelMap::n_fem_per_crate* ChannelMap::n_crates, 1)),
 
   // and the header stuff
-  _frame_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
-  _trigframe_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
-  _event_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_board* ChannelMap::n_boards)),
+  _frame_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_crate* ChannelMap::n_crates)),
+  _trigframe_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_crate* ChannelMap::n_crates)),
+  _event_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_crate* ChannelMap::n_crates)),
 
   _fft_manager((waveform_input_size > 0) ? waveform_input_size: 0),
   _do_timing(timing)
@@ -104,36 +104,36 @@ void Redis::SendHeader(unsigned stream_index) {
   if (_do_timing) {
     _timing.StartTime();
   }
-  for (size_t fem_ind = 0; fem_ind < ChannelMap::n_fem_per_board* ChannelMap::n_boards; fem_ind++) {
-    // TODO @INSTALLATION: implement translation from fem_ind to fem/board
+  for (size_t fem_ind = 0; fem_ind < ChannelMap::n_fem_per_crate* ChannelMap::n_crates; fem_ind++) {
+    // TODO @INSTALLATION: implement translation from fem_ind to fem/crate
     // TEMPORARY IMPLEMENTATION
-    unsigned fem = fem_ind % ChannelMap::n_fem_per_board;
-    unsigned board = fem_ind / ChannelMap::n_fem_per_board;
+    unsigned fem = fem_ind % ChannelMap::n_fem_per_crate;
+    unsigned crate = fem_ind / ChannelMap::n_fem_per_crate;
 
-    reply = redisCommand(context, "SET stream/%i:%i:frame_no:board:%i:fem:%i %f", 
-      _stream_take[stream_index], _now/_stream_take[stream_index], fem, board, _frame_no[stream_index].Take(fem_ind));
+    reply = redisCommand(context, "SET stream/%i:%i:frame_no:crate:%i:fem:%i %f", 
+      _stream_take[stream_index], _now/_stream_take[stream_index], fem, crate, _frame_no[stream_index].Take(fem_ind));
     freeReplyObject(reply);
     
-    reply = redisCommand(context, "EXPIRE stream/%i:%i:frame_no:board:%i:fem:%i %i", 
-      _stream_take[stream_index], _now/_stream_take[stream_index], fem, board, _stream_expire[stream_index]);
-    freeReplyObject(reply);
-    
-
-    reply = redisCommand(context, "SET stream/%i:%i:event_no:board:%i:fem:%i %f", 
-      _stream_take[stream_index], _now/_stream_take[stream_index], fem, board, _event_no[stream_index].Take(fem_ind));
-    freeReplyObject(reply);
-    
-    reply = redisCommand(context, "EXPIRE stream/%i:%i:event_no:board:%i:fem:%i %i", 
-      _stream_take[stream_index], _now/_stream_take[stream_index], fem, board, _stream_expire[stream_index]);
+    reply = redisCommand(context, "EXPIRE stream/%i:%i:frame_no:crate:%i:fem:%i %i", 
+      _stream_take[stream_index], _now/_stream_take[stream_index], fem, crate, _stream_expire[stream_index]);
     freeReplyObject(reply);
     
 
-    reply = redisCommand(context, "SET stream/%i:%i:trigframe_no:board:%i:fem:%i %f", 
-      _stream_take[stream_index], _now/_stream_take[stream_index], fem, board, _trigframe_no[stream_index].Take(fem_ind));
+    reply = redisCommand(context, "SET stream/%i:%i:event_no:crate:%i:fem:%i %f", 
+      _stream_take[stream_index], _now/_stream_take[stream_index], fem, crate, _event_no[stream_index].Take(fem_ind));
     freeReplyObject(reply);
     
-    reply = redisCommand(context, "EXPIRE stream/%i:%i:trigframe_no:board:%i:fem:%i %i", 
-      _stream_take[stream_index], _now/_stream_take[stream_index], fem, board, _stream_expire[stream_index]);
+    reply = redisCommand(context, "EXPIRE stream/%i:%i:event_no:crate:%i:fem:%i %i", 
+      _stream_take[stream_index], _now/_stream_take[stream_index], fem, crate, _stream_expire[stream_index]);
+    freeReplyObject(reply);
+    
+
+    reply = redisCommand(context, "SET stream/%i:%i:trigframe_no:crate:%i:fem:%i %f", 
+      _stream_take[stream_index], _now/_stream_take[stream_index], fem, crate, _trigframe_no[stream_index].Take(fem_ind));
+    freeReplyObject(reply);
+    
+    reply = redisCommand(context, "EXPIRE stream/%i:%i:trigframe_no:crate:%i:fem:%i %i", 
+      _stream_take[stream_index], _now/_stream_take[stream_index], fem, crate, _stream_expire[stream_index]);
     freeReplyObject(reply);
     
     if (_do_timing) {
@@ -152,16 +152,16 @@ void Redis::SendFem(unsigned stream_index) {
     _timing.StartTime();
   }
   for (unsigned fem_ind = 0; fem_ind < _fem_scaled_sum_rms[stream_index].Size(); fem_ind++) {
-    // TODO @INSTALLATION: implement translation from fem_ind to fem/board
+    // TODO @INSTALLATION: implement translation from fem_ind to fem/crate
     // TEMPORARY IMPLEMENTATION
-    unsigned fem = fem_ind % ChannelMap::n_fem_per_board;
-    unsigned board = fem_ind / ChannelMap::n_fem_per_board;
-    reply = redisCommand(context, "SET stream/%i:%i:scaled_sum_rms:board:%i:fem:%i %f", 
-      _stream_take[stream_index], _now/_stream_take[stream_index], board, fem, _fem_scaled_sum_rms[stream_index].Take(fem_ind));
+    unsigned fem = fem_ind % ChannelMap::n_fem_per_crate;
+    unsigned crate = fem_ind / ChannelMap::n_fem_per_crate;
+    reply = redisCommand(context, "SET stream/%i:%i:scaled_sum_rms:crate:%i:fem:%i %f", 
+      _stream_take[stream_index], _now/_stream_take[stream_index], crate, fem, _fem_scaled_sum_rms[stream_index].Take(fem_ind));
     freeReplyObject(reply);
            
-    reply = redisCommand(context, "EXPIRE stream/%i:%i:scaled_sum_rms:board:%i:fem:%i %i", 
-      _stream_take[stream_index], _now/_stream_take[stream_index], board, fem, _stream_expire[stream_index]);
+    reply = redisCommand(context, "EXPIRE stream/%i:%i:scaled_sum_rms:crate:%i:fem:%i %i", 
+      _stream_take[stream_index], _now/_stream_take[stream_index], crate, fem, _stream_expire[stream_index]);
     freeReplyObject(reply);
   }
   if (_do_timing) {
@@ -380,12 +380,12 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
   unsigned n_fem = ChannelMap::NFEM();
   bool at_end_of_detector = false;
 
-  // iterate over boards and fems
-  for (unsigned board = 0; board < daqAnalysis::ChannelMap::n_boards; board++) {
-    for (unsigned fem = 0; fem < daqAnalysis::ChannelMap::n_fem_per_board; fem++) {
+  // iterate over crates and fems
+  for (unsigned crate = 0; crate < daqAnalysis::ChannelMap::n_crates; crate++) {
+    for (unsigned fem = 0; fem < daqAnalysis::ChannelMap::n_fem_per_crate; fem++) {
       // TODO @INSTALLATION: Will this still work?
       // index into the fem data cache
-      unsigned fem_ind = board * ChannelMap::n_fem_per_board + fem;
+      unsigned fem_ind = crate * ChannelMap::n_fem_per_crate + fem;
 
       // detect if at end of fem's
       if (fem_ind >= n_fem) {
@@ -398,8 +398,8 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
 
       for (unsigned channel = 0; channel < daqAnalysis::ChannelMap::n_channel_per_fem; channel++) {
         // get the wire number
-	daqAnalysis::ChannelMap::board_channel board_channel {board, fem, channel};
-	uint16_t wire = daqAnalysis::ChannelMap::Channel2Wire(board_channel);
+	daqAnalysis::ChannelMap::readout_channel readout_channel {crate, fem, channel};
+	uint16_t wire = daqAnalysis::ChannelMap::Channel2Wire(readout_channel);
         // detect if at end of detector
         if (wire >= n_channels) {
           at_end_of_detector = true;
@@ -408,11 +408,11 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
  
         // fill metrics for each stream
         for (size_t i = 0; i < _stream_take.size(); i++) {
-          _rms[i].Add((*per_channel_data)[wire], board, fem_ind, wire);
-          _baseline[i].Add((*per_channel_data)[wire], board, fem_ind, wire);
-          _dnoise[i].Add((*per_channel_data)[wire], board, fem_ind, wire);
-          _pulse_height[i].Add((*per_channel_data)[wire], board, fem_ind, wire);
-          _occupancy[i].Add((*per_channel_data)[wire], board, fem_ind, wire);
+          _rms[i].Add((*per_channel_data)[wire], crate, fem_ind, wire);
+          _baseline[i].Add((*per_channel_data)[wire], crate, fem_ind, wire);
+          _dnoise[i].Add((*per_channel_data)[wire], crate, fem_ind, wire);
+          _pulse_height[i].Add((*per_channel_data)[wire], crate, fem_ind, wire);
+          _occupancy[i].Add((*per_channel_data)[wire], crate, fem_ind, wire);
         }
 
         // collect waveforms for sum rms calculation
