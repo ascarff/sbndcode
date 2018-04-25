@@ -135,12 +135,12 @@ public:
   DetectorMetric() :
     _wire_data(ChannelMap::n_wire, 1),
     _fem_data(ChannelMap::NFEM(), ChannelMap::n_channel_per_fem),
-    _crate_data(ChannelMap::n_crates, ChannelMap::n_fem_per_crate*ChannelMap::n_channel_per_fem)
+    _crate_data(ChannelMap::n_crate, ChannelMap::n_fem_per_crate*ChannelMap::n_channel_per_fem)
   {
     // TODO @INSTALLATION: Make sure that this implementation also works for the VST installation
 
     unsigned n_fem = ChannelMap::NFEM();
-    unsigned n_crate = ChannelMap::n_crates;
+    unsigned n_crate = ChannelMap::n_crate;
     unsigned n_wire = ChannelMap::n_wire;
     unsigned n_fem_per_crate = ChannelMap::n_fem_per_crate;
     unsigned n_channel_per_fem = ChannelMap::n_channel_per_fem;

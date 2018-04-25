@@ -36,12 +36,12 @@ Redis::Redis(std::vector<unsigned> &stream_take, std::vector<unsigned> &stream_e
   _pulse_height(stream_take.size(), RedisPulseHeight()),
   _occupancy(stream_take.size(), RedisOccupancy()),
 
-  _fem_scaled_sum_rms(stream_take.size(), StreamDataMean(ChannelMap::n_fem_per_crate* ChannelMap::n_crates, 1)),
+  _fem_scaled_sum_rms(stream_take.size(), StreamDataMean(ChannelMap::n_fem_per_crate* ChannelMap::n_crate, 1)),
 
   // and the header stuff
-  _frame_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_crate* ChannelMap::n_crates)),
-  _trigframe_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_crate* ChannelMap::n_crates)),
-  _event_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_crate* ChannelMap::n_crates)),
+  _frame_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_crate* ChannelMap::n_crate)),
+  _trigframe_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_crate* ChannelMap::n_crate)),
+  _event_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_crate* ChannelMap::n_crate)),
 
   _fft_manager((waveform_input_size > 0) ? waveform_input_size: 0),
   _do_timing(timing)
@@ -104,7 +104,7 @@ void Redis::SendHeader(unsigned stream_index) {
   if (_do_timing) {
     _timing.StartTime();
   }
-  for (size_t fem_ind = 0; fem_ind < ChannelMap::n_fem_per_crate* ChannelMap::n_crates; fem_ind++) {
+  for (size_t fem_ind = 0; fem_ind < ChannelMap::n_fem_per_crate* ChannelMap::n_crate; fem_ind++) {
     // TODO @INSTALLATION: implement translation from fem_ind to fem/crate
     // TEMPORARY IMPLEMENTATION
     unsigned fem = fem_ind % ChannelMap::n_fem_per_crate;
@@ -381,7 +381,7 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
   bool at_end_of_detector = false;
 
   // iterate over crates and fems
-  for (unsigned crate = 0; crate < daqAnalysis::ChannelMap::n_crates; crate++) {
+  for (unsigned crate = 0; crate < daqAnalysis::ChannelMap::n_crate; crate++) {
     for (unsigned fem = 0; fem < daqAnalysis::ChannelMap::n_fem_per_crate; fem++) {
       // TODO @INSTALLATION: Will this still work?
       // index into the fem data cache

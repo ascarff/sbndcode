@@ -96,7 +96,7 @@ void daq::DaqDecoder::produce(art::Event & event)
 
 
 raw::ChannelID_t daq::DaqDecoder::get_wire_id(const sbnddaq::NevisTPCHeader *header, uint16_t nevis_channel_id) {
- daqAnalysis::ChannelMap::board_channel channel {header->getSlot(), header->getFEMID(), (size_t) nevis_channel_id };
+ daqAnalysis::ChannelMap::readout_channel channel {header->getSlot(), header->getFEMID(), (size_t) nevis_channel_id };
  // rely on ChannelMap for implementation
  return daqAnalysis::ChannelMap::Channel2Wire(channel);
 }
