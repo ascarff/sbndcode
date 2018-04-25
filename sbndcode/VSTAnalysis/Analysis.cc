@@ -192,8 +192,8 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
     std::vector<std::vector<std::vector<int16_t> *>> channel_waveforms_per_fem(n_fem);
     // collect the waveforms
     for (unsigned i = 0; i < ChannelMap::n_wire; i++) {
-      daqAnalysis::ChannelMap::board_channel info = daqAnalysis::ChannelMap::Wire2Channel(i);
-      size_t fem_ind = info.fem_no + info.slot_no * ChannelMap::n_fem_per_board; 
+      daqAnalysis::ChannelMap::readout_channel info = daqAnalysis::ChannelMap::Wire2Channel(i);
+      size_t fem_ind = info.crate + info.slot * ChannelMap::n_fem_per_crate; 
       channel_waveforms_per_fem[fem_ind].push_back(&_per_channel_data[i].waveform);
     }
     // sum all of them
