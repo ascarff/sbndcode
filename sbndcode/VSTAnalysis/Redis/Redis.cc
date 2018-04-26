@@ -105,7 +105,7 @@ void Redis::SendHeader(unsigned stream_index) {
     _timing.StartTime();
   }
   for (size_t fem_ind = 0; fem_ind < ChannelMap::n_fem_per_crate* ChannelMap::n_crate; fem_ind++) {
-    // TODO @INSTALLATION: implement translation from fem_ind to fem/crate
+    // @VST: This is ok because there is only 1 crate
     // TEMPORARY IMPLEMENTATION
     unsigned fem = fem_ind % ChannelMap::n_fem_per_crate;
     unsigned crate = fem_ind / ChannelMap::n_fem_per_crate;
@@ -152,7 +152,7 @@ void Redis::SendFem(unsigned stream_index) {
     _timing.StartTime();
   }
   for (unsigned fem_ind = 0; fem_ind < _fem_scaled_sum_rms[stream_index].Size(); fem_ind++) {
-    // TODO @INSTALLATION: implement translation from fem_ind to fem/crate
+    // @VST: this is ok because there is only 1 crate
     // TEMPORARY IMPLEMENTATION
     unsigned fem = fem_ind % ChannelMap::n_fem_per_crate;
     unsigned crate = fem_ind / ChannelMap::n_fem_per_crate;
