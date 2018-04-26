@@ -7,8 +7,8 @@ namespace daqAnalysis {
 // Header Data associated with a NevisTPCHeader
 class HeaderData {
   public:
-  uint8_t fem_id;
-  uint8_t slot_id;
+  uint8_t crate;
+  uint8_t slot;
   uint32_t event_number;
   uint32_t frame_number;
   uint32_t checksum;
@@ -19,9 +19,9 @@ class HeaderData {
 
   HeaderData() {}
   // Returns the logical index of the header
-  // TODO @INSTALLATION: implement
+  // @VST This is ok because crate will always be 0
   size_t Ind() const {
-    return 0;
+    return crate * ChannelMap::n_fem_per_crate + slot;
   }
 
 };
