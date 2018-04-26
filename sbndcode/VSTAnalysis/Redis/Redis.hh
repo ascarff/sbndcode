@@ -27,7 +27,6 @@ public:
   std::chrono::time_point<std::chrono::high_resolution_clock> start;
   float copy_data;
   float send_metrics;
-  float send_fem_data;
   float send_header_data;
   float send_waveform;
   float send_fft;
@@ -38,7 +37,6 @@ public:
   RedisTiming():
     copy_data(0),
     send_metrics(0),
-    send_fem_data(0),
     send_header_data(0),
     send_waveform(0),
     send_fft(0),
@@ -68,8 +66,6 @@ public:
   void FinishSend();
 
 protected:
-  // per-fem data to Redis (currently just ssum_rms, may remove later)
-  void SendFem(unsigned stream_index);
   // per-header (each associated w/ an fem) data to Redis
   void SendHeader(unsigned stream_index);
   // snapshot stuff
@@ -100,9 +96,6 @@ protected:
   std::vector<daqAnalysis::RedisDNoise> _dnoise;
   std::vector<daqAnalysis::RedisPulseHeight> _pulse_height;
   std::vector<daqAnalysis::RedisOccupancy> _occupancy;
-
-  // TODO: what to do with this?
-  std::vector<daqAnalysis::StreamDataMean> _fem_scaled_sum_rms;
 
   // header info
   std::vector<daqAnalysis::StreamDataMax> _frame_no;

@@ -36,8 +36,6 @@ Redis::Redis(std::vector<unsigned> &stream_take, std::vector<unsigned> &stream_e
   _pulse_height(stream_take.size(), RedisPulseHeight()),
   _occupancy(stream_take.size(), RedisOccupancy()),
 
-  _fem_scaled_sum_rms(stream_take.size(), StreamDataMean(ChannelMap::n_fem_per_crate* ChannelMap::n_crate, 1)),
-
   // and the header stuff
   _frame_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_crate* ChannelMap::n_crate)),
   _trigframe_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_crate* ChannelMap::n_crate)),
@@ -139,33 +137,6 @@ void Redis::SendHeader(unsigned stream_index) {
     if (_do_timing) {
       _timing.EndTime(&_timing.send_header_data);
     }
-  }
-}
-
-// TEMPORARY: Still needed to _ssum_rms
-// may remove later?
-void Redis::SendFem(unsigned stream_index) {
-  // TODO: Report failures
-
-  void *reply;
-  if (_do_timing) {
-    _timing.StartTime();
-  }
-  for (unsigned fem_ind = 0; fem_ind < _fem_scaled_sum_rms[stream_index].Size(); fem_ind++) {
-    // @VST: this is ok because there is only 1 crate
-    // TEMPORARY IMPLEMENTATION
-    unsigned fem = fem_ind % ChannelMap::n_fem_per_crate;
-    unsigned crate = fem_ind / ChannelMap::n_fem_per_crate;
-    reply = redisCommand(context, "SET stream/%i:%i:scaled_sum_rms:crate:%i:fem:%i %f", 
-      _stream_take[stream_index], _now/_stream_take[stream_index], crate, fem, _fem_scaled_sum_rms[stream_index].Take(fem_ind));
-    freeReplyObject(reply);
-           
-    reply = redisCommand(context, "EXPIRE stream/%i:%i:scaled_sum_rms:crate:%i:fem:%i %i", 
-      _stream_take[stream_index], _now/_stream_take[stream_index], crate, fem, _stream_expire[stream_index]);
-    freeReplyObject(reply);
-  }
-  if (_do_timing) {
-    _timing.EndTime(&_timing.send_fem_data);
   }
 }
 
@@ -394,9 +365,6 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
         at_end_of_detector = true;
         break;
       }
-      // keeping track of stuff to calculate sum rms
-      std::vector<std::vector<int16_t> *> waveforms {};
-      std::vector<daqAnalysis::NoiseSample *> this_noise_samples {};
 
       for (unsigned channel = 0; channel < daqAnalysis::ChannelMap::n_channel_per_fem; channel++) {
         // get the wire number
@@ -417,22 +385,8 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
           _occupancy[i].Add((*per_channel_data)[wire], crate, fem_ind, wire);
         }
 
-        // collect waveforms for sum rms calculation
-        waveforms.push_back(&(*per_channel_data)[wire].waveform);
-        this_noise_samples.push_back(&(*noise_samples)[wire]);
       }
 
-      // sum rms!
-      float ssum_rms = NoiseSample::ScaledSumRMS(this_noise_samples, waveforms); 
-      // and then clear out containers
-      waveforms.clear();
-      this_noise_samples.clear();
-
-
-      // update all the streams for sum rms
-      for (size_t i = 0; i < _stream_take.size(); i++) {
-        _fem_scaled_sum_rms[i].Add(fem_ind, ssum_rms);
-      }
       // if at end, break
       if (at_end_of_detector) {
         break;
@@ -452,8 +406,6 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
   for (size_t i = 0; i < _stream_take.size(); i++) {
     // Send stuff to redis if it's time
     if (_stream_send[i]) {
-      // send the fem stuff (scaled sum rms)
-      SendFem(i);
       if (_do_timing) {
         _timing.StartTime();
       }
@@ -476,8 +428,6 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
     _dnoise[i].Update(taken);
     _pulse_height[i].Update(taken);
     _occupancy[i].Update(taken);
-    // and sum rms
-    _fem_scaled_sum_rms[i].Update(taken);
   }
 
   // actually send the commands out of the pipeline
@@ -514,7 +464,6 @@ void RedisTiming::EndTime(float *field) {
 void RedisTiming::Print() {
   std::cout << "COPY DATA: " << copy_data << std::endl;
   std::cout << "SEND METRICS: " << send_metrics << std::endl;
-  std::cout << "SEND FEM    : " << send_fem_data << std::endl;
   std::cout << "SEND HEADER : " << send_header_data << std::endl;
   std::cout << "SEND WAVEFORM " << send_waveform << std::endl;
   std::cout << "SEND FFT    : " << send_fft << std::endl;
