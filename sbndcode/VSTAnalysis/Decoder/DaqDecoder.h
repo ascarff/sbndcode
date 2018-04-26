@@ -44,11 +44,15 @@ public:
   // Required functions.
   void produce(art::Event & e) override;
 
+  // get checksum from a Nevis fragment
+  static uint32_t compute_checksum(sbnddaq::NevisTPCFragment &fragment);
+
 private:
   // process an individual fragment inside an art event
   void process_fragment(const artdaq::Fragment &frag,
     std::unique_ptr<std::vector<raw::RawDigit>> &product_collection,
     std::unique_ptr<std::vector<daqAnalysis::HeaderData>> &header_collection);
+
   // validate Nevis header
   // TODO: report errors in header
   void validate_header(const sbnddaq::NevisTPCHeader *header); 

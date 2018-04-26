@@ -1,7 +1,7 @@
 #ifndef _sbnddaq_analysis_HeaderData
 #define _sbnddaq_analysis_HeaderData
 
-// TODO: This should probably have a better name
+#include "ChannelMap.hh"
 
 namespace daqAnalysis {
 // Header Data associated with a NevisTPCHeader
@@ -12,6 +12,7 @@ class HeaderData {
   uint32_t event_number;
   uint32_t frame_number;
   uint32_t checksum;
+  uint32_t computed_checksum;
   uint32_t adc_word_count;
   uint32_t trig_frame_number;
   double frame_time;

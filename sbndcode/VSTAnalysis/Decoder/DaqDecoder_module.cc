@@ -40,14 +40,17 @@ DEFINE_ART_MODULE(daq::DaqDecoder)
 
 // constructs a header data object from a nevis header
 // construct from a nevis header
-daqAnalysis::HeaderData Nevis2HeaderData(const sbnddaq::NevisTPCHeader *raw_header, double frame_to_dt=1.0) {
+daqAnalysis::HeaderData Nevis2HeaderData(sbnddaq::NevisTPCFragment fragment, double frame_to_dt=1.0) {
+
+  const sbnddaq::NevisTPCHeader *raw_header = fragment.header();
   daqAnalysis::HeaderData ret;
 
-  ret.fem_id = raw_header->getFEMID();
-  ret.slot_id = raw_header->getSlot();
+  ret.crate = raw_header->getFEMID();
+  ret.slot = raw_header->getSlot();
   ret.event_number = raw_header->getEventNum();
   ret.frame_number = raw_header->getFrameNum();
   ret.checksum = raw_header->getChecksum();
+  ret.computed_checksum = daq::DaqDecoder::compute_checksum(fragment);
   ret.adc_word_count = raw_header->getADCWordCount();
   ret.trig_frame_number = raw_header->getTrigFrame();
   
@@ -116,7 +119,7 @@ void daq::DaqDecoder::process_fragment(const artdaq::Fragment &frag,
 
   if (_produce_header) {
     // Construct HeaderData from the Nevis Header and throw it in the collection
-    header_collection->push_back(Nevis2HeaderData(fragment.header()));
+    header_collection->push_back(Nevis2HeaderData(fragment));
   }
 
   for (auto waveform: waveform_map) {
@@ -137,6 +140,46 @@ void daq::DaqDecoder::validate_header(const sbnddaq::NevisTPCHeader *header) {
   (void) header;
   return; 
 }
+
+// just copied from sbnddaq-datatypes
+// we should tale this out at some point
+sbnddaq::NevisTPCWordType_t get_word_type( uint16_t word )
+{
+  if( (word & 0xF000) == 0x4000 ) return sbnddaq::NevisTPCWordType_t::kChannelHeader;
+  if( (word & 0xF000) == 0x0000 ) return sbnddaq::NevisTPCWordType_t::kADC;
+  if( (word & 0xC000) == 0x8000 ) return sbnddaq::NevisTPCWordType_t::kADCHuffman; // Look for headers first
+  if( (word & 0xF000) == 0x5000 ) return sbnddaq::NevisTPCWordType_t::kChannelEnding;
+  else
+    return sbnddaq::NevisTPCWordType_t::kUnknown;
+}
+
+// Computes the checksum, given a nevis tpc header
+// Ideally this would be in sbnddaq-datatypes, but it's not and I can't
+// make changes to it, so put it here for now
+uint32_t daq::DaqDecoder::compute_checksum(sbnddaq::NevisTPCFragment &fragment) {
+  uint32_t checksum = 0;
+
+  const sbnddaq::NevisTPC_ADC_t* data_ptr = fragment.data();
+  size_t n_words = fragment.header()->getADCWordCount();
+
+  for (size_t word_ind = 0; word_ind < n_words; word_ind++) {
+    const sbnddaq::NevisTPC_ADC_t* word_ptr = data_ptr + word_ind;
+    switch (get_word_type(*word_ptr)) {
+      // checksum gets incremented for each of these cases
+      case sbnddaq::NevisTPCWordType_t::kChannelHeader:
+      case sbnddaq::NevisTPCWordType_t::kADC:
+      case sbnddaq::NevisTPCWordType_t::kADCHuffman:
+      case sbnddaq::NevisTPCWordType_t::kChannelEnding:
+      case sbnddaq::NevisTPCWordType_t::kUnknown:
+        checksum += *word_ptr;
+        break;
+    }
+  }
+  // only first 6 bytes of checksum are used
+  return checksum & 0xFFFFFF;
+
+}
+
 
 
  
