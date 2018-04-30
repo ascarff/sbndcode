@@ -32,7 +32,7 @@ services:
 source:
 {
   module_type: RootInput
-  fileNames: ["/home/nfs/gputnam/lariat_data.root"]
+  fileNames: ["/sbnd/data/users/gputnam/lariat_data.root"]
 }
 
 process_name: DAQANALYSIS
