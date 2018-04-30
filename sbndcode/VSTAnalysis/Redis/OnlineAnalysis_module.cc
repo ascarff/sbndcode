@@ -67,7 +67,7 @@ daqAnalysis::OnlineAnalysis::OnlineAnalysis(fhicl::ParameterSet const & p):
 
 void daqAnalysis::OnlineAnalysis::analyze(art::Event const & e) {
   _analysis.AnalyzeEvent(e);
-  if (_analysis.ReadyToProcess()) {
+  if (_analysis.ReadyToProcess() && !_analysis.EmptyEvent()) {
     _redis_manager->StartSend();
     _redis_manager->SendChannelData(&_analysis._per_channel_data, &_analysis._noise_samples, &_analysis._fem_summed_waveforms);
     // send headers if _analysis was configured to copy them
