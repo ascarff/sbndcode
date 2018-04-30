@@ -1,6 +1,11 @@
 #ifndef _sbnddaq_analysis_HeaderData
 #define _sbnddaq_analysis_HeaderData
 
+#include <string>
+#include <iostream>
+#include <sstream> 
+#include <stdlib.h>
+
 #include "ChannelMap.hh"
 
 namespace daqAnalysis {
@@ -25,6 +30,22 @@ class HeaderData {
     return crate * ChannelMap::n_fem_per_crate + slot;
   }
 
+  // print the data -- for debugging
+  std::string Print() {
+    std::stringstream buffer;
+    buffer << "crate: " << ((unsigned)crate) << std::endl;
+    buffer << "slot: " << ((unsigned)slot) << std::endl;
+    buffer << "event no: " << event_number << std::endl;
+    buffer << "frame no: " << frame_number << std::endl;
+    buffer << "checksum: " << checksum << std::endl;
+    buffer << "computed checksum: " << computed_checksum << std::endl;
+    buffer << "adc word count: " << adc_word_count << std::endl;
+    buffer << "trigger frame no: " << trig_frame_number << std::endl;
+    buffer << "frame time: " << frame_time << std::endl;
+    buffer << "trigger frame time: " << trig_frame_time << std::endl;
+
+    return buffer.str();
+  }
 };
 }
 
