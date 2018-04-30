@@ -229,6 +229,7 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
 
 void Analysis::ProcessHeader(const daqAnalysis::HeaderData &header) {
   _header_data[header.Ind()] = header;
+
 }
 
 void Analysis::ProcessChannel(const raw::RawDigit &digits) {
@@ -384,7 +385,11 @@ void Analysis::ProcessChannel(const raw::RawDigit &digits) {
 }
 
 bool Analysis::ReadyToProcess() {
-  return _analyzed && !_per_channel_data[0].empty;
+  return _analyzed;
+}
+
+bool Analysis::EmptyEvent() {
+  return _per_channel_data[0].empty;
 }
 
 void Timing::StartTime() {
