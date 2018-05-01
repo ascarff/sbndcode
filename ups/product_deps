@@ -39,7 +39,7 @@ sbndutil         v01_17_00 - optional
 
 # list products required ONLY for the build
 # any products here must NOT have qualifiers
-only_for_build  cetbuildtools   v5_09_01 
+only_for_build  cetbuildtools   v5_08_01 
 
 # We now define allowed qualifiers and the corresponding qualifiers for the dependencies.
 # Make the table by adding columns before "notes". 
@@ -48,7 +48,7 @@ e14:debug         e14:debug     e14:debug   -nq-
 e14:prof          e14:prof      e14:prof    -nq-
 e10:debug         e10:debug     e10:debug   -nq-
 e10:prof          e10:prof      e10:prof    -nq-
-
+e14:prof:nu:eth:s50	e14:prof    e14:prof	-nq-
 # table fragment to set FW_SEARCH_PATH needed to find XML files:
 table_fragment_begin
     # currently, XML pandora files are installed in 'scripts':

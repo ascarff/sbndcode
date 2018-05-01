@@ -1,0 +1,35 @@
+#include "geometry_lariat.fcl"
+#include "hitfindermodules_sbnd.fcl"
+#include "channelstatus_sbnd.fcl"
+#include "badeventdisplay_Para.fcl"     
+
+services:
+{
+  TFileService: { fileName: "evd.root" }
+  Geometry: @local::lariat_geo		
+  ExptGeoHelperInterface: @local::lariat_geometry_helper
+  ChannelStatusService:   @local::sbnd_channelstatus
+  @table::sbnd_resourcemonitorservices
+  FileCatalogMetadata:  @local::sbnd_file_catalog_mc
+}
+
+source:
+{
+  module_type: RootInput
+  maxEvents:  -1        # Number of events to create                                                                                                                                 
+
+}
+
+physics:
+{
+  analyzers:
+  {
+     ana: @local::standard_badeventdisplay_Para
+  }
+
+ a1: [ ana ]
+ end_paths: [ a1 ]
+
+}
+
+

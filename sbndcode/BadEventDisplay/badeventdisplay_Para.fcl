@@ -1,0 +1,7 @@
+BEGIN_PROLOG
+standard_badeventdisplay_Para: {
+ module_type: "sbndcode/BadEventDisplay/BadEventDisplay"
+ HitsModuleLabel:          "fasthit"
+ 
+}
+END_PROLOG
