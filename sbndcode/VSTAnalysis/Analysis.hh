@@ -88,6 +88,7 @@ public:
     int static_input_size;
 
     int n_headers;
+    bool header_index;
 
     float threshold;
     float threshold_sigma;

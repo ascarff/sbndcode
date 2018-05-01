@@ -109,6 +109,10 @@ Analysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &param) {
   static_input_size = param.get<int>("static_input_size", -1);
   // how many headers to expect (set to negative if don't process) 
   n_headers = param.get<int>("n_headers", -1);
+  // header indexing method
+  // 0 == always index at 0
+  // 1 == use HeaderInfo::Ind()
+  header_index = (bool) param.get<unsigned>("header_index", 1);
 
   // whether to calculate/save certain things
   sum_waveforms = param.get<bool>("sum_waveforms", false);
@@ -228,8 +232,12 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
 }
 
 void Analysis::ProcessHeader(const daqAnalysis::HeaderData &header) {
-  _header_data[header.Ind()] = header;
-
+  if (_config.header_index) {
+    _header_data[header.Ind()] = header;
+  }
+  else {
+    _header_data[0] = header;
+  }
 }
 
 void Analysis::ProcessChannel(const raw::RawDigit &digits) {
