@@ -34,7 +34,7 @@ physics:
 
   outstream: [out1]
   analyze: [VSTAnalysis]
-  end_paths: [outstream, analyze]
+  end_paths: [analyze]
 }
 
 outputs:
