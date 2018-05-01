@@ -57,6 +57,14 @@ daqAnalysis::HeaderData Nevis2HeaderData(sbnddaq::NevisTPCFragment fragment, dou
   ret.frame_time = ret.frame_number * frame_to_dt;
   ret.trig_frame_time = ret.trig_frame_number * frame_to_dt;
 
+  // draw header stuff
+  ret.id_and_slot_word = raw_header->id_and_slot;
+  ret.word_count_word = raw_header->word_count;
+  ret.event_num_word = raw_header->event_num;
+  ret.frame_num_word = raw_header->frame_num;
+  ret.checksum_word = raw_header->checksum;
+  ret.trig_frame_sample_word = raw_header->trig_frame_sample;
+
   return ret;
 }
 
@@ -91,6 +99,7 @@ void daq::DaqDecoder::produce(art::Event & event)
   for (auto const &rawfrag: *daq_handle) {
     process_fragment(rawfrag, product_collection, header_collection);
   }
+
   event.put(std::move(product_collection));
   if (_produce_header) {
     event.put(std::move(header_collection));
