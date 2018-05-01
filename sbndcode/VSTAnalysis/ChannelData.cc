@@ -15,14 +15,9 @@ float daqAnalysis::ChannelData::meanPeakHeight() {
 
   int total = 0;
   for (unsigned i = 0; i < peaks.size(); i++) {
-    // account fot up/down peaks
-    if (peaks[i].is_up) {
-      total += peaks[i].amplitude - baseline;
-    }
-    else {
-      total += baseline - peaks[i].amplitude;
-    }
+    total += peaks[i].amplitude;
   }
+
   return ((float) total) / peaks.size();
 }
 
@@ -51,12 +46,7 @@ std::string daqAnalysis::ChannelData::Print() {
   buffer << "peaks: [" << std::endl;
   for (auto &peak: peaks) {
     buffer << "  {" << std::endl;
-    buffer << "    amplitude: " << peak.amplitude << std::endl;
-    buffer << "    start_tight: " << peak.start_tight << std::endl;
-    buffer << "    start_loose: " << peak.start_loose << std::endl;
-    buffer << "    end_loose: " << peak.end_loose << std::endl;
-    buffer << "    end_tight: " << peak.end_tight << std::endl;
-    buffer << "    is_up: " << peak.is_up << std::endl;
+    buffer << peak.Print() << std::endl;
     buffer << "  }" << std::endl;
   }
   buffer << "]" << std::endl;

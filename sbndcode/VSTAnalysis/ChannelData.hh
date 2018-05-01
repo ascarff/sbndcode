@@ -12,12 +12,12 @@ class ChannelData {
 public:
   unsigned channel_no;
   bool empty;
-  float baseline;
+  int16_t baseline;
   int16_t max;
   int16_t min;
   float rms;
   float next_channel_dnoise;
-  int16_t threshold;
+  float threshold;
   std::vector<int16_t> waveform;
   std::vector<double> fft_real;
   std::vector<double> fft_imag;

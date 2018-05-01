@@ -35,6 +35,8 @@ public:
   static wire_id_t Channel2Wire(readout_channel channel) {
     // TEMPORARY IMPLEMENTATION FOR TEST ON LARIAT DATA
     wire_id_t wire = channel.crate * ChannelMap::n_fem_per_crate * ChannelMap::n_channel_per_fem + channel.slot * ChannelMap::n_channel_per_fem + channel.channel_ind;
+    // TEMPORARY IMPLEMENTATION FOR TEST ON NEVIS TEST STAND DATA
+    //wire_id_t wire = channel.channel_ind;
     return wire;
   }
 
