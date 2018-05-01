@@ -36,12 +36,12 @@ Redis::Redis(std::vector<unsigned> &stream_take, std::vector<unsigned> &stream_e
   _pulse_height(stream_take.size(), RedisPulseHeight()),
   _occupancy(stream_take.size(), RedisOccupancy()),
 
-  _fem_scaled_sum_rms(stream_take.size(), StreamDataMean(ChannelMap::n_fem_per_crate* ChannelMap::n_crate, 1)),
-
   // and the header stuff
   _frame_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_crate* ChannelMap::n_crate)),
   _trigframe_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_crate* ChannelMap::n_crate)),
   _event_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_crate* ChannelMap::n_crate)),
+  //_checksum_diff(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_crate* ChannelMap::n_crate)),
+  
 
   _fft_manager((waveform_input_size > 0) ? waveform_input_size: 0),
   _do_timing(timing)
@@ -105,7 +105,7 @@ void Redis::SendHeader(unsigned stream_index) {
     _timing.StartTime();
   }
   for (size_t fem_ind = 0; fem_ind < ChannelMap::n_fem_per_crate* ChannelMap::n_crate; fem_ind++) {
-    // TODO @INSTALLATION: implement translation from fem_ind to fem/crate
+    // @VST: This is ok because there is only 1 crate
     // TEMPORARY IMPLEMENTATION
     unsigned fem = fem_ind % ChannelMap::n_fem_per_crate;
     unsigned crate = fem_ind / ChannelMap::n_fem_per_crate;
@@ -142,33 +142,6 @@ void Redis::SendHeader(unsigned stream_index) {
   }
 }
 
-// TEMPORARY: Still needed to _ssum_rms
-// may remove later?
-void Redis::SendFem(unsigned stream_index) {
-  // TODO: Report failures
-
-  void *reply;
-  if (_do_timing) {
-    _timing.StartTime();
-  }
-  for (unsigned fem_ind = 0; fem_ind < _fem_scaled_sum_rms[stream_index].Size(); fem_ind++) {
-    // TODO @INSTALLATION: implement translation from fem_ind to fem/crate
-    // TEMPORARY IMPLEMENTATION
-    unsigned fem = fem_ind % ChannelMap::n_fem_per_crate;
-    unsigned crate = fem_ind / ChannelMap::n_fem_per_crate;
-    reply = redisCommand(context, "SET stream/%i:%i:scaled_sum_rms:crate:%i:fem:%i %f", 
-      _stream_take[stream_index], _now/_stream_take[stream_index], crate, fem, _fem_scaled_sum_rms[stream_index].Take(fem_ind));
-    freeReplyObject(reply);
-           
-    reply = redisCommand(context, "EXPIRE stream/%i:%i:scaled_sum_rms:crate:%i:fem:%i %i", 
-      _stream_take[stream_index], _now/_stream_take[stream_index], crate, fem, _stream_expire[stream_index]);
-    freeReplyObject(reply);
-  }
-  if (_do_timing) {
-    _timing.EndTime(&_timing.send_fem_data);
-  }
-}
-
 inline size_t pushFFTDat(char *buffer, float re, float im) {
   float dat = re * im;
   return sprintf(buffer, " %f", dat);
@@ -184,32 +157,34 @@ void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> 
   if (_do_timing) _timing.StartTime();
 
   // stuff per fem
-  for (unsigned fem_ind = 0; fem_ind < ChannelMap::NFEM(); fem_ind++) {
-    // sending the summed waveforms to redis
-    // delete old list
-    redisAppendCommand(context, "DEL snapshot:waveform:fem:%i", fem_ind);
-    {
-      // buffer for writing out waveform
-      size_t buffer_len = (*fem_summed_waveforms)[fem_ind].size() * 5 + 50;
-      char *buffer = new char[buffer_len];
-
-      // print in the base of the command
-      // assumes fem_summed_waveforms are already sorted by id
-      size_t print_len = sprintf(buffer, "RPUSH snapshot:waveform:fem:%i", fem_ind);
-      char *buffer_index = buffer + print_len;
-      for (short dat: (*fem_summed_waveforms)[fem_ind]) {
-	print_len += sprintf(buffer_index, " %i", dat); 
-	buffer_index = buffer + print_len;
-	if (print_len >= buffer_len - 1) {
-          std::cerr << "ERROR: BUFFER OVERFLOW IN WAVEFORM DATA" << std::endl;
-          std::exit(1);
-        }
+  if (fem_summed_waveforms->size() != 0) {
+    for (unsigned fem_ind = 0; fem_ind < ChannelMap::NFEM(); fem_ind++) {
+      // sending the summed waveforms to redis
+      // delete old list
+      redisAppendCommand(context, "DEL snapshot:waveform:fem:%i", fem_ind);
+      {
+	// buffer for writing out waveform
+	size_t buffer_len = (*fem_summed_waveforms)[fem_ind].size() * 5 + 50;
+	char *buffer = new char[buffer_len];
+	
+	// print in the base of the command
+	// assumes fem_summed_waveforms are already sorted by id
+	size_t print_len = sprintf(buffer, "RPUSH snapshot:waveform:fem:%i", fem_ind);
+	char *buffer_index = buffer + print_len;
+	for (short dat: (*fem_summed_waveforms)[fem_ind]) {
+	  print_len += sprintf(buffer_index, " %i", dat); 
+ 	  buffer_index = buffer + print_len;
+	  if (print_len >= buffer_len - 1) {
+            std::cerr << "ERROR: BUFFER OVERFLOW IN WAVEFORM DATA" << std::endl;
+            std::exit(1);
+          }
+	}
+	// submit the command
+	redisAppendCommand(context, buffer);
+	n_commands += 2;
+	
+	delete buffer;
       }
-      // submit the command
-      redisAppendCommand(context, buffer);
-      n_commands += 2;
-
-      delete buffer;
     }
   }
   if (_do_timing) _timing.EndTime(&_timing.fem_waveforms);
@@ -383,7 +358,7 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
   // iterate over crates and fems
   for (unsigned crate = 0; crate < daqAnalysis::ChannelMap::n_crate; crate++) {
     for (unsigned fem = 0; fem < daqAnalysis::ChannelMap::n_fem_per_crate; fem++) {
-      // TODO @INSTALLATION: Will this still work?
+      // @VST INSTALLATION: OK -- crate is always 0
       // index into the fem data cache
       unsigned fem_ind = crate * ChannelMap::n_fem_per_crate + fem;
 
@@ -392,9 +367,6 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
         at_end_of_detector = true;
         break;
       }
-      // keeping track of stuff to calculate sum rms
-      std::vector<std::vector<int16_t> *> waveforms {};
-      std::vector<daqAnalysis::NoiseSample *> this_noise_samples {};
 
       for (unsigned channel = 0; channel < daqAnalysis::ChannelMap::n_channel_per_fem; channel++) {
         // get the wire number
@@ -415,22 +387,8 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
           _occupancy[i].Add((*per_channel_data)[wire], crate, fem_ind, wire);
         }
 
-        // collect waveforms for sum rms calculation
-        waveforms.push_back(&(*per_channel_data)[wire].waveform);
-        this_noise_samples.push_back(&(*noise_samples)[wire]);
       }
 
-      // sum rms!
-      float ssum_rms = NoiseSample::ScaledSumRMS(this_noise_samples, waveforms); 
-      // and then clear out containers
-      waveforms.clear();
-      this_noise_samples.clear();
-
-
-      // update all the streams for sum rms
-      for (size_t i = 0; i < _stream_take.size(); i++) {
-        _fem_scaled_sum_rms[i].Add(fem_ind, ssum_rms);
-      }
       // if at end, break
       if (at_end_of_detector) {
         break;
@@ -450,8 +408,6 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
   for (size_t i = 0; i < _stream_take.size(); i++) {
     // Send stuff to redis if it's time
     if (_stream_send[i]) {
-      // send the fem stuff (scaled sum rms)
-      SendFem(i);
       if (_do_timing) {
         _timing.StartTime();
       }
@@ -474,8 +430,6 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
     _dnoise[i].Update(taken);
     _pulse_height[i].Update(taken);
     _occupancy[i].Update(taken);
-    // and sum rms
-    _fem_scaled_sum_rms[i].Update(taken);
   }
 
   // actually send the commands out of the pipeline
@@ -512,7 +466,6 @@ void RedisTiming::EndTime(float *field) {
 void RedisTiming::Print() {
   std::cout << "COPY DATA: " << copy_data << std::endl;
   std::cout << "SEND METRICS: " << send_metrics << std::endl;
-  std::cout << "SEND FEM    : " << send_fem_data << std::endl;
   std::cout << "SEND HEADER : " << send_header_data << std::endl;
   std::cout << "SEND WAVEFORM " << send_waveform << std::endl;
   std::cout << "SEND FFT    : " << send_fft << std::endl;

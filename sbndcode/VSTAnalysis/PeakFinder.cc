@@ -3,7 +3,9 @@
 #include <cassert>
 #include <float.h>
 #include <algorithm>
+#include <string>
 #include <iostream>
+#include <sstream> 
 
 #include "TH1D.h"
 #include "TF1.h"
@@ -63,6 +65,7 @@ PeakFinder::PeakFinder(std::vector<int16_t> &inp_waveform, int16_t baseline, flo
           // reset points above threshold counting
           n_points = 0;
           // setup peak
+          peak.amplitude = 0;
 	  peak.start_tight = i;
 	  inside_peak = true;
 	  up_peak = true;
@@ -74,8 +77,10 @@ PeakFinder::PeakFinder(std::vector<int16_t> &inp_waveform, int16_t baseline, flo
 
       if (inside_peak) {
         // always use original waveform to determine amplitude
-        if (inp_waveform[i] > peak.amplitude) {
-          peak.amplitude = inp_waveform[i];
+        // define amplitude as distance from baseline
+        uint16_t amplitude = abs(inp_waveform[i] - baseline);
+        if (amplitude > peak.amplitude) {
+          peak.amplitude = amplitude;
           peak.peak_index = i;
         }
       }
@@ -90,7 +95,7 @@ PeakFinder::PeakFinder(std::vector<int16_t> &inp_waveform, int16_t baseline, flo
           // reset points above threshold counting
           n_points = 0;
           // setup peak
-	  peak.amplitude = INT16_MAX;
+	  peak.amplitude = 0;
 	  peak.start_tight = i;
 	  inside_peak = true;
 	  up_peak = false;
@@ -102,8 +107,10 @@ PeakFinder::PeakFinder(std::vector<int16_t> &inp_waveform, int16_t baseline, flo
 
       if (inside_peak) {
         // always use original waveform to determine amplitude
-        if (inp_waveform[i] < peak.amplitude) {
-          peak.amplitude = inp_waveform[i];
+        // define amplitude as distance from baseline
+        uint16_t amplitude = abs(inp_waveform[i] - baseline);
+        if (amplitude > peak.amplitude) {
+          peak.amplitude = amplitude;
           peak.peak_index = i;
         }
       }
@@ -197,6 +204,21 @@ void PeakFinder::matchPeaks(unsigned match_range) {
   _peaks = pruned_peaks;
 }
 
+// Print for debugging purposes
+std::string PeakFinder::Peak::Print() {
+  std::stringstream buffer;
+  buffer << "    amplitude: " << amplitude << std::endl;
+  buffer << "    peak_index: " << peak_index << std::endl;
+  buffer << "    start_tight: " << start_tight << std::endl;
+  buffer << "    start_loose: " << start_loose << std::endl;
+  buffer << "    end_loose: " << end_loose << std::endl;
+  buffer << "    end_tight: " << end_tight << std::endl;
+  buffer << "    is_up: " << is_up << std::endl;
+
+  return buffer.str();
+
+}
+
 
 // Calculate the threshold by fitting a gaussian to a histogram of ADC values from the waveform
 Threshold::Threshold(std::vector<int16_t> &waveform, int16_t baseline, float n_sigma, bool verbose) {
@@ -264,4 +286,7 @@ void RunningThreshold::AddRMS(float rms) {
   _past_rms[_rms_ind] = rms;
   _rms_ind = (_rms_ind + 1 ) % _past_rms.size();
 }
+
+
+
 

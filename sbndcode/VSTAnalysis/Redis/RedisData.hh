@@ -212,7 +212,7 @@ public:
     // and the fem stuff
     unsigned n_fem = _fem_data.Size();
     for (unsigned fem_ind = 0; fem_ind < n_fem; fem_ind++) {
-      // TODO @INSTALLATION: implement translation from fem_ind to fem/crate
+      // @VST: this is ok because there is only 1 crate
       // TEMPORARY IMPLEMENTATION
       unsigned fem = fem_ind % ChannelMap::n_fem_per_crate;
       unsigned crate = fem_ind / ChannelMap::n_fem_per_crate;

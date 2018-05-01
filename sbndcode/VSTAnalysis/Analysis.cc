@@ -109,6 +109,10 @@ Analysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &param) {
   static_input_size = param.get<int>("static_input_size", -1);
   // how many headers to expect (set to negative if don't process) 
   n_headers = param.get<int>("n_headers", -1);
+  // header indexing method
+  // 0 == always index at 0
+  // 1 == use HeaderInfo::Ind()
+  header_index = (bool) param.get<unsigned>("header_index", 1);
 
   // whether to calculate/save certain things
   sum_waveforms = param.get<bool>("sum_waveforms", false);
@@ -193,7 +197,7 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
     // collect the waveforms
     for (unsigned i = 0; i < ChannelMap::n_wire; i++) {
       daqAnalysis::ChannelMap::readout_channel info = daqAnalysis::ChannelMap::Wire2Channel(i);
-      size_t fem_ind = info.crate + info.slot * ChannelMap::n_fem_per_crate; 
+      size_t fem_ind = info.slot + info.crate * ChannelMap::n_fem_per_crate; 
       channel_waveforms_per_fem[fem_ind].push_back(&_per_channel_data[i].waveform);
     }
     // sum all of them
@@ -228,7 +232,12 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
 }
 
 void Analysis::ProcessHeader(const daqAnalysis::HeaderData &header) {
-  _header_data[header.Ind()] = header;
+  if (_config.header_index) {
+    _header_data[header.Ind()] = header;
+  }
+  else {
+    _header_data[0] = header;
+  }
 }
 
 void Analysis::ProcessChannel(const raw::RawDigit &digits) {
@@ -384,7 +393,11 @@ void Analysis::ProcessChannel(const raw::RawDigit &digits) {
 }
 
 bool Analysis::ReadyToProcess() {
-  return _analyzed && !_per_channel_data[0].empty;
+  return _analyzed;
+}
+
+bool Analysis::EmptyEvent() {
+  return _per_channel_data[0].empty;
 }
 
 void Timing::StartTime() {

@@ -88,6 +88,7 @@ public:
     int static_input_size;
 
     int n_headers;
+    bool header_index;
 
     float threshold;
     float threshold_sigma;
@@ -115,6 +116,7 @@ public:
 
   // if the containers filled by the analysis are ready to be processed
   bool ReadyToProcess();
+  bool EmptyEvent();
 
   // configuration is available publicly
   AnalysisConfig _config;

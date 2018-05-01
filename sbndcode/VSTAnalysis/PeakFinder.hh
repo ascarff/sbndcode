@@ -2,6 +2,7 @@
 #define _sbnddaq_analysis_PeakFinder
 #include <vector>
 #include <array>
+#include <string>
 #include <float.h>
 
 // Reinventing the wheel: search for a bunch of peaks in a set of data
@@ -12,7 +13,7 @@ class PeakFinder {
 public:
   class Peak {
   public:
-    int16_t amplitude;
+    uint16_t amplitude;
     unsigned peak_index;
     unsigned start_tight;
     unsigned start_loose;
@@ -24,13 +25,16 @@ public:
       reset();
     }
     void reset() {
-      amplitude = -INT16_MAX;
+      amplitude = 0;
       peak_index = 0;
       start_tight = 0;
       start_loose = 0;
       end_tight = 0;
       end_loose = 0;
     }
+
+    std::string Print();
+
   };
 
   PeakFinder(std::vector<int16_t> &waveform, int16_t baseline, float threshold, unsigned n_smoothing_samples=1, unsigned n_above_threshold=0, unsigned plane_type=0);
