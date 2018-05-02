@@ -117,6 +117,7 @@ Analysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &param) {
   // whether to calculate/save certain things
   sum_waveforms = param.get<bool>("sum_waveforms", false);
   fft_per_channel = param.get<bool>("fft_per_channel", false);
+  fill_waveforms = param.get<bool>("fill_waveforms", false);
   reduce_data = param.get<bool>("reduce_data", false);
   timing = param.get<bool>("timing", false);
 
@@ -177,7 +178,7 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
 
     if (!_per_channel_data[i].empty && !_per_channel_data[next_channel].empty) {
       float unscaled_dnoise = _noise_samples[i].DNoise(
-          _per_channel_data[i].waveform, _noise_samples[next_channel],  _per_channel_data[next_channel].waveform);
+          (*raw_digits_handle)[i].ADCs(), _noise_samples[next_channel], (*raw_digits_handle)[next_channel].ADCs());
       // Doon't use same noise sample to scale dnoise
       // This should probably be ok, as long as the dnoise sample is large enough
       float dnoise_scale = sqrt(_per_channel_data[i].rms * _per_channel_data[i].rms + 
@@ -193,12 +194,12 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
   // TODO @INSTALLATION: Make sure this still works
   if (_config.sum_waveforms) {
     size_t n_fem = ChannelMap::NFEM();
-    std::vector<std::vector<std::vector<int16_t> *>> channel_waveforms_per_fem(n_fem);
+    std::vector<std::vector<const std::vector<int16_t> *>> channel_waveforms_per_fem(n_fem);
     // collect the waveforms
     for (unsigned i = 0; i < ChannelMap::n_wire; i++) {
       daqAnalysis::ChannelMap::readout_channel info = daqAnalysis::ChannelMap::Wire2Channel(i);
       size_t fem_ind = info.slot + info.crate * ChannelMap::n_fem_per_crate; 
-      channel_waveforms_per_fem[fem_ind].push_back(&_per_channel_data[i].waveform);
+      channel_waveforms_per_fem[fem_ind].push_back(&(*raw_digits_handle)[i].ADCs());
     }
     // sum all of them
     for (unsigned i = 0; i < n_fem; i++) {
@@ -263,24 +264,31 @@ void Analysis::ProcessChannel(const raw::RawDigit &digits) {
 
     int16_t max = -INT16_MAX;
     int16_t min = INT16_MAX;
-    auto adv_vec = digits.ADCs();
+    auto adc_vec = digits.ADCs();
     if (_config.timing) {
       _timing.StartTime();
     }
-    for (unsigned i = 0; i < digits.NADC(); i ++) {
-      int16_t adc = adv_vec[i];
-      if (adc > max) max = adc;
-      if (adc < min) min = adc;
+    auto n_adc = digits.NADC();
+    if (_config.fill_waveforms || _config.fft_per_channel) {
+      for (unsigned i = 0; i < n_adc; i ++) {
+        int16_t adc = adc_vec[i];
     
-      // TODO: is it possible to do analysis w/out copying waveform?
-      // fill up waveform
-      _per_channel_data[channel].waveform.push_back(adc);
-      if (_config.fft_per_channel) {
-        // fill up fftw array
-        double *input = _fft_manager.InputAt(i);
-        *input = (double) adc;
+        // fill up waveform
+        if (_config.fill_waveforms) {
+          if (adc > max) max = adc;
+          if (adc < min) min = adc;
+
+          _per_channel_data[channel].waveform.push_back(adc);
+        }
+
+        if (_config.fft_per_channel) {
+          // fill up fftw array
+          double *input = _fft_manager.InputAt(i);
+          *input = (double) adc;
+        }
       }
     }
+
     if (_config.timing) {
       _timing.EndTime(&_timing.fill_waveform);
     }
@@ -328,12 +336,12 @@ void Analysis::ProcessChannel(const raw::RawDigit &digits) {
       threshold = _config.threshold;
     }
     else if (_config.threshold_calc == 1) {
-      auto thresholds = Threshold(_per_channel_data[channel].waveform, _per_channel_data[channel].baseline, _config.threshold_sigma, _config.verbose);
+      auto thresholds = Threshold(adc_vec, _per_channel_data[channel].baseline, _config.threshold_sigma, _config.verbose);
       threshold = thresholds.Val();
     }
     else if (_config.threshold_calc == 2) {
       NoiseSample temp({{0, (unsigned)digits.NADC()-1}}, _per_channel_data[channel].baseline);
-      float raw_rms = temp.RMS(_per_channel_data[channel].waveform);
+      float raw_rms = temp.RMS(adc_vec);
       threshold = raw_rms * _config.threshold_sigma;
     }
     else if (_config.threshold_calc == 3) {
@@ -341,7 +349,7 @@ void Analysis::ProcessChannel(const raw::RawDigit &digits) {
       float n_sigma = _config.threshold_sigma;
       if (_config.use_planes && ChannelMap::PlaneType(channel) == 2) n_sigma = n_sigma * 1.5;
 
-      threshold = _thresholds[channel].Threshold(_per_channel_data[channel].waveform, _per_channel_data[channel].baseline, n_sigma);
+      threshold = _thresholds[channel].Threshold(adc_vec, _per_channel_data[channel].baseline, n_sigma);
     }
     if (_config.timing) {
       _timing.EndTime(&_timing.calc_threshold);
@@ -354,8 +362,8 @@ void Analysis::ProcessChannel(const raw::RawDigit &digits) {
     }
     // get Peaks
     unsigned peak_plane = (_config.use_planes) ? ChannelMap::PlaneType(channel) : 0;
-    PeakFinder peaks(_per_channel_data[channel].waveform, _per_channel_data[channel].baseline, 
-         threshold, _config.n_smoothing_samples, _config.n_above_threshold, peak_plane);
+    PeakFinder peaks(adc_vec, _per_channel_data[channel].baseline, threshold, 
+        _config.n_smoothing_samples, _config.n_above_threshold, peak_plane);
     _per_channel_data[channel].peaks.assign(peaks.Peaks()->begin(), peaks.Peaks()->end());
 
     if (_config.timing) {
@@ -375,7 +383,7 @@ void Analysis::ProcessChannel(const raw::RawDigit &digits) {
       _noise_samples[channel] = NoiseSample(_per_channel_data[channel].peaks, _per_channel_data[channel].baseline, digits.NADC()); 
     }
 
-    _per_channel_data[channel].rms = _noise_samples[channel].RMS(_per_channel_data[channel].waveform);
+    _per_channel_data[channel].rms = _noise_samples[channel].RMS(adc_vec);
     _per_channel_data[channel].noise_ranges = *_noise_samples[channel].Ranges();
     if (_config.timing) {
       _timing.EndTime(&_timing.calc_noise);

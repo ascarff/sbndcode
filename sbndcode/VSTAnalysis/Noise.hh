@@ -19,22 +19,22 @@ public:
   // calculate the intersect of ranges with another sample
   NoiseSample Intersection(NoiseSample &other) { return DoIntersection(*this, other, _baseline); }
 
-  float RMS(std::vector<int16_t> &wvfm_self) { return CalcRMS(wvfm_self, _ranges, _baseline); } 
+  float RMS(const std::vector<int16_t> &wvfm_self) { return CalcRMS(wvfm_self, _ranges, _baseline); } 
 
   // Functions for quantifying coherent noise:
-  float Covariance(std::vector<int16_t> &wvfm_self, NoiseSample &other, std::vector<int16_t> &wvfm_other);
-  float Correlation(std::vector<int16_t> &wvfm_self, NoiseSample &other, std::vector<int16_t> &wvfm_other);
+  float Covariance(const std::vector<int16_t> &wvfm_self, NoiseSample &other, const std::vector<int16_t> &wvfm_other);
+  float Correlation(const std::vector<int16_t> &wvfm_self, NoiseSample &other, const std::vector<int16_t> &wvfm_other);
   // the "Sum RMS" of a sample with another sample
-  float SumRMS(std::vector<int16_t> &wvfm_self, NoiseSample &other, std::vector<int16_t> &wvfm_other);
+  float SumRMS(const std::vector<int16_t> &wvfm_self, NoiseSample &other, const std::vector<int16_t> &wvfm_other);
   // the "Sum RMS" of n samples
-  static float ScaledSumRMS(std::vector<NoiseSample *>& other, std::vector<std::vector<int16_t> *>& wvfm_other);
+  static float ScaledSumRMS(std::vector<NoiseSample *>& other, std::vector<const std::vector<int16_t> *>& wvfm_other);
   // "DNoise" with another sample
-  float DNoise(std::vector<int16_t> &wvfm_self, NoiseSample &other, std::vector<int16_t> &wvfm_other);
+  float DNoise(const std::vector<int16_t> &wvfm_self, NoiseSample &other, const std::vector<int16_t> &wvfm_other);
 
   // get access to the ranges
   std::vector<std::array<unsigned, 2>> *Ranges() { return &_ranges; }
 private:
-  static float CalcRMS(std::vector<int16_t> &wvfm_self, std::vector<std::array<unsigned,2>> &ranges, int16_t baseline);
+  static float CalcRMS(const std::vector<int16_t> &wvfm_self, std::vector<std::array<unsigned,2>> &ranges, int16_t baseline);
   static NoiseSample DoIntersection(NoiseSample &me, NoiseSample &other, int16_t baseline=0.);
 
   std::vector<std::array<unsigned, 2>> _ranges;
@@ -42,7 +42,7 @@ private:
 };
 
 // helper function to sum a group of waveforms looking for e.g. coherent noise
-void SumWaveforms(std::vector<int16_t> &output, std::vector<std::vector<int16_t>*> waveforms);
+void SumWaveforms(std::vector<int16_t> &output, std::vector<const std::vector<int16_t>*> waveforms);
 
 } // namespace daqAnalysis
 #endif

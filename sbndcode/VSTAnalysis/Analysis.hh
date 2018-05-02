@@ -103,6 +103,7 @@ public:
 
     bool sum_waveforms;
     bool fft_per_channel;
+    bool fill_waveforms;
     bool reduce_data;
     bool timing;
 
