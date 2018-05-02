@@ -69,7 +69,7 @@ daqAnalysis::HeaderData Nevis2HeaderData(sbnddaq::NevisTPCFragment fragment, dou
 }
 
 daq::DaqDecoder::DaqDecoder(fhicl::ParameterSet const & param)
-  : _tag("daq","NEVISTPC")
+  : _tag(param.get<std::string>("raw_data_label", "daq"),param.get<std::string>("fragment_type_label", "NEVISTPC"))
 {
   // amount of time to wait in between processing events
   // useful for debugging redis
@@ -90,7 +90,8 @@ void daq::DaqDecoder::produce(art::Event & event)
   if (_wait_sec >= 0) {
     std::this_thread::sleep_for(std::chrono::seconds(_wait_sec) + std::chrono::microseconds(_wait_usec));
   }
-  auto const& daq_handle = event.getValidHandle<std::vector<artdaq::Fragment>>(_tag);
+  auto const& daq_handle = event.getValidHandle<artdaq::Fragments>(_tag);
+  
 
   // storage for waveform
   std::unique_ptr<std::vector<raw::RawDigit>> product_collection(new std::vector<raw::RawDigit>);
