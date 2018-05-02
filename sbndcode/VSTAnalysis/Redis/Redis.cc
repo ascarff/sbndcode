@@ -21,7 +21,7 @@
 using namespace daqAnalysis;
 using namespace std;
 
-Redis::Redis(std::vector<unsigned> &stream_take, std::vector<unsigned> &stream_expire, int snapshot_time, int waveform_input_size, bool timing): 
+Redis::Redis(const char *hostname, std::vector<unsigned> &stream_take, std::vector<unsigned> &stream_expire, int snapshot_time, int waveform_input_size, bool timing): 
   _snapshot_time(snapshot_time),
   _stream_take(stream_take),
   _stream_expire(stream_expire),
@@ -47,7 +47,7 @@ Redis::Redis(std::vector<unsigned> &stream_take, std::vector<unsigned> &stream_e
   _do_timing(timing)
 {
   //context = redisAsyncConnect("127.0.0.1", 6379);
-  context = redisConnect("127.0.0.1", 6379);
+  context = redisConnect(hostname, 6379);
   if (context != NULL && context->err) {
     std::cerr << "Redis error: " <<  context->errstr << std::endl;
     exit(1);

@@ -56,12 +56,13 @@ daqAnalysis::OnlineAnalysis::OnlineAnalysis(fhicl::ParameterSet const & p):
   auto stream_take = p.get<std::vector<unsigned>>("stream_take");
   auto stream_expire = p.get<std::vector<unsigned>>("stream_expire");
   int snapshot_time = p.get<int>("snapshot_time", -1);
+  const char *hostname = p.get<std::string>("hostname", "127.0.0.1").c_str();
   
   // have Redis alloc fft if you don't calculate them and you know the input size
   int waveform_input_size = (!_analysis._config.fft_per_channel && _analysis._config.static_input_size > 0) ?
     _analysis._config.static_input_size : -1;
   // setup redis
-  _redis_manager = new Redis(stream_take, stream_expire, snapshot_time, waveform_input_size, _analysis._config.timing);
+  _redis_manager = new Redis(hostname, stream_take, stream_expire, snapshot_time, waveform_input_size, _analysis._config.timing);
 
 }
 
