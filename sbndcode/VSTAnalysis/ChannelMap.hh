@@ -71,6 +71,13 @@ public:
   static const size_t n_fem_per_crate = 8;
   static const size_t n_channel_per_fem = 64;
   static const size_t n_wire = 480;
+  // TEMPORARY IMPLEMENTATION FOR TEST ON NEVIS TEST STAND DATA
+  /*
+  static const size_t n_crate = 1;
+  static const size_t n_fem_per_crate = 8;
+  static const size_t n_channel_per_fem = 64;
+  static const size_t n_wire = 64;
+  */
 };
 #endif
 
