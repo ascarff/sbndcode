@@ -9,6 +9,8 @@
 #include <hiredis/hiredis.h>
 #include <hiredis/async.h>
 
+#include "lardataobj/RawData/RawDigit.h"
+
 #include "../ChannelData.hh"
 #include "../HeaderData.hh"
 #include "../Noise.hh"
@@ -57,7 +59,7 @@ public:
   ~Redis();
   // send info associated w/ ChannelData
   void SendChannelData(std::vector<daqAnalysis::ChannelData> *per_channel_data, std::vector<daqAnalysis::NoiseSample> *noise_samples, 
-      std::vector<std::vector<short>> *fem_summed_waveforms);
+      std::vector<std::vector<short>> *fem_summed_waveforms, const std::vector<raw::RawDigit>& digits);
   // send info associated w/ HeaderData
   void SendHeaderData(std::vector<daqAnalysis::HeaderData> *header_data);
   // must be called before calling Send functions
@@ -69,7 +71,8 @@ protected:
   // per-header (each associated w/ an fem) data to Redis
   void SendHeader(unsigned stream_index);
   // snapshot stuff
-  void Snapshot(std::vector<ChannelData> *per_channel_data, std::vector<daqAnalysis::NoiseSample> *noise, std::vector<std::vector<short>> *fem_summed_waveforms);
+  void Snapshot(std::vector<ChannelData> *per_channel_data, std::vector<daqAnalysis::NoiseSample> *noise, 
+    std::vector<std::vector<short>> *fem_summed_waveforms, const std::vector<raw::RawDigit>& digits);
   // clear out a pipeline of n_commands commands
   void FinishPipeline(size_t n_commands);
 
