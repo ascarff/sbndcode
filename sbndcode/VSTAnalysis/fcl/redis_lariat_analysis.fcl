@@ -1,3 +1,5 @@
+#include "resourcemonitorservices_sbnd.fcl"
+
 physics:
 {
 
@@ -24,7 +26,7 @@ physics:
 
       sum_waveforms: true
       fft_per_channel: false
-      timing: false
+      timing: true
     }
   }
 
@@ -37,6 +39,11 @@ source:
   module_type: RootInput
   fileNames: ["/home/nfs/gputnam/lariat_data.root"]
 }
+
+services: {
+  @table::sbnd_resourcemonitorservices
+}
+
 
 process_name: REDISPIPELINE
 
