@@ -16,13 +16,23 @@ physics:
     {
       module_type: OnlineAnalysis
       producer_name: daq
-      threshold_lo: 100
-      noise_range_sampling: 1
-      redis: true
-      n_headers: 1
-      snapshot_time: 100
+      snapshot_time: -1
       stream_take: [1, 10]
       stream_expire: [1000, 10000]
+      n_headers: 1
+
+      threshold_calc: 3
+      threshold_sigma: 5
+      noise_range_sampling: 1
+      n_smoothing_samples: 1
+      n_above_threshold: 2
+      use_planes: false
+      verbose: false
+      baseline_calc: 2
+
+      sum_waveforms: true
+      fft_per_channel: false
+      timing: true
     }
   }
 
@@ -30,7 +40,7 @@ physics:
 
   outstream: [out1]
   analyze: [OnlineAnalysis]
-  end_paths: [outstream, analyze]
+  end_paths: [analyze]
 }
 
 outputs:
@@ -43,15 +53,10 @@ outputs:
   }
 }
 
-services:
-{
-  TFileService: { fileName: "out.root"}
-} 
-
 source:
 {
   module_type: RootInput
-  fileNames: ["/home/nfs/gputnam/nevistpc_filedata_test.root"]
+  fileNames: ["/sbnd/data/users/gputnam/nevis_fake_data/filedata.root"]
 }
 
 process_name: REDISPIPELINE
