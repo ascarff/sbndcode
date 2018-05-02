@@ -27,7 +27,7 @@ daqAnalysis::NoiseSample::NoiseSample(std::vector<PeakFinder::Peak>& peaks, int1
   _baseline = baseline;
 }
 
-float daqAnalysis::NoiseSample::CalcRMS(std::vector<int16_t> &wvfm_self, std::vector<std::array<unsigned,2>> &ranges, int16_t baseline) {
+float daqAnalysis::NoiseSample::CalcRMS(const std::vector<int16_t> &wvfm_self, std::vector<std::array<unsigned,2>> &ranges, int16_t baseline) {
   unsigned n_samples = 0;
   int ret = 0;
   // iterate over the regions w/out signal
@@ -63,7 +63,7 @@ daqAnalysis::NoiseSample daqAnalysis::NoiseSample::DoIntersection(daqAnalysis::N
   return daqAnalysis::NoiseSample(ranges, baseline);
 }
 
-float daqAnalysis::NoiseSample::Covariance(std::vector<int16_t> &wvfm_self, daqAnalysis::NoiseSample &other, std::vector<int16_t> &wvfm_other) {
+float daqAnalysis::NoiseSample::Covariance(const std::vector<int16_t> &wvfm_self, daqAnalysis::NoiseSample &other, const std::vector<int16_t> &wvfm_other) {
   daqAnalysis::NoiseSample joint = Intersection(other);
   unsigned n_samples = 0;
   int ret = 0;
@@ -77,13 +77,13 @@ float daqAnalysis::NoiseSample::Covariance(std::vector<int16_t> &wvfm_self, daqA
   return ((float)ret) / n_samples;
 }
 
-float daqAnalysis::NoiseSample::Correlation(std::vector<int16_t> &wvfm_self, daqAnalysis::NoiseSample &other, std::vector<int16_t> &wvfm_other) {
+float daqAnalysis::NoiseSample::Correlation(const std::vector<int16_t> &wvfm_self, daqAnalysis::NoiseSample &other, const std::vector<int16_t> &wvfm_other) {
   daqAnalysis::NoiseSample joint = Intersection(other);
   float scaling = CalcRMS(wvfm_self, joint._ranges, _baseline) * CalcRMS(wvfm_other, joint._ranges, other._baseline);
   return Covariance(wvfm_self, other, wvfm_other) / scaling;
 }
 
-float daqAnalysis::NoiseSample::SumRMS(std::vector<int16_t> &wvfm_self, daqAnalysis::NoiseSample &other, std::vector<int16_t> &wvfm_other) {
+float daqAnalysis::NoiseSample::SumRMS(const std::vector<int16_t> &wvfm_self, daqAnalysis::NoiseSample &other, const std::vector<int16_t> &wvfm_other) {
   daqAnalysis::NoiseSample joint = Intersection(other);
   unsigned n_samples = 0;
   int ret = 0;
@@ -98,7 +98,7 @@ float daqAnalysis::NoiseSample::SumRMS(std::vector<int16_t> &wvfm_self, daqAnaly
   return sqrt(((float)ret) / n_samples);
 }
 
-float daqAnalysis::NoiseSample::ScaledSumRMS(std::vector<daqAnalysis::NoiseSample *>& noises, std::vector<std::vector<int16_t> *>& waveforms) {
+float daqAnalysis::NoiseSample::ScaledSumRMS(std::vector<daqAnalysis::NoiseSample *>& noises, std::vector<const std::vector<int16_t> *>& waveforms) {
   // calculate the joint noise sample over all n samples
   // n must be >= 2
   daqAnalysis::NoiseSample joint = DoIntersection(*noises[0], *noises[1]);
@@ -133,7 +133,7 @@ float daqAnalysis::NoiseSample::ScaledSumRMS(std::vector<daqAnalysis::NoiseSampl
   return (sum_rms - scale_sub) / scale_div; 
 }
 
-float daqAnalysis::NoiseSample::DNoise(std::vector<int16_t> &wvfm_self, NoiseSample &other, std::vector<int16_t> &wvfm_other) {
+float daqAnalysis::NoiseSample::DNoise(const std::vector<int16_t> &wvfm_self, NoiseSample &other, const std::vector<int16_t> &wvfm_other) {
   daqAnalysis::NoiseSample joint = Intersection(other);
 
   unsigned n_samples = 0;
@@ -152,7 +152,7 @@ float daqAnalysis::NoiseSample::DNoise(std::vector<int16_t> &wvfm_self, NoiseSam
 
 // sum a group of waveforms looking for e.g. coherent noise
 // assumes output is of size output_size
-void daqAnalysis::SumWaveforms(std::vector<int16_t> &output, std::vector<std::vector<int16_t>*> waveforms) {
+void daqAnalysis::SumWaveforms(std::vector<int16_t> &output, std::vector<const std::vector<int16_t>*> waveforms) {
   size_t output_size = waveforms[0]->size();
 
   for (size_t adc_ind = 0; adc_ind < output_size; adc_ind++) {
