@@ -34,9 +34,9 @@ public:
   //TODO @INSTALLATION: Imeplement
   static wire_id_t Channel2Wire(readout_channel channel) {
     // TEMPORARY IMPLEMENTATION FOR TEST ON LARIAT DATA
-    wire_id_t wire = channel.crate * ChannelMap::n_fem_per_crate * ChannelMap::n_channel_per_fem + channel.slot * ChannelMap::n_channel_per_fem + channel.channel_ind;
+    //wire_id_t wire = channel.crate * ChannelMap::n_fem_per_crate * ChannelMap::n_channel_per_fem + channel.slot * ChannelMap::n_channel_per_fem + channel.channel_ind;
     // TEMPORARY IMPLEMENTATION FOR TEST ON NEVIS TEST STAND DATA
-    //wire_id_t wire = channel.channel_ind;
+    wire_id_t wire = channel.channel_ind;
     return wire;
   }
 
@@ -67,17 +67,17 @@ public:
 
   // TODO @INSTALLATION: Implement
   // TEMPORARY IMPLEMENTATION FOR TEST ON LARIAT DATA
+  /*
   static const size_t n_crate = 1;
   static const size_t n_fem_per_crate = 8;
   static const size_t n_channel_per_fem = 64;
   static const size_t n_wire = 480;
   // TEMPORARY IMPLEMENTATION FOR TEST ON NEVIS TEST STAND DATA
-  /*
+  */
   static const size_t n_crate = 1;
   static const size_t n_fem_per_crate = 8;
   static const size_t n_channel_per_fem = 64;
   static const size_t n_wire = 64;
-  */
 };
 #endif
 
