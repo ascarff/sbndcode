@@ -59,7 +59,7 @@ public:
   ~Redis();
   // send info associated w/ ChannelData
   void SendChannelData(std::vector<daqAnalysis::ChannelData> *per_channel_data, std::vector<daqAnalysis::NoiseSample> *noise_samples, 
-      std::vector<std::vector<short>> *fem_summed_waveforms, const std::vector<raw::RawDigit>& digits);
+      std::vector<std::vector<short>> *fem_summed_waveforms, const std::vector<raw::RawDigit>& digits, const std::vector<unsigned> channel_to_index);
   // send info associated w/ HeaderData
   void SendHeaderData(std::vector<daqAnalysis::HeaderData> *header_data);
   // must be called before calling Send functions
@@ -72,7 +72,7 @@ protected:
   void SendHeader(unsigned stream_index);
   // snapshot stuff
   void Snapshot(std::vector<ChannelData> *per_channel_data, std::vector<daqAnalysis::NoiseSample> *noise, 
-    std::vector<std::vector<short>> *fem_summed_waveforms, const std::vector<raw::RawDigit>& digits);
+    std::vector<std::vector<short>> *fem_summed_waveforms, const std::vector<raw::RawDigit>& digits, const std::vector<unsigned> channel_to_index);
   // clear out a pipeline of n_commands commands
   void FinishPipeline(size_t n_commands);
 

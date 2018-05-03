@@ -149,7 +149,8 @@ inline size_t pushFFTDat(char *buffer, float re, float im) {
   return sprintf(buffer, " %f", dat);
 }
 
-void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> *noise, vector<vector<short>> *fem_summed_waveforms, const std::vector<raw::RawDigit>& digits) {
+void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> *noise, vector<vector<short>> *fem_summed_waveforms, 
+    const std::vector<raw::RawDigit>& digits, const std::vector<unsigned> channel_to_index) {
   size_t n_commands = 0;
 
   // record the time for reference
@@ -204,7 +205,8 @@ void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> 
     // allocate enough space for it 
     // Assume at max 4 chars per int plus a space each plus another 50 chars to store the base of the command
     {
-      auto waveform = digits[channel.channel_no].ADCs();
+      unsigned digits_ind = channel_to_index[channel.channel_no];
+      auto waveform = digits[digits_ind].ADCs();
       size_t buffer_len = waveform.size() * 5 + 50;
       char *buffer = new char[buffer_len];
 
@@ -258,7 +260,8 @@ void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> 
     redisAppendCommand(context, "DEL snapshot:fft:wire:%i", channel.channel_no);
 
     {
-      auto waveform = digits[channel.channel_no].ADCs();
+      unsigned digits_ind = channel_to_index[channel.channel_no];
+      auto waveform = digits[digits_ind].ADCs();
       // allocate buffer for fft storage command
       // FFT's are comprised of floats, which can get pretty big
       // so assume you need ~25 digits per float to be on the safe side
@@ -326,8 +329,10 @@ void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> 
     // k = ((n+1)*n/2) - (n-i+1)*(n-i)/2 + j - i
     for (size_t i = 0; i < noise->size(); i++) {
       for (size_t j = i; j < noise->size(); j++) {
-        auto waveform_i = digits[i].ADCs();
-        auto waveform_j = digits[j].ADCs();
+        unsigned digits_i = channel_to_index[i];
+        unsigned digits_j = channel_to_index[j];
+        auto waveform_i = digits[digits_i].ADCs();
+        auto waveform_j = digits[digits_j].ADCs();
 
         float correlation = (*noise)[i].Correlation(waveform_i, (*noise)[j], waveform_j);
         print_len += sprintf(buffer_index, " %f", correlation);
@@ -353,7 +358,8 @@ void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> 
   
 }
 
-void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseSample> *noise_samples, vector<vector<short>> *fem_summed_waveforms, const std::vector<raw::RawDigit>& digits) {
+void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseSample> *noise_samples, vector<vector<short>> *fem_summed_waveforms, 
+    const std::vector<raw::RawDigit>& digits, const std::vector<unsigned> channel_to_index) {
   if (_do_timing) {
     _timing.StartTime();
   }
@@ -448,7 +454,7 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
   // snapshots
   bool take_snapshot = _snapshot_time > 0 && (_now - _start) % _snapshot_time == 0 && _last_snapshot != _now;
   if (take_snapshot) {
-    Snapshot(per_channel_data, noise_samples, fem_summed_waveforms, digits);
+    Snapshot(per_channel_data, noise_samples, fem_summed_waveforms, digits, channel_to_index);
     _last_snapshot = _now;
   }
 }

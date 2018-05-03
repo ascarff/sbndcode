@@ -71,7 +71,8 @@ void daqAnalysis::OnlineAnalysis::analyze(art::Event const & e) {
   auto const& raw_digits_handle = e.getValidHandle<std::vector<raw::RawDigit>>(_analysis._config.daq_tag);
   if (_analysis.ReadyToProcess() && !_analysis.EmptyEvent()) {
     _redis_manager->StartSend();
-    _redis_manager->SendChannelData(&_analysis._per_channel_data, &_analysis._noise_samples, &_analysis._fem_summed_waveforms, *raw_digits_handle);
+    _redis_manager->SendChannelData(&_analysis._per_channel_data, &_analysis._noise_samples, &_analysis._fem_summed_waveforms, 
+        *raw_digits_handle, _analysis._channel_index_map);
     // send headers if _analysis was configured to copy them
     if (_analysis._config.n_headers > 0) {
         _redis_manager->SendHeaderData(&_analysis._header_data);
