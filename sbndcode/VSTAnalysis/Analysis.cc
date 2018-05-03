@@ -46,6 +46,7 @@ using namespace daqAnalysis;
 
 Analysis::Analysis(fhicl::ParameterSet const & p) :
   _config(p),
+  _channel_index_map(ChannelMap::n_wire),
   _per_channel_data(ChannelMap::n_wire),
   _per_channel_data_reduced((_config.reduce_data) ? ChannelMap::n_wire : 0), // setup reduced event vector if we need it
   _noise_samples(ChannelMap::n_wire),
@@ -149,8 +150,12 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
   auto const& raw_digits_handle = event.getValidHandle<std::vector<raw::RawDigit>>(_config.daq_tag);
   
   // calculate per channel stuff
+  // keep track of channel to index mapping
+  unsigned index = 0;
   for (auto const& digits: *raw_digits_handle) {
+    _channel_index_map[digits.Channel()] = index;
     ProcessChannel(digits);
+    index ++;
   }
 
   if (_config.timing) {
@@ -177,8 +182,10 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
     unsigned next_channel = i + 1; 
 
     if (!_per_channel_data[i].empty && !_per_channel_data[next_channel].empty) {
+      unsigned raw_digits_i = _channel_index_map[i];
+      unsigned raw_digits_next_channel = _channel_index_map[next_channel];
       float unscaled_dnoise = _noise_samples[i].DNoise(
-          (*raw_digits_handle)[i].ADCs(), _noise_samples[next_channel], (*raw_digits_handle)[next_channel].ADCs());
+          (*raw_digits_handle)[raw_digits_i].ADCs(), _noise_samples[next_channel], (*raw_digits_handle)[raw_digits_next_channel].ADCs());
       // Doon't use same noise sample to scale dnoise
       // This should probably be ok, as long as the dnoise sample is large enough
       float dnoise_scale = sqrt(_per_channel_data[i].rms * _per_channel_data[i].rms + 
@@ -197,9 +204,10 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
     std::vector<std::vector<const std::vector<int16_t> *>> channel_waveforms_per_fem(n_fem);
     // collect the waveforms
     for (unsigned i = 0; i < ChannelMap::n_wire; i++) {
+      unsigned raw_digits_i = _channel_index_map[i];
       daqAnalysis::ChannelMap::readout_channel info = daqAnalysis::ChannelMap::Wire2Channel(i);
       size_t fem_ind = info.slot + info.crate * ChannelMap::n_fem_per_crate; 
-      channel_waveforms_per_fem[fem_ind].push_back(&(*raw_digits_handle)[i].ADCs());
+      channel_waveforms_per_fem[fem_ind].push_back(&(*raw_digits_handle)[raw_digits_i].ADCs());
     }
     // sum all of them
     for (unsigned i = 0; i < n_fem; i++) {

@@ -121,6 +121,8 @@ public:
 
   // configuration is available publicly
   AnalysisConfig _config;
+  // keeping track of wire id to index into stuff from Decoder
+  std::vector<unsigned> _channel_index_map;
   // output containers of analysis code. Only use after calling ReadyToProcess()
   std::vector<daqAnalysis::ChannelData> _per_channel_data;
   std::vector<daqAnalysis::ReducedChannelData> _per_channel_data_reduced;
