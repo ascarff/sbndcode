@@ -1,0 +1,10 @@
+BEGIN_PROLOG
+
+standard_crtsimhitproducer:
+{
+    module_type:      "CRTSimHitProducer"
+    CrtModuleLabel:   "crt"
+    Verbose:          true
+}
+
+END_PROLOG

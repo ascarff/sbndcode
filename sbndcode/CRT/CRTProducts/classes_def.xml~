@@ -1,0 +1,16 @@
+<lcgdict>
+  <class name="sbnd::crt::CRTData" ClassVersion="10">
+   <version ClassVersion="10" checksum="4014796032"/>
+  </class>
+  <class name="std::vector<sbnd::crt::CRTData>"/>
+  <class name="art::Wrapper<sbnd::crt::CRTData>"/>
+  <class name="art::Wrapper<std::vector<sbnd::crt::CRTData> >"/>
+
+  <class name="sbnd::crt::CRTHit" ClassVersion="11">
+   <version ClassVersion="11" checksum="3783352173"/>
+   <version ClassVersion="10" checksum="202575031"/>
+  </class>
+  <class name="std::vector<sbnd::crt::CRTHit>"/>
+  <class name="art::Wrapper<sbnd::crt::CRTHit>"/>
+  <class name="art::Wrapper<std::vector<sbnd::crt::CRTHit> >"/>
+</lcgdict>

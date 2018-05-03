@@ -49,5 +49,8 @@ sbnd_crtsim: {
 
   // Effective absorption length (for transverse response) [cm]
   AbsLenEff: 8.5
+
+  // Minimum time between energy deposits that SiPMs can resolve [ns]
+  SipmTimeResponse: 2.0
 }
 
