@@ -1,7 +1,7 @@
 BEGIN_PROLOG
 standard_badeventdisplay_Para: {
  module_type: "sbndcode/BadEventDisplay/BadEventDisplay"
- HitsModuleLabel:          "fasthit"
- 
+ HitsModuleLabel:          "rawhit"
+ Thresholds: [10,10] 
 }
 END_PROLOG

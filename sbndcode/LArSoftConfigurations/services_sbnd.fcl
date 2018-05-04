@@ -45,6 +45,9 @@
 #include "database_sbnd.fcl"
 #include "sam_sbnd.fcl"
 
+#include "geometry_lariat.fcl"
+#include "channelstatus_lariat.fcl"
+
 BEGIN_PROLOG
 
 #
@@ -58,7 +61,7 @@ sbnd_basic_services:
   scheduler:                      { defaultExceptions: false } # Make all uncaught exceptions fatal
   message:                        @local::sbnd_message_services
                                   @table::sbnd_resourcemonitorservices
-                                  @table::sbnd_geometry_services
+                                  @table::lariat_geometry_services
 } # sbnd_basic_services
 
 
@@ -84,7 +87,7 @@ sbnd_services:
   DetectorClocksService:          @local::sbnd_detectorclocks
   DetectorPropertiesService:      @local::sbnd_detproperties 
 # OpDigiProperties:               @local::sbnd_opdigiproperties
-  ChannelStatusService:           @local::sbnd_channelstatus
+  ChannelStatusService:           @local::lariat_channel_filter
   DetPedestalService:             @local::sbnd_detpedestalservice  # from database_sbnd.fcl
 } # sbnd_services
 

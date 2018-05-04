@@ -5,7 +5,7 @@
 
 services:
 {
-  TFileService: { fileName: "evd.root" }
+  TFileService: { fileName: "Evd.root" }
   Geometry: @local::lariat_geo		
   ExptGeoHelperInterface: @local::lariat_geometry_helper
   ChannelStatusService:   @local::sbnd_channelstatus

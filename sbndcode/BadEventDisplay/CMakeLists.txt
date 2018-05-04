@@ -1,12 +1,12 @@
-
 art_make(
-          MODULE_LIBRARIES #larcorealg_Geometry
+          MODULE_LIBRARIES larcore_Geometry
                            larcore_Geometry_Geometry_service
-                           lardata_Utilities
+			   lardata_Utilities
                            larevt_Filters
                            lardataobj_RawData
                            lardataobj_RecoBase
-                           lardata_RecoObjects
+                           lardata_RecoObjects larreco_Deprecated
+                           nusimdata_SimulationBase
                            ${ART_FRAMEWORK_CORE}
                            ${ART_FRAMEWORK_PRINCIPAL}
                            ${ART_FRAMEWORK_SERVICES_REGISTRY}
@@ -22,10 +22,8 @@ art_make(
                            ${ROOT_XMLIO}
                            ${ROOT_GDML}
                            ${ROOT_BASIC_LIB_LIST}
- 			   
         )
 
-#install_headers()
+# install_headers()
 install_fhicl()
 install_source()
-

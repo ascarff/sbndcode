@@ -42,6 +42,9 @@
 #include "PeakFinder.hh"
 #include "Mode.hh"
 
+//LArSoft includes.
+#include "lardataobj/RecoBase/Hit.h"
+
 using namespace daqAnalysis;
 
 Analysis::Analysis(fhicl::ParameterSet const & p) :
@@ -120,6 +123,9 @@ Analysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &param) {
   reduce_data = param.get<bool>("reduce_data", false);
   timing = param.get<bool>("timing", false);
 
+  //HitFinderName
+  fHitsModuleLabel = param.get<std::string>("HitsModuleLabel","RawHitFinder");
+
   // name of producer of raw::RawDigits
   std::string producer = param.get<std::string>("producer_name");
   daq_tag = art::InputTag(producer, ""); 
@@ -129,6 +135,17 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
   //if (_config.n_events >= 0 && _event_ind >= (unsigned)_config.n_events) return false;
 
   _event_ind ++;
+
+  // Getting the Hit Information
+  art::Handle<std::vector<recob::Hit> > hitListHandle;
+  std::vector<art::Ptr<recob::Hit> > hits;
+  if(event.getByLabel(_config.fHitsModuleLabel,hitListHandle))
+    {art::fill_ptr_vector(hits, hitListHandle);}
+  std::cout << "Number of Hits: " << hits.size() << std::endl;
+
+  //######################################################
+  // I would add a function to some purity code here tom.
+  //#####################################################
 
   // clear out containers from last iter
   for (unsigned i = 0; i < ChannelMap::n_wire; i++) {

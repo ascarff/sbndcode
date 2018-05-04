@@ -106,6 +106,8 @@ public:
     bool reduce_data;
     bool timing;
 
+    std::string fHitsModuleLabel;
+
     AnalysisConfig(const fhicl::ParameterSet &param);
     AnalysisConfig() {}
   };
