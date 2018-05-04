@@ -9,6 +9,8 @@
 #include <hiredis/hiredis.h>
 #include <hiredis/async.h>
 
+#include "art/Framework/Principal/Handle.h"
+
 #include "lardataobj/RawData/RawDigit.h"
 
 #include "../ChannelData.hh"
@@ -106,7 +108,7 @@ void Redis::SendHeader(unsigned stream_index) {
   if (_do_timing) {
     _timing.StartTime();
   }
-  for (size_t fem_ind = 0; fem_ind < ChannelMap::n_fem_per_crate* ChannelMap::n_crate; fem_ind++) {
+  for (size_t fem_ind = 0; fem_ind < ChannelMap::NFEM(); fem_ind++) {
     // @VST: This is ok because there is only 1 crate
     // TEMPORARY IMPLEMENTATION
     unsigned fem = fem_ind % ChannelMap::n_fem_per_crate;
@@ -150,7 +152,7 @@ inline size_t pushFFTDat(char *buffer, float re, float im) {
 }
 
 void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> *noise, vector<vector<short>> *fem_summed_waveforms, 
-    const std::vector<raw::RawDigit>& digits, const std::vector<unsigned> channel_to_index) {
+    const art::ValidHandle<std::vector<raw::RawDigit>> &digits, const std::vector<unsigned> &channel_to_index) {
   size_t n_commands = 0;
 
   // record the time for reference
@@ -206,7 +208,7 @@ void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> 
     // Assume at max 4 chars per int plus a space each plus another 50 chars to store the base of the command
     {
       unsigned digits_ind = channel_to_index[channel.channel_no];
-      auto waveform = digits[digits_ind].ADCs();
+      auto waveform = (*digits)[digits_ind].ADCs();
       size_t buffer_len = waveform.size() * 5 + 50;
       char *buffer = new char[buffer_len];
 
@@ -261,7 +263,7 @@ void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> 
 
     {
       unsigned digits_ind = channel_to_index[channel.channel_no];
-      auto waveform = digits[digits_ind].ADCs();
+      auto waveform = (*digits)[digits_ind].ADCs();
       // allocate buffer for fft storage command
       // FFT's are comprised of floats, which can get pretty big
       // so assume you need ~25 digits per float to be on the safe side
@@ -331,8 +333,8 @@ void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> 
       for (size_t j = i; j < noise->size(); j++) {
         unsigned digits_i = channel_to_index[i];
         unsigned digits_j = channel_to_index[j];
-        auto waveform_i = digits[digits_i].ADCs();
-        auto waveform_j = digits[digits_j].ADCs();
+        auto waveform_i = (*digits)[digits_i].ADCs();
+        auto waveform_j = (*digits)[digits_j].ADCs();
 
         float correlation = (*noise)[i].Correlation(waveform_i, (*noise)[j], waveform_j);
         print_len += sprintf(buffer_index, " %f", correlation);
@@ -359,7 +361,7 @@ void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> 
 }
 
 void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseSample> *noise_samples, vector<vector<short>> *fem_summed_waveforms, 
-    const std::vector<raw::RawDigit>& digits, const std::vector<unsigned> channel_to_index) {
+    const art::ValidHandle<std::vector<raw::RawDigit>> &digits, const std::vector<unsigned> &channel_to_index) {
   if (_do_timing) {
     _timing.StartTime();
   }
