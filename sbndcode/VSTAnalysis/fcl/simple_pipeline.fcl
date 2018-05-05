@@ -26,6 +26,7 @@ physics:
       baseline_calc: 2
 
       fft_per_channel: false
+      fill_waveforms: false
       timing: false
       sum_waveforms: false
       verbose: false

@@ -23,6 +23,7 @@ physics:
       use_planes: true
       verbose: false
       baseline_calc: 2
+      n_mode_skip: 3
 
       sum_waveforms: false
       fill_waveforms: false

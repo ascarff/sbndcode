@@ -5,7 +5,7 @@ physics:
     daq:
     {
       module_type: DaqDecoder
-      wait_time: 1
+      wait_time: 0
       produce_header: true
     }
   }
@@ -27,12 +27,12 @@ physics:
       n_smoothing_samples: 1
       n_above_threshold: 2
       use_planes: false
-      verbose: false
       baseline_calc: 2
 
-      sum_waveforms: true
+      sum_waveforms: false
+      fill_waveforms: false
       fft_per_channel: false
-      timing: true
+      timing: false
     }
   }
 
