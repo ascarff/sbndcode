@@ -41,10 +41,10 @@ Redis::Redis(const char *hostname, std::vector<unsigned> &stream_take, std::vect
   _occupancy(stream_take.size(), RedisOccupancy()),
 
   // and the header stuff
-  _frame_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_crate* ChannelMap::n_crate)),
-  _trigframe_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_crate* ChannelMap::n_crate)),
-  _event_no(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_crate* ChannelMap::n_crate)),
-  //_checksum_diff(stream_take.size(), StreamDataMax(ChannelMap::n_fem_per_crate* ChannelMap::n_crate)),
+  _frame_no(stream_take.size(), StreamDataMax(ChannelMap::NFEM())),
+  _trigframe_no(stream_take.size(), StreamDataMax(ChannelMap::NFEM())),
+  _event_no(stream_take.size(), StreamDataMax(ChannelMap::NFEM())),
+  //_checksum_diff(stream_take.size(), StreamDataMax(ChannelMap::NFEM())),
   
 
   _fft_manager((waveform_input_size > 0) ? waveform_input_size: 0),

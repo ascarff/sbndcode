@@ -76,6 +76,7 @@ daq::DaqDecoder::DaqDecoder(fhicl::ParameterSet const & param)
   double wait_time = param.get<double>("wait_time", -1 /* units of seconds */);
   _wait_sec = (int) wait_time;
   _wait_usec = (int) (wait_time / 1000000);
+  _calc_baseline = param.get<bool>("calc_baseline", false);
   
   // produce stuff
   produces<std::vector<raw::RawDigit>>();
@@ -142,7 +143,9 @@ void daq::DaqDecoder::process_fragment(const artdaq::Fragment &frag,
     // construct the next RawDigit object
     product_collection->emplace_back(wire_id, raw_digits_waveform.size(), raw_digits_waveform);
     // calculate the mode and set it as the pedestal
-    (*product_collection)[product_collection->size() - 1].SetPedestal( Mode(raw_digits_waveform) ); 
+    if (_calc_baseline) {
+      (*product_collection)[product_collection->size() - 1].SetPedestal( Mode(raw_digits_waveform) ); 
+    }
   }
 }
 void daq::DaqDecoder::validate_header(const sbnddaq::NevisTPCHeader *header) {

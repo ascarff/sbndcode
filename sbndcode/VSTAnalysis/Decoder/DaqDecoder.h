@@ -64,6 +64,7 @@ private:
   int _wait_sec;
   int _wait_usec;
   bool _produce_header;
+  bool _calc_baseline;
 };
 
 #endif /* DaqDecoder_h */
