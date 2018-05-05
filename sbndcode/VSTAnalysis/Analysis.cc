@@ -95,6 +95,9 @@ Analysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &param) {
   // 1 == assume baseline is in digits.GetPedestal()
   // 2 == use mode finding to get baseline
   baseline_calc = param.get<unsigned>("baseline_calc", 1);
+
+  // sets percentage of mode samples to be 100 / n_mode_skip
+  n_mode_skip = param.get<unsigned>("n_mode_skip", 1);
  
   // only used if noise_range_sampling == 0
   // number of samples in noise sample
@@ -186,13 +189,16 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
       unsigned raw_digits_next_channel = _channel_index_map[next_channel];
       float unscaled_dnoise = _noise_samples[i].DNoise(
           (*raw_digits_handle)[raw_digits_i].ADCs(), _noise_samples[next_channel], (*raw_digits_handle)[raw_digits_next_channel].ADCs());
-      // Doon't use same noise sample to scale dnoise
+      // Don't use same noise sample to scale dnoise
       // This should probably be ok, as long as the dnoise sample is large enough
       float dnoise_scale = sqrt(_per_channel_data[i].rms * _per_channel_data[i].rms + 
                                 _per_channel_data[next_channel].rms * _per_channel_data[next_channel].rms);
       _per_channel_data[i].next_channel_dnoise = unscaled_dnoise / dnoise_scale; 
     }
   }
+  // don't set last dnoise
+  _per_channel_data[ChannelMap::n_wire - 1] = 0;
+
   if (_config.timing) {
     _timing.EndTime(&_timing.coherent_noise_calc);
   }
@@ -310,7 +316,7 @@ void Analysis::ProcessChannel(const raw::RawDigit &digits) {
       _per_channel_data[channel].baseline = digits.GetPedestal();
     }
     else if (_config.baseline_calc == 2) {
-      _per_channel_data[channel].baseline = Mode(digits.ADCs());
+      _per_channel_data[channel].baseline = Mode(digits.ADCs(), _config.n_mode_skip);
     }
     if (_config.timing) {
       _timing.EndTime(&_timing.baseline_calc);
