@@ -94,6 +94,7 @@ public:
     float threshold_sigma;
     
     unsigned baseline_calc;
+    unsigned n_mode_skip;
     unsigned noise_range_sampling;
     bool use_planes;
     unsigned threshold_calc;

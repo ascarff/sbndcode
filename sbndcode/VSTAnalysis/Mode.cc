@@ -5,12 +5,14 @@
 
 // Calculate the mode to find a baseline of the passed in waveform.
 // Mode finding algorithm from: http://erikdemaine.org/papers/NetworkStats_ESA2002/paper.pdf (Algorithm FREQUENT)
-int16_t Mode(const std::vector<int16_t> &adcs) {
+int16_t Mode(const std::vector<int16_t> &adcs, unsigned n_skip_samples) {
   // 10 counters seem good
   std::array<unsigned, 10> counters {}; // zero-initialize
   std::array<int16_t, 10> modes {};
 
-  for (auto val: adcs) {
+  for (unsigned adc_ind = 0; adc_ind < adcs.size(); adc_ind += n_skip_samples) {
+    int16_t val = adcs[adc_ind];
+
     int home = -1;
     // look for a home for the val
     for (size_t i = 0; i < modes.size(); i ++) {
