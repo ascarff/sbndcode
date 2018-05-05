@@ -50,6 +50,8 @@ class HeaderData {
   // @VST This is ok because crate will always be 0
   size_t Ind() const {
     return crate * ChannelMap::n_fem_per_crate + slot;
+    // for testing on Nevis data
+    //return 0;
   }
 
   // print the data -- for debugging

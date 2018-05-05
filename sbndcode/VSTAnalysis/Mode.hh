@@ -8,6 +8,6 @@
 
 // Calculate the mode to find a baseline of the passed in waveform.
 // Mode finding algorithm from: http://erikdemaine.org/papers/NetworkStats_ESA2002/paper.pdf (Algorithm FREQUENT)
-int16_t Mode(const std::vector<int16_t> &adcs);
+int16_t Mode(const std::vector<int16_t> &adcs, unsigned n_skip_samples=1);
 
 #endif
