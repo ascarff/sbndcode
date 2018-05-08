@@ -43,7 +43,7 @@ services.LArG4Parameters.MisalignAtTPCFraction:    [0.5]          #Simulate misa
 services.LArG4Parameters.MisalignTransVector:      [0.3,0.0,0.0]  #Translation vector of Misalignment 
 services.LArG4Parameters.MisalignRotateAxis:       "Y"   	  #Rotation axis of TPC misalignment.
 services.LArG4Parameters.MisalignRotateAngle:      0.   	  	  #Misalignment through rotation/angle.
-
+services.LArG4Parameters.ModifyMisalignmentEfield:          false
 
 physics.producers.generator.X0: [ -100.0 ]
 physics.producers.generator.Y0: [ 0.0 ]
