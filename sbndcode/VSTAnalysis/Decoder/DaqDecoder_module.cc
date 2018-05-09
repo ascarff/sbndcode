@@ -86,9 +86,13 @@ daq::DaqDecoder::Config::Config(fhicl::ParameterSet const & param) {
   double wait_time = param.get<double>("wait_time", -1 /* units of seconds */);
   wait_sec = (int) wait_time;
   wait_usec = (int) (wait_time / 1000000);
+  // whether to calcualte the pedestal (and set it in SetPedestal())
   calc_baseline = param.get<bool>("calc_baseline", false);
+  // whether to put HeaderInfo in the art root file
   produce_header = param.get<bool>("produce_header", false);
+  // whether to check if Header looks good and print out error info
   validate_header = param.get<bool>("validate_header", false);
+  // how many adc values to skip in mode/pedestal finding
   n_mode_skip = param.get<unsigned>("n_mode_skip", 1);
 }
 
