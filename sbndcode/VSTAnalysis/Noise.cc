@@ -160,6 +160,10 @@ void daqAnalysis::NoiseSample::ResetBaseline(const std::vector<int16_t> &wvfm_se
       n_values ++;
     }
   }
+  // Don't crash if there are no values in the noise range, even though this would 
+  // obviously be a very bad thing. It's more important to persit to maintain analysis.
+  if (n_values == 0) return;
+
   _baseline = total / n_values;
 }
 
