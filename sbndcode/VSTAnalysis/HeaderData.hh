@@ -54,7 +54,7 @@ class HeaderData {
 
   // Returns the logical index of the header
   // @VST This is ok because crate will always be 0
-  size_t Ind() const {
+  uint32_t Ind() const {
     return crate * ChannelMap::n_fem_per_crate + slot;
     // for testing on Nevis data
     //return 0;
@@ -73,6 +73,8 @@ class HeaderData {
     buffer << "trigger frame no: " << trig_frame_number << std::endl;
     buffer << "frame time: " << frame_time << std::endl;
     buffer << "trigger frame time: " << trig_frame_time << std::endl;
+    buffer << std::hex << "checksum: " << checksum << std::endl;
+    buffer << std::hex << "computed checksum: " << computed_checksum << std::endl;
 
     return buffer.str();
   }
