@@ -85,6 +85,19 @@ sbnd_disp:
 }
 
 
+vast_disp:
+{
+                                               @table::vst_simulation_services
+  ColorDrawingOptions:                         @local::sbnd_colordrawingopt
+  SimulationDrawingOptions:                    @local::sbnd_simdrawingopt
+  RawDrawingOptions:                           @local::sbnd_rawdrawingopt
+  RecoDrawingOptions:                          @local::sbnd_recodrawingopt
+  AnalysisDrawingOptions:                      @local::sbnd_analysisdrawingopt
+  EvdLayoutOptions:                            @local::sbnd_evdlayoutopt
+  ScanOptions:                                 @local::sbnd_scanopt
+  InfoTransfer:                                @local::sbnd_infotransfer
+  EventDisplay:                                @local::sbnd_evd
+}
 
 
 #######################################

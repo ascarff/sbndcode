@@ -92,7 +92,8 @@ private:
   unsigned int           fNTimeSamples;     ///< number of ADC readout samples in all readout frames (per event)
   float                  fCollectionPed;    ///< ADC value of baseline for collection plane
   float                  fInductionPed;     ///< ADC value of baseline for induction plane
-  float                  fBaselineRMS;      ///< ADC value of baseline RMS within each channel
+  float                  fInductionPedErr;  ///< Error on the baseline for the induction plane 
+  float                  fCollectionPedErr; ///< Error on the basleine for the collection plane 
   TH1D*                  fNoiseDist;        ///< distribution of noise counts
   bool fGetNoiseFromHisto;                  ///< if True -> Noise from Histogram of Freq. spectrum
   bool fGenNoiseInTime;                     ///< if True -> Noise with Gaussian dsitribution in Time-domain
@@ -108,6 +109,7 @@ private:
   const float adcsaturation = 4095;
 
   ::detinfo::ElecClock fClock; ///< TPC electronics clock
+
 
 }; // class SimWireSBND
 
@@ -130,7 +132,6 @@ SimWireSBND::SimWireSBND(fhicl::ParameterSet const& pset)
   Seeds->createEngine(*this, "HepJamesRandom", "noise", pset, "Seed");
   Seeds->createEngine(*this, "HepJamesRandom", "pedestal", pset, "SeedPedestal");
 
-
 }
 
 //-------------------------------------------------
@@ -151,7 +152,8 @@ void SimWireSBND::reconfigure(fhicl::ParameterSet const& p)
   fGenNoise         = p.get< bool                >("GenNoise");
   fCollectionPed    = p.get< float               >("CollectionPed");
   fInductionPed     = p.get< float               >("InductionPed");
-  fBaselineRMS      = p.get< float               >("BaselineRMS");
+  fInductionPedErr  = p.get< float               >("InductionPedErr");
+  fCollectionPedErr = p.get< float               >("CollectionPedErr");
   
   fTrigModName      = p.get< std::string         >("TrigModName");
 
@@ -200,7 +202,7 @@ void SimWireSBND::beginJob()
   art::ServiceHandle<art::TFileService> tfs;
 
   fNoiseDist  = tfs->make<TH1D>("Noise", ";Noise  (ADC);", 1000,   -10., 10.);
-
+    
   art::ServiceHandle<util::LArFFT> fFFT;
   fNTicks = fFFT->FFTSize();
 
@@ -324,18 +326,23 @@ void SimWireSBND::produce(art::Event& evt)
         GenNoiseInFreq(noisetmp, noise_factor);
     }
 
+    //slight variation on ped using a flat distribution.
+    art::ServiceHandle<art::RandomNumberGenerator> rng;
+    CLHEP::HepRandomEngine &engine = rng->getEngine("pedestal");
+
     //Pedestal determination
     float ped_mean = fCollectionPed;
     geo::SigType_t sigtype = geo->SignalType(chan);
-    if (sigtype == geo::kInduction)
+    if (sigtype == geo::kInduction){
       ped_mean = fInductionPed;
-    else if (sigtype == geo::kCollection)
+      CLHEP::RandFlat rFlatPed(engine, -fInductionPedErr, fInductionPedErr);
+      ped_mean += rFlatPed.fire();
+    }
+    else if (sigtype == geo::kCollection){
       ped_mean = fCollectionPed;
-    //slight variation on ped on order of RMS of baselien variation
-    art::ServiceHandle<art::RandomNumberGenerator> rng;
-    CLHEP::HepRandomEngine &engine = rng->getEngine("pedestal");
-    CLHEP::RandGaussQ rGaussPed(engine, 0.0, fBaselineRMS);
-    ped_mean += rGaussPed.fire();
+      CLHEP::RandFlat rFlatPed(engine, -fCollectionPedErr, fCollectionPedErr);
+      ped_mean += rFlatPed.fire();
+    }
 
     for (unsigned int i = 0; i < fNTimeSamples; ++i) {
       float adcval = noisetmp.at(i) + chargeWork.at(i) + ped_mean;
