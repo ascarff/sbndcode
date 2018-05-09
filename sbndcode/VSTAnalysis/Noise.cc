@@ -150,6 +150,19 @@ float daqAnalysis::NoiseSample::DNoise(const std::vector<int16_t> &wvfm_self, No
 
 }
 
+// calculated the mean of all adc values in noise ranges, and sets that as baseline
+void daqAnalysis::NoiseSample::ResetBaseline(const std::vector<int16_t> &wvfm_self) {
+  int total = 0;
+  int n_values = 0;
+  for (auto &range: _ranges) {
+    for (unsigned i = range[0]; i <= range[1]; i++) {
+      total += wvfm_self[i];
+      n_values ++;
+    }
+  }
+  _baseline = total / n_values;
+}
+
 // sum a group of waveforms looking for e.g. coherent noise
 // assumes output is of size output_size
 void daqAnalysis::SumWaveforms(std::vector<int16_t> &output, std::vector<const std::vector<int16_t>*> waveforms) {
@@ -164,4 +177,6 @@ void daqAnalysis::SumWaveforms(std::vector<int16_t> &output, std::vector<const s
     } 
   }
 }
+
+
 
