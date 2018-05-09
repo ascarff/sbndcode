@@ -21,10 +21,12 @@ sbnd_simwire:
  # here we read the settings from the pedestal service configuration,
  # so that we have only one maintenance point
 # CollectionPed:       @local::sbnd_detpedestalservice.DetPedestalRetrievalAlg.DefaultCollMean # used to be 400
- CollectionPed:        400
+ CollectionPed:        625
+ CollectionPedErr:     17 #Error on the collection baseline
 # InductionPed:        @local::sbnd_detpedestalservice.DetPedestalRetrievalAlg.DefaultIndMean  # used to be 2048
- InductionPed:         2048
- BaselineRMS:         0.3         #ADC baseline fluctuation within channel        
+ InductionPed:         1847
+ InductionPedErr:      48 #Error on the induction baseline
+# BaselineRMS:         0.3         #ADC baseline fluctuation within channel No longer in use and removed from the code DomBarker 09/05/2018 (May 2018)         
  NoiseFileFname:      "uboone_noise_v0.1.root"
  NoiseHistoName:      "NoiseFreq"    
 
