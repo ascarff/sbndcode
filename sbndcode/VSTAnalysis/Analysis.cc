@@ -96,6 +96,10 @@ Analysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &param) {
   // 2 == use mode finding to get baseline
   baseline_calc = param.get<unsigned>("baseline_calc", 1);
 
+  // whether to refine the baseline by calculating the mean
+  // of all adc values
+  refine_baseline = param.get<bool>("refine_baseline", false);
+
   // sets percentage of mode samples to be 100 / n_mode_skip
   n_mode_skip = param.get<unsigned>("n_mode_skip", 1);
  
@@ -395,6 +399,12 @@ void Analysis::ProcessChannel(const raw::RawDigit &digits) {
     else {
       // or use peak finding
       _noise_samples[channel] = NoiseSample(_per_channel_data[channel].peaks, _per_channel_data[channel].baseline, digits.NADC()); 
+    }
+
+    // Refine baseline values by taking the mean over the background range
+    if (_config.refine_baseline) {
+      _noise_samples[channel].ResetBaseline(adc_vec);
+      _per_channel_data[channel].baseline = _noise_samples[channel].Baseline(); 
     }
 
     _per_channel_data[channel].rms = _noise_samples[channel].RMS(adc_vec);

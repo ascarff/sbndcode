@@ -31,8 +31,13 @@ public:
   // "DNoise" with another sample
   float DNoise(const std::vector<int16_t> &wvfm_self, NoiseSample &other, const std::vector<int16_t> &wvfm_other);
 
+  // re-calculate the baseline as taking the mean of all values in the noise ranges
+  void ResetBaseline(const std::vector<int16_t> &wvfm_self);
+
   // get access to the ranges
   std::vector<std::array<unsigned, 2>> *Ranges() { return &_ranges; }
+  // getter for the baseline
+  int16_t Baseline() { return _baseline; }
 private:
   static float CalcRMS(const std::vector<int16_t> &wvfm_self, std::vector<std::array<unsigned,2>> &ranges, int16_t baseline);
   static NoiseSample DoIntersection(NoiseSample &me, NoiseSample &other, int16_t baseline=0.);
