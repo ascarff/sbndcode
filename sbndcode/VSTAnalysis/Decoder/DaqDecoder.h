@@ -48,23 +48,33 @@ public:
   static uint32_t compute_checksum(sbnddaq::NevisTPCFragment &fragment);
 
 private:
+  class Config {
+    public:
+    int wait_sec;
+    int wait_usec;
+    bool produce_header;
+    bool calc_baseline;
+    bool validate_header;
+    unsigned n_mode_skip;
+    Config(fhicl::ParameterSet const & p);
+  };
+
   // process an individual fragment inside an art event
   void process_fragment(const artdaq::Fragment &frag,
     std::unique_ptr<std::vector<raw::RawDigit>> &product_collection,
     std::unique_ptr<std::vector<daqAnalysis::HeaderData>> &header_collection);
 
   // validate Nevis header
-  // TODO: report errors in header
-  void validate_header(const sbnddaq::NevisTPCHeader *header); 
+  void validate_header(const daqAnalysis::HeaderData &header);
 
   // Gets the WIRE ID of the channel. This wire id can be then passed
   // to the Lariat geometry.
   raw::ChannelID_t get_wire_id(const sbnddaq::NevisTPCHeader *header, uint16_t nevis_channel_id);
   art::InputTag _tag;
-  int _wait_sec;
-  int _wait_usec;
-  bool _produce_header;
-  bool _calc_baseline;
+  Config _config;
+  // keeping track of incrementing numbers
+  uint32_t _last_event_number;
+  uint32_t _last_trig_frame_number;
 };
 
 #endif /* DaqDecoder_h */

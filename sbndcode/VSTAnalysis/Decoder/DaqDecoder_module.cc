@@ -68,28 +68,34 @@ daqAnalysis::HeaderData Nevis2HeaderData(sbnddaq::NevisTPCFragment fragment, dou
   return ret;
 }
 
-daq::DaqDecoder::DaqDecoder(fhicl::ParameterSet const & param)
-  : _tag(param.get<std::string>("raw_data_label", "daq"),param.get<std::string>("fragment_type_label", "NEVISTPC"))
+daq::DaqDecoder::DaqDecoder(fhicl::ParameterSet const & param): 
+  _tag(param.get<std::string>("raw_data_label", "daq"),param.get<std::string>("fragment_type_label", "NEVISTPC")),
+  _config(param)
 {
-  // amount of time to wait in between processing events
-  // useful for debugging redis
-  double wait_time = param.get<double>("wait_time", -1 /* units of seconds */);
-  _wait_sec = (int) wait_time;
-  _wait_usec = (int) (wait_time / 1000000);
-  _calc_baseline = param.get<bool>("calc_baseline", false);
   
   // produce stuff
   produces<std::vector<raw::RawDigit>>();
-  _produce_header = param.get<bool>("produce_header", false);
-  if (_produce_header) {
+  if (_config.produce_header) {
     produces<std::vector<daqAnalysis::HeaderData>>();
   }
 }
 
+daq::DaqDecoder::Config::Config(fhicl::ParameterSet const & param) {
+  // amount of time to wait in between processing events
+  // useful for debugging redis
+  double wait_time = param.get<double>("wait_time", -1 /* units of seconds */);
+  wait_sec = (int) wait_time;
+  wait_usec = (int) (wait_time / 1000000);
+  calc_baseline = param.get<bool>("calc_baseline", false);
+  produce_header = param.get<bool>("produce_header", false);
+  validate_header = param.get<bool>("validate_header", false);
+  n_mode_skip = param.get<unsigned>("n_mode_skip", 1);
+}
+
 void daq::DaqDecoder::produce(art::Event & event)
 {
-  if (_wait_sec >= 0) {
-    std::this_thread::sleep_for(std::chrono::seconds(_wait_sec) + std::chrono::microseconds(_wait_usec));
+  if (_config.wait_sec >= 0) {
+    std::this_thread::sleep_for(std::chrono::seconds(_config.wait_sec) + std::chrono::microseconds(_config.wait_usec));
   }
   auto const& daq_handle = event.getValidHandle<artdaq::Fragments>(_tag);
   
@@ -103,14 +109,14 @@ void daq::DaqDecoder::produce(art::Event & event)
   }
 
   event.put(std::move(product_collection));
-  if (_produce_header) {
+  if (_config.produce_header) {
     event.put(std::move(header_collection));
   }
 }
 
 
 raw::ChannelID_t daq::DaqDecoder::get_wire_id(const sbnddaq::NevisTPCHeader *header, uint16_t nevis_channel_id) {
- daqAnalysis::ChannelMap::readout_channel channel {header->getSlot(), header->getFEMID(), (size_t) nevis_channel_id };
+ daqAnalysis::ChannelMap::readout_channel channel {header->getSlot(), header->getFEMID(), nevis_channel_id };
  // rely on ChannelMap for implementation
  return daqAnalysis::ChannelMap::Channel2Wire(channel);
 }
@@ -122,15 +128,20 @@ void daq::DaqDecoder::process_fragment(const artdaq::Fragment &frag,
   // convert fragment to Nevis fragment
   sbnddaq::NevisTPCFragment fragment(frag);
 
-  validate_header(fragment.header());
 
   std::unordered_map<uint16_t,sbnddaq::NevisTPC_Data_t> waveform_map;
   size_t n_waveforms = fragment.decode_data(waveform_map);
   (void)n_waveforms;
 
-  if (_produce_header) {
-    // Construct HeaderData from the Nevis Header and throw it in the collection
-    header_collection->push_back(Nevis2HeaderData(fragment));
+  if (_config.produce_header || _config.validate_header) {
+    auto header_data = Nevis2HeaderData(fragment);
+    if (_config.produce_header) {
+      // Construct HeaderData from the Nevis Header and throw it in the collection
+      header_collection->push_back(header_data);
+    }
+    if (_config.validate_header) {
+      validate_header(header_data);
+    }
   }
 
   for (auto waveform: waveform_map) {
@@ -143,14 +154,36 @@ void daq::DaqDecoder::process_fragment(const artdaq::Fragment &frag,
     // construct the next RawDigit object
     product_collection->emplace_back(wire_id, raw_digits_waveform.size(), raw_digits_waveform);
     // calculate the mode and set it as the pedestal
-    if (_calc_baseline) {
-      (*product_collection)[product_collection->size() - 1].SetPedestal( Mode(raw_digits_waveform) ); 
+    if (_config.calc_baseline) {
+      (*product_collection)[product_collection->size() - 1].SetPedestal( Mode(raw_digits_waveform, _config.n_mode_skip) ); 
     }
   }
 }
-void daq::DaqDecoder::validate_header(const sbnddaq::NevisTPCHeader *header) {
-  // TODO: implement
-  (void) header;
+void daq::DaqDecoder::validate_header(const daqAnalysis::HeaderData &header) {
+  if (header.checksum != header.computed_checksum) {
+    fprintf(stderr, "ERROR: computed checksum %#x does not match firmware checksum %#x\n", header.checksum, header.computed_checksum);
+  }
+  if (header.slot >= daqAnalysis::ChannelMap::n_fem_per_crate) {
+    fprintf(stderr, "ERROR: Slot index of FEM (%u) mismatch with number of FEM slots per crate (%u)\n", header.slot, daqAnalysis::ChannelMap::n_fem_per_crate);
+  }
+  if (header.crate >= daqAnalysis::ChannelMap::n_crate) {
+    fprintf(stderr, "ERROR: Crate id (%u) too large for total number of crates (%u)\n", header.crate, daqAnalysis::ChannelMap::n_crate);
+  }
+  if (header.Ind() >= daqAnalysis::ChannelMap::NFEM()) {
+    fprintf(stderr, "ERROR: Global index of FEM (%u) too large for total number of FEM's (%u)\n", header.Ind(), daqAnalysis::ChannelMap::NFEM());
+  }
+  if (header.adc_word_count == 0) {
+    fprintf(stderr, "WARNING: ADC Word Count in crate %u, slot %u, fem ID %u is 0\n", header.crate, header.slot, header.Ind());
+  }
+  if (header.event_number < _last_event_number) {
+    fprintf(stderr, "ERROR: Non incrementing event numbers. Last event number: %u. This event number: %u\n", _last_event_number, header.event_number);
+  }
+  if (header.trig_frame_number < _last_trig_frame_number) {
+    fprintf(stderr, "ERROR: Non incrementing trig frame numbers. Last trig frame: %u. This true frame: %u\n", _last_trig_frame_number, header.trig_frame_number);
+  }
+  // store numbers for next time
+  _last_event_number = header.event_number;
+  _last_trig_frame_number = header.trig_frame_number;
   return; 
 }
 
@@ -173,14 +206,15 @@ uint32_t daq::DaqDecoder::compute_checksum(sbnddaq::NevisTPCFragment &fragment) 
   uint32_t checksum = 0;
 
   const sbnddaq::NevisTPC_ADC_t* data_ptr = fragment.data();
-  size_t n_words = fragment.header()->getADCWordCount();
+  // RETURN VALUE OF getADCWordCount IS OFF BY 1
+  size_t n_words = fragment.header()->getADCWordCount() + 1;
 
   for (size_t word_ind = 0; word_ind < n_words; word_ind++) {
     const sbnddaq::NevisTPC_ADC_t* word_ptr = data_ptr + word_ind;
     switch (get_word_type(*word_ptr)) {
       // checksum gets incremented for each of these cases
-      case sbnddaq::NevisTPCWordType_t::kChannelHeader:
       case sbnddaq::NevisTPCWordType_t::kADC:
+      case sbnddaq::NevisTPCWordType_t::kChannelHeader:
       case sbnddaq::NevisTPCWordType_t::kADCHuffman:
       case sbnddaq::NevisTPCWordType_t::kChannelEnding:
       case sbnddaq::NevisTPCWordType_t::kUnknown:
