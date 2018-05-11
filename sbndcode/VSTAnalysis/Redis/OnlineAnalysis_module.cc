@@ -63,7 +63,6 @@ daqAnalysis::OnlineAnalysis::OnlineAnalysis(fhicl::ParameterSet const & p):
     _analysis._config.static_input_size : -1;
   // setup redis
   _redis_manager = new Redis(hostname, stream_take, stream_expire, snapshot_time, waveform_input_size, _analysis._config.timing);
-
 }
 
 void daqAnalysis::OnlineAnalysis::analyze(art::Event const & e) {

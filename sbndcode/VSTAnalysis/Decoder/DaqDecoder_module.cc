@@ -164,43 +164,42 @@ void daq::DaqDecoder::process_fragment(const artdaq::Fragment &frag,
   }
 }
 void daq::DaqDecoder::validate_header(const daqAnalysis::HeaderData &header) {
+  bool printed = false;
   if (header.checksum != header.computed_checksum) {
     fprintf(stderr, "ERROR: computed checksum %#x does not match firmware checksum %#x\n", header.checksum, header.computed_checksum);
+    printed = true;
   }
   if (header.slot >= daqAnalysis::ChannelMap::n_fem_per_crate) {
     fprintf(stderr, "ERROR: Slot index of FEM (%u) mismatch with number of FEM slots per crate (%u)\n", header.slot, daqAnalysis::ChannelMap::n_fem_per_crate);
+    printed = true;
   }
   if (header.crate >= daqAnalysis::ChannelMap::n_crate) {
     fprintf(stderr, "ERROR: Crate id (%u) too large for total number of crates (%u)\n", header.crate, daqAnalysis::ChannelMap::n_crate);
+    printed = true;
   }
   if (header.Ind() >= daqAnalysis::ChannelMap::NFEM()) {
     fprintf(stderr, "ERROR: Global index of FEM (%u) too large for total number of FEM's (%u)\n", header.Ind(), daqAnalysis::ChannelMap::NFEM());
+    printed = true;
   }
   if (header.adc_word_count == 0) {
     fprintf(stderr, "WARNING: ADC Word Count in crate %u, slot %u, fem ID %u is 0\n", header.crate, header.slot, header.Ind());
+    printed = true;
   }
   if (header.event_number < _last_event_number) {
     fprintf(stderr, "ERROR: Non incrementing event numbers. Last event number: %u. This event number: %u\n", _last_event_number, header.event_number);
+    printed = true;
   }
   if (header.trig_frame_number < _last_trig_frame_number) {
-    fprintf(stderr, "ERROR: Non incrementing trig frame numbers. Last trig frame: %u. This true frame: %u\n", _last_trig_frame_number, header.trig_frame_number);
+    fprintf(stderr, "ERROR: Non incrementing trig frame numbers. Last trig frame: %u. This trig frame: %u\n", _last_trig_frame_number, header.trig_frame_number);
+    printed = true;
+  }
+  if (printed) {
+     fprintf(stderr, "Header Info:\n%s\n", header.Print().c_str());
   }
   // store numbers for next time
   _last_event_number = header.event_number;
   _last_trig_frame_number = header.trig_frame_number;
   return; 
-}
-
-// just copied from sbnddaq-datatypes
-// we should tale this out at some point
-sbnddaq::NevisTPCWordType_t get_word_type( uint16_t word )
-{
-  if( (word & 0xF000) == 0x4000 ) return sbnddaq::NevisTPCWordType_t::kChannelHeader;
-  if( (word & 0xF000) == 0x0000 ) return sbnddaq::NevisTPCWordType_t::kADC;
-  if( (word & 0xC000) == 0x8000 ) return sbnddaq::NevisTPCWordType_t::kADCHuffman; // Look for headers first
-  if( (word & 0xF000) == 0x5000 ) return sbnddaq::NevisTPCWordType_t::kChannelEnding;
-  else
-    return sbnddaq::NevisTPCWordType_t::kUnknown;
 }
 
 // Computes the checksum, given a nevis tpc header
@@ -215,16 +214,7 @@ uint32_t daq::DaqDecoder::compute_checksum(sbnddaq::NevisTPCFragment &fragment) 
 
   for (size_t word_ind = 0; word_ind < n_words; word_ind++) {
     const sbnddaq::NevisTPC_ADC_t* word_ptr = data_ptr + word_ind;
-    switch (get_word_type(*word_ptr)) {
-      // checksum gets incremented for each of these cases
-      case sbnddaq::NevisTPCWordType_t::kADC:
-      case sbnddaq::NevisTPCWordType_t::kChannelHeader:
-      case sbnddaq::NevisTPCWordType_t::kADCHuffman:
-      case sbnddaq::NevisTPCWordType_t::kChannelEnding:
-      case sbnddaq::NevisTPCWordType_t::kUnknown:
-        checksum += *word_ptr;
-        break;
-    }
+    checksum += *word_ptr;
   }
   // only first 6 bytes of checksum are used
   return checksum & 0xFFFFFF;

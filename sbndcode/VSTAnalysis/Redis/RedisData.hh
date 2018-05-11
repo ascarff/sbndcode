@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <ctime>
+#include <cmath>
 
 #include <hiredis/hiredis.h>
 #include <hiredis/async.h>
@@ -173,6 +174,13 @@ public:
   void Add(daqAnalysis::ChannelData &channel, unsigned crate, unsigned fem_ind, unsigned wire) {
     // calculate and add to each container
     float dat = Calculate(channel);
+
+    // persist through nan's
+    if (std::isnan(dat)) {
+      fprintf(stderr, "Error: Metric %s is NAN on wire %i", REDIS_NAME, wire);
+      return;
+    }
+
     // each container is aware of how often it is filled per time instance
     _crate_data.Add(crate, dat);
     _fem_data.Add(fem_ind, dat);
@@ -206,8 +214,10 @@ public:
       redisAppendCommand(context, "SET stream/%i:%i:%s:wire:%i %f",
         stream_no, now/stream_no, REDIS_NAME,wire, TakeWire(wire)); 
 
-      redisAppendCommand(context, "EXPIRE stream/%i:%i:%s:wire:%i %i",
-        stream_no, now/stream_no, REDIS_NAME,wire, stream_expire); 
+      if (stream_expire != 0) {
+        redisAppendCommand(context, "EXPIRE stream/%i:%i:%s:wire:%i %i",
+          stream_no, now/stream_no, REDIS_NAME,wire, stream_expire); 
+      }
     } 
     // and the fem stuff
     unsigned n_fem = _fem_data.Size();
@@ -219,8 +229,10 @@ public:
       redisAppendCommand(context, "SET stream/%i:%i:%s:crate:%i:fem:%i %f",
         stream_no, now/stream_no, REDIS_NAME, crate, fem, TakeFEM(fem_ind)); 
 
-      redisAppendCommand(context, "EXPIRE stream/%i:%i:%s:crate:%i:fem:%i %i",
-        stream_no, now/stream_no, REDIS_NAME, crate, fem, stream_expire); 
+      if (stream_expire != 0) {
+        redisAppendCommand(context, "EXPIRE stream/%i:%i:%s:crate:%i:fem:%i %i",
+          stream_no, now/stream_no, REDIS_NAME, crate, fem, stream_expire); 
+      }
     } 
     // and the crate stuff
     unsigned n_crate = _crate_data.Size();
@@ -228,11 +240,13 @@ public:
       redisAppendCommand(context, "SET stream/%i:%i:%s:crate:%i %f",
          stream_no, now/stream_no, REDIS_NAME, crate, TakeCrate(crate));
 
-      redisAppendCommand(context, "EXPIRE stream/%i:%i:%s:crate:%i %i",
-         stream_no, now/stream_no, REDIS_NAME, crate, stream_expire);
+      if (stream_expire != 0) {
+        redisAppendCommand(context, "EXPIRE stream/%i:%i:%s:crate:%i %i",
+           stream_no, now/stream_no, REDIS_NAME, crate, stream_expire);
+      }
     }
     // return number of commands sent
-    return 2*(n_wires + n_fem + n_crate);
+    return (n_wires + n_fem + n_crate) * ((stream_expire == 0) ? 1:2);
   }
 
 protected:
@@ -251,9 +265,10 @@ extern char REDIS_NAME_DNOISE[];
 extern char REDIS_NAME_BASLINE[];
 extern char REDIS_NAME_PULSE_HEIGHT[];
 
-class daqAnalysis::RedisRMS: public daqAnalysis::DetectorMetric<StreamDataMean, REDIS_NAME_RMS> {
+// RMS is Variable Mean because sometimes noise calculation algorithm can fail
+class daqAnalysis::RedisRMS: public daqAnalysis::DetectorMetric<StreamDataVariableMean, REDIS_NAME_RMS> {
   // inherit constructor
-  using daqAnalysis::DetectorMetric<StreamDataMean, REDIS_NAME_RMS>::DetectorMetric;
+  using daqAnalysis::DetectorMetric<StreamDataVariableMean, REDIS_NAME_RMS>::DetectorMetric;
 
   // implement calculate
  inline float Calculate(daqAnalysis::ChannelData &channel) override
@@ -270,9 +285,9 @@ class daqAnalysis::RedisOccupancy: public daqAnalysis::DetectorMetric<StreamData
    { return channel.occupancy; }
 };
 
-class daqAnalysis::RedisDNoise: public daqAnalysis::DetectorMetric<StreamDataMean, REDIS_NAME_DNOISE> {
+class daqAnalysis::RedisDNoise: public daqAnalysis::DetectorMetric<StreamDataVariableMean, REDIS_NAME_DNOISE> {
   // inherit constructor
-  using daqAnalysis::DetectorMetric<StreamDataMean, REDIS_NAME_DNOISE>::DetectorMetric;
+  using daqAnalysis::DetectorMetric<StreamDataVariableMean, REDIS_NAME_DNOISE>::DetectorMetric;
 
   // implement calculate
  inline float Calculate(daqAnalysis::ChannelData &channel) override
