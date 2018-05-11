@@ -61,7 +61,7 @@ class HeaderData {
   }
 
   // print the data -- for debugging
-  std::string Print() {
+  std::string Print() const {
     std::stringstream buffer;
     buffer << "crate: " << ((unsigned)crate) << std::endl;
     buffer << "slot: " << ((unsigned)slot) << std::endl;
@@ -80,7 +80,7 @@ class HeaderData {
   }
 
   // print raw data -- for debugging
-  std::string PrintRaw() {
+  std::string PrintRaw() const {
     std::stringstream buffer;
     buffer << std::hex << "id_and_slot_word: " << id_and_slot_word << std::endl;
     buffer << std::hex << "word_count_word:  " << word_count_word << std::endl;
