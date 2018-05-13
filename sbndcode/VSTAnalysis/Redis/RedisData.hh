@@ -13,18 +13,32 @@
 #include "../ChannelMap.hh"
 
 namespace daqAnalysis {
+  // stream types
   class StreamDataMean;
   class StreamDataVariableMean;
   class StreamDataMax;
+  class StreamDataSum;
 
+  // detector metric base class
   template<class Stream, char const *REDIS_NAME>
   class DetectorMetric;
 
+  // and the metric classes
   class RedisRMS;
   class RedisOccupancy;
   class RedisBaseline;
   class RedisPulseHeight;
   class RedisDNoise;
+
+  // header metric base class
+  template<class Stream, char const *REDIS_NAME>
+  class HeaderMetric;
+
+  // and the metric classes
+  class RedisEventNo;
+  class RedisFrameNo;
+  class RedisTrigFrameNo;
+  class RedisBlocks;
 }
 
 // keeps a running mean of a metric w/ n_data instances and n_points_per_time data points per each time instance
@@ -107,16 +121,31 @@ protected:
 // keeps running max value of a metric w/ n instances
 class daqAnalysis::StreamDataMax {
 public:
-  StreamDataMax(unsigned n_data): _data(n_data, 0.) {}
+  StreamDataMax(unsigned n_data, unsigned _): _data(n_data, 0) {}
 
-  void Add(unsigned index, float dat);
-  float Take(unsigned index);
-  float Peek(unsigned index) { return _data[index]; }
+  void Add(unsigned index, unsigned dat);
+  unsigned Take(unsigned index);
+  unsigned Peek(unsigned index) { return _data[index]; }
   unsigned Size() { return _data.size(); }
   void Update(bool _) {/* doesn't need to do anything currently */}
 
 protected:
-  std::vector<float> _data;
+  std::vector<unsigned> _data;
+};
+
+// keeps running sum of a metric w/ n instances
+class daqAnalysis::StreamDataSum {
+public:
+  StreamDataSum(unsigned n_data, unsigned _): _data(n_data, 0) {}
+
+  void Add(unsigned index, unsigned dat);
+  unsigned Take(unsigned index);
+  unsigned Peek(unsigned index) { return _data[index]; }
+  unsigned Size() { return _data.size(); }
+  void Update(bool _) {/* doesn't need to do anything currently */}
+
+protected:
+  std::vector<unsigned> _data;
 };
 
 // holds a StreamDataMean or StreamDataVariableMean across all instances of the detector
@@ -177,7 +206,7 @@ public:
 
     // persist through nan's
     if (std::isnan(dat)) {
-      fprintf(stderr, "Error: Metric %s is NAN on wire %i", REDIS_NAME, wire);
+      fprintf(stderr, "Error: Metric %s is NAN on wire %i\n", REDIS_NAME, wire);
       return;
     }
 
@@ -310,6 +339,103 @@ class daqAnalysis::RedisPulseHeight: public daqAnalysis::DetectorMetric<StreamDa
   // implement calculate
  inline float Calculate(daqAnalysis::ChannelData &channel) override
    { return channel.mean_peak_height; }
+};
+
+template<class Stream, char const *REDIS_NAME>
+class daqAnalysis::HeaderMetric {
+public:
+  // how to calculate the metric given a channel data reference
+  virtual unsigned Calculate(daqAnalysis::HeaderData &header) = 0;
+
+  // base class destructors should be virtual
+  virtual ~HeaderMetric() {}
+
+  HeaderMetric()
+    : _fem(ChannelMap::NFEM(), 1)
+  {}
+
+  void Add(daqAnalysis::HeaderData &header, unsigned fem_ind) {
+    // calculate and add to each container
+    unsigned val = Calculate(header);
+
+    // each container is aware of how often it is filled per time instance
+    _fem.Add(fem_ind, val);
+  }
+
+  unsigned Take(unsigned index) {
+    return _fem.Take(index);
+  }
+
+  // to be called once per time instance
+  void Update(bool taken) {
+    _fem.Update(taken);
+  }
+
+  // send stuff to Redis
+  unsigned Send(redisContext *context, std::time_t now, unsigned stream_no, unsigned stream_expire) {
+    // send FEM stuff
+    unsigned n_fem = _fem.Size();
+    for (unsigned fem_ind = 0; fem_ind < n_fem; fem_ind++) {
+      // @VST: this is ok because there is only 1 crate
+      // TEMPORARY IMPLEMENTATION
+      unsigned fem = fem_ind % ChannelMap::n_fem_per_crate;
+      unsigned crate = fem_ind / ChannelMap::n_fem_per_crate;
+      redisAppendCommand(context, "SET stream/%i:%i:%s:crate:%i:fem:%i %u",
+        stream_no, now/stream_no, REDIS_NAME, crate, fem, Take(fem_ind)); 
+
+      if (stream_expire != 0) {
+        redisAppendCommand(context, "EXPIRE stream/%i:%i:%s:crate:%i:fem:%i %u",
+          stream_no, now/stream_no, REDIS_NAME, crate, fem, stream_expire); 
+      }
+    } 
+    return n_fem * ((stream_expire == 0) ? 1 : 2);
+  }
+
+protected:
+  Stream _fem;
+
+};
+
+// string literals for header metric inheritor classes
+extern char REDIS_NAME_EVENT_NO[];
+extern char REDIS_NAME_FRAME_NO[];
+extern char REDIS_NAME_TRIG_FRAME_NO[];
+extern char REDIS_NAME_BLOCKS[];
+
+class daqAnalysis::RedisEventNo: public daqAnalysis::HeaderMetric<StreamDataMax, REDIS_NAME_EVENT_NO> {
+  // inherit constructor
+  using daqAnalysis::HeaderMetric<StreamDataMax, REDIS_NAME_EVENT_NO>::HeaderMetric;
+
+  // implement calculate
+ inline unsigned Calculate(daqAnalysis::HeaderData &header) override
+   { return header.event_number; }
+};
+
+class daqAnalysis::RedisFrameNo: public daqAnalysis::HeaderMetric<StreamDataMax, REDIS_NAME_FRAME_NO> {
+  // inherit constructor
+  using daqAnalysis::HeaderMetric<StreamDataMax, REDIS_NAME_FRAME_NO>::HeaderMetric;
+
+  // implement calculate
+ inline unsigned Calculate(daqAnalysis::HeaderData &header) override
+   { return header.frame_number; }
+};
+
+class daqAnalysis::RedisTrigFrameNo: public daqAnalysis::HeaderMetric<StreamDataMax, REDIS_NAME_TRIG_FRAME_NO> {
+  // inherit constructor
+  using daqAnalysis::HeaderMetric<StreamDataMax, REDIS_NAME_TRIG_FRAME_NO>::HeaderMetric;
+
+  // implement calculate
+ inline unsigned Calculate(daqAnalysis::HeaderData &header) override
+   { return header.trig_frame_number; }
+};
+
+class daqAnalysis::RedisBlocks: public daqAnalysis::HeaderMetric<StreamDataSum, REDIS_NAME_BLOCKS> {
+  // inherit constructor
+  using daqAnalysis::HeaderMetric<StreamDataSum, REDIS_NAME_BLOCKS>::HeaderMetric;
+
+  // implement calculate
+ inline unsigned Calculate(daqAnalysis::HeaderData &header) override
+   { return 1; /* always 1 header per header */ }
 };
 
 #endif

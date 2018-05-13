@@ -41,11 +41,10 @@ Redis::Redis(const char *hostname, std::vector<unsigned> &stream_take, std::vect
   _occupancy(stream_take.size(), RedisOccupancy()),
 
   // and the header stuff
-  _frame_no(stream_take.size(), StreamDataMax(ChannelMap::NFEM())),
-  _trigframe_no(stream_take.size(), StreamDataMax(ChannelMap::NFEM())),
-  _event_no(stream_take.size(), StreamDataMax(ChannelMap::NFEM())),
-  //_checksum_diff(stream_take.size(), StreamDataMax(ChannelMap::NFEM())),
-  
+  _frame_no(stream_take.size(), RedisFrameNo()),
+  _trig_frame_no(stream_take.size(), RedisTrigFrameNo()),
+  _event_no(stream_take.size(), RedisEventNo()),
+  _blocks(stream_take.size(), RedisBlocks()),
 
   _fft_manager((waveform_input_size > 0) ? waveform_input_size: 0),
   _do_timing(timing)
@@ -90,60 +89,39 @@ void Redis::SendHeaderData(vector<HeaderData> *header_data) {
     for (size_t i = 0; i < _stream_take.size(); i++) {
       // index into the fem data cache
       unsigned fem_ind = header.Ind();
-      _event_no[i].Add(fem_ind, header.event_number);
-      _frame_no[i].Add(fem_ind, header.frame_number);
-      _trigframe_no[i].Add(fem_ind, header.trig_frame_number);
+      _event_no[i].Add(header, fem_ind);
+      _frame_no[i].Add(header, fem_ind);
+      _trig_frame_no[i].Add(header, fem_ind);
+      _blocks[i].Add(header, fem_ind);
     }
   }
-  for (size_t i = 0; i < _stream_take.size(); i++) {
-    // send headers to redis if need be
-    if (_stream_send[i]) {
-      SendHeader(i);
-    }
-  }
-}
-
-void Redis::SendHeader(unsigned stream_index) {
-  void *reply; 
   if (_do_timing) {
     _timing.StartTime();
   }
-  for (size_t fem_ind = 0; fem_ind < ChannelMap::NFEM(); fem_ind++) {
-    // @VST: This is ok because there is only 1 crate
-    // TEMPORARY IMPLEMENTATION
-    unsigned fem = fem_ind % ChannelMap::n_fem_per_crate;
-    unsigned crate = fem_ind / ChannelMap::n_fem_per_crate;
-
-    reply = redisCommand(context, "SET stream/%i:%i:frame_no:crate:%i:fem:%i %f", 
-      _stream_take[stream_index], _now/_stream_take[stream_index], fem, crate, _frame_no[stream_index].Take(fem_ind));
-    freeReplyObject(reply);
-    
-    reply = redisCommand(context, "EXPIRE stream/%i:%i:frame_no:crate:%i:fem:%i %i", 
-      _stream_take[stream_index], _now/_stream_take[stream_index], fem, crate, _stream_expire[stream_index]);
-    freeReplyObject(reply);
-    
-
-    reply = redisCommand(context, "SET stream/%i:%i:event_no:crate:%i:fem:%i %f", 
-      _stream_take[stream_index], _now/_stream_take[stream_index], fem, crate, _event_no[stream_index].Take(fem_ind));
-    freeReplyObject(reply);
-    
-    reply = redisCommand(context, "EXPIRE stream/%i:%i:event_no:crate:%i:fem:%i %i", 
-      _stream_take[stream_index], _now/_stream_take[stream_index], fem, crate, _stream_expire[stream_index]);
-    freeReplyObject(reply);
-    
-
-    reply = redisCommand(context, "SET stream/%i:%i:trigframe_no:crate:%i:fem:%i %f", 
-      _stream_take[stream_index], _now/_stream_take[stream_index], fem, crate, _trigframe_no[stream_index].Take(fem_ind));
-    freeReplyObject(reply);
-    
-    reply = redisCommand(context, "EXPIRE stream/%i:%i:trigframe_no:crate:%i:fem:%i %i", 
-      _stream_take[stream_index], _now/_stream_take[stream_index], fem, crate, _stream_expire[stream_index]);
-    freeReplyObject(reply);
-    
-    if (_do_timing) {
-      _timing.EndTime(&_timing.send_header_data);
+  unsigned n_commands = 0;
+  for (size_t i = 0; i < _stream_take.size(); i++) {
+    // send headers to redis if need be
+    if (_stream_send[i]) {
+      n_commands += _event_no[i].Send(context, _now, _stream_take[i], _stream_expire[i]);
+      n_commands += _frame_no[i].Send(context, _now, _stream_take[i], _stream_expire[i]);
+      n_commands += _trig_frame_no[i].Send(context, _now, _stream_take[i], _stream_expire[i]);
+      n_commands += _blocks[i].Send(context, _now, _stream_take[i], _stream_expire[i]);
     }
+
+    // the metric was taken iff it was sent to redis
+    bool taken = _stream_send[i];
+    _event_no[i].Update(taken);
+    _frame_no[i].Update(taken);
+    _trig_frame_no[i].Update(taken);
+    _blocks[i].Update(taken);
   }
+  // actually send the commands out of the pipeline
+  FinishPipeline(n_commands);
+  
+  if (_do_timing) {
+    _timing.EndTime(&_timing.send_header_data);
+  } 
+
 }
 
 inline size_t pushFFTDat(char *buffer, float re, float im) {

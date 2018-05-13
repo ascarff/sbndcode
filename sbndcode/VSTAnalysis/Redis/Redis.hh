@@ -103,9 +103,10 @@ protected:
   std::vector<daqAnalysis::RedisOccupancy> _occupancy;
 
   // header info
-  std::vector<daqAnalysis::StreamDataMax> _frame_no;
-  std::vector<daqAnalysis::StreamDataMax> _trigframe_no;
-  std::vector<daqAnalysis::StreamDataMax> _event_no;
+  std::vector<daqAnalysis::RedisFrameNo> _frame_no;
+  std::vector<daqAnalysis::RedisTrigFrameNo> _trig_frame_no;
+  std::vector<daqAnalysis::RedisEventNo> _event_no;
+  std::vector<daqAnalysis::RedisBlocks> _blocks;
 
   // FFT's for snapshots
   FFTManager _fft_manager;

@@ -106,11 +106,22 @@ void daqAnalysis::StreamDataVariableMean::Update(bool taken) {
 }
 
 // Implementing StreamDataMax
-void daqAnalysis::StreamDataMax::Add(unsigned index, float dat) {
+void daqAnalysis::StreamDataMax::Add(unsigned index, unsigned dat) {
   if (_data[index] < dat) _data[index] = dat;
 }
 
-float daqAnalysis::StreamDataMax::Take(unsigned index) {
+unsigned daqAnalysis::StreamDataMax::Take(unsigned index) {
+  float ret = _data[index];
+  _data[index] = 0;
+  return ret;
+}
+
+// Implementing StreamDataSum
+void daqAnalysis::StreamDataSum::Add(unsigned index, unsigned dat) {
+  _data[index] += dat;
+}
+
+unsigned daqAnalysis::StreamDataSum::Take(unsigned index) {
   float ret = _data[index];
   _data[index] = 0;
   return ret;
@@ -122,4 +133,11 @@ char REDIS_NAME_OCCUPANCY[] = "hit_occupancy";
 char REDIS_NAME_DNOISE[] = "next_channel_dnoise";
 char REDIS_NAME_BASLINE[] = "baseline";
 char REDIS_NAME_PULSE_HEIGHT[] = "pulse_height";
+
+// and of HeaderMetric
+char REDIS_NAME_EVENT_NO[] = "event_no";
+char REDIS_NAME_TRIG_FRAME_NO[] = "trig_frame_no";
+char REDIS_NAME_FRAME_NO[] = "frame_no";
+char REDIS_NAME_BLOCKS[] = "blocks";
+
 
