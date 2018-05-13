@@ -7,12 +7,13 @@
 
 #include "art/Framework/Core/EDAnalyzer.h"
 #include "art/Framework/Core/ModuleMacros.h"
-
 #include "canvas/Utilities/InputTag.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Handle.h"
 #include "art/Framework/Principal/Run.h" 
 #include "art/Framework/Principal/SubRun.h" 
+#include "fhiclcpp/ParameterSet.h"
+#include "messagefacility/MessageLogger/MessageLogger.h"
 
 #include "../ChannelData.hh"
 #include "../HeaderData.hh"
@@ -63,6 +64,9 @@ daqAnalysis::OnlineAnalysis::OnlineAnalysis(fhicl::ParameterSet const & p):
     _analysis._config.static_input_size : -1;
   // setup redis
   _redis_manager = new Redis(hostname, stream_take, stream_expire, snapshot_time, waveform_input_size, _analysis._config.timing);
+  // start message facility
+  //auto message_param = mf::MessageFacilityService::logConsole();
+  //mf::StartMessageFacility(mf::MessageFacilityService::SingleThread, message_param); 
 }
 
 void daqAnalysis::OnlineAnalysis::analyze(art::Event const & e) {

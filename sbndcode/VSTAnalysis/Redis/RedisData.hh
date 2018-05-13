@@ -4,9 +4,13 @@
 #include <vector>
 #include <ctime>
 #include <cmath>
+#include <iostream>
+#include <stdlib.h>
 
 #include <hiredis/hiredis.h>
 #include <hiredis/async.h>
+
+#include "messagefacility/MessageLogger/MessageLogger.h"
 
 #include "../ChannelData.hh"
 #include "../HeaderData.hh"
@@ -206,7 +210,7 @@ public:
 
     // persist through nan's
     if (std::isnan(dat)) {
-      fprintf(stderr, "Error: Metric %s is NAN on wire %i\n", REDIS_NAME, wire);
+      mf::LogError("NAN Metric") << "Metric " << REDIS_NAME << "is NAN on wire " << wire << std::endl;
       return;
     }
 

@@ -9,6 +9,8 @@ simple_plugin( DaqDecoder module
   lardataobj_RawData
   ${ART_UTILITIES}
   ${FHICLCPP}
+  ${MF_MESSAGELOGGER}
+  ${MF_UTILITIES}
   ${ART_FRAMEWORK_CORE}
   ${ROOT_BASIC_LIB_LIST}
 )
