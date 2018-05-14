@@ -4,8 +4,10 @@ physics:
   {
     daq:
     {
+      wait_time: 0
       module_type: DaqDecoder
       produce_header: true
+      validate_header: false
     }
   }
 
@@ -24,9 +26,10 @@ physics:
       use_planes: false
       verbose: false
       baseline_calc: 2
+      refine_baseline: true
 
       fft_per_channel: false
-      fill_waveforms: false
+      fill_waveforms: true
       timing: false
       sum_waveforms: false
       verbose: false
@@ -51,7 +54,8 @@ outputs:
 
 services:
 {
-  TFileService: { fileName: "out.root"}
+  TFileService: { fileName: "out_nevis.root"}
+  //message: @local::standard_debug
 } 
 
 source:
