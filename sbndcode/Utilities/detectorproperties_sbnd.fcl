@@ -14,5 +14,19 @@ sbnd_detproperties.TimeOffsetZ:       0.
 sbnd_detproperties.ReadOutWindowSize: 3000
 sbnd_detproperties.InheritNumberTimeSamples: false
 
+vst_detproperties:                   @local::standard_detproperties
+vst_detproperties.Temperature:       89.60  #(lariat value)
+vst_detproperties.Efield:           [0.4865,0.7,0.890]  #lariat values
+vst_detproperties.Electronlifetime:  3.0e3  # microseconds
+vst_detproperties.ElectronsToADC:    6.29778e-3 #most probably obsolete 
+vst_detproperties.NumberTimeSamples: 3000
+vst_detproperties.TimeOffsetU:       0.
+vst_detproperties.TimeOffsetV:       0.
+vst_detproperties.TimeOffsetZ:       0.
+vst_detproperties.ReadOutWindowSize: 3000
+vst_detproperties.InheritNumberTimeSamples: false
+
+
+
 
 END_PROLOG
