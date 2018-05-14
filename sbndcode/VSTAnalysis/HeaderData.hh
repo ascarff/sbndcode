@@ -26,6 +26,10 @@ class HeaderData {
   uint32_t checksum_word;
   uint32_t trig_frame_sample_word;
 
+  // timing info
+  uint32_t run_no;
+  uint32_t sub_run_no;
+
   // by default make words noticable
   // Nevis uses DEADBEEF as a default, so distinguish from
   // that use BEEFDEAD
@@ -43,20 +47,25 @@ class HeaderData {
     event_num_word(0xBEEFDEAD),
     frame_num_word(0xBEEFDEAD),
     checksum_word(0xBEEFDEAD),
-    trig_frame_sample_word(0xBEEFDEAD)
+    trig_frame_sample_word(0xBEEFDEAD),
+    run_no(0),
+    sub_run_no(0)
   {}
 
   // Returns the logical index of the header
   // @VST This is ok because crate will always be 0
   uint32_t Ind() const {
-    return crate * ChannelMap::n_fem_per_crate + slot;
+    //return crate * ChannelMap::n_fem_per_crate + slot;
     // for testing on Nevis data
-    //return 0;
+    return 0;
   }
 
   // print the data -- for debugging
   std::string Print() const {
     std::stringstream buffer;
+    buffer << "run id: " << run_no << std::endl;
+    buffer << "sub run id: " << sub_run_no << std::endl;
+
     buffer << "crate: " << ((unsigned)crate) << std::endl;
     buffer << "slot: " << ((unsigned)slot) << std::endl;
     buffer << "event no: " << event_number << std::endl;
