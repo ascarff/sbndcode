@@ -83,7 +83,7 @@ Analysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &param) {
   threshold = param.get<float>("threshold", 100);
 
   // determine method to get noise sample
-  // 0 == use first `n_baseline_samples`
+  // 0 == use first `n_noise_samples`
   // 1 == use peakfinding
   noise_range_sampling = param.get<unsigned>("noise_range_sampling",0);
 
@@ -135,7 +135,6 @@ Analysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &param) {
 }
 
 void Analysis::AnalyzeEvent(art::Event const & event) {
-  //if (_config.n_events >= 0 && _event_ind >= (unsigned)_config.n_events) return false;
 
   _event_ind ++;
 
@@ -201,7 +200,7 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
     }
   }
   // don't set last dnoise
-  _per_channel_data[ChannelMap::n_wire - 1] = 0;
+  _per_channel_data[ChannelMap::n_wire - 1].next_channel_dnoise = 0;
 
   if (_config.timing) {
     _timing.EndTime(&_timing.coherent_noise_calc);
@@ -261,167 +260,166 @@ void Analysis::ProcessHeader(const daqAnalysis::HeaderData &header) {
 
 void Analysis::ProcessChannel(const raw::RawDigit &digits) {
   auto channel = digits.Channel();
-  if (channel < ChannelMap::n_wire) {
-    // handle empty events
-    if (digits.NADC() == 0) {
-      // default constructor handles empty event
-      _per_channel_data[channel] = ChannelData(channel);
-      _noise_samples[channel] = NoiseSample();
-      return;
-    }
+  if (channel >= ChannelMap::n_wire) return;
+  // handle empty events
+  if (digits.NADC() == 0) {
+    // default constructor handles empty event
+    _per_channel_data[channel] = ChannelData(channel);
+    _noise_samples[channel] = NoiseSample();
+    return;
+  }
    
-    // if there are ADC's, the channel isn't empty
-    _per_channel_data[channel].empty = false;
+  // if there are ADC's, the channel isn't empty
+  _per_channel_data[channel].empty = false;
  
-    // re-allocate FFT if necessary
-    if (_fft_manager.InputSize() != digits.NADC()) {
-      _fft_manager.Set(digits.NADC());
-    }
+  // re-allocate FFT if necessary
+  if (_fft_manager.InputSize() != digits.NADC()) {
+    _fft_manager.Set(digits.NADC());
+  }
    
-    _per_channel_data[channel].channel_no = channel;
+  _per_channel_data[channel].channel_no = channel;
 
-    int16_t max = -INT16_MAX;
-    int16_t min = INT16_MAX;
-    auto adc_vec = digits.ADCs();
-    if (_config.timing) {
-      _timing.StartTime();
-    }
-    auto n_adc = digits.NADC();
-    if (_config.fill_waveforms || _config.fft_per_channel) {
-      for (unsigned i = 0; i < n_adc; i ++) {
-        int16_t adc = adc_vec[i];
+  int16_t max = -INT16_MAX;
+  int16_t min = INT16_MAX;
+  auto adc_vec = digits.ADCs();
+  if (_config.timing) {
+    _timing.StartTime();
+  }
+  auto n_adc = digits.NADC();
+  if (_config.fill_waveforms || _config.fft_per_channel) {
+    for (unsigned i = 0; i < n_adc; i ++) {
+      int16_t adc = adc_vec[i];
     
-        // fill up waveform
-        if (_config.fill_waveforms) {
-          if (adc > max) max = adc;
-          if (adc < min) min = adc;
+      // fill up waveform
+       if (_config.fill_waveforms) {
+        if (adc > max) max = adc;
+        if (adc < min) min = adc;
 
-          _per_channel_data[channel].waveform.push_back(adc);
-        }
+        _per_channel_data[channel].waveform.push_back(adc);
+      }
 
-        if (_config.fft_per_channel) {
-          // fill up fftw array
-          double *input = _fft_manager.InputAt(i);
-          *input = (double) adc;
-        }
+      if (_config.fft_per_channel) {
+        // fill up fftw array
+        double *input = _fft_manager.InputAt(i);
+        *input = (double) adc;
       }
     }
-
-    if (_config.timing) {
-      _timing.EndTime(&_timing.fill_waveform);
-    }
-    if (_config.timing) {
-      _timing.StartTime();
-    }
-    if (_config.baseline_calc == 0) {
-      _per_channel_data[channel].baseline = 0;
-    }
-    else if (_config.baseline_calc == 1) {
-      _per_channel_data[channel].baseline = digits.GetPedestal();
-    }
-    else if (_config.baseline_calc == 2) {
-      _per_channel_data[channel].baseline = Mode(digits.ADCs(), _config.n_mode_skip);
-    }
-    if (_config.timing) {
-      _timing.EndTime(&_timing.baseline_calc);
-    }
-
-    _per_channel_data[channel].max = max;
-    _per_channel_data[channel].min = min;
-      
-    if (_config.timing) {
-      _timing.StartTime();
-    }
-    // calculate FFTs
-    if (_config.fft_per_channel) {
-      _fft_manager.Execute();
-      int adc_fft_size = _fft_manager.OutputSize();
-      for (int i = 0; i < adc_fft_size; i++) {
-        _per_channel_data[channel].fft_real.push_back(_fft_manager.ReOutputAt(i));
-        _per_channel_data[channel].fft_imag.push_back(_fft_manager.ImOutputAt(i));
-      } 
-    }
-    if (_config.timing) {
-      _timing.EndTime(&_timing.execute_fft);
-    }
-
-    if (_config.timing) {
-      _timing.StartTime();
-    }
-    // get thresholds 
-    float threshold = _config.threshold;
-    if (_config.threshold_calc == 0) {
-      threshold = _config.threshold;
-    }
-    else if (_config.threshold_calc == 1) {
-      auto thresholds = Threshold(adc_vec, _per_channel_data[channel].baseline, _config.threshold_sigma, _config.verbose);
-      threshold = thresholds.Val();
-    }
-    else if (_config.threshold_calc == 2) {
-      NoiseSample temp({{0, (unsigned)digits.NADC()-1}}, _per_channel_data[channel].baseline);
-      float raw_rms = temp.RMS(adc_vec);
-      threshold = raw_rms * _config.threshold_sigma;
-    }
-    else if (_config.threshold_calc == 3) {
-      // if using plane data, make collection planes reach a higher threshold
-      float n_sigma = _config.threshold_sigma;
-      if (_config.use_planes && ChannelMap::PlaneType(channel) == 2) n_sigma = n_sigma * 1.5;
-
-      threshold = _thresholds[channel].Threshold(adc_vec, _per_channel_data[channel].baseline, n_sigma);
-    }
-    if (_config.timing) {
-      _timing.EndTime(&_timing.calc_threshold);
-    }
-
-    _per_channel_data[channel].threshold = threshold;
-
-    if (_config.timing) {
-      _timing.StartTime();
-    }
-    // get Peaks
-    unsigned peak_plane = (_config.use_planes) ? ChannelMap::PlaneType(channel) : 0;
-    PeakFinder peaks(adc_vec, _per_channel_data[channel].baseline, threshold, 
-        _config.n_smoothing_samples, _config.n_above_threshold, peak_plane);
-    _per_channel_data[channel].peaks.assign(peaks.Peaks()->begin(), peaks.Peaks()->end());
-
-    if (_config.timing) {
-      _timing.EndTime(&_timing.find_peaks);
-    }
-
-    if (_config.timing) {
-      _timing.StartTime();
-    }
-    // get noise samples
-    if (_config.noise_range_sampling == 0) {
-      // use first n_noise_samples
-      _noise_samples[channel] = NoiseSample( { { 0, _config.n_noise_samples -1 } }, _per_channel_data[channel].baseline);
-    }
-    else {
-      // or use peak finding
-      _noise_samples[channel] = NoiseSample(_per_channel_data[channel].peaks, _per_channel_data[channel].baseline, digits.NADC()); 
-    }
-
-    // Refine baseline values by taking the mean over the background range
-    if (_config.refine_baseline) {
-      _noise_samples[channel].ResetBaseline(adc_vec);
-      _per_channel_data[channel].baseline = _noise_samples[channel].Baseline(); 
-    }
-
-    _per_channel_data[channel].rms = _noise_samples[channel].RMS(adc_vec);
-    _per_channel_data[channel].noise_ranges = *_noise_samples[channel].Ranges();
-    if (_config.timing) {
-      _timing.EndTime(&_timing.calc_noise);
-    }
-
-    // register rms if using running threshold
-    if (_config.threshold_calc == 3) {
-      _thresholds[channel].AddRMS(_per_channel_data[channel].rms);
-    }
-
-    // calculate derived quantities
-    _per_channel_data[channel].occupancy = _per_channel_data[channel].Occupancy();
-    _per_channel_data[channel].mean_peak_height = _per_channel_data[channel].meanPeakHeight();
   }
+
+  if (_config.timing) {
+    _timing.EndTime(&_timing.fill_waveform);
+  }
+  if (_config.timing) {
+    _timing.StartTime();
+  }
+  if (_config.baseline_calc == 0) {
+    _per_channel_data[channel].baseline = 0;
+  }
+  else if (_config.baseline_calc == 1) {
+    _per_channel_data[channel].baseline = digits.GetPedestal();
+  }
+  else if (_config.baseline_calc == 2) {
+    _per_channel_data[channel].baseline = Mode(digits.ADCs(), _config.n_mode_skip);
+  }
+  if (_config.timing) {
+    _timing.EndTime(&_timing.baseline_calc);
+  }
+
+  _per_channel_data[channel].max = max;
+  _per_channel_data[channel].min = min;
+  
+  if (_config.timing) {
+    _timing.StartTime();
+  }
+  // calculate FFTs
+  if (_config.fft_per_channel) {
+    _fft_manager.Execute();
+    int adc_fft_size = _fft_manager.OutputSize();
+    for (int i = 0; i < adc_fft_size; i++) {
+      _per_channel_data[channel].fft_real.push_back(_fft_manager.ReOutputAt(i));
+      _per_channel_data[channel].fft_imag.push_back(_fft_manager.ImOutputAt(i));
+    } 
+  }
+  if (_config.timing) {
+    _timing.EndTime(&_timing.execute_fft);
+  }
+
+  if (_config.timing) {
+    _timing.StartTime();
+  }
+  // get thresholds 
+  float threshold = _config.threshold;
+  if (_config.threshold_calc == 0) {
+    threshold = _config.threshold;
+  }
+  else if (_config.threshold_calc == 1) {
+    auto thresholds = Threshold(adc_vec, _per_channel_data[channel].baseline, _config.threshold_sigma, _config.verbose);
+    threshold = thresholds.Val();
+  }
+  else if (_config.threshold_calc == 2) {
+    NoiseSample temp({{0, (unsigned)digits.NADC()-1}}, _per_channel_data[channel].baseline);
+    float raw_rms = temp.RMS(adc_vec);
+    threshold = raw_rms * _config.threshold_sigma;
+  }
+  else if (_config.threshold_calc == 3) {
+    // if using plane data, make collection planes reach a higher threshold
+    float n_sigma = _config.threshold_sigma;
+    if (_config.use_planes && ChannelMap::PlaneType(channel) == 2) n_sigma = n_sigma * 1.5;
+    
+    threshold = _thresholds[channel].Threshold(adc_vec, _per_channel_data[channel].baseline, n_sigma);
+  }
+  if (_config.timing) {
+    _timing.EndTime(&_timing.calc_threshold);
+  }
+
+  _per_channel_data[channel].threshold = threshold;
+
+  if (_config.timing) {
+    _timing.StartTime();
+  }
+  // get Peaks
+  unsigned peak_plane = (_config.use_planes) ? ChannelMap::PlaneType(channel) : 0;
+  PeakFinder peaks(adc_vec, _per_channel_data[channel].baseline, threshold, 
+      _config.n_smoothing_samples, _config.n_above_threshold, peak_plane);
+  _per_channel_data[channel].peaks.assign(peaks.Peaks()->begin(), peaks.Peaks()->end());
+
+  if (_config.timing) {
+    _timing.EndTime(&_timing.find_peaks);
+  }
+
+  if (_config.timing) {
+    _timing.StartTime();
+  }
+  // get noise samples
+  if (_config.noise_range_sampling == 0) {
+    // use first n_noise_samples
+    _noise_samples[channel] = NoiseSample( { { 0, _config.n_noise_samples -1 } }, _per_channel_data[channel].baseline);
+  }
+  else {
+    // or use peak finding
+    _noise_samples[channel] = NoiseSample(_per_channel_data[channel].peaks, _per_channel_data[channel].baseline, digits.NADC()); 
+  }
+
+  // Refine baseline values by taking the mean over the background range
+  if (_config.refine_baseline) {
+    _noise_samples[channel].ResetBaseline(adc_vec);
+    _per_channel_data[channel].baseline = _noise_samples[channel].Baseline(); 
+  }
+
+  _per_channel_data[channel].rms = _noise_samples[channel].RMS(adc_vec);
+  _per_channel_data[channel].noise_ranges = *_noise_samples[channel].Ranges();
+  if (_config.timing) {
+    _timing.EndTime(&_timing.calc_noise);
+  }
+
+  // register rms if using running threshold
+  if (_config.threshold_calc == 3) {
+    _thresholds[channel].AddRMS(_per_channel_data[channel].rms);
+  }
+
+  // calculate derived quantities
+  _per_channel_data[channel].occupancy = _per_channel_data[channel].Occupancy();
+  _per_channel_data[channel].mean_peak_height = _per_channel_data[channel].meanPeakHeight();
 }
 
 bool Analysis::ReadyToProcess() {
