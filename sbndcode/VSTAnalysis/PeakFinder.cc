@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 #include <sstream> 
+#include <cmath>
 
 #include "TH1D.h"
 #include "TF1.h"
@@ -149,8 +150,8 @@ PeakFinder::Peak PeakFinder::FinishPeak(PeakFinder::Peak peak, std::vector<int16
   peak.start_loose = peak.start_tight;
   unsigned n_at_baseline = 0;
   while (peak.start_loose > 0) {
-    if ((up_peak && (*waveform)[peak.start_loose] < baseline) ||
-       (!up_peak && (*waveform)[peak.start_loose] > baseline)) {
+    if ((up_peak && (*waveform)[peak.start_loose] <= baseline) ||
+       (!up_peak && (*waveform)[peak.start_loose] >= baseline)) {
 
       n_at_baseline ++;
     }
@@ -168,8 +169,8 @@ PeakFinder::Peak PeakFinder::FinishPeak(PeakFinder::Peak peak, std::vector<int16
   peak.end_loose = peak.end_tight;
   n_at_baseline = 0;
   while (peak.end_loose < waveform->size()-1) {
-    if ((up_peak && (*waveform)[peak.end_loose] < baseline) ||
-       (!up_peak && (*waveform)[peak.end_loose] > baseline)) {
+    if ((up_peak && (*waveform)[peak.end_loose] <= baseline) ||
+       (!up_peak && (*waveform)[peak.end_loose] >= baseline)) {
       n_at_baseline ++;
     }
     if (n_at_baseline > 2) {
@@ -282,6 +283,9 @@ float RunningThreshold::Threshold(std::vector<int16_t> &waveform, int16_t baseli
 
 // add to running average
 void RunningThreshold::AddRMS(float rms) {
+  // don't save nan values
+  if (std::isnan(rms)) return;
+
   if (_n_past_rms < 10) _n_past_rms ++;
   _past_rms[_rms_ind] = rms;
   _rms_ind = (_rms_ind + 1 ) % _past_rms.size();

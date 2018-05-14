@@ -9,14 +9,17 @@ physics:
       threshold_calc: 3
       threshold_sigma: 5
       noise_range_sampling: 1
-      n_smoothing_samples: 9
+      n_smoothing_samples: 1
       use_planes: true
       verbose: false
       baseline_calc: 2
+      refine_baseline: false
+      n_mode_skip: 3
 
       fft_per_channel: false
       timing: false
       sum_waveforms: false
+      fill_waveforms: true
     }
   }
 
@@ -26,7 +29,7 @@ physics:
 
 services:
 {
-  TFileService: { fileName: "out.root"}
+  TFileService: { fileName: "out_raw_baseline.root"}
 } 
 
 source:
