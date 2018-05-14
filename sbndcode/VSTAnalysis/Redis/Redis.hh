@@ -57,7 +57,30 @@ public:
 
 class daqAnalysis::Redis {
 public:
-  Redis(const char *hostname, std::vector<unsigned> &stream_take, std::vector<unsigned> &stream_expire, int snapshot_time = -1, int static_waveform_size = -1, bool timing=false);
+  class Config {
+    public:
+    const char *hostname;
+    std::vector<unsigned> stream_take;
+    std::vector<unsigned> stream_expire;
+    bool sub_run_stream;
+    unsigned sub_run_stream_expire;
+    unsigned first_subrun;
+    int snapshot_time;
+    int waveform_input_size;
+    bool timing;
+    Config(): 
+      hostname("127.0.0.1"),
+      sub_run_stream(false),
+      sub_run_stream_expire(0),
+      first_subrun(0),
+      snapshot_time(-1),
+      waveform_input_size(-1),
+      timing(false) 
+    {}
+    unsigned NStreams() { return stream_take.size() + sub_run_stream; }
+  };
+
+  explicit Redis(Config &config);
   ~Redis();
   // send info associated w/ ChannelData
   void SendChannelData(std::vector<daqAnalysis::ChannelData> *per_channel_data, std::vector<daqAnalysis::NoiseSample> *noise_samples, 
@@ -65,9 +88,10 @@ public:
   // send info associated w/ HeaderData
   void SendHeaderData(std::vector<daqAnalysis::HeaderData> *header_data);
   // must be called before calling Send functions
-  void StartSend();
+  void StartSend(unsigned sub_run=0);
   // must be called after calling Send functions
   void FinishSend();
+
 
 protected:
   // per-header (each associated w/ an fem) data to Redis
@@ -92,6 +116,16 @@ protected:
   std::vector<std::time_t> _stream_last;
   // whether, this time around, the i-th stream will send to redis. Calculated in StartSend()
   std::vector<bool> _stream_send;
+  // whether there is a sub run stream
+  bool _sub_run_stream;
+  // expire time on sub run stream
+  unsigned _sub_run_stream_expire;
+  // total number of streams
+  unsigned _n_streams;
+  // current subrun analyzed
+  unsigned _this_subrun;
+  // last subrun analyzed
+  unsigned _last_subrun;
   // last time a snapshot was sent
   std::time_t _last_snapshot;
 

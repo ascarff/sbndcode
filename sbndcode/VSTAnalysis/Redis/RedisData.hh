@@ -240,16 +240,16 @@ public:
   }
 
   // send stuff to Redis
-  unsigned Send(redisContext *context, std::time_t now, unsigned stream_no, unsigned stream_expire) {
+  unsigned Send(redisContext *context, unsigned index, const char *stream_name, unsigned stream_expire) {
     // send all the wire stuff
     unsigned n_wires = _wire_data.Size();
     for (unsigned wire = 0; wire < n_wires; wire++) {
-      redisAppendCommand(context, "SET stream/%i:%i:%s:wire:%i %f",
-        stream_no, now/stream_no, REDIS_NAME,wire, TakeWire(wire)); 
+      redisAppendCommand(context, "SET stream/%s:%i:%s:wire:%i %f",
+        stream_name, index, REDIS_NAME,wire, TakeWire(wire)); 
 
       if (stream_expire != 0) {
-        redisAppendCommand(context, "EXPIRE stream/%i:%i:%s:wire:%i %i",
-          stream_no, now/stream_no, REDIS_NAME,wire, stream_expire); 
+        redisAppendCommand(context, "EXPIRE stream/%s:%i:%s:wire:%i %i",
+          stream_name, index, REDIS_NAME,wire, stream_expire); 
       }
     } 
     // and the fem stuff
@@ -259,23 +259,23 @@ public:
       // TEMPORARY IMPLEMENTATION
       unsigned fem = fem_ind % ChannelMap::n_fem_per_crate;
       unsigned crate = fem_ind / ChannelMap::n_fem_per_crate;
-      redisAppendCommand(context, "SET stream/%i:%i:%s:crate:%i:fem:%i %f",
-        stream_no, now/stream_no, REDIS_NAME, crate, fem, TakeFEM(fem_ind)); 
+      redisAppendCommand(context, "SET stream/%s:%i:%s:crate:%i:fem:%i %u",
+        stream_name, index, REDIS_NAME, crate, fem, TakeFEM(fem_ind)); 
 
       if (stream_expire != 0) {
-        redisAppendCommand(context, "EXPIRE stream/%i:%i:%s:crate:%i:fem:%i %i",
-          stream_no, now/stream_no, REDIS_NAME, crate, fem, stream_expire); 
+        redisAppendCommand(context, "EXPIRE stream/%s:%i:%s:crate:%i:fem:%i %u",
+         stream_name, index, REDIS_NAME, crate, fem, stream_expire); 
       }
     } 
     // and the crate stuff
     unsigned n_crate = _crate_data.Size();
     for (unsigned crate = 0; crate < n_crate; crate++) {
-      redisAppendCommand(context, "SET stream/%i:%i:%s:crate:%i %f",
-         stream_no, now/stream_no, REDIS_NAME, crate, TakeCrate(crate));
+      redisAppendCommand(context, "SET stream/%s:%i:%s:crate:%i %f",
+         stream_name, index, REDIS_NAME, crate, TakeCrate(crate));
 
       if (stream_expire != 0) {
-        redisAppendCommand(context, "EXPIRE stream/%i:%i:%s:crate:%i %i",
-           stream_no, now/stream_no, REDIS_NAME, crate, stream_expire);
+        redisAppendCommand(context, "EXPIRE stream/%s:%i:%s:crate:%i %i",
+           stream_name, index, REDIS_NAME, crate, stream_expire);
       }
     }
     // return number of commands sent
@@ -376,7 +376,7 @@ public:
   }
 
   // send stuff to Redis
-  unsigned Send(redisContext *context, std::time_t now, unsigned stream_no, unsigned stream_expire) {
+  unsigned Send(redisContext *context, unsigned index, const char *stream_name, unsigned stream_expire) {
     // send FEM stuff
     unsigned n_fem = _fem.Size();
     for (unsigned fem_ind = 0; fem_ind < n_fem; fem_ind++) {
@@ -384,12 +384,12 @@ public:
       // TEMPORARY IMPLEMENTATION
       unsigned fem = fem_ind % ChannelMap::n_fem_per_crate;
       unsigned crate = fem_ind / ChannelMap::n_fem_per_crate;
-      redisAppendCommand(context, "SET stream/%i:%i:%s:crate:%i:fem:%i %u",
-        stream_no, now/stream_no, REDIS_NAME, crate, fem, Take(fem_ind)); 
+      redisAppendCommand(context, "SET stream/%s:%i:%s:crate:%i:fem:%i %u",
+        stream_name, index, REDIS_NAME, crate, fem, Take(fem_ind)); 
 
       if (stream_expire != 0) {
-        redisAppendCommand(context, "EXPIRE stream/%i:%i:%s:crate:%i:fem:%i %u",
-          stream_no, now/stream_no, REDIS_NAME, crate, fem, stream_expire); 
+        redisAppendCommand(context, "EXPIRE stream/%s:%i:%s:crate:%i:fem:%i %u",
+         stream_name, index, REDIS_NAME, crate, fem, stream_expire); 
       }
     } 
     return n_fem * ((stream_expire == 0) ? 1 : 2);

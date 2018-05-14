@@ -5,6 +5,7 @@
 #include <numeric>
 #include <chrono>
 #include <iostream>
+#include <string> 
 
 #include <hiredis/hiredis.h>
 #include <hiredis/async.h>
@@ -25,37 +26,42 @@
 using namespace daqAnalysis;
 using namespace std;
 
-Redis::Redis(const char *hostname, std::vector<unsigned> &stream_take, std::vector<unsigned> &stream_expire, int snapshot_time, int waveform_input_size, bool timing): 
-  _snapshot_time(snapshot_time),
-  _stream_take(stream_take),
-  _stream_expire(stream_expire),
-  _stream_last(stream_take.size(), 0),
-  _stream_send(stream_take.size(), false),
+Redis::Redis(Redis::Config &config):
+  context(redisConnect(config.hostname, 6379)),
+  _now(std::time(nullptr)),
+  _start(std::time(nullptr)),
+  _snapshot_time(config.snapshot_time),
+  _stream_take(config.stream_take),
+  _stream_expire(config.stream_expire),
+  _stream_last(config.NStreams(), _now),
+  _stream_send(config.NStreams(), false),
+  _sub_run_stream(config.sub_run_stream),
+  _sub_run_stream_expire(config.sub_run_stream_expire),
+  _n_streams(config.NStreams()),
+  _this_subrun(config.first_subrun),
+  _last_subrun(config.first_subrun),
   _last_snapshot(0),
 
   // allocate and zero-initalize all of the metrics
-  _rms(stream_take.size(), RedisRMS()),
-  _baseline(stream_take.size(), RedisBaseline()),
-  _dnoise(stream_take.size(), RedisDNoise()),
-  _pulse_height(stream_take.size(), RedisPulseHeight()),
-  _occupancy(stream_take.size(), RedisOccupancy()),
+  _rms(config.NStreams(), RedisRMS()),
+  _baseline(config.NStreams(), RedisBaseline()),
+  _dnoise(config.NStreams(), RedisDNoise()),
+  _pulse_height(config.NStreams(), RedisPulseHeight()),
+  _occupancy(config.NStreams(), RedisOccupancy()),
 
   // and the header stuff
-  _frame_no(stream_take.size(), RedisFrameNo()),
-  _trig_frame_no(stream_take.size(), RedisTrigFrameNo()),
-  _event_no(stream_take.size(), RedisEventNo()),
-  _blocks(stream_take.size(), RedisBlocks()),
+  _frame_no(config.NStreams(), RedisFrameNo()),
+  _trig_frame_no(config.NStreams(), RedisTrigFrameNo()),
+  _event_no(config.NStreams(), RedisEventNo()),
+  _blocks(config.NStreams(), RedisBlocks()),
 
-  _fft_manager((waveform_input_size > 0) ? waveform_input_size: 0),
-  _do_timing(timing)
+  _fft_manager((config.waveform_input_size > 0) ? config.waveform_input_size: 0),
+  _do_timing(config.timing)
 {
-  //context = redisAsyncConnect("127.0.0.1", 6379);
-  context = redisConnect(hostname, 6379);
   if (context != NULL && context->err) {
     std::cerr << "Redis error: " <<  context->errstr << std::endl;
     exit(1);
   }
-  _start = 0;
 }
 
 Redis::~Redis() {
@@ -63,30 +69,43 @@ Redis::~Redis() {
   redisFree(context);
 }
 
-void Redis::StartSend() {
+void Redis::StartSend(unsigned sub_run) {
   _now = std::time(nullptr);
-  // first time startup
-  if (_start == 0) _start = _now;
 
-  for (size_t i = 0; i < _stream_send.size(); i++) {
+  for (size_t i = 0; i < _stream_take.size(); i++) {
     // calculate whether each stream is sending to redis on this event
     _stream_send[i] = _stream_last[i] != _now && (_now - _start) % _stream_take[i] == 0;
     if (_stream_send[i]) {
       _stream_last[i] = _now;
     }
   }
+  // special-case the sub-run stream
+  // this one is sent if we're on a new sub-run
+  if (_sub_run_stream) {
+    unsigned sub_run_ind = _n_streams - 1;  
+    _stream_send[sub_run_ind] = _stream_last[sub_run_ind] != sub_run; 
+    if (_stream_send[sub_run_ind]) {
+      _stream_last[sub_run_ind] = sub_run;
+    }
+  }
+  _this_subrun = sub_run;
 }
 
 void Redis::FinishSend() {
   if (_do_timing) {
     _timing.Print();
   }
+  // if a new subrun, set the value in redis
+  if (_this_subrun != _last_subrun) {
+    redisCommand(context, "SET last_subrun_no %u", _last_subrun);
+  }
+  _last_subrun = _this_subrun;
 }
 
 void Redis::SendHeaderData(vector<HeaderData> *header_data) {
   for (auto &header: *header_data) {
     // update header info in each stream
-    for (size_t i = 0; i < _stream_take.size(); i++) {
+    for (size_t i = 0; i < _n_streams; i++) {
       // index into the fem data cache
       unsigned fem_ind = header.Ind();
       _event_no[i].Add(header, fem_ind);
@@ -102,10 +121,12 @@ void Redis::SendHeaderData(vector<HeaderData> *header_data) {
   for (size_t i = 0; i < _stream_take.size(); i++) {
     // send headers to redis if need be
     if (_stream_send[i]) {
-      n_commands += _event_no[i].Send(context, _now, _stream_take[i], _stream_expire[i]);
-      n_commands += _frame_no[i].Send(context, _now, _stream_take[i], _stream_expire[i]);
-      n_commands += _trig_frame_no[i].Send(context, _now, _stream_take[i], _stream_expire[i]);
-      n_commands += _blocks[i].Send(context, _now, _stream_take[i], _stream_expire[i]);
+      unsigned index = _now / _stream_take[i];
+      const char *stream_name = std::to_string(_stream_take[i]).c_str(); 
+      n_commands += _event_no[i].Send(context, index, stream_name, _stream_expire[i]);
+      n_commands += _frame_no[i].Send(context, index, stream_name, _stream_expire[i]);
+      n_commands += _trig_frame_no[i].Send(context, index, stream_name, _stream_expire[i]);
+      n_commands += _blocks[i].Send(context, index, stream_name, _stream_expire[i]);
     }
 
     // the metric was taken iff it was sent to redis
@@ -115,6 +136,26 @@ void Redis::SendHeaderData(vector<HeaderData> *header_data) {
     _trig_frame_no[i].Update(taken);
     _blocks[i].Update(taken);
   }
+  // special case the sub run stream
+  if (_sub_run_stream) {
+    unsigned sub_run_ind = _n_streams - 1;  
+    // send headers to redis if need be
+    if (_stream_send[sub_run_ind]) {
+      n_commands += _event_no[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
+      n_commands += _frame_no[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
+      n_commands += _trig_frame_no[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
+      n_commands += _blocks[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
+    }
+
+    // the metric was taken iff it was sent to redis
+    bool taken = _stream_send[sub_run_ind];
+    _event_no[sub_run_ind].Update(taken);
+    _frame_no[sub_run_ind].Update(taken);
+    _trig_frame_no[sub_run_ind].Update(taken);
+    _blocks[sub_run_ind].Update(taken);
+    
+  }
+  
   // actually send the commands out of the pipeline
   FinishPipeline(n_commands);
   
@@ -372,7 +413,7 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
         }
  
         // fill metrics for each stream
-        for (size_t i = 0; i < _stream_take.size(); i++) {
+        for (size_t i = 0; i < _n_streams; i++) {
           _rms[i].Add((*per_channel_data)[wire], crate, fem_ind, wire);
           _baseline[i].Add((*per_channel_data)[wire], crate, fem_ind, wire);
           _dnoise[i].Add((*per_channel_data)[wire], crate, fem_ind, wire);
@@ -404,12 +445,14 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
       if (_do_timing) {
         _timing.StartTime();
       }
+      unsigned index = _now / _stream_take[i];
+      const char *stream_name = std::to_string(_stream_take[i]).c_str(); 
       // metrics control the sending of everything else
-      n_commands += _rms[i].Send(context, _now, _stream_take[i], _stream_expire[i]);
-      n_commands += _baseline[i].Send(context, _now, _stream_take[i], _stream_expire[i]);
-      n_commands += _dnoise[i].Send(context, _now, _stream_take[i], _stream_expire[i]);
-      n_commands += _occupancy[i].Send(context, _now, _stream_take[i], _stream_expire[i]);
-      n_commands += _pulse_height[i].Send(context, _now, _stream_take[i], _stream_expire[i]);
+      n_commands += _rms[i].Send(context, index, stream_name, _stream_expire[i]);
+      n_commands += _baseline[i].Send(context, index, stream_name, _stream_expire[i]);
+      n_commands += _dnoise[i].Send(context, index, stream_name, _stream_expire[i]);
+      n_commands += _occupancy[i].Send(context, index, stream_name, _stream_expire[i]);
+      n_commands += _pulse_height[i].Send(context, index, stream_name, _stream_expire[i]);
       if (_do_timing) {
         _timing.EndTime(&_timing.send_metrics);
       }
@@ -423,6 +466,35 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
     _dnoise[i].Update(taken);
     _pulse_height[i].Update(taken);
     _occupancy[i].Update(taken);
+  }
+  // special case the sub run stream
+  if (_sub_run_stream) {
+    unsigned sub_run_ind = _n_streams - 1;  
+    // Send stuff to redis if it's time
+    if (_stream_send[sub_run_ind]) {
+      if (_do_timing) {
+        _timing.StartTime();
+      }
+      // metrics control the sending of everything else
+      n_commands += _rms[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
+      n_commands += _baseline[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
+      n_commands += _dnoise[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
+      n_commands += _occupancy[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
+      n_commands += _pulse_height[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
+      if (_do_timing) {
+        _timing.EndTime(&_timing.send_metrics);
+      }
+    }
+
+    // the metric was taken iff it was sent to redis
+    bool taken = _stream_send[sub_run_ind];
+    // update all of the metrics
+    _rms[sub_run_ind].Update(taken);
+    _baseline[sub_run_ind].Update(taken);
+    _dnoise[sub_run_ind].Update(taken);
+    _pulse_height[sub_run_ind].Update(taken);
+    _occupancy[sub_run_ind].Update(taken);
+
   }
 
   // actually send the commands out of the pipeline
