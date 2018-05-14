@@ -175,43 +175,52 @@ void daq::DaqDecoder::process_fragment(const artdaq::Fragment &frag,
 }
 void daq::DaqDecoder::validate_header(const daqAnalysis::HeaderData &header) {
   bool printed = false;
-  unsigned n_fem_per_crate = daqAnalysis::ChannelMap::n_fem_per_crate;
-  unsigned n_crate = daqAnalysis::ChannelMap::n_crate;
-  unsigned n_fem = daqAnalysis::ChannelMap::NFEM();
   if (_config.calc_checksum && header.checksum != header.computed_checksum) {
+   unsigned checksum = header.checksum;
+   unsigned computed_checksum = header.computed_checksum;
     mf::LogError("Bad Header") << std::hex << "computed checksum " << 
-      header.checksum << " does not match firmware checksum " << header.computed_checksum ;
+      checksum << " does not match firmware checksum " << computed_checksum ;
     printed = true;
   }
   if (header.slot >= daqAnalysis::ChannelMap::n_fem_per_crate) {
-    mf::LogError("Bad Header") <<  "Slot index of FEM (" << header.slot << 
+    unsigned n_fem_per_crate = daqAnalysis::ChannelMap::n_fem_per_crate;
+    unsigned slot = header.slot;
+    mf::LogError("Bad Header") <<  "Slot index of FEM (" << slot << 
       ") mismatch with number of FEM slots per crate (" << n_fem_per_crate << ")" ;
     printed = true;
   }
   if (header.crate >= daqAnalysis::ChannelMap::n_crate) {
-    mf::LogError("Bad Header") << "Crate id (" << header.crate << 
+    unsigned crate = header.crate;
+    unsigned n_crate = daqAnalysis::ChannelMap::n_crate;
+    mf::LogError("Bad Header") << "Crate id (" << crate << 
       ") too large for total number of crates (" << n_crate << ")" ;
     printed = true;
   }
   if (header.Ind() >= daqAnalysis::ChannelMap::NFEM()) {
-    mf::LogError("Bad Header") << "Global index of FEM (" << header.Ind() << 
+    unsigned ind = header.Ind();
+    unsigned n_fem = daqAnalysis::ChannelMap::NFEM();
+    mf::LogError("Bad Header") << "Global index of FEM (" << ind << 
       ") too large for total number of FEM's (" << n_fem << ")" ;
     printed = true;
   }
   if (header.adc_word_count == 0) {
     unsigned fem_ind = header.Ind();
-    mf::LogWarning("Bad Header") << "ADC Word Count in crate " << header.crate << ", slot " << 
-      header.slot << ", fem ID " << fem_ind << "is 0" ;
+    unsigned crate = header.crate;
+    unsigned slot = header.slot;
+    mf::LogWarning("Bad Header") << "ADC Word Count in crate " << crate << ", slot " << 
+      slot << ", fem ID " << fem_ind << "is 0" ;
     printed = true;
   }
   if (header.event_number < _last_event_number) {
+    unsigned event_number = header.event_number;
     mf::LogError("Bad Header") << "Non incrementing event numbers. Last event number: " << 
-      _last_event_number << ". This event number: " << header.event_number ;
+      _last_event_number << ". This event number: " << event_number ;
     printed = true;
   }
   if (header.trig_frame_number < _last_trig_frame_number) {
+    unsigned trig_frame_number = header.trig_frame_number;
     mf::LogError("Bad Header") << "Non incrementing trig frame numbers. Last trig frame: " << 
-      _last_trig_frame_number << " This trig frame: " << header.trig_frame_number ;
+      _last_trig_frame_number << " This trig frame: " << trig_frame_number ;
     printed = true;
   }
   if (printed) {
