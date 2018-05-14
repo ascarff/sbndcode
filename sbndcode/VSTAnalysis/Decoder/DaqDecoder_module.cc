@@ -38,9 +38,22 @@
 
 DEFINE_ART_MODULE(daq::DaqDecoder)
 
+// TODO: Implement these
+// get run id from fragment
+inline unsigned RunNo(const artdaq::Fragment &frag) {
+  return 0;
+}
+// get sub-run id from fragment
+inline unsigned SubRunNo(const artdaq::Fragment &frag) {
+  static unsigned ind = 0;
+  return ind++;
+}
+
+
 // constructs a header data object from a nevis header
 // construct from a nevis header
-daqAnalysis::HeaderData Nevis2HeaderData(sbnddaq::NevisTPCFragment fragment, double frame_to_dt=1.0, bool calc_checksum=false) {
+daqAnalysis::HeaderData Fragment2HeaderData(const artdaq::Fragment &frag, double frame_to_dt=1.0, bool calc_checksum=false) {
+  sbnddaq::NevisTPCFragment fragment(frag);
 
   const sbnddaq::NevisTPCHeader *raw_header = fragment.header();
   daqAnalysis::HeaderData ret;
@@ -63,6 +76,10 @@ daqAnalysis::HeaderData Nevis2HeaderData(sbnddaq::NevisTPCFragment fragment, dou
   
   ret.frame_time = ret.frame_number * frame_to_dt;
   ret.trig_frame_time = ret.trig_frame_number * frame_to_dt;
+
+  // run id stuff
+  ret.run_no = RunNo(frag); 
+  ret.sub_run_no = SubRunNo(frag);
 
   // raw header stuff
   ret.id_and_slot_word = raw_header->id_and_slot;
@@ -148,7 +165,7 @@ void daq::DaqDecoder::process_fragment(const artdaq::Fragment &frag,
   (void)n_waveforms;
 
   if (_config.produce_header || _config.validate_header) {
-    auto header_data = Nevis2HeaderData(fragment, 1.0, _config.calc_checksum);
+    auto header_data = Fragment2HeaderData(frag, 1.0, _config.calc_checksum);
     if (_config.produce_header) {
       // Construct HeaderData from the Nevis Header and throw it in the collection
       header_collection->push_back(header_data);
