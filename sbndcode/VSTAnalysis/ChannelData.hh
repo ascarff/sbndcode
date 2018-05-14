@@ -32,7 +32,7 @@ public:
   float Occupancy();
 
   // zero initialize
-  ChannelData(unsigned channel=0):
+  explicit ChannelData(unsigned channel=0):
     channel_no(channel),
     empty(true /* except for empty by default*/),
     baseline(0),
