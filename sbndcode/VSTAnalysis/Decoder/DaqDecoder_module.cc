@@ -40,7 +40,7 @@ DEFINE_ART_MODULE(daq::DaqDecoder)
 
 // constructs a header data object from a nevis header
 // construct from a nevis header
-daqAnalysis::HeaderData Nevis2HeaderData(sbnddaq::NevisTPCFragment fragment, double frame_to_dt=1.0) {
+daqAnalysis::HeaderData Nevis2HeaderData(sbnddaq::NevisTPCFragment fragment, double frame_to_dt=1.0, bool calc_checksum=false) {
 
   const sbnddaq::NevisTPCHeader *raw_header = fragment.header();
   daqAnalysis::HeaderData ret;
@@ -50,14 +50,21 @@ daqAnalysis::HeaderData Nevis2HeaderData(sbnddaq::NevisTPCFragment fragment, dou
   ret.event_number = raw_header->getEventNum();
   ret.frame_number = raw_header->getFrameNum();
   ret.checksum = raw_header->getChecksum();
-  ret.computed_checksum = daq::DaqDecoder::compute_checksum(fragment);
+
+  if (calc_checksum) {
+    ret.computed_checksum = daq::DaqDecoder::compute_checksum(fragment);
+  }
+  else {
+    ret.computed_checksum = 0;
+  }
+
   ret.adc_word_count = raw_header->getADCWordCount();
   ret.trig_frame_number = raw_header->getTrigFrame();
   
   ret.frame_time = ret.frame_number * frame_to_dt;
   ret.trig_frame_time = ret.trig_frame_number * frame_to_dt;
 
-  // draw header stuff
+  // raw header stuff
   ret.id_and_slot_word = raw_header->id_and_slot;
   ret.word_count_word = raw_header->word_count;
   ret.event_num_word = raw_header->event_num;
@@ -70,7 +77,9 @@ daqAnalysis::HeaderData Nevis2HeaderData(sbnddaq::NevisTPCFragment fragment, dou
 
 daq::DaqDecoder::DaqDecoder(fhicl::ParameterSet const & param): 
   _tag(param.get<std::string>("raw_data_label", "daq"),param.get<std::string>("fragment_type_label", "NEVISTPC")),
-  _config(param)
+  _config(param),
+  _last_event_number(0),
+  _last_trig_frame_number(0)
 {
   
   // produce stuff
@@ -78,9 +87,6 @@ daq::DaqDecoder::DaqDecoder(fhicl::ParameterSet const & param):
   if (_config.produce_header) {
     produces<std::vector<daqAnalysis::HeaderData>>();
   }
-  // start message facility
-  //auto message_param = mf::MessageFacilityService::logConsole();
-  //mf::StartMessageFacility(mf::MessageFacilityService::SingleThread, message_param); 
 }
 
 daq::DaqDecoder::Config::Config(fhicl::ParameterSet const & param) {
@@ -88,7 +94,7 @@ daq::DaqDecoder::Config::Config(fhicl::ParameterSet const & param) {
   // useful for debugging redis
   double wait_time = param.get<double>("wait_time", -1 /* units of seconds */);
   wait_sec = (int) wait_time;
-  wait_usec = (int) (wait_time / 1000000);
+  wait_usec = (int) (wait_time / 1000000.);
   // whether to calcualte the pedestal (and set it in SetPedestal())
   calc_baseline = param.get<bool>("calc_baseline", false);
   // whether to put HeaderInfo in the art root file
@@ -97,6 +103,8 @@ daq::DaqDecoder::Config::Config(fhicl::ParameterSet const & param) {
   validate_header = param.get<bool>("validate_header", false);
   // how many adc values to skip in mode/pedestal finding
   n_mode_skip = param.get<unsigned>("n_mode_skip", 1);
+  // whether to verify checksum
+  calc_checksum = param.get<bool>("calc_checksum", false);
 }
 
 void daq::DaqDecoder::produce(art::Event & event)
@@ -106,7 +114,6 @@ void daq::DaqDecoder::produce(art::Event & event)
   }
   auto const& daq_handle = event.getValidHandle<artdaq::Fragments>(_tag);
   
-
   // storage for waveform
   std::unique_ptr<std::vector<raw::RawDigit>> product_collection(new std::vector<raw::RawDigit>);
   // storage for header info
@@ -141,7 +148,7 @@ void daq::DaqDecoder::process_fragment(const artdaq::Fragment &frag,
   (void)n_waveforms;
 
   if (_config.produce_header || _config.validate_header) {
-    auto header_data = Nevis2HeaderData(fragment);
+    auto header_data = Nevis2HeaderData(fragment, 1.0, _config.calc_checksum);
     if (_config.produce_header) {
       // Construct HeaderData from the Nevis Header and throw it in the collection
       header_collection->push_back(header_data);
@@ -171,7 +178,7 @@ void daq::DaqDecoder::validate_header(const daqAnalysis::HeaderData &header) {
   unsigned n_fem_per_crate = daqAnalysis::ChannelMap::n_fem_per_crate;
   unsigned n_crate = daqAnalysis::ChannelMap::n_crate;
   unsigned n_fem = daqAnalysis::ChannelMap::NFEM();
-  if (header.checksum != header.computed_checksum) {
+  if (_config.calc_checksum && header.checksum != header.computed_checksum) {
     mf::LogError("Bad Header") << std::hex << "computed checksum " << 
       header.checksum << " does not match firmware checksum " << header.computed_checksum ;
     printed = true;

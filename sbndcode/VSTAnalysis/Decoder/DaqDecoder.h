@@ -56,6 +56,7 @@ private:
     bool calc_baseline;
     bool validate_header;
     unsigned n_mode_skip;
+    bool calc_checksum;
     Config(fhicl::ParameterSet const & p);
   };
 
