@@ -31,6 +31,10 @@ simple_plugin( SignalShapingServiceSBND  "service"
                ${sbnd_util_lib_list}
         )
              
+simple_plugin( SignalShapingServiceVST  "service"
+               ${sbnd_util_lib_list}
+        )
+
 simple_plugin( FileCatalogMetadataSBND  "service"
                ${sbnd_util_lib_list}
         )

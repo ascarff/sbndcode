@@ -2,6 +2,7 @@ simple_plugin( CalWireVST module
                         lardata_Utilities
                         lardataobj_RawData
                         lardataobj_RecoBase
+                        sbndcode_Utilities_SignalShapingServiceVST_service
                         sbndcode_Utilities_SignalShapingServiceSBND_service
                         ${ART_FRAMEWORK_CORE}
                         ${ART_FRAMEWORK_PRINCIPAL}

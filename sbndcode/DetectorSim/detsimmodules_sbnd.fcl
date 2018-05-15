@@ -22,15 +22,45 @@ sbnd_simwire:
  # so that we have only one maintenance point
 # CollectionPed:       @local::sbnd_detpedestalservice.DetPedestalRetrievalAlg.DefaultCollMean # used to be 400
  CollectionPed:        625
- CollectionPedErr:     17 #Error on the collection baseline
+ CollectionPedErr:     0 #17 #Error on the collection baseline
 # InductionPed:        @local::sbnd_detpedestalservice.DetPedestalRetrievalAlg.DefaultIndMean  # used to be 2048
  InductionPed:         1847
- InductionPedErr:      48 #Error on the induction baseline
+ InductionPedErr:      0 #48 #Error on the induction baseline
 # BaselineRMS:         0.3         #ADC baseline fluctuation within channel No longer in use and removed from the code DomBarker 09/05/2018 (May 2018)         
  NoiseFileFname:      "uboone_noise_v0.1.root"
  NoiseHistoName:      "NoiseFreq"    
 
 }
+
+vst_simwire:  
+{ 
+ module_type:        "SimWireVST"
+ TrigModName:        "triggersim"
+ DriftEModuleLabel:  "largeant"
+ NoiseWidth:         62.4         #Exponential Noise width (kHz)
+ NoiseRand:          0.1          #frac of randomness of noise freq-spec
+ LowCutoff:          7.5          #Low frequency filter cutoff (kHz)
+ CompressionType:    "none"       #could also be none		
+ GenNoise:            true        #gen noise...if false function not called
+ GetNoiseFromHisto:   false
+ GenNoiseInTime:      true
+ 
+
+ # the two settings below determine the ADC baseline for collection and induction plane, respectively;
+ # here we read the settings from the pedestal service configuration,
+ # so that we have only one maintenance point
+# CollectionPed:       @local::sbnd_detpedestalservice.DetPedestalRetrievalAlg.DefaultCollMean # used to be 400
+ CollectionPed:        625
+ CollectionPedErr:     0 #17 #Error on the collection baseline DONT VARY FOR USEABLE EVENT DISPLAY
+# InductionPed:        @local::sbnd_detpedestalservice.DetPedestalRetrievalAlg.DefaultIndMean  # used to be 2048
+ InductionPed:         1847
+ InductionPedErr:      0 #48 #Error on the induction baseline DONT VARY FOR USEABLE EVENT DISPLAY
+# BaselineRMS:         0.3         #ADC baseline fluctuation within channel No longer in use and removed from the code DomBarker 09/05/2018 (May 2018)         
+ NoiseFileFname:      "uboone_noise_v0.1.root"
+ NoiseHistoName:      "NoiseFreq"    
+
+}
+
 #sbnd_simwireana: @local::standard_simwireana
 sbnd_simwireana:
 {

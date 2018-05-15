@@ -48,6 +48,7 @@ cet_make_library( LIBRARY_NAME daqAnalysis_VST
                            lardataobj_RawData
                            lardata_DetectorInfoServices_DetectorClocksServiceStandard_service
                            sbndcode_Utilities_SignalShapingServiceSBND_service
+                           sbndcode_Utilities_SignalShapingServiceVST_service
                            nutools_RandomUtils_NuRandomService_service
                            ${ART_FRAMEWORK_CORE}
                            ${ART_FRAMEWORK_PRINCIPAL}
