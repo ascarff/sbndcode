@@ -85,12 +85,16 @@ sbnd_disp:
 }
 
 
-vast_disp:
+vst_rawdrawingopt:                         @local::standard_rawdrawingopt
+vst_rawdrawingopt.TotalTicks: 787
+vst_simdrawingopt:                         @local::standard_simdrawingopt
+vst_simdrawingopt.ShowMCTruthVectors:      false
+vst_disp:
 {
                                                @table::vst_simulation_services
   ColorDrawingOptions:                         @local::sbnd_colordrawingopt
-  SimulationDrawingOptions:                    @local::sbnd_simdrawingopt
-  RawDrawingOptions:                           @local::sbnd_rawdrawingopt
+  SimulationDrawingOptions:                    @local::vst_simdrawingopt
+  RawDrawingOptions:                           @local::vst_rawdrawingopt
   RecoDrawingOptions:                          @local::sbnd_recodrawingopt
   AnalysisDrawingOptions:                      @local::sbnd_analysisdrawingopt
   EvdLayoutOptions:                            @local::sbnd_evdlayoutopt
