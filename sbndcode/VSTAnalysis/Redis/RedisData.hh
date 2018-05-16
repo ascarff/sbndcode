@@ -54,16 +54,14 @@ public:
   void Add(unsigned index, float dat);
   // incl the number of values
   void Incl();
-  // clear the number of values
+  // clear values
   void Clear();
   // take the data value and reset it
-  float Take(unsigned index);
-  // just take a peek at the data value
-  float Peak(unsigned index) { return _data[index]; }
+  float Data(unsigned index);
   // returns n_data
   unsigned Size() { return _data.size(); }
   // called per iter
-  void Update(bool taken);
+  void Update();
   // update a points per time value
   void SetPointsPerTime(unsigned index, unsigned points)
     { _n_points_per_time[index] = points; }
@@ -95,13 +93,13 @@ public:
   // add in a new value
   void Add(unsigned index, float dat);
   // take the data value and reset it
-  float Take(unsigned index);
-  // just take a peek at the data value
-  float Peak(unsigned index) { return _data[index]; }
+  float Data(unsigned index);
   // returns n_data
   unsigned Size() { return _data.size(); }
   // called per iter
-  void Update(bool taken);
+  void Update();
+  // clear values
+  void Clear();
 
   // update a points per time value
   // does nothing, since all points per time values are dynamic for this class
@@ -128,10 +126,11 @@ public:
   StreamDataMax(unsigned n_data, unsigned _): _data(n_data, 0) {}
 
   void Add(unsigned index, unsigned dat);
-  unsigned Take(unsigned index);
-  unsigned Peek(unsigned index) { return _data[index]; }
+  unsigned Data(unsigned index);
   unsigned Size() { return _data.size(); }
-  void Update(bool _) {/* doesn't need to do anything currently */}
+  void Update() {/* doesn't need to do anything currently */}
+  // clear values
+  void Clear();
 
 protected:
   std::vector<unsigned> _data;
@@ -143,10 +142,11 @@ public:
   StreamDataSum(unsigned n_data, unsigned _): _data(n_data, 0) {}
 
   void Add(unsigned index, unsigned dat);
-  unsigned Take(unsigned index);
-  unsigned Peek(unsigned index) { return _data[index]; }
+  unsigned Data(unsigned index);
   unsigned Size() { return _data.size(); }
-  void Update(bool _) {/* doesn't need to do anything currently */}
+  void Update() {/* doesn't need to do anything currently */}
+  // clear values
+  void Clear();
 
 protected:
   std::vector<unsigned> _data;
@@ -220,23 +220,30 @@ public:
     _wire_data.Add(wire, dat);
   }
 
-  float TakeCrate(unsigned index) {
-    return _crate_data.Take(index);
+  float DataCrate(unsigned index) {
+    return _crate_data.Data(index);
   }
 
-  float TakeFEM(unsigned index) {
-    return _fem_data.Take(index);
+  float DataFEM(unsigned index) {
+    return _fem_data.Data(index);
   }
 
-  float TakeWire(unsigned index) {
-    return _wire_data.Take(index);
+  float DataWire(unsigned index) {
+    return _wire_data.Data(index);
   }
 
   // to be called once per time instance
-  void Update(bool taken) {
-    _crate_data.Update(taken);
-    _fem_data.Update(taken);
-    _wire_data.Update(taken);
+  void Update() {
+    _crate_data.Update();
+    _fem_data.Update();
+    _wire_data.Update();
+  }
+
+  // called after stuff is sent to Redis
+  void Clear() {
+    _crate_data.Clear();
+    _fem_data.Clear();
+    _wire_data.Clear();
   }
 
   // send stuff to Redis
@@ -245,10 +252,10 @@ public:
     unsigned n_wires = _wire_data.Size();
     for (unsigned wire = 0; wire < n_wires; wire++) {
       redisAppendCommand(context, "SET stream/%s:%i:%s:wire:%i %f",
-        stream_name, index, REDIS_NAME,wire, TakeWire(wire)); 
+        stream_name, index, REDIS_NAME,wire, DataWire(wire)); 
 
       if (stream_expire != 0) {
-        redisAppendCommand(context, "EXPIRE stream/%s:%i:%s:wire:%i %i",
+        redisAppendCommand(context, "EXPIRE stream/%s:%i:%s:wire:%i %u",
           stream_name, index, REDIS_NAME,wire, stream_expire); 
       }
     } 
@@ -259,8 +266,8 @@ public:
       // TEMPORARY IMPLEMENTATION
       unsigned fem = fem_ind % ChannelMap::n_fem_per_crate;
       unsigned crate = fem_ind / ChannelMap::n_fem_per_crate;
-      redisAppendCommand(context, "SET stream/%s:%i:%s:crate:%i:fem:%i %u",
-        stream_name, index, REDIS_NAME, crate, fem, TakeFEM(fem_ind)); 
+      redisAppendCommand(context, "SET stream/%s:%i:%s:crate:%i:fem:%i %f",
+        stream_name, index, REDIS_NAME, crate, fem, DataFEM(fem_ind)); 
 
       if (stream_expire != 0) {
         redisAppendCommand(context, "EXPIRE stream/%s:%i:%s:crate:%i:fem:%i %u",
@@ -271,10 +278,10 @@ public:
     unsigned n_crate = _crate_data.Size();
     for (unsigned crate = 0; crate < n_crate; crate++) {
       redisAppendCommand(context, "SET stream/%s:%i:%s:crate:%i %f",
-         stream_name, index, REDIS_NAME, crate, TakeCrate(crate));
+         stream_name, index, REDIS_NAME, crate, DataCrate(crate));
 
       if (stream_expire != 0) {
-        redisAppendCommand(context, "EXPIRE stream/%s:%i:%s:crate:%i %i",
+        redisAppendCommand(context, "EXPIRE stream/%s:%i:%s:crate:%i %u",
            stream_name, index, REDIS_NAME, crate, stream_expire);
       }
     }
@@ -366,13 +373,18 @@ public:
     _fem.Add(fem_ind, val);
   }
 
-  unsigned Take(unsigned index) {
-    return _fem.Take(index);
+  unsigned Data(unsigned index) {
+    return _fem.Data(index);
   }
 
   // to be called once per time instance
-  void Update(bool taken) {
-    _fem.Update(taken);
+  void Update() {
+    _fem.Update();
+  }
+
+  // called when stuff is sent to Redis
+  void Clear() {
+    _fem.Clear();
   }
 
   // send stuff to Redis
@@ -385,7 +397,7 @@ public:
       unsigned fem = fem_ind % ChannelMap::n_fem_per_crate;
       unsigned crate = fem_ind / ChannelMap::n_fem_per_crate;
       redisAppendCommand(context, "SET stream/%s:%i:%s:crate:%i:fem:%i %u",
-        stream_name, index, REDIS_NAME, crate, fem, Take(fem_ind)); 
+        stream_name, index, REDIS_NAME, crate, fem, Data(fem_ind)); 
 
       if (stream_expire != 0) {
         redisAppendCommand(context, "EXPIRE stream/%s:%i:%s:crate:%i:fem:%i %u",

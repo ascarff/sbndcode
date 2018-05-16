@@ -18,34 +18,26 @@ void daqAnalysis::StreamDataMean::Add(unsigned index, float dat) {
   _instance_data[index] += dat/_n_points_per_time[index];
 }
 
-void daqAnalysis::StreamDataMean::Incl() {
-  _n_values ++;
-}
-
+// clear data
 void daqAnalysis::StreamDataMean::Clear() {
+  for (unsigned index = 0; index < _data.size(); index++) {
+    _data[index] = 0;
+  }
   _n_values = 0;
 }
 
-float daqAnalysis::StreamDataMean::Take(unsigned index) {
-  AddInstance(index);
+float daqAnalysis::StreamDataMean::Data(unsigned index) {
   float ret = _data[index];
-  _data[index] = 0;
   return ret;
 }
 
-void daqAnalysis::StreamDataMean::Update(bool taken) {
-  // clear out _n_values if taken
-  if (taken) {
-    Clear();
+void daqAnalysis::StreamDataMean::Update() {
+  // update instance data
+  for (unsigned index = 0; index < _instance_data.size(); index++) {
+    AddInstance(index);
   }
-  else {
-    // update instance data if not taken
-    for (unsigned index = 0; index < _instance_data.size(); index++) {
-      AddInstance(index);
-    }
-    // increment _n_values
-    Incl();
-  }
+  // increment _n_values
+  _n_values ++;
 }
 
 // takes new data value out of instance and puts it in _data (not idempotent)
@@ -83,25 +75,25 @@ void daqAnalysis::StreamDataVariableMean::AddInstance(unsigned index) {
 }
 
 
-float daqAnalysis::StreamDataVariableMean::Take(unsigned index) {
-  // update from the most recent instance
-  AddInstance(index);
-  // return and clear data
+float daqAnalysis::StreamDataVariableMean::Data(unsigned index) {
+  // return data
   float ret = _data[index];
-  _data[index] = 0;
-  _n_values[index] = 0;
   return ret;
 }
 
-void daqAnalysis::StreamDataVariableMean::Update(bool taken) {
-  // if the data was taken, then the current instance data was already added 
-  // to the running data
-  
-  // otherwise, we need to do it now
-  if (!taken) {
-    for (unsigned index = 0; index < _instance_data.size(); index++) {
-      AddInstance(index);
-    }
+// clear data
+void daqAnalysis::StreamDataVariableMean::Clear() {
+  for (unsigned index = 0; index < _data.size(); index++) {
+    _data[index] = 0;
+    _n_values[index] = 0;
+  }
+}
+
+void daqAnalysis::StreamDataVariableMean::Update() {
+  // add instance data and increment n_values
+  for (unsigned index = 0; index < _instance_data.size(); index++) {
+    AddInstance(index);
+    _n_values[index] += 1;
   }
 }
 
@@ -110,10 +102,16 @@ void daqAnalysis::StreamDataMax::Add(unsigned index, unsigned dat) {
   if (_data[index] < dat) _data[index] = dat;
 }
 
-unsigned daqAnalysis::StreamDataMax::Take(unsigned index) {
+unsigned daqAnalysis::StreamDataMax::Data(unsigned index) {
   float ret = _data[index];
-  _data[index] = 0;
   return ret;
+}
+
+// clear data
+void daqAnalysis::StreamDataMax::Clear() {
+  for (unsigned index = 0; index < _data.size(); index++) {
+    _data[index] = 0;
+  }
 }
 
 // Implementing StreamDataSum
@@ -121,10 +119,16 @@ void daqAnalysis::StreamDataSum::Add(unsigned index, unsigned dat) {
   _data[index] += dat;
 }
 
-unsigned daqAnalysis::StreamDataSum::Take(unsigned index) {
+unsigned daqAnalysis::StreamDataSum::Data(unsigned index) {
   float ret = _data[index];
-  _data[index] = 0;
   return ret;
+}
+
+// clear data
+void daqAnalysis::StreamDataSum::Clear() {
+  for (unsigned index = 0; index < _data.size(); index++) {
+    _data[index] = 0;
+  }
 }
 
 // Defining string literal template parameters for inheritors of DetectorMetric

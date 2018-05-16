@@ -41,6 +41,7 @@ Redis::Redis(Redis::Config &config):
   _this_subrun(config.first_subrun),
   _last_subrun(config.first_subrun),
   _last_snapshot(0),
+  _first_run(true),
 
   // allocate and zero-initalize all of the metrics
   _rms(config.NStreams(), RedisRMS()),
@@ -58,6 +59,11 @@ Redis::Redis(Redis::Config &config):
   _fft_manager((config.waveform_input_size > 0) ? config.waveform_input_size: 0),
   _do_timing(config.timing)
 {
+  // set the subrun stream last correctly
+  if (config.sub_run_stream) {
+    _stream_last[_n_streams - 1] = config.first_subrun;
+  }
+
   if (context != NULL && context->err) {
     std::cerr << "Redis error: " <<  context->errstr << std::endl;
     exit(1);
@@ -100,9 +106,15 @@ void Redis::FinishSend() {
     redisCommand(context, "SET last_subrun_no %u", _last_subrun);
   }
   _last_subrun = _this_subrun;
+  _first_run = false;
 }
 
-void Redis::SendHeaderData(vector<HeaderData> *header_data) {
+void Redis::HeaderData(vector<daqAnalysis::HeaderData> *header_data) {
+  SendHeaderData();
+  FillHeaderData(header_data);
+}
+
+void Redis::FillHeaderData(vector<daqAnalysis::HeaderData> *header_data) {
   for (auto &header: *header_data) {
     // update header info in each stream
     for (size_t i = 0; i < _n_streams; i++) {
@@ -114,6 +126,16 @@ void Redis::SendHeaderData(vector<HeaderData> *header_data) {
       _blocks[i].Add(header, fem_ind);
     }
   }
+  // update all of the metrics
+  for (size_t i = 0; i < _n_streams; i++) {
+    _event_no[i].Update();
+    _frame_no[i].Update();
+    _trig_frame_no[i].Update();
+    _blocks[i].Update();
+  }
+}
+
+void Redis::SendHeaderData() {
   if (_do_timing) {
     _timing.StartTime();
   }
@@ -127,14 +149,12 @@ void Redis::SendHeaderData(vector<HeaderData> *header_data) {
       n_commands += _frame_no[i].Send(context, index, stream_name, _stream_expire[i]);
       n_commands += _trig_frame_no[i].Send(context, index, stream_name, _stream_expire[i]);
       n_commands += _blocks[i].Send(context, index, stream_name, _stream_expire[i]);
+      // the metric was taken iff it was sent to redis
+      _event_no[i].Clear();
+      _frame_no[i].Clear();
+      _trig_frame_no[i].Clear();
+      _blocks[i].Clear();
     }
-
-    // the metric was taken iff it was sent to redis
-    bool taken = _stream_send[i];
-    _event_no[i].Update(taken);
-    _frame_no[i].Update(taken);
-    _trig_frame_no[i].Update(taken);
-    _blocks[i].Update(taken);
   }
   // special case the sub run stream
   if (_sub_run_stream) {
@@ -145,15 +165,13 @@ void Redis::SendHeaderData(vector<HeaderData> *header_data) {
       n_commands += _frame_no[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
       n_commands += _trig_frame_no[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
       n_commands += _blocks[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
-    }
 
-    // the metric was taken iff it was sent to redis
-    bool taken = _stream_send[sub_run_ind];
-    _event_no[sub_run_ind].Update(taken);
-    _frame_no[sub_run_ind].Update(taken);
-    _trig_frame_no[sub_run_ind].Update(taken);
-    _blocks[sub_run_ind].Update(taken);
-    
+      // the metric was taken iff it was sent to redis
+      _event_no[sub_run_ind].Clear();
+      _frame_no[sub_run_ind].Clear();
+      _trig_frame_no[sub_run_ind].Clear();
+      _blocks[sub_run_ind].Clear();
+    }
   }
   
   // actually send the commands out of the pipeline
@@ -170,13 +188,14 @@ inline size_t pushFFTDat(char *buffer, float re, float im) {
   return sprintf(buffer, " %f", dat);
 }
 
-void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> *noise, vector<vector<short>> *fem_summed_waveforms, 
+void Redis::Snapshot(vector<daqAnalysis::ChannelData> *per_channel_data, vector<NoiseSample> *noise, vector<vector<short>> *fem_summed_waveforms, 
     const art::ValidHandle<std::vector<raw::RawDigit>> &digits, const std::vector<unsigned> &channel_to_index) {
   size_t n_commands = 0;
 
   // record the time for reference
   redisAppendCommand(context, "SET snapshot:time %i", _now);
-  n_commands ++;
+  redisAppendCommand(context, "SET snapshot:sub_run %i", _this_subrun);
+  n_commands += 2;
 
   if (_do_timing) _timing.StartTime();
 
@@ -379,8 +398,21 @@ void Redis::Snapshot(vector<ChannelData> *per_channel_data, vector<NoiseSample> 
   
 }
 
-void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseSample> *noise_samples, vector<vector<short>> *fem_summed_waveforms, 
+void Redis::ChannelData(vector<daqAnalysis::ChannelData> *per_channel_data, vector<NoiseSample> *noise_samples, vector<vector<short>> *fem_summed_waveforms, 
     const art::ValidHandle<std::vector<raw::RawDigit>> &digits, const std::vector<unsigned> &channel_to_index) {
+
+  SendChannelData();
+  FillChannelData(per_channel_data);
+
+  bool take_snapshot = _snapshot_time > 0 && (_now - _start) % _snapshot_time == 0 && _last_snapshot != _now;
+  if (take_snapshot) {
+    Snapshot(per_channel_data, noise_samples, fem_summed_waveforms, digits, channel_to_index);
+    _last_snapshot = _now;
+  }
+
+}
+
+void Redis::FillChannelData(vector<daqAnalysis::ChannelData> *per_channel_data) {
   if (_do_timing) {
     _timing.StartTime();
   }
@@ -438,6 +470,17 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
     _timing.EndTime(&_timing.copy_data);
   }
 
+  // update all of the metrics
+  for (size_t i = 0; i < _n_streams; i++) {
+    _rms[i].Update();
+    _baseline[i].Update();
+    _dnoise[i].Update();
+    _pulse_height[i].Update();
+    _occupancy[i].Update();
+  }
+}
+
+void Redis::SendChannelData() {
   unsigned n_commands = 0;
   for (size_t i = 0; i < _stream_take.size(); i++) {
     // Send stuff to redis if it's time
@@ -453,19 +496,17 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
       n_commands += _dnoise[i].Send(context, index, stream_name, _stream_expire[i]);
       n_commands += _occupancy[i].Send(context, index, stream_name, _stream_expire[i]);
       n_commands += _pulse_height[i].Send(context, index, stream_name, _stream_expire[i]);
+
+      _rms[i].Clear();
+      _baseline[i].Clear();
+      _dnoise[i].Clear();
+      _pulse_height[i].Clear();
+      _occupancy[i].Clear();
+
       if (_do_timing) {
         _timing.EndTime(&_timing.send_metrics);
       }
     }
-
-    // the metric was taken iff it was sent to redis
-    bool taken = _stream_send[i];
-    // update all of the metrics
-    _rms[i].Update(taken);
-    _baseline[i].Update(taken);
-    _dnoise[i].Update(taken);
-    _pulse_height[i].Update(taken);
-    _occupancy[i].Update(taken);
   }
   // special case the sub run stream
   if (_sub_run_stream) {
@@ -481,34 +522,23 @@ void Redis::SendChannelData(vector<ChannelData> *per_channel_data, vector<NoiseS
       n_commands += _dnoise[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
       n_commands += _occupancy[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
       n_commands += _pulse_height[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
+
+      // the metric was taken iff it was sent to redis
+      // clear all of the metrics
+      _rms[sub_run_ind].Clear();
+      _baseline[sub_run_ind].Clear();
+      _dnoise[sub_run_ind].Clear();
+      _pulse_height[sub_run_ind].Clear();
+      _occupancy[sub_run_ind].Clear();
+
       if (_do_timing) {
         _timing.EndTime(&_timing.send_metrics);
       }
     }
-
-    // the metric was taken iff it was sent to redis
-    bool taken = _stream_send[sub_run_ind];
-    // update all of the metrics
-    _rms[sub_run_ind].Update(taken);
-    _baseline[sub_run_ind].Update(taken);
-    _dnoise[sub_run_ind].Update(taken);
-    _pulse_height[sub_run_ind].Update(taken);
-    _occupancy[sub_run_ind].Update(taken);
-
   }
 
   // actually send the commands out of the pipeline
   FinishPipeline(n_commands);
-
-  if (_do_timing) {
-    _timing.StartTime();
-  }
-  // snapshots
-  bool take_snapshot = _snapshot_time > 0 && (_now - _start) % _snapshot_time == 0 && _last_snapshot != _now;
-  if (take_snapshot) {
-    Snapshot(per_channel_data, noise_samples, fem_summed_waveforms, digits, channel_to_index);
-    _last_snapshot = _now;
-  }
 }
 
 // clear out a sequence of Append Commands

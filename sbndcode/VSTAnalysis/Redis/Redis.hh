@@ -77,16 +77,16 @@ public:
       waveform_input_size(-1),
       timing(false) 
     {}
-    unsigned NStreams() { return stream_take.size() + sub_run_stream; }
+    unsigned NStreams() { return stream_take.size() + (sub_run_stream ? 1:0); }
   };
 
   explicit Redis(Config &config);
   ~Redis();
   // send info associated w/ ChannelData
-  void SendChannelData(std::vector<daqAnalysis::ChannelData> *per_channel_data, std::vector<daqAnalysis::NoiseSample> *noise_samples, 
+  void ChannelData(std::vector<daqAnalysis::ChannelData> *per_channel_data, std::vector<daqAnalysis::NoiseSample> *noise_samples, 
       std::vector<std::vector<short>> *fem_summed_waveforms, const art::ValidHandle<std::vector<raw::RawDigit>> &digits, const std::vector<unsigned> &channel_to_index);
   // send info associated w/ HeaderData
-  void SendHeaderData(std::vector<daqAnalysis::HeaderData> *header_data);
+  void HeaderData(std::vector<daqAnalysis::HeaderData> *header_data);
   // must be called before calling Send functions
   void StartSend(unsigned sub_run=0);
   // must be called after calling Send functions
@@ -94,10 +94,14 @@ public:
 
 
 protected:
-  // per-header (each associated w/ an fem) data to Redis
-  void SendHeader(unsigned stream_index);
+  // per-channel data to redis
+  void SendChannelData();
+  void FillChannelData(std::vector<daqAnalysis::ChannelData> *per_channel_data);
+  // send info associated w/ HeaderData
+  void SendHeaderData();
+  void FillHeaderData(std::vector<daqAnalysis::HeaderData> *header_data);
   // snapshot stuff
-  void Snapshot(std::vector<ChannelData> *per_channel_data, std::vector<daqAnalysis::NoiseSample> *noise, 
+  void Snapshot(std::vector<daqAnalysis::ChannelData> *per_channel_data, std::vector<daqAnalysis::NoiseSample> *noise, 
     std::vector<std::vector<short>> *fem_summed_waveforms, const art::ValidHandle<std::vector<raw::RawDigit>> &digits, const std::vector<unsigned> &channel_to_index);
   // clear out a pipeline of n_commands commands
   void FinishPipeline(size_t n_commands);
@@ -128,6 +132,8 @@ protected:
   unsigned _last_subrun;
   // last time a snapshot was sent
   std::time_t _last_snapshot;
+  // whether this is the first run
+  bool _first_run;
 
   // running averates of Redis metrics per stream
   std::vector<daqAnalysis::RedisRMS> _rms;
