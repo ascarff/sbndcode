@@ -113,7 +113,7 @@ daq::DaqDecoder::Config::Config(fhicl::ParameterSet const & param) {
   wait_sec = (int) wait_time;
   wait_usec = (int) (wait_time / 1000000.);
   // whether to calcualte the pedestal (and set it in SetPedestal())
-  calc_baseline = param.get<bool>("calc_baseline", false);
+  baseline_calc = param.get<bool>("baseline_calc", false);
   // whether to put HeaderInfo in the art root file
   produce_header = param.get<bool>("produce_header", false);
   // whether to check if Header looks good and print out error info
@@ -185,7 +185,7 @@ void daq::DaqDecoder::process_fragment(const artdaq::Fragment &frag,
     // construct the next RawDigit object
     product_collection->emplace_back(wire_id, raw_digits_waveform.size(), raw_digits_waveform);
     // calculate the mode and set it as the pedestal
-    if (_config.calc_baseline) {
+    if (_config.baseline_calc) {
       (*product_collection)[product_collection->size() - 1].SetPedestal( Mode(raw_digits_waveform, _config.n_mode_skip) ); 
     }
   }

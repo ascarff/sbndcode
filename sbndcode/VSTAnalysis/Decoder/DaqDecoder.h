@@ -53,7 +53,7 @@ private:
     int wait_sec;
     int wait_usec;
     bool produce_header;
-    bool calc_baseline;
+    bool baseline_calc;
     bool validate_header;
     unsigned n_mode_skip;
     bool calc_checksum;
