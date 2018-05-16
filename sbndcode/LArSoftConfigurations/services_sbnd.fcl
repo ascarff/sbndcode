@@ -103,7 +103,7 @@ vst_services:
 {
                                   @table::vst_basic_services
   LArPropertiesService:           @local::sbnd_properties
-  DetectorClocksService:          @local::sbnd_detectorclocks
+  DetectorClocksService:          @local::vst_detectorclocks
   DetectorPropertiesService:      @local::vst_detproperties
 # OpDigiProperties:               @local::sbnd_opdigiproperties
   ChannelStatusService:           @local::vst_channelstatus

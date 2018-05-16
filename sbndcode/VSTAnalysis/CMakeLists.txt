@@ -9,11 +9,7 @@ add_subdirectory(LariatDataProducts)
 # add in VST Calibration
 add_subdirectory(VSTCalibration)
 
-# add in Redis stuff
-add_subdirectory(Redis)
-
-# add header-decoder stuff
-add_subdirectory(Decoder)
+link_directories($ENV{FFTW_LIBRARY})
 
 art_dictionary(DICTIONARY_LIBRARIES daqAnalysis_VST)
 
@@ -30,8 +26,6 @@ cet_make_library( LIBRARY_NAME daqAnalysis_VST
 		ChannelData.cc
 	LIBRARIES
 		daqAnalysis_MODE
-		sbnddaq-datatypes_Overlays
-		sbnddaq-datatypes_NevisTPC
 		${LARDATAOBJ} 
 		lardataobj_RawData
 		lardata_Utilities
@@ -54,6 +48,7 @@ cet_make_library( LIBRARY_NAME daqAnalysis_VST
                            lardataobj_RawData
                            lardata_DetectorInfoServices_DetectorClocksServiceStandard_service
                            sbndcode_Utilities_SignalShapingServiceSBND_service
+                           sbndcode_Utilities_SignalShapingServiceVST_service
                            nutools_RandomUtils_NuRandomService_service
                            ${ART_FRAMEWORK_CORE}
                            ${ART_FRAMEWORK_PRINCIPAL}

@@ -15,6 +15,18 @@ sbnd_detectorclocks.ClockSpeedTrigger: 16.   # Trigger clock speed in MHz
 sbnd_detectorclocks.DefaultTrigTime:   0. # Default trigger time [us].
 sbnd_detectorclocks.DefaultBeamTime:   0. # Default beam time [us].
 
+vst_detectorclocks: @local::standard_detectorclocks
+
+vst_detectorclocks.TrigModuleName:     "triggersim"
+vst_detectorclocks.InheritClockConfig: false # Whether to inherit the configuration from previous jobs
+vst_detectorclocks.G4RefTime:        0      # G4 time [us] where electronics clock counting start
+vst_detectorclocks.TriggerOffsetTPC:  0  # Time [us] for TPC readout start w.r.t. trigger time
+vst_detectorclocks.FramePeriod:       393.2 # Frame period [us]                         
+vst_detectorclocks.ClockSpeedTPC:     2.    # TPC clock speed in MHz
+vst_detectorclocks.ClockSpeedOptical: 64.   # Optical clock speed in MHz
+vst_detectorclocks.ClockSpeedTrigger: 16.   # Trigger clock speed in MHz
+vst_detectorclocks.DefaultTrigTime:   0. # Default trigger time [us].
+vst_detectorclocks.DefaultBeamTime:   0. # Default beam time [us].
 
 
 END_PROLOG
