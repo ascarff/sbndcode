@@ -169,7 +169,7 @@ void daqAnalysis::NoiseSample::ResetBaseline(const std::vector<int16_t> &wvfm_se
 
 // sum a group of waveforms looking for e.g. coherent noise
 // assumes output is of size output_size
-void daqAnalysis::SumWaveforms(std::vector<int16_t> &output, std::vector<const std::vector<int16_t>*> waveforms) {
+void daqAnalysis::SumWaveforms(std::vector<int> &output, std::vector<const std::vector<int16_t>*> waveforms) {
   size_t output_size = waveforms[0]->size();
 
   for (size_t adc_ind = 0; adc_ind < output_size; adc_ind++) {

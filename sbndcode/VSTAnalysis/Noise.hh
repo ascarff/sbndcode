@@ -47,7 +47,7 @@ private:
 };
 
 // helper function to sum a group of waveforms looking for e.g. coherent noise
-void SumWaveforms(std::vector<int16_t> &output, std::vector<const std::vector<int16_t>*> waveforms);
+void SumWaveforms(std::vector<int> &output, std::vector<const std::vector<int16_t>*> waveforms);
 
 } // namespace daqAnalysis
 #endif
