@@ -84,7 +84,8 @@ public:
   ~Redis();
   // send info associated w/ ChannelData
   void ChannelData(std::vector<daqAnalysis::ChannelData> *per_channel_data, std::vector<daqAnalysis::NoiseSample> *noise_samples, 
-      std::vector<std::vector<short>> *fem_summed_waveforms, const art::ValidHandle<std::vector<raw::RawDigit>> &digits, const std::vector<unsigned> &channel_to_index);
+      std::vector<std::vector<int>> *fem_summed_waveforms, std::vector<std::vector<double>> *fem_summed_fft,
+      const art::ValidHandle<std::vector<raw::RawDigit>> &digits, const std::vector<unsigned> &channel_to_index);
   // send info associated w/ HeaderData
   void HeaderData(std::vector<daqAnalysis::HeaderData> *header_data);
   // must be called before calling Send functions
@@ -102,7 +103,8 @@ protected:
   void FillHeaderData(std::vector<daqAnalysis::HeaderData> *header_data);
   // snapshot stuff
   void Snapshot(std::vector<daqAnalysis::ChannelData> *per_channel_data, std::vector<daqAnalysis::NoiseSample> *noise, 
-    std::vector<std::vector<short>> *fem_summed_waveforms, const art::ValidHandle<std::vector<raw::RawDigit>> &digits, const std::vector<unsigned> &channel_to_index);
+    std::vector<std::vector<int>> *fem_summed_waveforms, std::vector<std::vector<double>> *fem_summed_fft,
+    const art::ValidHandle<std::vector<raw::RawDigit>> &digits, const std::vector<unsigned> &channel_to_index);
   // clear out a pipeline of n_commands commands
   void FinishPipeline(size_t n_commands);
 
