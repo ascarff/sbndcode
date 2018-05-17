@@ -10,7 +10,7 @@
 class FFTManager {
 public:
   // Make a new FFT manager and allocate a setup for an input array of size input_size
-  FFTManager(unsigned input_size);
+  explicit FFTManager(unsigned input_size);
   // Make a new FFT manager and don't allocate
   FFTManager() {}
   // allocate a setup for an input array of size input_size (NOTE: is idempotent)
@@ -22,6 +22,7 @@ public:
   // get a member of the output array
   double ReOutputAt(const int index);
   double ImOutputAt(const int index);
+  double AbsOutputAt(const int index);
   
   // input/output sizes
   unsigned InputSize() {return _input_size;}

@@ -53,6 +53,7 @@ Analysis::Analysis(fhicl::ParameterSet const & p) :
   _header_data(std::max(_config.n_headers,0)),
   _thresholds( (_config.threshold_calc == 3) ? ChannelMap::n_wire : 0),
   _fem_summed_waveforms((_config.sum_waveforms) ? ChannelMap::NFEM() : 0),
+  _fem_summed_fft((_config.sum_waveforms && _config.fft_summed_waveforms) ? ChannelMap::NFEM() : 0),
   _fft_manager(  (_config.static_input_size > 0) ? _config.static_input_size: 0),
   _analyzed(false)
 {
@@ -124,6 +125,7 @@ Analysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &param) {
 
   // whether to calculate/save certain things
   sum_waveforms = param.get<bool>("sum_waveforms", false);
+  fft_summed_waveforms = param.get<bool>("fft_summed_waveforms", false);
   fft_per_channel = param.get<bool>("fft_per_channel", false);
   fill_waveforms = param.get<bool>("fill_waveforms", false);
   reduce_data = param.get<bool>("reduce_data", false);
@@ -221,6 +223,25 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
     // sum all of them
     for (unsigned i = 0; i < n_fem; i++) {
       daqAnalysis::SumWaveforms(_fem_summed_waveforms[i] ,channel_waveforms_per_fem[i]);
+      // do fft if configed
+      if (_config.fft_summed_waveforms) {
+        if (_fft_manager.InputSize() != _fem_summed_waveforms[i].size()) {
+          _fft_manager.Set(_fem_summed_waveforms[i].size());
+        }
+        // fill up fft array
+         
+        for (unsigned adc_ind = 0; adc_ind < _fem_summed_waveforms[i].size(); adc_ind++) {
+          double *input = _fft_manager.InputAt(adc_ind);
+          *input = (double) _fem_summed_waveforms[i][adc_ind];
+        }
+        // run the FFT
+        _fft_manager.Execute();
+        // return results
+        unsigned adc_fft_size = _fft_manager.OutputSize();
+        for (unsigned adc_ind = 0; adc_ind < adc_fft_size; adc_ind++) {
+          _fem_summed_fft[i].push_back(_fft_manager.AbsOutputAt(adc_ind));
+        }
+      }
     }
   }
 
