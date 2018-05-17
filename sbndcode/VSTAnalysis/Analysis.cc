@@ -229,7 +229,6 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
           _fft_manager.Set(_fem_summed_waveforms[i].size());
         }
         // fill up fft array
-         
         for (unsigned adc_ind = 0; adc_ind < _fem_summed_waveforms[i].size(); adc_ind++) {
           double *input = _fft_manager.InputAt(adc_ind);
           *input = (double) _fem_summed_waveforms[i][adc_ind];

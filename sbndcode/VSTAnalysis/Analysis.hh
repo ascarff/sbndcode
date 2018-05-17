@@ -132,7 +132,7 @@ public:
   std::vector<daqAnalysis::NoiseSample> _noise_samples;
   std::vector<daqAnalysis::HeaderData> _header_data;
   std::vector<RunningThreshold> _thresholds;
-  std::vector<std::vector<int16_t>> _fem_summed_waveforms;
+  std::vector<std::vector<int>> _fem_summed_waveforms;
   std::vector<std::vector<double>> _fem_summed_fft;
 
 private:
