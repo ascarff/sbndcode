@@ -9,6 +9,12 @@ add_subdirectory(LariatDataProducts)
 # add in VST Calibration
 add_subdirectory(VSTCalibration)
 
+# add in Redis stuff
+add_subdirectory(Redis)
+
+# add header-decoder stuff
+add_subdirectory(Decoder)
+
 link_directories($ENV{FFTW_LIBRARY})
 
 art_dictionary(DICTIONARY_LIBRARIES daqAnalysis_VST)
