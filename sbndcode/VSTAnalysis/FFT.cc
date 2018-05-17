@@ -64,6 +64,12 @@ double FFTManager::ImOutputAt(const int index) {
   return _output_array[index][1];
 }
 
+double FFTManager::AbsOutputAt(const int index) {
+  assert(_is_allocated);
+  assert(index < _output_size);
+  return _output_array[index][0]*_output_array[index][0] + _output_array[index][1]*_output_array[index][1];
+}
+
 FFTManager::~FFTManager() {
   DeAlloc();
 }

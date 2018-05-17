@@ -104,6 +104,7 @@ public:
     unsigned n_above_threshold;
 
     bool sum_waveforms;
+    bool fft_summed_waveforms;
     bool fft_per_channel;
     bool fill_waveforms;
     bool reduce_data;
@@ -132,6 +133,7 @@ public:
   std::vector<daqAnalysis::HeaderData> _header_data;
   std::vector<RunningThreshold> _thresholds;
   std::vector<std::vector<int16_t>> _fem_summed_waveforms;
+  std::vector<std::vector<double>> _fem_summed_fft;
 
 private:
   // Declare member data here.
