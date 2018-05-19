@@ -75,7 +75,8 @@ public:
 
   // actually analyze stuff
   void AnalyzeEvent(art::Event const & e);
-
+  // sum FEM waveforms
+  void SumWaveforms(art::Event const & event);
 
   // configuration
   struct AnalysisConfig {
