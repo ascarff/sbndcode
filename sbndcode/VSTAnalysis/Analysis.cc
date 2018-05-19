@@ -151,6 +151,9 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
   if (_config.sum_waveforms) {
     for (unsigned i = 0; i < ChannelMap::NFEM(); i++) {
       _fem_summed_waveforms[i].clear();
+      if (_config.fft_summed_waveforms) {
+        _fem_summed_fft[i].clear();
+      }
     }
   }
   _analyzed = true;
@@ -207,42 +210,6 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
   if (_config.timing) {
     _timing.EndTime(&_timing.coherent_noise_calc);
   }
- 
-  // summed waveforms
-  // TODO @INSTALLATION: Make sure this still works
-  if (_config.sum_waveforms) {
-    size_t n_fem = ChannelMap::NFEM();
-    std::vector<std::vector<const std::vector<int16_t> *>> channel_waveforms_per_fem(n_fem);
-    // collect the waveforms
-    for (unsigned i = 0; i < ChannelMap::n_wire; i++) {
-      unsigned raw_digits_i = _channel_index_map[i];
-      daqAnalysis::ChannelMap::readout_channel info = daqAnalysis::ChannelMap::Wire2Channel(i);
-      size_t fem_ind = info.slot + info.crate * ChannelMap::n_fem_per_crate; 
-      channel_waveforms_per_fem[fem_ind].push_back(&(*raw_digits_handle)[raw_digits_i].ADCs());
-    }
-    // sum all of them
-    for (unsigned i = 0; i < n_fem; i++) {
-      daqAnalysis::SumWaveforms(_fem_summed_waveforms[i] ,channel_waveforms_per_fem[i]);
-      // do fft if configed
-      if (_config.fft_summed_waveforms) {
-        if (_fft_manager.InputSize() != _fem_summed_waveforms[i].size()) {
-          _fft_manager.Set(_fem_summed_waveforms[i].size());
-        }
-        // fill up fft array
-        for (unsigned adc_ind = 0; adc_ind < _fem_summed_waveforms[i].size(); adc_ind++) {
-          double *input = _fft_manager.InputAt(adc_ind);
-          *input = (double) _fem_summed_waveforms[i][adc_ind];
-        }
-        // run the FFT
-        _fft_manager.Execute();
-        // return results
-        unsigned adc_fft_size = _fft_manager.OutputSize();
-        for (unsigned adc_ind = 0; adc_ind < adc_fft_size; adc_ind++) {
-          _fem_summed_fft[i].push_back(_fft_manager.AbsOutputAt(adc_ind));
-        }
-      }
-    }
-  }
 
   if (_config.timing) {
     _timing.StartTime();
@@ -266,6 +233,47 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
   }
   if (_config.timing) {
     _timing.Print();
+  }
+}
+
+void Analysis::SumWaveforms(art::Event const & event) {
+  auto const& raw_digits_handle = event.getValidHandle<std::vector<raw::RawDigit>>(_config.daq_tag);
+  // summed waveforms
+  // TODO @INSTALLATION: Make sure this still works
+  if (_config.sum_waveforms) {
+    size_t n_fem = ChannelMap::NFEM();
+    std::vector<std::vector<const std::vector<int16_t> *>> channel_waveforms_per_fem(n_fem);
+    std::vector<std::vector<int16_t>> all_baselines(n_fem);
+    // collect the waveforms
+    for (unsigned i = 0; i < ChannelMap::n_wire; i++) {
+      unsigned raw_digits_i = _channel_index_map[i];
+      daqAnalysis::ChannelMap::readout_channel info = daqAnalysis::ChannelMap::Wire2Channel(i);
+      size_t fem_ind = info.slot + info.crate * ChannelMap::n_fem_per_crate; 
+      channel_waveforms_per_fem[fem_ind].push_back(&(*raw_digits_handle)[raw_digits_i].ADCs());
+      all_baselines[fem_ind].push_back(_per_channel_data[i].baseline);
+    }
+    // sum all of them
+    for (unsigned i = 0; i < n_fem; i++) {
+      daqAnalysis::SumWaveforms(_fem_summed_waveforms[i] ,channel_waveforms_per_fem[i], all_baselines[i]);
+      // do fft if configed
+      if (_config.fft_summed_waveforms) {
+        if (_fft_manager.InputSize() != _fem_summed_waveforms[i].size()) {
+          _fft_manager.Set(_fem_summed_waveforms[i].size());
+        }
+        // fill up fft array
+        for (unsigned adc_ind = 0; adc_ind < _fem_summed_waveforms[i].size(); adc_ind++) {
+          double *input = _fft_manager.InputAt(adc_ind);
+          *input = (double) _fem_summed_waveforms[i][adc_ind];
+        }
+        // run the FFT
+        _fft_manager.Execute();
+        // return results
+        unsigned adc_fft_size = _fft_manager.OutputSize();
+        for (unsigned adc_ind = 0; adc_ind < adc_fft_size; adc_ind++) {
+          _fem_summed_fft[i].push_back(_fft_manager.AbsOutputAt(adc_ind));
+        }
+      }
+    }
   }
 }
 
