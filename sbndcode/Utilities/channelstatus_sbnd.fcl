@@ -19,4 +19,17 @@ sbnd_channelstatus: {
   
 } # sbnd_channel_filter
 
+vst_channelstatus: {
+  
+  service_provider: SimpleChannelStatusService
+
+  # list of bad channels:
+  BadChannels:   [ ]
+
+  # list of bad noisy channels:
+  NoisyChannels: [ ]
+
+} # sbnd_channel_filter
+
+
 END_PROLOG

@@ -22,6 +22,23 @@ inline bool doMatchPeaks(unsigned plane_type) {
   return plane_type == 1;
 }
 
+PeakFinder::PeakFinder(const std::vector<art::Ptr<recob::Hit> > &hits){
+  //Creates peak objects used for the gettting the channel info by using the hits found using RawHitFinder.                                
+  for(std::vector<art::Ptr<recob::Hit> >::const_iterator hit_iter=hits.begin(); hit_iter!=hits.end(); ++hit_iter){
+    PeakFinder::Peak peak;
+    peak.amplitude = (*hit_iter)->PeakAmplitude();
+    peak.peak_index = (*hit_iter)->PeakTime();
+    peak.start_tight = (*hit_iter)->StartTick();
+    peak.start_loose = (*hit_iter)->StartTick();
+    peak.end_tight = (*hit_iter)->EndTick();
+    peak.end_loose = (*hit_iter)->EndTick();
+    _peaks.emplace_back(peak);
+  }
+
+}
+
+
+
 // plane_type == 0 means fit up and down peaks and don't match (i.e. debug mode)
 // plane_type == 1 means fit up and down peaks and match (induction planes)
 // plane_type == 2 means fit up peaks only (collection planes)

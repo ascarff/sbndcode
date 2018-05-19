@@ -49,6 +49,8 @@ Redis::Redis(Redis::Config &config):
   _dnoise(config.NStreams(), RedisDNoise()),
   _pulse_height(config.NStreams(), RedisPulseHeight()),
   _occupancy(config.NStreams(), RedisOccupancy()),
+  _RawHit_pulse_height(config.NStreams(),RedisRawHitPulseHeight()),
+  _RawHit_occupancy(config.NStreams(), RedisRawHitOccupancy()),
 
   // and the header stuff
   _frame_no(config.NStreams(), RedisFrameNo()),
@@ -484,7 +486,9 @@ void Redis::FillChannelData(vector<daqAnalysis::ChannelData> *per_channel_data) 
           _baseline[i].Add((*per_channel_data)[wire], crate, fem_ind, wire);
           _dnoise[i].Add((*per_channel_data)[wire], crate, fem_ind, wire);
           _pulse_height[i].Add((*per_channel_data)[wire], crate, fem_ind, wire);
+	  _RawHit_pulse_height[i].Add((*per_channel_data)[wire], crate, fem_ind, wire);
           _occupancy[i].Add((*per_channel_data)[wire], crate, fem_ind, wire);
+	  _RawHit_occupancy[i].Add((*per_channel_data)[wire], crate, fem_ind, wire);
         }
 
       }
@@ -510,7 +514,9 @@ void Redis::FillChannelData(vector<daqAnalysis::ChannelData> *per_channel_data) 
     _baseline[i].Update();
     _dnoise[i].Update();
     _pulse_height[i].Update();
+    _RawHit_pulse_height[i].Update();
     _occupancy[i].Update();
+    _RawHit_occupancy[i].Update();
   }
 }
 
@@ -530,12 +536,16 @@ void Redis::SendChannelData() {
       n_commands += _dnoise[i].Send(context, index, stream_name, _stream_expire[i]);
       n_commands += _occupancy[i].Send(context, index, stream_name, _stream_expire[i]);
       n_commands += _pulse_height[i].Send(context, index, stream_name, _stream_expire[i]);
+      n_commands += _RawHit_occupancy[i].Send(context, index, stream_name, _stream_expire[i]);
+      n_commands += _RawHit_pulse_height[i].Send(context, index, stream_name, _stream_expire[i]);
 
       _rms[i].Clear();
       _baseline[i].Clear();
       _dnoise[i].Clear();
       _pulse_height[i].Clear();
       _occupancy[i].Clear();
+      _RawHit_pulse_height[i].Clear();
+      _RawHit_occupancy[i].Clear();
 
       if (_do_timing) {
         _timing.EndTime(&_timing.send_metrics);
@@ -556,6 +566,8 @@ void Redis::SendChannelData() {
       n_commands += _dnoise[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
       n_commands += _occupancy[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
       n_commands += _pulse_height[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
+      n_commands += _RawHit_occupancy[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
+      n_commands += _RawHit_pulse_height[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
 
       // the metric was taken iff it was sent to redis
       // clear all of the metrics
@@ -564,6 +576,8 @@ void Redis::SendChannelData() {
       _dnoise[sub_run_ind].Clear();
       _pulse_height[sub_run_ind].Clear();
       _occupancy[sub_run_ind].Clear();
+      _RawHit_pulse_height[sub_run_ind].Clear();
+      _RawHit_occupancy[sub_run_ind].Clear();
 
       if (_do_timing) {
         _timing.EndTime(&_timing.send_metrics);

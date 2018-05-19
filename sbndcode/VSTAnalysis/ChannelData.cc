@@ -21,6 +21,19 @@ float daqAnalysis::ChannelData::meanPeakHeight() {
   return ((float) total) / peaks.size();
 }
 
+float daqAnalysis::ChannelData::meanPeakHeight(const std::vector<art::Ptr<recob::Hit> > &hits) {
+  if(hits.size() == 0) {
+    return 0;
+  }
+  int total = 0;
+  for(std::vector<art::Ptr<recob::Hit> >::const_iterator hit_iter=hits.begin();hit_iter!=hits.end(); ++hit_iter){
+    total += (*hit_iter)->PeakAmplitude();
+  }
+
+  return ((float) total)/ hits.size();
+}
+
+
 // only count up peaks
 float daqAnalysis::ChannelData::Occupancy() {
   float n_peaks = 0;

@@ -33,6 +33,8 @@ namespace daqAnalysis {
   class RedisBaseline;
   class RedisPulseHeight;
   class RedisDNoise;
+  class RedisRawHitOccupancy;
+  class RedisRawHitPulseHeight;
 
   // header metric base class
   template<class Stream, char const *REDIS_NAME>
@@ -304,6 +306,8 @@ extern char REDIS_NAME_OCCUPANCY[];
 extern char REDIS_NAME_DNOISE[];
 extern char REDIS_NAME_BASLINE[];
 extern char REDIS_NAME_PULSE_HEIGHT[];
+extern char REDIS_NAME_RAWHIT_OCCUPANCY[];
+extern char REDIS_NAME_RAWHIT_PULSE_HEIGHT[];
 
 // RMS is Variable Mean because sometimes noise calculation algorithm can fail
 class daqAnalysis::RedisRMS: public daqAnalysis::DetectorMetric<StreamDataVariableMean, REDIS_NAME_RMS> {
@@ -323,6 +327,15 @@ class daqAnalysis::RedisOccupancy: public daqAnalysis::DetectorMetric<StreamData
   // implement calculate
  inline float Calculate(daqAnalysis::ChannelData &channel) override
    { return channel.occupancy; }
+};
+
+class daqAnalysis::RedisRawHitOccupancy: public daqAnalysis::DetectorMetric<StreamDataMean, REDIS_NAME_RAWHIT_OCCUPANCY> {
+  // inherit constructor
+  using daqAnalysis::DetectorMetric<StreamDataMean, REDIS_NAME_RAWHIT_OCCUPANCY>::DetectorMetric;
+
+  // implement calculate 
+  inline float Calculate(daqAnalysis::ChannelData &channel) override
+  { return channel.Hitoccupancy; }
 };
 
 class daqAnalysis::RedisDNoise: public daqAnalysis::DetectorMetric<StreamDataVariableMean, REDIS_NAME_DNOISE> {
@@ -351,6 +364,16 @@ class daqAnalysis::RedisPulseHeight: public daqAnalysis::DetectorMetric<StreamDa
  inline float Calculate(daqAnalysis::ChannelData &channel) override
    { return channel.mean_peak_height; }
 };
+
+class daqAnalysis::RedisRawHitPulseHeight: public daqAnalysis::DetectorMetric<StreamDataVariableMean, REDIS_NAME_RAWHIT_PULSE_HEIGHT> {
+  // inherit constructor
+  using daqAnalysis::DetectorMetric<StreamDataVariableMean, REDIS_NAME_RAWHIT_PULSE_HEIGHT>::DetectorMetric;
+
+  // implement calculate 
+  inline float Calculate(daqAnalysis::ChannelData &channel) override
+  { return channel.Hitmean_peak_height; }
+};
+
 
 template<class Stream, char const *REDIS_NAME>
 class daqAnalysis::HeaderMetric {

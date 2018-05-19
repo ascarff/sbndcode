@@ -137,6 +137,8 @@ char REDIS_NAME_OCCUPANCY[] = "hit_occupancy";
 char REDIS_NAME_DNOISE[] = "next_channel_dnoise";
 char REDIS_NAME_BASLINE[] = "baseline";
 char REDIS_NAME_PULSE_HEIGHT[] = "pulse_height";
+char REDIS_NAME_RAWHIT_OCCUPANCY[] = "rawhit_occupancy";
+char REDIS_NAME_RAWHIT_PULSE_HEIGHT[] = "rawhit_pulse_height";
 
 // and of HeaderMetric
 char REDIS_NAME_EVENT_NO[] = "event_no";

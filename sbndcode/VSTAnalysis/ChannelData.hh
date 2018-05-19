@@ -6,6 +6,8 @@
 #include <string>
 
 #include "PeakFinder.hh"
+#include "canvas/Persistency/Common/Ptr.h"
+#include "lardataobj/RecoBase/Hit.h"
 
 namespace daqAnalysis {
 class ChannelData {
@@ -28,7 +30,11 @@ public:
 
   float mean_peak_height;
   float occupancy;
+  float Hitoccupancy;
+  float Hitmean_peak_height;
+
   float meanPeakHeight();
+  float meanPeakHeight(const std::vector<art::Ptr<recob::Hit> > &hits);
   float Occupancy();
 
   // zero initialize
@@ -52,6 +58,8 @@ public:
   float rms;
   float occupancy;
   float mean_peak_amplitude;
+  float Hitoccupancy;
+  float Hitmean_peak_height;
 
   // zero initialize
   ReducedChannelData(unsigned channel=0):
@@ -60,7 +68,9 @@ public:
     baseline(0),
     rms(0),
     occupancy(0),
-    mean_peak_amplitude(0)
+    mean_peak_amplitude(0),
+    Hitoccupancy(0),
+    Hitmean_peak_height(0)
   {}
 
   ReducedChannelData(ChannelData &channel_data) {
@@ -70,6 +80,8 @@ public:
     rms = channel_data.rms;
     occupancy = channel_data.occupancy;
     mean_peak_amplitude = channel_data.mean_peak_height;
+    Hitoccupancy = channel_data.Hitoccupancy;
+    Hitmean_peak_height = channel_data.Hitmean_peak_height;
   }
 };
 

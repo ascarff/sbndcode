@@ -18,6 +18,7 @@
 #include "art/Framework/Principal/Run.h" 
 #include "art/Framework/Principal/SubRun.h" 
 #include "lardataobj/RawData/RawDigit.h"
+#include "lardataobj/RecoBase/Hit.h"
 
 #include "ChannelData.hh"
 #include "HeaderData.hh"
@@ -109,6 +110,9 @@ public:
     bool fill_waveforms;
     bool reduce_data;
     bool timing;
+    bool fUseRawHits;
+
+    std::string fHitsModuleLabel;
 
     AnalysisConfig(const fhicl::ParameterSet &param);
     AnalysisConfig() {}
@@ -116,6 +120,7 @@ public:
 
   // other functions
   void ProcessChannel(const raw::RawDigit &digits);
+  void ProcessChannel(const raw::RawDigit &digits, const std::vector<art::Ptr<recob::Hit> > &hits);
   void ProcessHeader(const daqAnalysis::HeaderData &header);
 
   // if the containers filled by the analysis are ready to be processed
