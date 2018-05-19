@@ -184,7 +184,7 @@ void Redis::SendHeaderData() {
 }
 
 inline size_t pushFFTDat(char *buffer, float re, float im) {
-  float dat = re * im;
+  float dat = re*re + im*im;
   return sprintf(buffer, " %f", dat);
 }
 
@@ -430,6 +430,10 @@ void Redis::Snapshot(vector<daqAnalysis::ChannelData> *per_channel_data, vector<
     _timing.EndTime(&_timing.clear_pipeline);
   }
   
+}
+
+bool Redis::WillTakeSnapshot() {
+  return _snapshot_time > 0 && (_now - _start) % _snapshot_time == 0 && _last_snapshot != _now;
 }
 
 void Redis::ChannelData(vector<daqAnalysis::ChannelData> *per_channel_data, vector<NoiseSample> *noise_samples, vector<vector<int>> *fem_summed_waveforms, 

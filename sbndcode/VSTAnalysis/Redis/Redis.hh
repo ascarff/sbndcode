@@ -92,7 +92,8 @@ public:
   void StartSend(unsigned sub_run=0);
   // must be called after calling Send functions
   void FinishSend();
-
+  // whether the code will call Snapshot() on ChannelData
+  bool WillTakeSnapshot();
 
 protected:
   // per-channel data to redis
