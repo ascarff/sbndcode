@@ -7,7 +7,8 @@ physics:
       wait_time: 0
       module_type: DaqDecoder
       produce_header: true
-      validate_header: false
+      validate_header: true
+      baseline_calc: true
     }
   }
 
@@ -31,7 +32,8 @@ physics:
       fft_per_channel: false
       fill_waveforms: true
       timing: false
-      sum_waveforms: false
+      sum_waveforms: true
+      fft_summed_waveforms: true
       verbose: false
     }
   }

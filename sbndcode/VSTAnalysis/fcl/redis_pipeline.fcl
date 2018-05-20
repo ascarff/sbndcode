@@ -7,6 +7,7 @@ physics:
       module_type: DaqDecoder
       wait_time: 1
       produce_header: true
+      validate_header: true
     }
   }
 
@@ -16,9 +17,11 @@ physics:
     {
       module_type: OnlineAnalysis
       producer_name: daq
-      snapshot_time: -1
+      snapshot_time: 10
       stream_take: [1, 10]
       stream_expire: [1000, 10000]
+      sub_run_stream: true
+      sub_run_expire: 1000
       n_headers: 1
 
       threshold_calc: 3
@@ -29,7 +32,8 @@ physics:
       use_planes: false
       baseline_calc: 2
 
-      sum_waveforms: false
+      sum_waveforms: true
+      fft_summed_waveforms: true
       fill_waveforms: false
       fft_per_channel: false
       timing: false
@@ -50,6 +54,20 @@ outputs:
     module_type: RootOutput
     fileName: "pipeline_out.root"
     compressionLevel: 0
+  }
+}
+
+services: {
+  message: {
+    destinations : {
+      log1 : { type : cout } 
+      udp_to_redis : { 
+        type : "UDP" 
+        threshold : "INFO" 
+        port : 30001
+        host : "sbnd-daq29.fnal.gov" 
+      }
+    }
   }
 }
 
