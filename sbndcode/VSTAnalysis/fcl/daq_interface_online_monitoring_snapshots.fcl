@@ -1,0 +1,86 @@
+physics:
+{
+  producers:
+  {
+    daq:
+    {
+      module_type: DaqDecoder
+      produce_header: true
+      validate_header: true
+      raw_data_label: daq
+      fragment_type_label: TOY2
+    }
+  }
+
+  analyzers:
+  {
+    OnlineAnalysis:
+    {
+      module_type: OnlineAnalysis
+      producer_name: daq
+      snapshot_time: 60
+      stream_take: []
+      stream_expire: []
+      sub_run_stream: false
+      hostname: "131.225.150.201"
+
+      threshold_calc: 3
+      threshold_sigma: 5
+      noise_range_sampling: 1
+      n_smoothing_samples: 1
+      n_above_threshold: 2
+      use_planes: false
+      verbose: false
+      baseline_calc: 2
+
+      sum_waveforms: true
+    }
+  }
+
+  my_producer_modules: [daq]
+
+  analyze: [OnlineAnalysis]
+  end_paths: [analyze]
+}
+
+source: {
+  module_type: TransferInput
+  timeoutInUsecs: 100000000  
+  dispatcherHost: localhost
+  dispatcherPort: 5266
+  transfer_plugin: {
+    #transferPluginType: Shmem 
+    transferPluginType: NthEvent
+    nth: 1
+    unique_label: "OnlineMonitor"
+    physical_transfer_plugin: {
+      transferPluginType: Shmem
+      shm_key: 0x40471453
+      max_fragment_size_words: 2097152
+      first_event_builder_rank: 0
+    }
+  }
+}
+
+services: {
+  message: {
+    destinations : {
+      log1 : { type : cout } 
+      udp_artdaq_messageviwer : { 
+        type : "UDP" 
+        threshold : "INFO" 
+        port : 30000 
+        host : "lariat-daq04.fnal.gov" 
+      }
+      udp_to_redis : { 
+        type : "UDP" 
+        threshold : "INFO" 
+        port : 30001
+        host : "lariat-daq04.fnal.gov" 
+      }
+    }
+  }
+}
+
+process_name: OnlineMonitoringSnapshot
+
