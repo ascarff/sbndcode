@@ -92,7 +92,7 @@ namespace hit {
       std::vector<double> fAreaNorms;           //FACTORS FOR CONVERTING AREA TO SAME UNIT AS PEAK HEIGHT.
       bool                fUncompressWithPed;   //OPTION TO UNCOMPRESS WITH PEDESTAL.
 
-      TFile *f = new TFile("TimeVsWire","RECREATE");
+    //    TFile *f = new TFile("TimeVsWire","RECREATE");
 
     protected: 
 
@@ -222,10 +222,6 @@ namespace hit {
         raw::Uncompress(digitVec->ADCs(), rawadc, pedestal, digitVec->Compression());
       }
       else{
-	//	auto adv_vec = (digitVec).ADCs();
-	//for (unsigned i = 0; i < (digitVec).NADC(); i ++) {
-	//  rawadc[i] = adv_vec[i];
-	//}
        	raw::Uncompress(digitVec->ADCs(), rawadc, digitVec->Compression());
       }
 
@@ -240,15 +236,15 @@ namespace hit {
       std::vector<geo::WireID> Wire = geom->ChannelToWire(channel);
 
       //sbnd is one channel per wire so the vector should be size one.                                                                                                        
-      geo::PlaneID  PlaneID = (Wire[0]).planeID();
+      //geo::PlaneID  PlaneID = (Wire[0]).planeID();
      
       for(unsigned int bin = 0; bin < fDataSize; ++bin){ 
 	
-	 if(rawadc[bin]-digitVec->GetPedestal()>10){
-         std::cout << " channel: " << channel << "rawadc[bin]: " << rawadc[bin] << " digitVec->GetPedestal(): " << digitVec->GetPedestal() <<" bin: " << bin  << " holder[bin]:" << rawadc[bin]-digitVec->GetPedestal() <<std::endl ;
-	  Graph_map_daq[PlaneID]->SetPoint(Graph_map_daq[PlaneID]->GetN(),channel,bin); 
-	}
-        holder[bin]=(rawadc[bin]-digitVec->GetPedestal());
+	//	if(TMath::Abs(rawadc[bin])>20){//-digitVec->GetPedestal()>10){
+	// std::cout << " channel: " << channel << "rawadc[bin]: " << rawadc[bin] << " digitVec->GetPedestal(): " << digitVec->GetPedestal() <<" bin: " << bin  << " holder[bin]:" << rawadc[bin]-digitVec->GetPedestal() <<std::endl ;
+        //Graph_map_daq[PlaneID]->SetPoint(Graph_map_daq[PlaneID]->GetN(),channel,bin); 
+	//}
+        holder[bin]=(rawadc[bin]);//-digitVec->GetPedestal());
       }
 
       sigType = geom->SignalType(channel);
@@ -492,6 +488,8 @@ namespace hit {
           continue;
         }
 
+	//	std::cout << "position: " << position << std::endl;
+
         recob::HitCreator hit(
             *digitVec,                                                                     //RAW DIGIT REFERENCE.
             wid,                                                                           //WIRE ID.
@@ -514,13 +512,14 @@ namespace hit {
 	
         ++hitIndex;
       }
-    }
+      }
     
-    // f->Close();
-    for(geo::PlaneID plane_id: geom->IteratePlaneIDs()){
-      Graph_map_daq[plane_id]->Write();
-      Graph_map_daq[plane_id]->Delete();                                                                                                                                         
-    }
+
+      //    for(geo::PlaneID plane_id: geom->IteratePlaneIDs()){
+      //std::cout << Graph_map_daq[plane_id]->GetN() << std::endl;
+      //Graph_map_daq[plane_id]->Write();
+      //      Graph_map_daq[plane_id]->Delete();                                                                                                                                         
+      //}
     
   
     hcol.put_into(evt);

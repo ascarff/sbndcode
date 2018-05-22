@@ -46,7 +46,11 @@ public:
     min(0),
     rms(0),
     next_channel_dnoise(0),
-    threshold(0)
+    threshold(0),
+    mean_peak_height(0),
+    occupancy(0),
+    Hitoccupancy(0),
+    Hitmean_peak_height(0)
   {}
 };
 

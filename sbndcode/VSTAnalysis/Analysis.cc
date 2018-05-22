@@ -182,22 +182,22 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
   std::vector<art::Ptr<raw::RawDigit> > rawdigits;
   if(event.getByLabel(_config.daq_tag,raw_digits_handle))
     {art::fill_ptr_vector(rawdigits, raw_digits_handle);}
-  std::cout << "raw_digits_handle->size(): " << raw_digits_handle->size() << std::endl;
+  //  std::cout << "raw_digits_handle->size(): " << raw_digits_handle->size() << std::endl;
 
   //if we don't have the RawHits we can't use that method.
   if(!event.getByLabel(_config.fHitsModuleLabel,hitListHandle)){_config.fUseRawHits = false;}
 
-  // === Associations between hits and raw digits ===
-  art::FindOneP<raw::RawDigit> ford(hitListHandle,   event,_config.fHitsModuleLabel);
-  art::FindManyP<recob::Hit>   fmhr(raw_digits_handle, event,_config.fHitsModuleLabel);
-
   unsigned index = 0;
   // calculate per channel stuff 
   if(_config.fUseRawHits == true){
+    
+    // === Associations between hits and raw digits === 
+    art::FindManyP<recob::Hit>   fmhr(raw_digits_handle, event,_config.fHitsModuleLabel);
+
     // loop over all tracks in the handle and get their hits
     for(size_t digit_int = 0; digit_int < raw_digits_handle->size(); ++digit_int){
       //Get the raw digit object.    
-      auto const& digits=rawdigits[digit_int];
+      auto const& digits=rawdigits[digit_int];  
       //Get the hits associated to the raw digit. 
       const std::vector<art::Ptr<recob::Hit> >& hits = fmhr.at(digit_int);
       _channel_index_map[digits->Channel()] = index;
@@ -206,6 +206,9 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
     }
   }
   else if(event.getByLabel(_config.fHitsModuleLabel,hitListHandle) && _config.fUseRawHits == false){
+
+    // === Associations between hits and raw digits === 
+    art::FindManyP<recob::Hit>   fmhr(raw_digits_handle, event,_config.fHitsModuleLabel);
     // loop over all tracks in the handle and get their hits 
     for(size_t digit_int = 0; digit_int < raw_digits_handle->size(); ++digit_int){
       //Get the raw digit object.
@@ -356,11 +359,14 @@ void Analysis::ProcessChannel(const raw::RawDigit &digits, const std::vector<art
   if(_config.fUseRawHits == true){
     PeakFinder peaks(hits);
     _per_channel_data[channel].peaks.assign(peaks.Peaks()->begin(), peaks.Peaks()->end());
+    _per_channel_data[channel].Hitoccupancy = hits.size();
+    _per_channel_data[channel].Hitmean_peak_height = _per_channel_data[channel].meanPeakHeight(hits);
   }
   else {
     //Calculate Quantities from the raw Hit Finder but calculate the rest using the peakfinder.
     _per_channel_data[channel].Hitoccupancy = hits.size();
     _per_channel_data[channel].Hitmean_peak_height = _per_channel_data[channel].meanPeakHeight(hits);
+    std::cout << "hits.size(): " << hits.size()  << " _per_channel_data[channel].meanPeakHeight(hits): " << _per_channel_data[channel].meanPeakHeight(hits) << std::endl;
   }
 
 
