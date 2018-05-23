@@ -5,6 +5,9 @@
 #include <string>
 #include <float.h>
 
+#include "canvas/Persistency/Common/Ptr.h"
+#include "lardataobj/RecoBase/Hit.h"
+
 // Reinventing the wheel: search for a bunch of peaks in a set of data
 // 
 // Implementation: searches for points above some threshold (requiring a 
@@ -36,6 +39,8 @@ public:
     std::string Print();
 
   };
+
+  PeakFinder(const std::vector<art::Ptr<recob::Hit> > &hits);
 
   PeakFinder(std::vector<int16_t> &waveform, int16_t baseline, float threshold, unsigned n_smoothing_samples=1, unsigned n_above_threshold=0, unsigned plane_type=0);
   inline std::vector<Peak> *Peaks() { return &_peaks; }

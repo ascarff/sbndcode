@@ -21,8 +21,8 @@
 
 // art includes
 #include "canvas/Utilities/InputTag.h"
-#include "canvas/Persistency/Common/FindMany.h"
-#include "canvas/Persistency/Common/FindOne.h"
+#include "canvas/Persistency/Common/FindManyP.h"
+#include "canvas/Persistency/Common/FindOneP.h"
 #include "art/Framework/Core/EDAnalyzer.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Handle.h"
@@ -32,6 +32,8 @@
 #include "messagefacility/MessageLogger/MessageLogger.h"  
 #include "art/Framework/Services/Optional/TFileService.h"
 #include "lardataobj/RawData/RawDigit.h"
+#include "lardataobj/RecoBase/Hit.h"
+#include "lardataobj/RawData/raw.h"
 
 #include "Analysis.hh"
 #include "ChannelData.hh"
@@ -132,11 +134,29 @@ Analysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &param) {
   // name of producer of raw::RawDigits
   std::string producer = param.get<std::string>("producer_name");
   daq_tag = art::InputTag(producer, ""); 
+
+  //HitFinderName
+  fHitsModuleLabel = param.get<std::string>("HitsModuleLabel","RawHitFinder");
+
+  //Use Hits rather than peak finder
+  fUseRawHits = param.get<bool>("UseRawHits",false);
+
 }
 
 void Analysis::AnalyzeEvent(art::Event const & event) {
 
   _event_ind ++;
+
+  // Getting the Hit Information 
+  art::Handle<std::vector<recob::Hit> > hitListHandle;
+  std::vector<art::Ptr<recob::Hit> > rawhits;
+  if(event.getByLabel(_config.fHitsModuleLabel,hitListHandle))
+    {art::fill_ptr_vector(rawhits, hitListHandle);}
+  //  std::cout << "Number of Hits: " << rawhits.size() << std::endl;  
+
+  //######################################################        
+  // I would add a function to some purity code here tom.  
+  //#####################################################  
 
   // clear out containers from last iter
   for (unsigned i = 0; i < ChannelMap::n_wire; i++) {
@@ -153,16 +173,69 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
   }
   _analyzed = true;
 
-  auto const& raw_digits_handle = event.getValidHandle<std::vector<raw::RawDigit>>(_config.daq_tag);
-  
-  // calculate per channel stuff
-  // keep track of channel to index mapping
+  //Get the raw_digits
+  art::Handle<std::vector<raw::RawDigit> > raw_digits_handle;
+  std::vector<art::Ptr<raw::RawDigit> > rawdigits;
+  if(event.getByLabel(_config.daq_tag,raw_digits_handle))
+    {art::fill_ptr_vector(rawdigits, raw_digits_handle);}
+  //  std::cout << "raw_digits_handle->size(): " << raw_digits_handle->size() << std::endl;     
+
+  //if we don't have the RawHits we can't use that method.
+  if(!event.getByLabel(_config.fHitsModuleLabel,hitListHandle)){_config.fUseRawHits = false;}
+
   unsigned index = 0;
-  for (auto const& digits: *raw_digits_handle) {
-    _channel_index_map[digits.Channel()] = index;
-    ProcessChannel(digits);
-    index ++;
+  // calculate per channel stuff   
+  if(_config.fUseRawHits == true){
+
+    // === Associations between hits and raw digits === 
+    art::FindManyP<recob::Hit>   fmhr(raw_digits_handle, event,_config.fHitsModuleLabel);
+
+    // loop over all tracks in the handle and get their hits
+    for(size_t digit_int = 0; digit_int < raw_digits_handle->size(); ++digit_int){
+      //Get the raw digit object. 
+      auto const& digits=rawdigits[digit_int];
+      //Get the hits associated to the raw digit.
+      const std::vector<art::Ptr<recob::Hit> >& hits = fmhr.at(digit_int);
+      _channel_index_map[digits->Channel()] = index;
+      ProcessChannel(*digits, hits);
+      index++;
+    }
   }
+  else if(event.getByLabel(_config.fHitsModuleLabel,hitListHandle) && _config.fUseRawHits == false){
+
+    // === Associations between hits and raw digits ===
+    art::FindManyP<recob::Hit>   fmhr(raw_digits_handle, event,_config.fHitsModuleLabel);
+    // loop over all tracks in the handle and get their hits
+    for(size_t digit_int = 0; digit_int < raw_digits_handle->size(); ++digit_int){
+      //Get the raw digit object.
+      auto const& digits=rawdigits[digit_int];
+      //Get the hits associated to the raw digit.
+      const std::vector<art::Ptr<recob::Hit> >& hits = fmhr.at(digit_int);
+      _channel_index_map[digits->Channel()] = index;
+      ProcessChannel(*digits, hits);
+      index++;
+    }
+  }
+  else{
+    for (auto const& digits: *raw_digits_handle) {
+      _channel_index_map[digits.Channel()] = index;
+      ProcessChannel(digits);
+      index++;
+    }
+  }
+
+
+  //Gray's Old code.
+  // auto const& raw_digits_handle = event.getValidHandle<std::vector<raw::RawDigit>>(_config.daq_tag);
+  
+  // // calculate per channel stuff
+  // // keep track of channel to index mapping
+  // unsigned index = 0;
+  // for (auto const& digits: *raw_digits_handle) {
+  //   _channel_index_map[digits.Channel()] = index;
+  //   ProcessChannel(digits);
+  //   index ++;
+  // }
 
   if (_config.timing) {
     _timing.StartTime();
@@ -257,6 +330,29 @@ void Analysis::ProcessHeader(const daqAnalysis::HeaderData &header) {
     _header_data[0] = header;
   }
 }
+
+void Analysis::ProcessChannel(const raw::RawDigit &digits, const std::vector<art::Ptr<recob::Hit> > &hits){
+
+  auto channel = digits.Channel();
+
+  //uses the RawHitFinder Module to find the peak and then processes the channel as before.
+  if(_config.fUseRawHits == true){
+    PeakFinder peaks(hits);
+    _per_channel_data[channel].peaks.assign(peaks.Peaks()->begin(), peaks.Peaks()->end());
+    _per_channel_data[channel].Hitoccupancy = hits.size();
+    _per_channel_data[channel].Hitmean_peak_height = _per_channel_data[channel].meanPeakHeight(hits);
+  }
+  else {
+    //Calculate Quantities from the raw Hit Finder but calculate the rest using the peakfinder.
+    _per_channel_data[channel].Hitoccupancy = hits.size();
+    _per_channel_data[channel].Hitmean_peak_height = _per_channel_data[channel].meanPeakHeight(hits);
+  }
+
+
+  ProcessChannel(digits);
+}
+
+
 
 void Analysis::ProcessChannel(const raw::RawDigit &digits) {
   auto channel = digits.Channel();
@@ -379,9 +475,11 @@ void Analysis::ProcessChannel(const raw::RawDigit &digits) {
   }
   // get Peaks
   unsigned peak_plane = (_config.use_planes) ? ChannelMap::PlaneType(channel) : 0;
-  PeakFinder peaks(adc_vec, _per_channel_data[channel].baseline, threshold, 
-      _config.n_smoothing_samples, _config.n_above_threshold, peak_plane);
-  _per_channel_data[channel].peaks.assign(peaks.Peaks()->begin(), peaks.Peaks()->end());
+  if(!_config.fUseRawHits){
+    PeakFinder peaks(adc_vec, _per_channel_data[channel].baseline, threshold,
+		     _config.n_smoothing_samples, _config.n_above_threshold, peak_plane);
+    _per_channel_data[channel].peaks.assign(peaks.Peaks()->begin(), peaks.Peaks()->end());
+  }
 
   if (_config.timing) {
     _timing.EndTime(&_timing.find_peaks);
@@ -420,6 +518,7 @@ void Analysis::ProcessChannel(const raw::RawDigit &digits) {
   // calculate derived quantities
   _per_channel_data[channel].occupancy = _per_channel_data[channel].Occupancy();
   _per_channel_data[channel].mean_peak_height = _per_channel_data[channel].meanPeakHeight();
+
 }
 
 bool Analysis::ReadyToProcess() {

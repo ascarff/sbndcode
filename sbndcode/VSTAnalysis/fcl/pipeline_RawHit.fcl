@@ -1,0 +1,82 @@
+#include "geometry_lariat.fcl"
+#include "hitfindermodulesVST.fcl"
+#include "channelstatus_sbnd.fcl"
+#include "resourcemonitorservices_sbnd.fcl"
+
+physics:
+{
+  producers:
+  {
+    caldata:
+    {
+      module_type: CalWireVST
+      digit_producer_name: daq 
+    }
+    
+    rawhit:             @local::standard_fasthitfinderVST
+    
+  }
+
+  analyzers:
+  {
+    VSTAnalysis:
+    {
+      module_type: VSTAnalysis
+      producer_name: daq
+      threshold_calc: 3
+      threshold_sigma: 5
+      noise_range_sampling: 1
+      n_smoothing_samples: 9
+      use_planes: true
+      verbose: false
+      baseline_calc: 2
+
+      HitsModuleLabel: "rawhit"
+      UseRawHits: false
+
+      fft_per_channel: false
+      timing: false
+      sum_waveforms: false 
+    }
+  }
+
+  my_producer_modules: [rawhit]
+
+  outstream: [out1]
+  analyze: [VSTAnalysis]
+  end_paths: [outstream, analyze]
+}
+
+outputs:
+{
+  out1:
+  {
+    module_type: RootOutput 
+    #dropAllEvents:true		
+   			    
+    fileName: "decoder_out.root"
+  }
+}
+
+services:
+{
+  TFileService: { fileName: "out.root"}
+  Geometry: @local::lariat_geo
+  ExptGeoHelperInterface: @local::lariat_geometry_helper
+  ChannelStatusService:   @local::vst_channelstatus
+  @table::sbnd_resourcemonitorservices
+} 
+
+source:
+{
+  module_type: RootInput
+  fileNames: ["/home/nfs/gputnam/lariat_data.root"]
+}
+
+physics.producers.rawhit.DigitModuleLabel:    "daq"
+physics.producers.rawhit.MinSigInd:           13
+physics.producers.rawhit.MinSigCol:           13
+physics.producers.rawhit.UncompressWithPed:         false 
+
+process_name: PIPELINE
+
