@@ -374,7 +374,6 @@ void Analysis::ProcessChannel(const raw::RawDigit &digits, const std::vector<art
     //Calculate Quantities from the raw Hit Finder but calculate the rest using the peakfinder.
     _per_channel_data[channel].Hitoccupancy = hits.size();
     _per_channel_data[channel].Hitmean_peak_height = _per_channel_data[channel].meanPeakHeight(hits);
-    std::cout << "hits.size(): " << hits.size()  << " _per_channel_data[channel].meanPeakHeight(hits): " << _per_channel_data[channel].meanPeakHeight(hits) << std::endl;
   }
 
 

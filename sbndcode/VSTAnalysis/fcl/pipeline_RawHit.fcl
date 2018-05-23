@@ -30,7 +30,9 @@ physics:
       use_planes: true
       verbose: false
       baseline_calc: 2
+
       HitsModuleLabel: "rawhit"
+      UseRawHits: false
 
       fft_per_channel: false
       timing: false
@@ -72,15 +74,9 @@ source:
 }
 
 physics.producers.rawhit.DigitModuleLabel:    "daq"
-physics.producers.rawhit.MinSigInd:           13.33
-physics.producers.rawhit.MinSigCol:           13.33
-#physics.producers.rawhit.IncludeMoreTail:           3.0
+physics.producers.rawhit.MinSigInd:           13
+physics.producers.rawhit.MinSigCol:           13
 physics.producers.rawhit.UncompressWithPed:         false 
-#physics.producers.rawhit.IndWidth:             6.0              # Initial width for induction fit                                                               
-#physics.producers.rawhit.ColWidth:             7.8              # Initial width for collection fit                                                      
-#physics.producers.rawhit.IndMinWidth:          4.0              # Induction Hit width threshold                                                            
-#physics.producers.rawhit.ColMinWidth:          6.0              # Collection hit width threshold                                                                       
-#physics.producers.rawhit.MaxMultiHit:          3                # maximum hits for multi fit                                                                      
 
 process_name: PIPELINE
 

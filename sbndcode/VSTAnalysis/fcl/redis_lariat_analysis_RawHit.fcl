@@ -1,0 +1,72 @@
+#include "geometry_lariat.fcl"
+#include "resourcemonitorservices_sbnd.fcl"
+#include "hitfindermodulesVST.fcl"
+#include "channelstatus_sbnd.fcl"
+
+physics:
+{
+
+producers:
+{
+  rawhit:             @local::standard_fasthitfinderVST
+}
+
+  analyzers:
+  {
+    OnlineAnalysis:
+    {
+      module_type: OnlineAnalysis
+      producer_name: daq
+      redis: true
+      snapshot_time: -1
+      stream_take: [1, 10]
+      stream_expire: [1000, 10000]
+      n_headers: 0
+
+      threshold_calc: 3
+      threshold_sigma: 5
+      noise_range_sampling: 1
+      n_smoothing_samples: 1
+      n_above_threshold: 2
+      use_planes: true
+      verbose: false
+      baseline_calc: 2
+      n_mode_skip: 3
+
+      HitsModuleLabel: "rawhit"
+      UseRawHits: false
+
+      sum_waveforms: false
+      fill_waveforms: false
+      fft_per_channel: false
+      timing: true
+    }
+  }
+
+  my_producer_modules: [rawhit]
+
+  analyze: [OnlineAnalysis]
+  end_paths: [analyze]
+}
+
+source:
+{
+  module_type: RootInput
+  fileNames: ["/home/nfs/gputnam/lariat_data.root"]
+}
+
+services: {
+  Geometry: @local::lariat_geo
+  ExptGeoHelperInterface: @local::lariat_geometry_helper
+  ChannelStatusService:   @local::vst_channelstatus  
+  @table::sbnd_resourcemonitorservices
+}
+
+physics.producers.rawhit.DigitModuleLabel:        "daq"
+physics.producers.rawhit.MinSigInd:                 13  #Change to 5 sigma of the RMS of the Noise.  
+physics.producers.rawhit.MinSigCol:                 13
+physics.producers.rawhit.UncompressWithPed:         false
+
+
+process_name: REDISPIPELINE
+

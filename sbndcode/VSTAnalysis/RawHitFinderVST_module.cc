@@ -244,7 +244,7 @@ namespace hit {
 	// std::cout << " channel: " << channel << "rawadc[bin]: " << rawadc[bin] << " digitVec->GetPedestal(): " << digitVec->GetPedestal() <<" bin: " << bin  << " holder[bin]:" << rawadc[bin]-digitVec->GetPedestal() <<std::endl ;
         //Graph_map_daq[PlaneID]->SetPoint(Graph_map_daq[PlaneID]->GetN(),channel,bin); 
 	//}
-        holder[bin]=(rawadc[bin]);//-digitVec->GetPedestal());
+        holder[bin]=(rawadc[bin]-digitVec->GetPedestal());
       }
 
       sigType = geom->SignalType(channel);

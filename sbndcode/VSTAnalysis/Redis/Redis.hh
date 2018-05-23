@@ -144,8 +144,8 @@ protected:
   std::vector<daqAnalysis::RedisDNoise> _dnoise;
   std::vector<daqAnalysis::RedisPulseHeight> _pulse_height;
   std::vector<daqAnalysis::RedisOccupancy> _occupancy;
-  std::vector<daqAnalysis::RedisRawHitPulseHeight> _RawHit_pulse_height;
-  std::vector<daqAnalysis::RedisRawHitOccupancy> _RawHit_occupancy;
+  std::vector<daqAnalysis::RedisRawHitPulseHeight> _rawhit_pulse_height;
+  std::vector<daqAnalysis::RedisRawHitOccupancy> _rawhit_occupancy;
 
   // header info
   std::vector<daqAnalysis::RedisFrameNo> _frame_no;

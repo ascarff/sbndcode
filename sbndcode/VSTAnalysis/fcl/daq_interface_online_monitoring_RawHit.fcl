@@ -1,3 +1,5 @@
+#include "hitfindermodulesVST.fcl"
+#include "channelstatus_sbnd.fcl"
 
 physics:
 {
@@ -11,6 +13,8 @@ physics:
       raw_data_label: daq
       fragment_type_label: TOY2
     }
+
+    rawhit:             @local::standard_fasthitfinderVST
 
   }
 
@@ -35,13 +39,16 @@ physics:
       verbose: false
       baseline_calc: 2
 
+      HitsModuleLabel: "rawhit"
+      UseRawHits: false
+
       sum_waveforms: false
       fft_per_channel: false
       timing: false
     }
   }
 
-  my_producer_modules: [daq]
+  my_producer_modules: [daq,raw]
 
   analyze: [OnlineAnalysis]
   end_paths: [analyze]
@@ -67,6 +74,8 @@ source: {
 }
 
 services: {
+
+  ChannelStatusService:   @local::vst_channelstatus
 
   message: {
     destinations : {

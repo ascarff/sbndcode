@@ -371,7 +371,7 @@ class daqAnalysis::RedisRawHitPulseHeight: public daqAnalysis::DetectorMetric<St
 
   // implement calculate 
   inline float Calculate(daqAnalysis::ChannelData &channel) override
-  { return channel.Hitmean_peak_height; }
+  {return channel.Hitmean_peak_height; }
 };
 
 
