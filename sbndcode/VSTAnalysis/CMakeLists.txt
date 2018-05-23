@@ -10,10 +10,16 @@ add_subdirectory(LariatDataProducts)
 add_subdirectory(VSTCalibration)
 
 # add in Redis stuff
-add_subdirectory(Redis)
+# don't try to build if not set up
+if( DEFINED ENV{HIREDIS_INC} )
+  add_subdirectory(Redis)
+endif()
 
 # add header-decoder stuff
-add_subdirectory(Decoder)
+# don't try to build if not set up
+if( DEFINED ENV{TRACE_INC} )
+  add_subdirectory(Decoder)
+endif()
 
 link_directories($ENV{FFTW_LIBRARY})
 
