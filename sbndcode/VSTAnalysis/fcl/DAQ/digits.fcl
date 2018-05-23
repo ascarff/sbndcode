@@ -1,0 +1,40 @@
+physics:
+{
+  producers:
+  {
+    daq:
+    {
+      module_type: DaqDecoder
+      produce_header: false
+      baseline_calc: true
+    }
+  }
+
+  my_producer_modules: [daq]
+
+  outstream: [out1]
+  end_paths: [outstream]
+}
+
+outputs:
+{
+  out1:
+  {
+    module_type: RootOutput
+    fileName: "digits.root"
+    dataTier:    "digits"
+    streamName:  "all"
+    outputCommands: [
+      "keep raw::RawDigits_daq__DIGITS"
+    ]
+  }
+}
+
+source:
+{
+  module_type: RootInput
+  fileNames: ["/sbnd/data/users/gputnam/nevis_fake_data/filedata.root"]
+  //fileNames: ["/home/nfs/gputnam/nevistpc_filedata_test.root"]
+}
+
+process_name: DIGITS

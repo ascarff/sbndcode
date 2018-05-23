@@ -29,7 +29,7 @@ physics:
 
 services:
 {
-  TFileService: { fileName: "out_raw_baseline.root"}
+  TFileService: { fileName: "out.root"}
 } 
 
 source:

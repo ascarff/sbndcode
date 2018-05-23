@@ -5,6 +5,7 @@ physics:
     daq:
     {
       module_type: DaqDecoder
+      produce_header: true
     }
   }
 
@@ -26,7 +27,8 @@ outputs:
 source:
 {
   module_type: RootInput
-  fileNames: ["/home/nfs/gputnam/nevistpc_filedata_test.root"]
+  fileNames: ["/sbnd/data/users/gputnam/nevis_fake_data/filedata.root"]
+  //fileNames: ["/home/nfs/gputnam/nevistpc_filedata_test.root"]
 }
 
 process_name: DECODER

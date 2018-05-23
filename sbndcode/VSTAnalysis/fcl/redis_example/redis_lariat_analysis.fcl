@@ -23,12 +23,14 @@ physics:
       use_planes: true
       verbose: false
       baseline_calc: 2
+      refine_baseline: true
       n_mode_skip: 3
 
-      sum_waveforms: false
+      sum_waveforms: true
+      fft_summed_waveforms: true
       fill_waveforms: false
       fft_per_channel: false
-      timing: true
+      timing: false
     }
   }
 
