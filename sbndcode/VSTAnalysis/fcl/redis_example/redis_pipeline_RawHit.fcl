@@ -1,5 +1,6 @@
 #include "hitfindermodulesVST.fcl"
 #include "channelstatus_sbnd.fcl"
+#include "geometry_lariat.fcl"
 
 physics:
 {
@@ -35,7 +36,7 @@ physics:
       baseline_calc: 2
 
       HitsModuleLabel: "rawhit"
-      UseRawHits: false
+      ProcessRawHits: true
 
       sum_waveforms: false
       fill_waveforms: false
@@ -44,7 +45,7 @@ physics:
     }
   }
 
-  my_producer_modules: [daq,raw]
+  my_producer_modules: [daq,rawhit]
 
   outstream: [out1]
   analyze: [OnlineAnalysis]
@@ -69,7 +70,9 @@ source:
 
 services:
 {
-	ChannelStatusService:   @local::vst_channelstatus
+  Geometry: @local::lariat_geo
+  ExptGeoHelperInterface: @local::lariat_geometry_helper
+  ChannelStatusService:   @local::vst_channelstatus
 }
 
 physics.producers.rawhit.DigitModuleLabel:        "daq"
