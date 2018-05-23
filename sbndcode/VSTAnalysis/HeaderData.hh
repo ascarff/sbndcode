@@ -29,6 +29,7 @@ class HeaderData {
   // timing info
   uint32_t run_no;
   uint32_t sub_run_no;
+  uint32_t art_event_no;
 
   // by default make words noticable
   // Nevis uses DEADBEEF as a default, so distinguish from
