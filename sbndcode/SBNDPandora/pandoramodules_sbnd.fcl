@@ -42,7 +42,10 @@ sbnd_pandoraTrackCreation:
 
 sbnd_pandoraShowerCreation:
 {
-    module_type:                                                    "LArPandoraShowerCreation"
+    module_type:                                                    "LArPandoraShowerCreationSBND"
+    CalorimetryAlg:        @local::sbnd_calorimetryalgmc
+    ShowerEnergyAlg:       @local::sbnd_showerenergyalg
+    EMShowerAlg:           @local::standard_emshoweralg
 }
 
 END_PROLOG

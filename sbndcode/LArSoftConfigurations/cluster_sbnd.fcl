@@ -41,7 +41,7 @@ sbnd_clustercrawlermc.CCHitFinderAlg.ChiNorms:  [ 1.6, 7.5 ]
 
 #Initial tuning has been applied to blurred cluster but it is no longer supported. 
 sbnd_blurredclusteralg:                     @local::standard_blurredclusteralg
-physics.producers.blurredcluster.CreateDebugPDF:      false
+sbnd_blurredclusteralg.CreateDebugPDF:      false
 sbnd_blurredclusteralg.BlurWire:            20
 sbnd_blurredclusteralg.BlurTick:            12
 sbnd_blurredclusteralg.SigmaWire:           14

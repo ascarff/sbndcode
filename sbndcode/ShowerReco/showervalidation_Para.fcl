@@ -5,7 +5,8 @@ standard_showervalidation_Para: {
  LArGeantModuleLabel:      "largeant"
  HitsModuleLabel:          "gaushit"
  TrackModuleLabel:         "pmalgtrackmaker"
- ShowerModuleLabel:        "emshower"
+ ShowerModuleLabels:        ["emshower"]
+ UseBiggestShower:         false
 }
 END_PROLOG
 

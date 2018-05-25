@@ -55,7 +55,9 @@ namespace RecoUtils{
 
   std::map<geo::PlaneID,int> NumberofHitsThatContainEnergyDepositedByTrack(int TrackID, const std::vector<art::Ptr<recob::Hit> >& hits); //Returns the number of hits in the reconstruction that saw an energy deposition by the a track. Might be useful to add an energy cut on this. 
 
+  float TotalEnergyDepinHits(const std::vector<art::Ptr<recob::Hit> >& hits); //Returns the amount of energy deposited in the detector (before recombination and lifetime effects) in the hits. 
 
+  float TotalEnergyDepinHitsFromTrack(const std::vector<art::Ptr<recob::Hit> >& hits, int TrackID); //Returns the amount of energy deposited in the detector (before recombination and lifetime effects)in the hits from a given particle. 
     
 
 }

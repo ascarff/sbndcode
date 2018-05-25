@@ -161,12 +161,20 @@ void ana::EvsQ::analyze(const art::Event& evt) {
   if(!simchArray.isValid())
     throw cet::exception(__PRETTY_FUNCTION__)
       << "Did not find sim::SimChannel with a label: " << fLArGeantModuleLabel.c_str() << std::endl;
+  std::map<geo::PlaneID,double> EnergyMap;
   
-  double total_energy = 0;
-  // Loop over SimChannel                                                                                                                  
+  // Loop over SimChannel                                          
   for(size_t simch_index=0; simch_index<simchArray->size(); ++simch_index) {
 
     const art::Ptr<sim::SimChannel> simch_ptr(simchArray,simch_index);
+
+    //Get the plane.     
+    raw::ChannelID_t Channel = simch_ptr->Channel();
+    std::vector<geo::WireID> Wire = geom->ChannelToWire(Channel);
+    //sbnd is one channel per wire so the vector should be size one.  
+    geo::PlaneID  PlaneID = (Wire[0]).planeID();
+
+
     
     auto tdc_ide_map = simch_ptr->TDCIDEMap();
     
@@ -176,7 +184,7 @@ void ana::EvsQ::analyze(const art::Event& evt) {
       auto const& ide_v = tdc_ide_pair.second;
 
       for(auto const& ide : ide_v) {
-	total_energy +=  ide.energy;
+	EnergyMap[PlaneID] +=  (ide.numElectrons)/3*23*10e-6;
       }
     }
   }
@@ -184,7 +192,7 @@ void ana::EvsQ::analyze(const art::Event& evt) {
  
   //Fill the plane graphs with the Charge vs Energy info.
   for(std::map<geo::PlaneID,double>::iterator plane_iter=charge_sum_map.begin(); plane_iter!=charge_sum_map.end(); ++plane_iter){
-    ChangeVsEnergyGraph_map[plane_iter->first]->SetPoint(ChangeVsEnergyGraph_map[plane_iter->first]->GetN(),plane_iter->second,total_energy);
+    ChangeVsEnergyGraph_map[plane_iter->first]->SetPoint(ChangeVsEnergyGraph_map[plane_iter->first]->GetN(),plane_iter->second,EnergyMap[plane_iter->first]);
   }
    
  
