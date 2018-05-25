@@ -36,6 +36,7 @@ cet_make_library( LIBRARY_NAME daqAnalysis_VST
 		Noise.cc
 		PeakFinder.cc
 		ChannelData.cc
+    Purity.cc
 	LIBRARIES
 		daqAnalysis_MODE
 		${LARDATAOBJ} 

@@ -46,6 +46,7 @@
 #include "Noise.hh"
 #include "PeakFinder.hh"
 #include "Mode.hh"
+#include "Purity.hh"
 
 using namespace daqAnalysis;
 
@@ -162,7 +163,9 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
 
   //######################################################                      
   // I would add a function to some purity code here tom.                       
-  //#####################################################    
+  //#####################################################   
+
+  CalculateLifetime(rawhits);
 
   // clear out containers from last iter
   for (unsigned i = 0; i < ChannelMap::n_wire; i++) {
