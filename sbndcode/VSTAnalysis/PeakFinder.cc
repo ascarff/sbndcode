@@ -77,7 +77,8 @@ PeakFinder::PeakFinder(std::vector<int16_t> &inp_waveform, int16_t baseline, flo
     // detect a new peak, or continue on the current one
 
     // up-peak
-    if (dat > baseline + threshold) {
+    // only take this case if looking for new peak or already in up-peak
+    if (dat > baseline + threshold && (!inside_peak || up_peak)) {
       if (!inside_peak) {
         // increment above threshold
         n_points ++;
@@ -93,8 +94,6 @@ PeakFinder::PeakFinder(std::vector<int16_t> &inp_waveform, int16_t baseline, flo
 	  peak.is_up = true;
         }
       }
-      // already inside peak
-      else assert(up_peak);
 
       if (inside_peak) {
         // always use original waveform to determine amplitude
@@ -107,7 +106,8 @@ PeakFinder::PeakFinder(std::vector<int16_t> &inp_waveform, int16_t baseline, flo
       }
     }
     // down-peak
-    else if (fitDownPeak(plane_type) && dat < baseline - threshold) {
+    // only take this case if looking for new peak or already in down-peak
+    else if (fitDownPeak(plane_type) && dat < baseline - threshold && (!inside_peak || !up_peak)) {
       if (!inside_peak) {
         // increment above threshold
         n_points ++;
@@ -123,9 +123,6 @@ PeakFinder::PeakFinder(std::vector<int16_t> &inp_waveform, int16_t baseline, flo
 	  peak.is_up = false;
         }
       }
-      // already inside peak
-      else assert(!up_peak);
-
       if (inside_peak) {
         // always use original waveform to determine amplitude
         // define amplitude as distance from baseline
