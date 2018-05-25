@@ -112,6 +112,7 @@ public:
     bool reduce_data;
     bool timing;
     bool fUseRawHits;
+    bool fProcessRawHits;
 
     std::string fHitsModuleLabel;
 

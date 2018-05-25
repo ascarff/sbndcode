@@ -143,8 +143,10 @@ Analysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &param) {
   //HitFinderName                                                               
   fHitsModuleLabel = param.get<std::string>("HitsModuleLabel","RawHitFinder");
 
-  //Use Hits rather than peak finder                                            
-  fUseRawHits = param.get<bool>("UseRawHits",false);
+  // Use Hits rather than peak finder                                            
+  fUseRawHits = param.get<bool>("UseRawHits", false);
+  // Whether to process output from RawHitFinder
+  fProcessRawHits = param.get<bool>("ProcessRawHits", false);
 }
 
 void Analysis::AnalyzeEvent(art::Event const & event) {
@@ -188,12 +190,13 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
   //  std::cout << "raw_digits_handle->size(): " << raw_digits_handle->size() << std::endl;
 
   //if we don't have the RawHits we can't use that method.
-  if(!event.getByLabel(_config.fHitsModuleLabel,hitListHandle)){_config.fUseRawHits = false;}
+  if(!event.getByLabel(_config.fHitsModuleLabel,hitListHandle) && (_config.fUseRawHits || _config.fProcessRawHits)) {
+    std::cerr << "ERROR: No Raw Hits Present\n" << std::endl;
+  }
 
   unsigned index = 0;
   // calculate per channel stuff 
-  if(_config.fUseRawHits == true){
-    
+  if (_config.fUseRawHits || _config.fProcessRawHits) {
     // === Associations between hits and raw digits === 
     art::FindManyP<recob::Hit>   fmhr(raw_digits_handle, event,_config.fHitsModuleLabel);
 
@@ -208,39 +211,13 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
       index++;
     }
   }
-  else if(event.getByLabel(_config.fHitsModuleLabel,hitListHandle) && _config.fUseRawHits == false){
-
-    // === Associations between hits and raw digits === 
-    art::FindManyP<recob::Hit>   fmhr(raw_digits_handle, event,_config.fHitsModuleLabel);
-    // loop over all tracks in the handle and get their hits 
-    for(size_t digit_int = 0; digit_int < raw_digits_handle->size(); ++digit_int){
-      //Get the raw digit object.
-      auto const& digits=rawdigits[digit_int];
-      //Get the hits associated to the raw digit.
-      const std::vector<art::Ptr<recob::Hit> >& hits = fmhr.at(digit_int);
-      _channel_index_map[digits->Channel()] = index;
-      ProcessChannel(*digits, hits);
-      index++;
-    }
-  }
-  else{
+  else {
     for (auto const& digits: *raw_digits_handle) {
       _channel_index_map[digits.Channel()] = index;
       ProcessChannel(digits);
       index++;
     }
   }
-
-
-  //Grays old version 
-  // calculate per channel stuff
-  // keep track of channel to index mapping
-  //unsigned index = 0;
-  //for (auto const& digits: *raw_digits_handle) {
-  //  _channel_index_map[digits.Channel()] = index;
-  //  ProcessChannel(digits);
-  //  index ++;
-  // }
 
   if (_config.timing) {
     _timing.StartTime();
@@ -363,18 +340,15 @@ void Analysis::ProcessChannel(const raw::RawDigit &digits, const std::vector<art
 
   auto channel = digits.Channel();
 
-  //uses the RawHitFinder Module to find the peak and then processes the channel as before.
-  if(_config.fUseRawHits == true){
+  // uses the RawHitFinder Module to find the peak and then processes the channel as before.
+  if (_config.fUseRawHits) {
     PeakFinder peaks(hits);
     _per_channel_data[channel].peaks.assign(peaks.Peaks()->begin(), peaks.Peaks()->end());
-    _per_channel_data[channel].Hitoccupancy = hits.size();
-    _per_channel_data[channel].Hitmean_peak_height = _per_channel_data[channel].meanPeakHeight(hits);
   }
-  else {
-    //Calculate Quantities from the raw Hit Finder but calculate the rest using the peakfinder.
-    _per_channel_data[channel].Hitoccupancy = hits.size();
-    _per_channel_data[channel].Hitmean_peak_height = _per_channel_data[channel].meanPeakHeight(hits);
-  }
+
+  // fill up channel data even if we're using PeakFinder
+  _per_channel_data[channel].Hitoccupancy = hits.size();
+  _per_channel_data[channel].Hitmean_peak_height = _per_channel_data[channel].meanPeakHeight(hits);
 
 
   ProcessChannel(digits);
@@ -467,50 +441,50 @@ void Analysis::ProcessChannel(const raw::RawDigit &digits) {
     _timing.EndTime(&_timing.execute_fft);
   }
 
-  if (_config.timing) {
-    _timing.StartTime();
-  }
-  // get thresholds 
-  float threshold = _config.threshold;
-  if (_config.threshold_calc == 0) {
-    threshold = _config.threshold;
-  }
-  else if (_config.threshold_calc == 1) {
-    auto thresholds = Threshold(adc_vec, _per_channel_data[channel].baseline, _config.threshold_sigma, _config.verbose);
-    threshold = thresholds.Val();
-  }
-  else if (_config.threshold_calc == 2) {
-    NoiseSample temp({{0, (unsigned)digits.NADC()-1}}, _per_channel_data[channel].baseline);
-    float raw_rms = temp.RMS(adc_vec);
-    threshold = raw_rms * _config.threshold_sigma;
-  }
-  else if (_config.threshold_calc == 3) {
-    // if using plane data, make collection planes reach a higher threshold
-    float n_sigma = _config.threshold_sigma;
-    if (_config.use_planes && ChannelMap::PlaneType(channel) == 2) n_sigma = n_sigma * 1.5;
-    
-    threshold = _thresholds[channel].Threshold(adc_vec, _per_channel_data[channel].baseline, n_sigma);
-  }
-  if (_config.timing) {
-    _timing.EndTime(&_timing.calc_threshold);
-  }
-
-  _per_channel_data[channel].threshold = threshold;
-
-  if (_config.timing) {
-    _timing.StartTime();
-  }
-  // get Peaks
-  unsigned peak_plane = (_config.use_planes) ? ChannelMap::PlaneType(channel) : 0;
-  
+  // Run Peak Finding only if we aren't depending on RawHitFinder for that part
   if(!_config.fUseRawHits){
-  PeakFinder peaks(adc_vec, _per_channel_data[channel].baseline, threshold, 
-      _config.n_smoothing_samples, _config.n_above_threshold, peak_plane);
-  _per_channel_data[channel].peaks.assign(peaks.Peaks()->begin(), peaks.Peaks()->end());
-  }
+    if (_config.timing) {
+      _timing.StartTime();
+    }
+    // get thresholds 
+    float threshold = _config.threshold;
+    if (_config.threshold_calc == 0) {
+      threshold = _config.threshold;
+    }
+    else if (_config.threshold_calc == 1) {
+      auto thresholds = Threshold(adc_vec, _per_channel_data[channel].baseline, _config.threshold_sigma, _config.verbose);
+      threshold = thresholds.Val();
+    }
+    else if (_config.threshold_calc == 2) {
+      NoiseSample temp({{0, (unsigned)digits.NADC()-1}}, _per_channel_data[channel].baseline);
+      float raw_rms = temp.RMS(adc_vec);
+      threshold = raw_rms * _config.threshold_sigma;
+    }
+    else if (_config.threshold_calc == 3) {
+      // if using plane data, make collection planes reach a higher threshold
+      float n_sigma = _config.threshold_sigma;
+      if (_config.use_planes && ChannelMap::PlaneType(channel) == 2) n_sigma = n_sigma * 1.5;
+    
+      threshold = _thresholds[channel].Threshold(adc_vec, _per_channel_data[channel].baseline, n_sigma);
+    }
+    if (_config.timing) {
+      _timing.EndTime(&_timing.calc_threshold);
+    }
 
-  if (_config.timing) {
-    _timing.EndTime(&_timing.find_peaks);
+    _per_channel_data[channel].threshold = threshold;
+
+    if (_config.timing) {
+      _timing.StartTime();
+    }
+    // get Peaks
+    unsigned peak_plane = (_config.use_planes) ? ChannelMap::PlaneType(channel) : 0;
+  
+    PeakFinder peaks(adc_vec, _per_channel_data[channel].baseline, threshold, 
+        _config.n_smoothing_samples, _config.n_above_threshold, peak_plane);
+    _per_channel_data[channel].peaks.assign(peaks.Peaks()->begin(), peaks.Peaks()->end());
+    if (_config.timing) {
+      _timing.EndTime(&_timing.find_peaks);
+    }
   }
 
   if (_config.timing) {
@@ -539,7 +513,7 @@ void Analysis::ProcessChannel(const raw::RawDigit &digits) {
   }
 
   // register rms if using running threshold
-  if (_config.threshold_calc == 3) {
+  if (_config.threshold_calc == 3 && !_config.fUseRawHits) {
     _thresholds[channel].AddRMS(_per_channel_data[channel].rms);
   }
 
