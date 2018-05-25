@@ -40,8 +40,10 @@ public:
 
   };
 
-  PeakFinder(const std::vector<art::Ptr<recob::Hit> > &hits);
+  // initialize internal vector of peaks from art product
+  explicit PeakFinder(const std::vector<art::Ptr<recob::Hit> > &hits);
 
+  // generate list of peaks by providing waveform -- does hitfinding internally
   PeakFinder(std::vector<int16_t> &waveform, int16_t baseline, float threshold, unsigned n_smoothing_samples=1, unsigned n_above_threshold=0, unsigned plane_type=0);
   inline std::vector<Peak> *Peaks() { return &_peaks; }
 private:

@@ -32,12 +32,15 @@ PeakFinder::PeakFinder(const std::vector<art::Ptr<recob::Hit> > &hits){
     peak.start_loose = (*hit_iter)->StartTick();
     peak.end_tight = (*hit_iter)->EndTick();
     peak.end_loose = (*hit_iter)->EndTick();
+    // The RawHitFinder definition of a "hit" is slightly different from that of PeakFinder "peak"
+    // Peakfinder counds an induction signal as two peaks, one up and one down. RawHitFidner counts
+    // it as one hit. To make the semantics the same, make every RawHitFinder peak an up_peak
+    // so that the occupancy and mean peak heights are calculated correctly
+    peak.is_up = true;
     _peaks.emplace_back(peak);
   }
 
 }
-
-
 
 // plane_type == 0 means fit up and down peaks and don't match (i.e. debug mode)
 // plane_type == 1 means fit up and down peaks and match (induction planes)
