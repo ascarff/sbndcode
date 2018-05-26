@@ -179,7 +179,9 @@ void daqAnalysis::StreamDataRMS::Clear() {
 float daqAnalysis::StreamDataRMS::Data(unsigned index) {
   if (_n_values < 2) return 0;
 
-  return std::accumulate(_rms[index].begin(), _rms[index].end(), 0.) / (_rms[index].size() * (_n_values-1));
+  float sample_variance = std::accumulate(_rms[index].begin(), _rms[index].end(), 0.) / (_rms[index].size() * (_n_values-1));
+  float sample_rms = sqrt(sample_variance);
+  return sample_rms;
 }
 
 // update data
