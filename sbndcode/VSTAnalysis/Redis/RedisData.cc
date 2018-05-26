@@ -3,6 +3,7 @@
 #include <vector>
 #include <cassert> 
 #include <ctime>
+#include <numeric>
 
 #include <hiredis/hiredis.h>
 #include <hiredis/async.h>
@@ -14,8 +15,11 @@
 #include "RedisData.hh"
 
 // Implementing StreamDataMean
-void daqAnalysis::StreamDataMean::Add(unsigned index, float dat) {
-  _instance_data[index] += dat/_n_points_per_time[index];
+void daqAnalysis::StreamDataMean::Fill(unsigned instance_index, unsigned datum_index, float datum) {
+  // not needed
+  (void) datum_index;
+
+  _instance_data[instance_index] += datum/_n_points_per_time[instance_index];
 }
 
 // clear data
@@ -50,14 +54,18 @@ void daqAnalysis::StreamDataMean::AddInstance(unsigned index) {
 }
 
 // Implementing StreamDataVariableMean
-void daqAnalysis::StreamDataVariableMean::Add(unsigned index, float dat) {
+void daqAnalysis::StreamDataVariableMean::Fill(unsigned instance_index, unsigned datum_index, float datum) {
+  // not needed
+  (void) datum_index;
+
   // don't take values near zero
-  if (dat < 1e-4) {
+  if (datum < 1e-4) {
     return;
   }
   // add to the counter at this time instance
-  _instance_data[index] = (_n_values_current_instance[index] * _instance_data[index] + dat) / (_n_values_current_instance[index] + 1);
-  _n_values_current_instance[index] ++;
+  _instance_data[instance_index] = (_n_values_current_instance[instance_index] * _instance_data[instance_index] + datum) 
+      / (_n_values_current_instance[instance_index] + 1);
+  _n_values_current_instance[instance_index] ++;
 }
 
 // takes new data value out of instance and puts it in _data (note: is idempotent)
@@ -98,8 +106,11 @@ void daqAnalysis::StreamDataVariableMean::Update() {
 }
 
 // Implementing StreamDataMax
-void daqAnalysis::StreamDataMax::Add(unsigned index, unsigned dat) {
-  if (_data[index] < dat) _data[index] = dat;
+void daqAnalysis::StreamDataMax::Fill(unsigned instance_index, unsigned datum_index, unsigned datum) {
+  // not needed
+  (void) datum_index;
+
+  if (_data[instance_index] < datum) _data[instance_index] = datum;
 }
 
 unsigned daqAnalysis::StreamDataMax::Data(unsigned index) {
@@ -115,8 +126,11 @@ void daqAnalysis::StreamDataMax::Clear() {
 }
 
 // Implementing StreamDataSum
-void daqAnalysis::StreamDataSum::Add(unsigned index, unsigned dat) {
-  _data[index] += dat;
+void daqAnalysis::StreamDataSum::Fill(unsigned instance_index, unsigned datum_index, unsigned datum) {
+  // not needed
+  (void) datum_index;
+
+  _data[instance_index] += datum;
 }
 
 unsigned daqAnalysis::StreamDataSum::Data(unsigned index) {
@@ -131,11 +145,57 @@ void daqAnalysis::StreamDataSum::Clear() {
   }
 }
 
+// Implementing StreamDataRMS
+// uses Online RMS algorithm from: 
+// Algorithms for Computing the Sample Variance: Analysis and Recommendations
+// Tony Chan, Gene Golub, and Randall LeVeque
+// The American Statistician
+void daqAnalysis::StreamDataRMS::Fill(unsigned instance_index, unsigned datum_index, float datum) {
+  // store previous mean
+  float last_mean = 0;
+  if (_n_values != 0) {
+    last_mean = _means[instance_index].Data(datum_index); 
+  }
+  else {
+    last_mean = datum;
+  }
+  // update mean
+  _means[instance_index].Fill(datum_index, 0, datum);
+  // get new mean
+  float mean = _means[instance_index].Data(datum_index);
+  _rms[instance_index][datum_index] = _rms[instance_index][datum_index] + (datum - last_mean)*(datum - mean);
+}
+
+// clear data
+void daqAnalysis::StreamDataRMS::Clear() {
+  for (unsigned i = 0; i < _means.size(); i++) {
+    _means[i].Clear();
+    std::fill(_rms[i].begin(), _rms[i].end(), 0.);
+  }
+  _n_values = 0;
+}
+
+// get data
+float daqAnalysis::StreamDataRMS::Data(unsigned index) {
+  if (_n_values < 2) return 0;
+
+  return std::accumulate(_rms[index].begin(), _rms[index].end(), 0.) / (_rms[index].size() * (_n_values-1));
+}
+
+// update data
+void daqAnalysis::StreamDataRMS::Update() {
+  for (unsigned i = 0; i < _means.size(); i++) {
+    _means[i].Update();
+  }
+  _n_values ++;
+}
+
 // Defining string literal template parameters for inheritors of DetectorMetric
 char REDIS_NAME_RMS[] = "rms";
 char REDIS_NAME_OCCUPANCY[] = "hit_occupancy";
 char REDIS_NAME_DNOISE[] = "next_channel_dnoise";
 char REDIS_NAME_BASLINE[] = "baseline";
+char REDIS_NAME_BASELINE_RMS[] = "baseline_rms";
 char REDIS_NAME_PULSE_HEIGHT[] = "pulse_height";
 char REDIS_NAME_RAWHIT_OCCUPANCY[] = "rawhit_occupancy";
 char REDIS_NAME_RAWHIT_PULSE_HEIGHT[] = "rawhit_pulse_height";

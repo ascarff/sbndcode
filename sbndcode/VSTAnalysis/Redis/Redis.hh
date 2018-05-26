@@ -141,6 +141,7 @@ protected:
   // running averates of Redis metrics per stream
   std::vector<daqAnalysis::RedisRMS> _rms;
   std::vector<daqAnalysis::RedisBaseline> _baseline;
+  std::vector<daqAnalysis::RedisBaselineRMS> _baseline_rms;
   std::vector<daqAnalysis::RedisDNoise> _dnoise;
   std::vector<daqAnalysis::RedisPulseHeight> _pulse_height;
   std::vector<daqAnalysis::RedisOccupancy> _occupancy;

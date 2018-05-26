@@ -22,6 +22,7 @@ namespace daqAnalysis {
   class StreamDataVariableMean;
   class StreamDataMax;
   class StreamDataSum;
+  class StreamDataRMS;
 
   // detector metric base class
   template<class Stream, char const *REDIS_NAME>
@@ -31,6 +32,7 @@ namespace daqAnalysis {
   class RedisRMS;
   class RedisOccupancy;
   class RedisBaseline;
+  class RedisBaselineRMS;
   class RedisPulseHeight;
   class RedisDNoise;
   class RedisRawHitOccupancy;
@@ -53,9 +55,7 @@ public:
   StreamDataMean(unsigned n_data, unsigned n_points_per_time): _data(n_data, 0.), _n_values(0), _instance_data(n_data, 0.), _n_points_per_time(n_data, n_points_per_time) {}
 
   // add in a new value
-  void Add(unsigned index, float dat);
-  // incl the number of values
-  void Incl();
+  void Fill(unsigned instance_index, unsigned datum_index, float datum);
   // clear values
   void Clear();
   // take the data value and reset it
@@ -93,7 +93,7 @@ public:
   StreamDataVariableMean(unsigned n_data, unsigned _): _data(n_data, 0.), _n_values(n_data, 0), _instance_data(n_data, 0), _n_values_current_instance(n_data,0) {}
 
   // add in a new value
-  void Add(unsigned index, float dat);
+  void Fill(unsigned instance_index, unsigned datum_index, float datum);
   // take the data value and reset it
   float Data(unsigned index);
   // returns n_data
@@ -127,7 +127,7 @@ class daqAnalysis::StreamDataMax {
 public:
   StreamDataMax(unsigned n_data, unsigned _): _data(n_data, 0) {}
 
-  void Add(unsigned index, unsigned dat);
+  void Fill(unsigned instance_index, unsigned datum_index, unsigned datum);
   unsigned Data(unsigned index);
   unsigned Size() { return _data.size(); }
   void Update() {/* doesn't need to do anything currently */}
@@ -143,7 +143,7 @@ class daqAnalysis::StreamDataSum {
 public:
   StreamDataSum(unsigned n_data, unsigned _): _data(n_data, 0) {}
 
-  void Add(unsigned index, unsigned dat);
+  void Fill(unsigned instance_index, unsigned datum_index, unsigned datum);
   unsigned Data(unsigned index);
   unsigned Size() { return _data.size(); }
   void Update() {/* doesn't need to do anything currently */}
@@ -152,6 +152,38 @@ public:
 
 protected:
   std::vector<unsigned> _data;
+};
+
+// keeps track of running RMS value 
+class daqAnalysis::StreamDataRMS {
+public:
+  StreamDataRMS(unsigned n_data, unsigned n_points_per_time): 
+    _means(n_data, StreamDataMean(n_points_per_time, 1)), 
+    _rms(n_data, std::vector<float>(n_points_per_time)), 
+    _n_values(0) 
+  {}
+
+  // add in a new value
+  void Fill(unsigned instance_index, unsigned datum_index, float datum);
+  // clear values
+  void Clear();
+  // take the data value and reset it
+  float Data(unsigned index);
+  // returns n_data
+  unsigned Size() { return _rms.size(); }
+  // called per iter
+  void Update();
+  // update a points per time value
+  void SetPointsPerTime(unsigned index, unsigned points) {
+    _means[index] = StreamDataMean(points, 1);
+    _rms[index].resize(points);
+  }
+
+protected:
+  // internal data
+  std::vector<daqAnalysis::StreamDataMean> _means;
+  std::vector<std::vector<float>> _rms;
+  unsigned _n_values;
 };
 
 // holds a StreamDataMean or StreamDataVariableMean across all instances of the detector
@@ -206,7 +238,7 @@ public:
   }
 
   // add in data
-  void Add(daqAnalysis::ChannelData &channel, unsigned crate, unsigned fem_ind, unsigned wire) {
+  void Fill(daqAnalysis::ChannelData &channel, unsigned crate, unsigned crate_channel_ind, unsigned fem_ind, unsigned fem_channel_ind, unsigned wire) {
     // calculate and add to each container
     float dat = Calculate(channel);
 
@@ -217,9 +249,9 @@ public:
     }
 
     // each container is aware of how often it is filled per time instance
-    _crate_data.Add(crate, dat);
-    _fem_data.Add(fem_ind, dat);
-    _wire_data.Add(wire, dat);
+    _crate_data.Fill(crate, crate_channel_ind, dat);
+    _fem_data.Fill(fem_ind, fem_channel_ind, dat);
+    _wire_data.Fill(wire, 0, dat);
   }
 
   float DataCrate(unsigned index) {
@@ -305,6 +337,7 @@ extern char REDIS_NAME_RMS[];
 extern char REDIS_NAME_OCCUPANCY[];
 extern char REDIS_NAME_DNOISE[];
 extern char REDIS_NAME_BASLINE[];
+extern char REDIS_NAME_BASELINE_RMS[];
 extern char REDIS_NAME_PULSE_HEIGHT[];
 extern char REDIS_NAME_RAWHIT_OCCUPANCY[];
 extern char REDIS_NAME_RAWHIT_PULSE_HEIGHT[];
@@ -356,6 +389,15 @@ class daqAnalysis::RedisBaseline: public daqAnalysis::DetectorMetric<StreamDataM
    { return channel.baseline; }
 };
 
+class daqAnalysis::RedisBaselineRMS: public daqAnalysis::DetectorMetric<StreamDataRMS, REDIS_NAME_BASELINE_RMS> {
+  // inherit constructor
+  using daqAnalysis::DetectorMetric<StreamDataRMS, REDIS_NAME_BASELINE_RMS>::DetectorMetric;
+
+  // implement calculate
+ inline float Calculate(daqAnalysis::ChannelData &channel) override
+   { return channel.baseline; }
+};
+
 class daqAnalysis::RedisPulseHeight: public daqAnalysis::DetectorMetric<StreamDataVariableMean, REDIS_NAME_PULSE_HEIGHT> {
   // inherit constructor
   using daqAnalysis::DetectorMetric<StreamDataVariableMean, REDIS_NAME_PULSE_HEIGHT>::DetectorMetric;
@@ -388,12 +430,12 @@ public:
     : _fem(ChannelMap::NFEM(), 1)
   {}
 
-  void Add(daqAnalysis::HeaderData &header, unsigned fem_ind) {
+  void Fill(daqAnalysis::HeaderData &header, unsigned fem_ind) {
     // calculate and add to each container
     unsigned val = Calculate(header);
 
     // each container is aware of how often it is filled per time instance
-    _fem.Add(fem_ind, val);
+    _fem.Fill(fem_ind, 0, val);
   }
 
   unsigned Data(unsigned index) {

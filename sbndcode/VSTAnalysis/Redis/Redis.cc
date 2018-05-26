@@ -46,6 +46,7 @@ Redis::Redis(Redis::Config &config):
   // allocate and zero-initalize all of the metrics
   _rms(config.NStreams(), RedisRMS()),
   _baseline(config.NStreams(), RedisBaseline()),
+  _baseline_rms(config.NStreams(), RedisBaselineRMS()),
   _dnoise(config.NStreams(), RedisDNoise()),
   _pulse_height(config.NStreams(), RedisPulseHeight()),
   _occupancy(config.NStreams(), RedisOccupancy()),
@@ -122,10 +123,10 @@ void Redis::FillHeaderData(vector<daqAnalysis::HeaderData> *header_data) {
     for (size_t i = 0; i < _n_streams; i++) {
       // index into the fem data cache
       unsigned fem_ind = header.Ind();
-      _event_no[i].Add(header, fem_ind);
-      _frame_no[i].Add(header, fem_ind);
-      _trig_frame_no[i].Add(header, fem_ind);
-      _blocks[i].Add(header, fem_ind);
+      _event_no[i].Fill(header, fem_ind);
+      _frame_no[i].Fill(header, fem_ind);
+      _trig_frame_no[i].Fill(header, fem_ind);
+      _blocks[i].Fill(header, fem_ind);
     }
   }
   // update all of the metrics
@@ -483,16 +484,23 @@ void Redis::FillChannelData(vector<daqAnalysis::ChannelData> *per_channel_data) 
           at_end_of_detector = true;
           break;
         }
+
+        // TODO @INSTALLATION: Make sure this is ok
+        // get index of channel on fem
+        unsigned fem_channel_ind = channel;
+        // and get index of channel on crate
+        unsigned crate_channel_ind = channel + fem_ind * daqAnalysis::ChannelMap::n_channel_per_fem;
  
         // fill metrics for each stream
         for (size_t i = 0; i < _n_streams; i++) {
-          _rms[i].Add((*per_channel_data)[wire], crate, fem_ind, wire);
-          _baseline[i].Add((*per_channel_data)[wire], crate, fem_ind, wire);
-          _dnoise[i].Add((*per_channel_data)[wire], crate, fem_ind, wire);
-          _pulse_height[i].Add((*per_channel_data)[wire], crate, fem_ind, wire);
-	  _rawhit_pulse_height[i].Add((*per_channel_data)[wire], crate, fem_ind, wire);
-          _occupancy[i].Add((*per_channel_data)[wire], crate, fem_ind, wire);
-	  _rawhit_occupancy[i].Add((*per_channel_data)[wire], crate, fem_ind, wire);
+          _rms[i].Fill((*per_channel_data)[wire], crate, crate_channel_ind, fem_ind, fem_channel_ind, wire);
+          _baseline[i].Fill((*per_channel_data)[wire], crate, crate_channel_ind, fem_ind, fem_channel_ind, wire);
+          _baseline_rms[i].Fill((*per_channel_data)[wire], crate, crate_channel_ind, fem_ind, fem_channel_ind, wire);
+          _dnoise[i].Fill((*per_channel_data)[wire], crate, crate_channel_ind, fem_ind, fem_channel_ind, wire);
+          _pulse_height[i].Fill((*per_channel_data)[wire], crate, crate_channel_ind, fem_ind, fem_channel_ind, wire);
+	  _rawhit_pulse_height[i].Fill((*per_channel_data)[wire], crate, crate_channel_ind, fem_ind, fem_channel_ind, wire);
+          _occupancy[i].Fill((*per_channel_data)[wire], crate, crate_channel_ind, fem_ind, fem_channel_ind, wire);
+	  _rawhit_occupancy[i].Fill((*per_channel_data)[wire], crate, crate_channel_ind, fem_ind, fem_channel_ind, wire);
         }
 
       }
@@ -516,6 +524,7 @@ void Redis::FillChannelData(vector<daqAnalysis::ChannelData> *per_channel_data) 
   for (size_t i = 0; i < _n_streams; i++) {
     _rms[i].Update();
     _baseline[i].Update();
+    _baseline_rms[i].Update();
     _dnoise[i].Update();
     _pulse_height[i].Update();
     _rawhit_pulse_height[i].Update();
@@ -537,6 +546,7 @@ void Redis::SendChannelData() {
       // metrics control the sending of everything else
       n_commands += _rms[i].Send(context, index, stream_name, _stream_expire[i]);
       n_commands += _baseline[i].Send(context, index, stream_name, _stream_expire[i]);
+      n_commands += _baseline_rms[i].Send(context, index, stream_name, _stream_expire[i]);
       n_commands += _dnoise[i].Send(context, index, stream_name, _stream_expire[i]);
       n_commands += _occupancy[i].Send(context, index, stream_name, _stream_expire[i]);
       n_commands += _pulse_height[i].Send(context, index, stream_name, _stream_expire[i]);
@@ -545,6 +555,7 @@ void Redis::SendChannelData() {
 
       _rms[i].Clear();
       _baseline[i].Clear();
+      _baseline_rms[i].Clear();
       _dnoise[i].Clear();
       _pulse_height[i].Clear();
       _occupancy[i].Clear();
@@ -567,6 +578,7 @@ void Redis::SendChannelData() {
       // metrics control the sending of everything else
       n_commands += _rms[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
       n_commands += _baseline[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
+      n_commands += _baseline_rms[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
       n_commands += _dnoise[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
       n_commands += _occupancy[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
       n_commands += _pulse_height[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
@@ -577,6 +589,7 @@ void Redis::SendChannelData() {
       // clear all of the metrics
       _rms[sub_run_ind].Clear();
       _baseline[sub_run_ind].Clear();
+      _baseline_rms[sub_run_ind].Clear();
       _dnoise[sub_run_ind].Clear();
       _pulse_height[sub_run_ind].Clear();
       _occupancy[sub_run_ind].Clear();
