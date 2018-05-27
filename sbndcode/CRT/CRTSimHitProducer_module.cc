@@ -97,8 +97,11 @@ namespace sbnd {
   private:
 
     // Params got from fcl file.......
-    art::InputTag fCrtModuleLabel;     ///< name of crt producer
-    bool          fVerbose;            ///< print info
+    art::InputTag fCrtModuleLabel;      ///< name of crt producer
+    bool          fVerbose;             ///< print info
+    double        fTimeCoincidenceLimit;///< minimum time between two overlapping hit crt strips [ticks]
+    double        fQPed;                ///< Pedestal offset of SiPMs [ADC]
+    double        fQSlope;              ///< Pedestal slope of SiPMs [ADC/photon]
 
     // Positions of the CRT planes
     std::vector<double> crtPlanes = {-359.1, -357.3, 357.3, 359.1, -358.9, -357.1, 661.52, 663.32, 865.52, 867.32, -240.65, -238.85, 655.35, 657.15};
@@ -134,8 +137,11 @@ namespace sbnd {
 
   void CRTSimHitProducer::reconfigure(fhicl::ParameterSet const & p)
   {
-    fCrtModuleLabel   = (p.get<art::InputTag> ("CrtModuleLabel")); 
-    fVerbose          = (p.get<bool> ("Verbose"));
+    fCrtModuleLabel       = (p.get<art::InputTag> ("CrtModuleLabel")); 
+    fVerbose              = (p.get<bool> ("Verbose"));
+    fTimeCoincidenceLimit = (p.get<double> ("TimeCoincidenceLimit"));
+    fQPed                 = (p.get<double> ("QPed"));
+    fQSlope               = (p.get<double> ("QSlope"));
   }
 
   void CRTSimHitProducer::beginJob()
@@ -196,8 +202,8 @@ namespace sbnd {
 
           // Calculate the number of photoelectrons at each SiPM
           // (Hardcoded numbers from the CRT simulation)
-          double npe1 = ((double)crtList[i]->ADC() - 63.6)/131.9;
-          double npe2 = ((double)crtList[i+1]->ADC() - 63.6)/131.9;
+          double npe1 = ((double)crtList[i]->ADC() - fQPed)/fQSlope;
+          double npe2 = ((double)crtList[i+1]->ADC() - fQPed)/fQSlope;
 
           // Calculate the distance between the SiPMs
           double x = (width/2.)*atan(log(1.*npe2/npe1)) + (width/2.);
@@ -252,7 +258,7 @@ namespace sbnd {
 
           // If the time and position match then record the pair of hits
           std::vector<double> overlap = CrtOverlap(limits1, limits2, fixCoord[tag_i*2]);
-          if (overlap[0] != -99999 && std::abs(crtStrips[tag_i*2][hit_i].t0 - crtStrips[tag_i*2+1][hit_j].t0)<0.1){
+          if (overlap[0] != -99999 && std::abs(crtStrips[tag_i*2][hit_i].t0 - crtStrips[tag_i*2+1][hit_j].t0)<fTimeCoincidenceLimit){
             // Calculate the mean and error in x, y, z
             double meanX = (overlap[0] + overlap[1])/2.;
             double meanY = (overlap[2] + overlap[3])/2.;
