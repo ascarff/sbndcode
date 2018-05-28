@@ -17,8 +17,8 @@
 
 // LArSoft libraries
 #include "test/Geometry/geometry_unit_test_base.h"
-// #include "sbndcode/Geometry/ChannelMapsbndAlg.h"
-#include "larcore/Geometry/ChannelMapStandardAlg.h"
+// #include "sbndcode/Geometry/ChannelMapSBNDAlg.h"
+#include "larcorealg/Geometry/ChannelMapStandardAlg.h"
 
 // C/C++ standard libraries
 #include <string>
@@ -73,9 +73,9 @@ namespace sbnd {
           base_t::SetApplicationName("SBNDGeometryTest");
           base_t::SetDefaultGeometryConfiguration(R"(
             SurfaceY: 130e2 # in cm, vertical distance to the surface
-            Name:     "sbndv0"
-            GDML:     "sbndv0.gdml"
-            ROOT:     "sbndv0.gdml"
+            Name:     "sbndv1"
+            GDML:     "sbnd_v01_00.gdml"
+            ROOT:     "sbnd_v01_00.gdml"
             SortingParameters: {}
             )");
         }

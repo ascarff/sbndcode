@@ -14,8 +14,8 @@
 #include "sbndcode/Geometry/ChannelMapSBNDAlg.h"
 
 // LArSoft libraries
-#include "larcore/Geometry/GeometryCore.h"
-#include "larcore/Geometry/ChannelMapAlg.h"
+#include "larcorealg/Geometry/GeometryCore.h"
+#include "larcorealg/Geometry/ChannelMapAlg.h"
 
 // framework libraries
 #include "canvas/Utilities/Exception.h"
@@ -24,9 +24,8 @@
 namespace sbnd
 {
 
-  SBNDGeometryHelper::SBNDGeometryHelper( fhicl::ParameterSet const & pset, art::ActivityRegistry & )
-    :  fPset( pset ),
-       fChannelMap()
+  SBNDGeometryHelper::SBNDGeometryHelper( fhicl::ParameterSet const & , art::ActivityRegistry & )
+    :  fChannelMap()
   {}
 
 

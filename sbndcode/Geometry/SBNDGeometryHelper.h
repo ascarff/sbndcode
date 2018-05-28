@@ -13,8 +13,8 @@
 
 // LArSoft libraries
 #include "larcore/Geometry/ExptGeoHelperInterface.h"
-#include "larcore/Geometry/CryostatGeo.h"
-#include "larcore/Geometry/AuxDetGeo.h"
+#include "larcorealg/Geometry/CryostatGeo.h"
+#include "larcorealg/Geometry/AuxDetGeo.h"
 
 // C++ libraries
 #include <memory> // std::shared_ptr<>
@@ -53,7 +53,6 @@ namespace sbnd
     void  doConfigureChannelMapAlg(fhicl::ParameterSet const& sortingParameters, geo::GeometryCore* geom) override;
     virtual ChannelMapAlgPtr_t doGetChannelMapAlg() const override;
         
-    fhicl::ParameterSet const & fPset;
     std::shared_ptr<geo::ChannelMapAlg> fChannelMap;
   
   };

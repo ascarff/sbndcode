@@ -1,7 +1,7 @@
 cet_enable_asserts()
 
 set( sbnd_util_lib_list lardata_Utilities_LArFFT_service
-                          larcore_Geometry
+                          larcorealg_Geometry
                           larcore_Geometry_Geometry_service
                           lardata_Utilities
                           ${ART_FRAMEWORK_CORE}
@@ -37,6 +37,12 @@ simple_plugin( SignalShapingServiceVST  "service"
 
 simple_plugin( FileCatalogMetadataSBND  "service"
                ${sbnd_util_lib_list}
+        )
+
+simple_plugin( TFileMetadataSBND "service"
+               ${sbnd_util_lib_list}
+               art_Framework_IO
+               art_Framework_IO_detail
         )
 install_headers()
 install_fhicl()
