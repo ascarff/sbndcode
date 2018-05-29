@@ -25,7 +25,6 @@
 #include "canvas/Utilities/InputTag.h"
 
 //LArSoft
-#include "larcore/Geometry/Geometry.h"
 #include "larevt/Filters/ChannelFilter.h"
 #include "lardata/Utilities/LArFFT.h"
 #include "lardataobj/RawData/RawDigit.h"
@@ -39,9 +38,9 @@
 
 #include "larcoreobj/SimpleTypesAndConstants/geo_types.h"
 #include "larcore/Geometry/Geometry.h"
-#include "larcore/Geometry/CryostatGeo.h"
-#include "larcore/Geometry/TPCGeo.h"
-#include "larcore/Geometry/PlaneGeo.h"
+#include "larcorealg/Geometry/CryostatGeo.h"
+#include "larcorealg/Geometry/TPCGeo.h"
+#include "larcorealg/Geometry/PlaneGeo.h"
 
 //ROOT from CalData
 
