@@ -11,11 +11,11 @@
 #include "messagefacility/MessageLogger/MessageLogger.h" 
 
 // LArSoft Includes
-#include "larcore/Geometry/GeometryCore.h"
-#include "larcore/Geometry/CryostatGeo.h"
-#include "larcore/Geometry/TPCGeo.h"
-#include "larcore/Geometry/PlaneGeo.h"
-#include "larcore/Geometry/WireGeo.h"
+#include "larcorealg/Geometry/GeometryCore.h"
+#include "larcorealg/Geometry/CryostatGeo.h"
+#include "larcorealg/Geometry/TPCGeo.h"
+#include "larcorealg/Geometry/PlaneGeo.h"
+#include "larcorealg/Geometry/WireGeo.h"
 
 // LArIATSoft
 #include "ChannelMapLArIATAlg.h"
@@ -38,7 +38,7 @@ namespace geo{
     // start over:
     Uninitialize();
     
-    std::vector<geo::CryostatGeo*> const& cgeo = geodata.cryostats;
+    std::vector<geo::CryostatGeo> const& cgeo = geodata.cryostats;
     
     fNcryostat = cgeo.size();
     
@@ -58,15 +58,15 @@ namespace geo{
     fWiresPerPlane          .resize(fNcryostat);
     fFirstChannelInNextPlane.resize(fNcryostat);
     fFirstChannelInThisPlane.resize(fNcryostat);
-    fViews.clear();
     fPlaneIDs.clear();
     fTopChannel = 0;
 
     int RunningTotal = 0;
 
     for(unsigned int cs = 0; cs != fNcryostat; ++cs){
+      geo::CryostatGeo const& cryo = cgeo[cs];
       
-      fNTPC[cs] = cgeo[cs]->NTPC();
+      fNTPC[cs] = cryo.NTPC();
       
       LOG_DEBUG("ChannelMapLArIATAlg")
       << "\t Cryostat "
@@ -87,8 +87,9 @@ namespace geo{
       fFirstChannelInNextPlane[cs].resize(fNTPC[cs]);
 
       for(unsigned int TPCCount = 0; TPCCount != fNTPC[cs]; ++TPCCount){
+        geo::TPCGeo const& TPC = cryo.TPC(TPCCount);
         
-        unsigned int PlanesThisTPC = cgeo[cs]->TPC(TPCCount).Nplanes();
+        unsigned int PlanesThisTPC = TPC.Nplanes();
         
         LOG_DEBUG("ChannelMapLArIATAlg")
         << "\t TPC "
@@ -103,15 +104,15 @@ namespace geo{
         fOrthVectorsZ[cs][TPCCount] .resize(PlanesThisTPC);
         fNPlanes[cs][TPCCount]=PlanesThisTPC;
         for(unsigned int PlaneCount = 0; PlaneCount != PlanesThisTPC; ++PlaneCount){
+          geo::PlaneGeo const& plane = TPC.Plane(PlaneCount);
 
-          fViews.emplace(cgeo[cs]->TPC(TPCCount).Plane(PlaneCount).View());
           fPlaneIDs.emplace(PlaneID(cs, TPCCount, PlaneCount));
 
           // the following commented out code is for debugging purposes
-//          size_t nwires = cgeo[cs]->TPC(TPCCount).Plane(PlaneCount).Nwires();
+//          size_t nwires = plane.Nwires();
 //          for(size_t w = 0; w < nwires; ++w){
-//            auto const& wire1 = cgeo[cs]->TPC(TPCCount).Plane(PlaneCount).Wire(w);
-//            auto const& wire2 = (w == nwires - 1) ? cgeo[cs]->TPC(TPCCount).Plane(PlaneCount).Wire(w - 1) : cgeo[cs]->TPC(TPCCount).Plane(PlaneCount).Wire(w + 1);
+//            auto const& wire1 = plane.Wire(w);
+//            auto const& wire2 = (w == nwires - 1) ? plane.Wire(w - 1) : plane.Wire(w + 1);
 //            
 //            double pitch = geo::WireGeo::WirePitch(wire1, wire2);
 //            double xyz[3] = {0.};
@@ -132,9 +133,9 @@ namespace geo{
 //              << ")";
 //          }
           
-          double ThisWirePitch = cgeo[cs]->TPC(TPCCount).WirePitch(0, 1, PlaneCount);
+          double ThisWirePitch = TPC.WirePitch(0, 1, PlaneCount);
           
-          fWireCounts[cs][TPCCount][PlaneCount] = cgeo[cs]->TPC(TPCCount).Plane(PlaneCount).Nwires();
+          fWireCounts[cs][TPCCount][PlaneCount] = plane.Nwires();
 
           LOG_DEBUG("ChannelMapLArIATAlg")
           << "\t Plane "
@@ -146,11 +147,11 @@ namespace geo{
           double  WireCentre1[3] = {0.,0.,0.};
           double  WireCentre2[3] = {0.,0.,0.};
           
-          const geo::WireGeo& firstWire = cgeo[cs]->TPC(TPCCount).Plane(PlaneCount).Wire(0);
+          const geo::WireGeo& firstWire = plane.Wire(0);
           const double sth = firstWire.SinThetaZ(), cth = firstWire.CosThetaZ();
           
           firstWire.GetCenter(WireCentre1,0);
-          cgeo[cs]->TPC(TPCCount).Plane(PlaneCount).Wire(1).GetCenter(WireCentre2,0);
+          plane.Wire(1).GetCenter(WireCentre2,0);
           
           // figure out if we need to flip the orthogonal vector
           // (should point from wire n -> n+1)
@@ -179,7 +180,7 @@ namespace geo{
           fFirstWireProj[cs][TPCCount][PlaneCount] /= ThisWirePitch;
           
           // now to count up wires in each plane and get first channel in each plane
-          int WiresThisPlane = cgeo[cs]->TPC(TPCCount).Plane(PlaneCount).Nwires();
+          int WiresThisPlane = plane.Nwires();
           fWiresPerPlane[cs] .at(TPCCount).push_back(WiresThisPlane);
           fPlaneBaselines[cs].at(TPCCount).push_back(RunningTotal);
           
@@ -355,6 +356,7 @@ namespace geo{
   }
 
   //----------------------------------------------------------------------------
+  /* // this code should be equivalent to the logic implemented in geo::PlaneGeo::UpdateView()
   View_t ChannelMapLArIATAlg::View(raw::ChannelID_t const channel) const
   {
 
@@ -378,12 +380,7 @@ namespace geo{
 
     return view;
   }  
-
-  //----------------------------------------------------------------------------
-  std::set<View_t> const& ChannelMapLArIATAlg::Views() const
-  {
-    return fViews;
-  }
+  */
 
   //----------------------------------------------------------------------------
   std::set<PlaneID> const& ChannelMapLArIATAlg::PlaneIDs() const
