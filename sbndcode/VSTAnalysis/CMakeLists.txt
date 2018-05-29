@@ -93,7 +93,7 @@ Simple_plugin( RawHitFinderVST module
                         larreco_RecoAlg
                         lardataobj_RecoBase
                         lardataobj_MCBase
-                        larcore_Geometry
+                        larcorealg_Geometry
                         larcore_Geometry_Geometry_service
                         lardata_Utilities
                         larsim_Simulation nutools_ParticleNavigation lardataobj_Simulation
@@ -114,7 +114,7 @@ Simple_plugin( RawHitFinderVST module
                         ${ROOT_BASIC_LIB_LIST}
                         lardataobj_RawData
                         lardataobj_RecoBase
-                        larcore_Geometry
+                        larcorealg_Geometry
                         larcore_Geometry_Geometry_service
                         art_Persistency_Provenance
                         art_Utilities

@@ -28,7 +28,7 @@ cet_make_library( LIBRARY_NAME daqAnalysis_Redis
 		${ART_FRAMEWORK_PRINCIPAL}
 		${ROOT_BASIC_LIB_LIST} 
 		fftw3
-                           larcore_Geometry_Geometry_service
+                           larcorealg_Geometry_Geometry_service
                            lardataobj_Simulation
                            lardata_Utilities
                            lardataobj_RawData
