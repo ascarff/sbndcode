@@ -1,3 +1,5 @@
+BEGIN_PROLOG
+
 sbnd_crtsim: {
   module_type: "sbndcode/CRT/CRTDetSim"
   G4ModuleLabel: "largeant"
@@ -32,7 +34,7 @@ sbnd_crtsim: {
   NpeScaleShift: -1085.0
 
   // Mean deposited charge for mips [GeV]
-  UseEdep: false
+  UseEdep: true
   Q0: 1.75e-3
 
   // ADC model: Pedestal offset [ADC], slope [ADC/photon], RMS [ADC]
@@ -54,3 +56,4 @@ sbnd_crtsim: {
   SipmTimeResponse: 2.0
 }
 
+END_PROLOG

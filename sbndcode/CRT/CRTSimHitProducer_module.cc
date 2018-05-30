@@ -152,6 +152,10 @@ namespace sbnd {
   void CRTSimHitProducer::produce(art::Event & event)
   {
 
+    std::vector<uint8_t> tfeb_id = {0};
+    std::map<uint8_t, std::vector<std::pair<int,float>>> tpesmap;
+    tpesmap[0] = {std::make_pair(0,0)};
+
     if(fVerbose){
       std::cout<<"============================================"<<std::endl
                <<"Run = "<<event.run()<<", SubRun = "<<event.subRun()<<", Event = "<<event.id().event()<<std::endl
@@ -169,12 +173,14 @@ namespace sbnd {
 
     // Fill a vector of pairs of time and width direction for each CRT plane
     // The y crossing point of z planes and z crossing point of y planes would be constant
-    struct CRTStrip {double t0; uint32_t channel; double x; double ex; int id1; int id2;};
+    struct CRTStrip {double t0; uint32_t channel; double x; double ex; int id1; int id2; double pes;};
     std::vector<std::vector<CRTStrip>> crtStrips;
     for(size_t plane_i = 0; plane_i < crtPlanes.size(); plane_i++){
       std::vector<CRTStrip> temp;
       crtStrips.push_back(temp);
     }
+
+    if(fVerbose) std::cout<<"Number of SiPM hits = "<<crtList.size()<<"\n";
 
     // Loop over all the SiPM hits in 2 (should be in pairs due to trigger)
     for (size_t i = 0; i < crtList.size(); i+=2){
@@ -214,7 +220,7 @@ namespace sbnd {
           double ex = 1.92380e+00+1.47186e-02*normx-5.29446e-03*normx*normx;
           double time = (t1 + t2)/2.;
 
-          CRTStrip strip = {time, channel, x, ex, crtList[i]->TrackID(), crtList[i+1]->TrackID()};
+          CRTStrip strip = {time, channel, x, ex, crtList[i]->TrackID(), crtList[i+1]->TrackID(), npe1+npe2};
           crtStrips[plane_i].push_back(strip);
         }
       }
@@ -235,7 +241,10 @@ namespace sbnd {
                                            [](const CRTStrip & a, const CRTStrip & b) -> bool{
                                              return a.t0 == b.t0 && a.channel == b.channel;
                                             }), crtStrips[plane_i].end());
+
+      if(fVerbose) std::cout<<"Number of hits on plane "<<plane_i<<" = "<<crtStrips[plane_i].size()<<"\n"; 
     }
+      
 
     //Loop over number of tagger planes
     for (size_t tag_i = 0; tag_i < crtPlanes.size()/2; tag_i++){
@@ -271,7 +280,14 @@ namespace sbnd {
             
             // Create a CRT hit
             crt::CRTHit crtHit;
-            crtHit.ts0_ticks = time; 
+            crtHit.feb_id = tfeb_id;
+            crtHit.pesmap = tpesmap;
+            crtHit.peshit = crtStrips[tag_i*2][hit_i].pes + crtStrips[tag_i*2+1][hit_j].pes;
+            crtHit.ts0_s_corr = 0;
+            crtHit.ts0_ns = time * 0.5 * 10e3;;
+            crtHit.ts0_ns_corr = 0;
+            crtHit.ts1_ns = time * 0.5 * 10e3;
+            crtHit.ts0_s = time * 0.5 * 10e-6; 
             crtHit.plane = tag_i;
             crtHit.x_pos = meanX;
             crtHit.x_err = errX;
@@ -299,7 +315,14 @@ namespace sbnd {
             if(meanZ>400||meanZ<0){
               // Just use the single plane limits as the crt hit
               crt::CRTHit crtHit;
-              crtHit.ts0_ticks = crtStrips[tag_i*2][hit_i].t0; 
+              crtHit.feb_id = tfeb_id;
+              crtHit.pesmap = tpesmap;
+              crtHit.peshit = crtStrips[tag_i*2][hit_i].pes;
+              crtHit.ts0_s_corr = 0;
+              crtHit.ts0_ns = crtStrips[tag_i*2][hit_i].t0 * 0.5 * 10e3;
+              crtHit.ts0_ns_corr = 0;
+              crtHit.ts1_ns = crtStrips[tag_i*2][hit_i].t0 * 0.5 * 10e3;
+              crtHit.ts0_s = crtStrips[tag_i*2][hit_i].t0 * 0.5 * 10e-6; 
               crtHit.plane = tag_i;
               crtHit.x_pos = meanX;
               crtHit.x_err = errX;
@@ -323,7 +346,14 @@ namespace sbnd {
               errZ = std::abs((limits1[5] - limits1[4])/2.);
               // Use the single plane limits as the crt hit
               crt::CRTHit crtHit;
-              crtHit.ts0_ticks = crtStrips[tag_i*2][hit_i].t0; 
+              crtHit.feb_id = tfeb_id;
+              crtHit.pesmap = tpesmap;
+              crtHit.peshit = crtStrips[tag_i*2][hit_i].pes;
+              crtHit.ts0_s_corr = 0;
+              crtHit.ts0_ns = crtStrips[tag_i*2][hit_i].t0 * 0.5 * 10e3;
+              crtHit.ts0_ns_corr = 0;
+              crtHit.ts1_ns = crtStrips[tag_i*2][hit_i].t0 * 0.5 * 10e3;
+              crtHit.ts0_s = crtStrips[tag_i*2][hit_i].t0 * 0.5 * 10e-6; 
               crtHit.plane = tag_i;
               crtHit.x_pos = meanX;
               crtHit.x_err = errX;

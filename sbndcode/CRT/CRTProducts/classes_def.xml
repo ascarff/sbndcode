@@ -6,7 +6,8 @@
   <class name="art::Wrapper<sbnd::crt::CRTData>"/>
   <class name="art::Wrapper<std::vector<sbnd::crt::CRTData> >"/>
 
-  <class name="sbnd::crt::CRTHit" ClassVersion="12">
+  <class name="sbnd::crt::CRTHit" ClassVersion="13">
+   <version ClassVersion="13" checksum="3216187151"/>
    <version ClassVersion="12" checksum="1882709306"/>
    <version ClassVersion="11" checksum="3783352173"/>
    <version ClassVersion="10" checksum="202575031"/>
@@ -14,4 +15,28 @@
   <class name="std::vector<sbnd::crt::CRTHit>"/>
   <class name="art::Wrapper<sbnd::crt::CRTHit>"/>
   <class name="art::Wrapper<std::vector<sbnd::crt::CRTHit> >"/>
+
+  <class name="std::map< uint8_t, uint16_t >"/>
+  <class name="std::map< unsigned char, std::vector< std::pair<int,float> > > "/>
+
+  <class name="sbnd::crt::CRTTzero" ClassVersion="10">
+   <version ClassVersion="10" checksum="4009303985"/>
+  </class>
+  <class name="std::vector<sbnd::crt::CRTTzero>"/>
+  <class name="art::Wrapper< std::vector<sbnd::crt::CRTTzero> >"/>
+
+  <class name="sbnd::crt::CRTTrack" ClassVersion="10">
+   <version ClassVersion="10" checksum="567213743"/>
+  </class>
+  <class name="std::vector<sbnd::crt::CRTTrack>"/>
+  <class name="art::Wrapper< std::vector<sbnd::crt::CRTTrack> >"/>
+
+  <!-- associations  -->
+
+ <class name="art::Assns<sbnd::crt::CRTTzero, sbnd::crt::CRTHit,    void>"           />
+ <class name="art::Wrapper< art::Assns<sbnd::crt::CRTTzero, sbnd::crt::CRTHit, void> >"           />
+
+ <class name="art::Assns<sbnd::crt::CRTHit, sbnd::crt::CRTTzero,    void>"           />
+ <class name="art::Wrapper< art::Assns<sbnd::crt::CRTHit, sbnd::crt::CRTTzero, void> >"           />
+ 
 </lcgdict>
