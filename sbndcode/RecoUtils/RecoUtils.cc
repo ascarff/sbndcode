@@ -25,49 +25,31 @@ int RecoUtils::TrueParticleID(const art::Ptr<recob::Hit> hit, bool rollup_unsave
 }
 
 
-
 int RecoUtils::TrueParticleIDFromTotalTrueEnergy(const std::vector<art::Ptr<recob::Hit> >& hits, bool rollup_unsaved_ids) {
-  art::ServiceHandle<cheat::BackTrackerService> bt_serv;
-  art::ServiceHandle<cheat::ParticleInventoryService> particleInventory;
-
-  std::map<int,double> trackIDToEDepMap;
-  for (std::vector<art::Ptr<recob::Hit> >::const_iterator hitIt = hits.begin(); hitIt != hits.end(); ++hitIt) {
-    art::Ptr<recob::Hit> hit = *hitIt;
-    std::vector<sim::TrackIDE> trackIDs = bt_serv->HitToTrackIDEs(hit);
-    for (unsigned int idIt = 0; idIt < trackIDs.size(); ++idIt) {
-<<<<<<< HEAD
-      trackIDToEDepMap[TMath::Abs(trackIDs[idIt].trackID)] += trackIDs[idIt].energy;
-=======
-      int id = trackIDs[idIt].trackID;
-      if (rollup_unsaved_ids) id = std::abs(id);
-      trackIDToEDepMap[id] += trackIDs[idIt].energy;
->>>>>>> develop
+     art::ServiceHandle<cheat::BackTrackerService> bt_serv;
+     std::map<int,double> trackIDToEDepMap;
+     for (std::vector<art::Ptr<recob::Hit> >::const_iterator hitIt = hits.begin(); hitIt != hits.end(); ++hitIt) {
+    	art::Ptr<recob::Hit> hit = *hitIt;
+    	std::vector<sim::TrackIDE> trackIDs = bt_serv->HitToTrackIDEs(hit);
+    	for (unsigned int idIt = 0; idIt < trackIDs.size(); ++idIt) {
+	  int id = trackIDs[idIt].trackID;
+	  if (rollup_unsaved_ids) id = std::abs(id);
+	  trackIDToEDepMap[id] += trackIDs[idIt].energy;
+	}
     }
-  }
-
-
-  //Loop over the map and find the track which contributes the highest energy to the hit vector
-  double maxenergy = -1;
-  int objectTrack = -99999;
-  for (std::map<int,double>::iterator mapIt = trackIDToEDepMap.begin(); mapIt != trackIDToEDepMap.end(); mapIt++){
-    double energy = mapIt->second;
-    double trackid = mapIt->first;
-    std::cout << "Track ID: " << mapIt->first << "has deposited 1/3 this energy: " << mapIt->second << std::endl;
-    if (energy > maxenergy){
-      maxenergy = energy;
-      objectTrack = trackid;
-      
-      //All Electrons that deposited charge packets are given the negative of the track id they orginated from but I find the mother just in case this is not true.
-      if(trackid < 0){
-	simb::MCParticle motherparticle = particleInventory->TrackIdToMotherParticle(trackid);
-	objectTrack = motherparticle.TrackId(); 
-      }
+    //Loop over the map and find the track which contributes the highest energy to the hit vector
+    double maxenergy = -1;
+    int objectTrack = -99999;
+    for (std::map<int,double>::iterator mapIt = trackIDToEDepMap.begin(); mapIt != trackIDToEDepMap.end(); mapIt++){
+	double energy = mapIt->second;
+	double trackid = mapIt->first;
+	if (energy > maxenergy){
+	    maxenergy = energy;
+	    objectTrack = trackid;
+	    }
+      	}
+    return objectTrack;
     }
-  }    
-  
-  return objectTrack;
-}
-
 
 
 int RecoUtils::TrueParticleIDFromTotalRecoCharge(const std::vector<art::Ptr<recob::Hit> >& hits, bool rollup_unsaved_ids) {
@@ -197,7 +179,7 @@ double RecoUtils::CalculateTrackLength(const art::Ptr<recob::Track> track){
 }
 
 
-<<<<<<< HEAD
+
 std::map<geo::PlaneID,int> RecoUtils::NumberofHitsThatContainEnergyDepositedByTrack(int TrackID, const std::vector<art::Ptr<recob::Hit> >& hits){
 
   //Loop over the planes and create the initial PlaneMap
@@ -363,6 +345,3 @@ float RecoUtils::TotalEnergyDepinHitsFromTrack(const std::vector<art::Ptr<recob:
 
   return DepEnergy;
 }
-=======
-
->>>>>>> develop
