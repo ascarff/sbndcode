@@ -244,7 +244,7 @@ public:
 
     // persist through nan's
     if (std::isnan(dat)) {
-      mf::LogError("NAN Metric") << "Metric " << REDIS_NAME << "is NAN on wire " << wire << std::endl;
+      mf::LogError("NAN Metric") << "Metric " << REDIS_NAME << " is NAN on wire " << wire << std::endl;
       return;
     }
 
