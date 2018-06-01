@@ -75,7 +75,7 @@ void daqAnalysis::StreamDataVariableMean::AddInstance(unsigned index) {
     return;
   }
   // add instance data to data
-  _data[index] = (_data[index] * _n_values[index] + _instance_data[index]) / (_n_values[index] + 1);
+  _data[index] += (_instance_data[index] - _data[index]) / (_n_values[index] + 1);
 
   // clear instance data
   _instance_data[index] = 0;
@@ -163,7 +163,7 @@ void daqAnalysis::StreamDataRMS::Fill(unsigned instance_index, unsigned datum_in
   _means[instance_index].Fill(datum_index, 0, datum);
   // get new mean
   float mean = _means[instance_index].Data(datum_index);
-  _rms[instance_index][datum_index] = _rms[instance_index][datum_index] + (datum - last_mean)*(datum - mean);
+  _rms[instance_index][datum_index] += ( (datum - last_mean)*(datum - mean) - _rms[instance_index][datum_index]) / (_n_values + 1);
 }
 
 // clear data
@@ -179,7 +179,7 @@ void daqAnalysis::StreamDataRMS::Clear() {
 float daqAnalysis::StreamDataRMS::Data(unsigned index) {
   if (_n_values < 2) return 0;
 
-  float sample_variance = std::accumulate(_rms[index].begin(), _rms[index].end(), 0.) / (_rms[index].size() * (_n_values-1));
+  float sample_variance = std::accumulate(_rms[index].begin(), _rms[index].end(), 0.) / (_rms[index].size());
   float sample_rms = sqrt(sample_variance);
   return sample_rms;
 }
