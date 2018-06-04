@@ -124,6 +124,7 @@ void daq::DaqDecoder::produce(art::Event & event)
   std::unique_ptr<std::vector<raw::RawDigit>> product_collection(new std::vector<raw::RawDigit>);
   // storage for header info
   std::unique_ptr<std::vector<daqAnalysis::HeaderData>> header_collection(new std::vector<daqAnalysis::HeaderData>);
+  std::cout << "N FRAGMENTS: " << daq_handle->size() << std::endl;
   for (auto const &rawfrag: *daq_handle) {
     process_fragment(event, rawfrag, product_collection, header_collection);
   }
@@ -146,15 +147,13 @@ void daq::DaqDecoder::process_fragment(art::Event &event, const artdaq::Fragment
   std::unique_ptr<std::vector<daqAnalysis::HeaderData>> &header_collection) {
 
   // convert fragment to Nevis fragment
+  std::cout << "COVERTING FRAGMENT" << std::endl;
   sbnddaq::NevisTPCFragment fragment(frag);
-
-
-  std::unordered_map<uint16_t,sbnddaq::NevisTPC_Data_t> waveform_map;
-  size_t n_waveforms = fragment.decode_data(waveform_map);
-  (void)n_waveforms;
+  std::cout << "COVERTED FRAGMENT" << std::endl;
 
   if (_config.produce_header || _config.validate_header) {
     auto header_data = Fragment2HeaderData(event, frag, 1.0, _config.calc_checksum);
+    std::cout << "HEADER:\n" << header_data.Print();
     if (_config.produce_header) {
       // Construct HeaderData from the Nevis Header and throw it in the collection
       header_collection->push_back(header_data);
@@ -163,6 +162,10 @@ void daq::DaqDecoder::process_fragment(art::Event &event, const artdaq::Fragment
       validate_header(header_data);
     }
   }
+
+  std::unordered_map<uint16_t,sbnddaq::NevisTPC_Data_t> waveform_map;
+  size_t n_waveforms = fragment.decode_data(waveform_map);
+  (void)n_waveforms;
 
   for (auto waveform: waveform_map) {
     std::vector<int16_t> raw_digits_waveform;
