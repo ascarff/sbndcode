@@ -141,9 +141,8 @@ void daq::DaqDecoder::produce(art::Event & event)
 
 
 raw::ChannelID_t daq::DaqDecoder::get_wire_id(const sbnddaq::NevisTPCHeader *header, uint16_t nevis_channel_id) {
- daqAnalysis::ChannelMap::readout_channel channel {header->getSlot(), header->getFEMID(), nevis_channel_id };
  // rely on ChannelMap for implementation
- return daqAnalysis::ChannelMap::Channel2Wire(channel);
+ return daqAnalysis::ChannelMap::Channel2Wire(header->getFEMID(), header->getSlot(), nevis_channel_id, _config.slot_offset);
 }
 
 void daq::DaqDecoder::process_fragment(art::Event &event, const artdaq::Fragment &frag, 

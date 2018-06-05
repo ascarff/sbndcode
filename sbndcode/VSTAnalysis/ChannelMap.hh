@@ -15,16 +15,17 @@ public:
     uint32_t crate;
     uint32_t slot;
     uint32_t channel_ind;
+    uint32_t slot_offset;
   };
 
   // TODO @INSTALLATION: Implement for VST
-  static readout_channel Wire2Channel(wire_id_t wire) {
+  static readout_channel Wire2Channel(wire_id_t wire, uint32_t slot_offset=0) {
     // TEMPORARY IMPLEMENTATION FOR TEST ON LARIAT DATA
 
     // 480 total channels. 64 channels per fem, 8 fem per crate. 1 crate total.
     uint32_t crate = wire / (ChannelMap::n_fem_per_crate * ChannelMap::n_channel_per_fem);
     // 480 total channels. 64 channels per fem. 8 fem per crate.
-    uint32_t slot = (wire / ChannelMap::n_channel_per_fem) % ChannelMap::n_fem_per_crate;
+    uint32_t slot = (wire / ChannelMap::n_channel_per_fem) % ChannelMap::n_fem_per_crate + slot_offset;
     // channel ind counts up from 0 -> 480. 64 channels per fem.
     uint32_t channel_ind = wire % (ChannelMap::n_fem_per_crate * ChannelMap::n_channel_per_fem);
 
@@ -33,15 +34,13 @@ public:
 
   //TODO @INSTALLATION: Imeplement
   static wire_id_t Channel2Wire(readout_channel channel) {
-    // TEMPORARY IMPLEMENTATION FOR TEST ON LARIAT DATA
-    wire_id_t wire = channel.crate * ChannelMap::n_fem_per_crate * ChannelMap::n_channel_per_fem + channel.slot * ChannelMap::n_channel_per_fem + channel.channel_ind;
-    // TEMPORARY IMPLEMENTATION FOR TEST ON NEVIS TEST STAND DATA
-    //wire_id_t wire = channel.channel_ind;
+    // TEMPORARY IMPLEMENTATION FOR TEST ON LARIAT DATA AND NEVIST TEST STAND DATA
+    wire_id_t wire = (channel.slot - channel.slot_offset) * ChannelMap::n_channel_per_fem + channel.channel_ind;
     return wire;
   }
 
-  static wire_id_t Channel2Wire(uint32_t card_no, uint32_t fem, uint32_t channel_id) {
-    readout_channel channel {card_no, fem, channel_id};
+  static wire_id_t Channel2Wire(uint32_t crate, uint32_t fem, uint32_t channel_id, uint32_t slot_offset=0) {
+    readout_channel channel {crate, fem, channel_id, slot_offset};
     return Channel2Wire(channel);
   }
 
