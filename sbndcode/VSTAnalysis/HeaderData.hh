@@ -37,6 +37,9 @@ class HeaderData {
   uint32_t sub_run_no;
   uint32_t art_event_no;
 
+  // config info
+  uint32_t slot_offset;
+
   // by default make words noticable
   // Nevis uses DEADBEEF as a default, so distinguish from
   // that use BEEFDEAD
@@ -62,9 +65,7 @@ class HeaderData {
   // Returns the logical index of the header
   // @VST This is ok because crate will always be 0
   uint32_t Ind() const {
-    //return crate * ChannelMap::n_fem_per_crate + slot;
-    // for testing on Nevis data
-    return 0;
+    return slot - slot_offset;
   }
 
   // print the data -- for debugging

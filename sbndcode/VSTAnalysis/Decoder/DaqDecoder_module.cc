@@ -40,7 +40,7 @@ DEFINE_ART_MODULE(daq::DaqDecoder)
 
 // constructs a header data object from a nevis header
 // construct from a nevis header
-daqAnalysis::HeaderData Fragment2HeaderData(art::Event &event, const artdaq::Fragment &frag, double frame_to_dt=1.0, bool calc_checksum=false) {
+daqAnalysis::HeaderData Fragment2HeaderData(art::Event &event, const artdaq::Fragment &frag, unsigned slot_offset=0, double frame_to_dt=1.0, bool calc_checksum=false) {
   sbnddaq::NevisTPCFragment fragment(frag);
 
   const sbnddaq::NevisTPCHeader *raw_header = fragment.header();
@@ -78,6 +78,9 @@ daqAnalysis::HeaderData Fragment2HeaderData(art::Event &event, const artdaq::Fra
   ret.checksum_word = raw_header->checksum;
   ret.trig_frame_sample_word = raw_header->trig_frame_sample;
 
+  // config
+  ret.slot_offset = slot_offset;
+
   return ret;
 }
 
@@ -111,6 +114,8 @@ daq::DaqDecoder::Config::Config(fhicl::ParameterSet const & param) {
   n_mode_skip = param.get<unsigned>("n_mode_skip", 1);
   // whether to verify checksum
   calc_checksum = param.get<bool>("calc_checksum", false);
+  // the id of the 0th slot
+  slot_offset = param.get<unsigned>("slot_offset", 0);
 }
 
 void daq::DaqDecoder::produce(art::Event & event)
@@ -196,13 +201,20 @@ void daq::DaqDecoder::validate_header(const daqAnalysis::HeaderData &header) {
     printed = true;
   }
 
-  if (header.slot >= daqAnalysis::ChannelMap::n_fem_per_crate) {
+  // negative overflow will wrap around and also be large than n_fem_per_crate,
+  // so this covers both the case where the slot id is too big and too small
+  if (header.slot - header.slot_offset >= daqAnalysis::ChannelMap::n_fem_per_crate) {
     unsigned n_fem_per_crate = daqAnalysis::ChannelMap::n_fem_per_crate;
     unsigned slot = header.slot;
+    unsigned slot_offset = header.slot_offset;
     mf::LogError("Bad Header") <<  "Slot index of FEM (" << slot << 
-      ") mismatch with number of FEM slots per crate (" << n_fem_per_crate << ")" ;
+      ") mismatch with number of FEM slots per crate (" << n_fem_per_crate << 
+      ") and slot offset value (" << slot_offset << ")";
+      ;
     printed = true;
   }
+  // ignore this error because crate id is whatever
+  /*
   if (header.crate >= daqAnalysis::ChannelMap::n_crate) {
     unsigned crate = header.crate;
     unsigned n_crate = daqAnalysis::ChannelMap::n_crate;
@@ -210,13 +222,15 @@ void daq::DaqDecoder::validate_header(const daqAnalysis::HeaderData &header) {
       ") too large for total number of crates (" << n_crate << ")" ;
     printed = true;
   }
+  // for VST, this check is redundant with prior slot id check
   if (header.Ind() >= daqAnalysis::ChannelMap::NFEM()) {
     unsigned ind = header.Ind();
     unsigned n_fem = daqAnalysis::ChannelMap::NFEM();
     mf::LogError("Bad Header") << "Global index of FEM (" << ind << 
       ") too large for total number of FEM's (" << n_fem << ")" ;
     printed = true;
-  }
+  }*/
+
   if (header.adc_word_count == 0) {
     unsigned fem_ind = header.Ind();
     unsigned crate = header.crate;
