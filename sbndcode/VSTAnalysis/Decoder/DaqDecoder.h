@@ -57,6 +57,7 @@ private:
     bool validate_header;
     unsigned n_mode_skip;
     bool calc_checksum;
+    unsigned slot_offset;
     Config(fhicl::ParameterSet const & p);
   };
 
