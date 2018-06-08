@@ -158,7 +158,7 @@ void daq::DaqDecoder::process_fragment(art::Event &event, const artdaq::Fragment
   (void)n_waveforms;
 
   if (_config.produce_header || _config.validate_header) {
-    auto header_data = Fragment2HeaderData(event, frag, 1.0, _config.calc_checksum);
+    auto header_data = Fragment2HeaderData(event, frag, _config.slot_offset, 1.0, _config.calc_checksum);
     if (_config.produce_header) {
       // Construct HeaderData from the Nevis Header and throw it in the collection
       header_collection->push_back(header_data);
