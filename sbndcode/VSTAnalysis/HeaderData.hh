@@ -76,6 +76,7 @@ class HeaderData {
 
     buffer << "crate: " << ((unsigned)crate) << std::endl;
     buffer << "slot: " << ((unsigned)slot) << std::endl;
+    buffer << "slot offset: " << slot_offset << std::endl;
     buffer << "event no: " << event_number << std::endl;
     buffer << "frame no: " << frame_number << std::endl;
     buffer << "checksum: " << checksum << std::endl;
