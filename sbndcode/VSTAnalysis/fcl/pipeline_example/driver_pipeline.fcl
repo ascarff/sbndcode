@@ -6,14 +6,17 @@ fragment_receiver: {
   fragment_type: NevisTPC
   fragment_id: 0
   board_id: 0
-  InputFilename: "/sbnd/data/users/gputnam/nevis_fake_data/data.dat"
-  WaitTime: 0
+  //InputFilename: "/sbnd/data/users/gputnam/nevis_fake_data/integration_data.dat"
+  InputFilename: "integration_data.dat"
+  //InputFilename: "/home/nfs/gputnam/daq-dev2/srcs/sbndcode/sbndcode/VSTAnalysis/fcl/pipeline_example/output_working.dat"
+  WaitTime: 1
   ChunkSize: 8192
-  SamplesPerChannel: 768
+  SamplesPerChannel: 7667
+  NChannels: 640
 }
 
 event_builder: {
-  expected_fragments_per_event: 1
+  expected_fragments_per_event: 10
   use_art: true
   print_event_store_stats: false
   verbose: false
@@ -28,8 +31,9 @@ physics: {
       wait_time: 0
       module_type: DaqDecoder
       produce_header: true
-      validate_header: false
+      validate_header: true
       baseline_calc: false
+      slot_offset: 4
     }
   }
 
@@ -39,8 +43,7 @@ physics: {
     {
       module_type: VSTAnalysis
       producer_name: daq
-      n_headers: 1
-      header_index: 0
+      n_headers: 10
 
       threshold_calc: 3
       threshold_sigma: 5
