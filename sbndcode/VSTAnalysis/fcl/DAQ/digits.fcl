@@ -7,6 +7,7 @@ physics:
       module_type: DaqDecoder
       produce_header: false
       baseline_calc: true
+      slot_offset: 9
     }
   }
 
@@ -33,8 +34,6 @@ outputs:
 source:
 {
   module_type: RootInput
-  fileNames: ["/sbnd/data/users/gputnam/nevis_fake_data/filedata.root"]
-  //fileNames: ["/home/nfs/gputnam/nevistpc_filedata_test.root"]
 }
 
 process_name: DIGITS
