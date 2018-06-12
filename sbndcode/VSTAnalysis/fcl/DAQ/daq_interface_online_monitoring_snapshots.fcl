@@ -9,6 +9,8 @@ physics:
       validate_header: true
       raw_data_label: daq
       fragment_type_label: TOY2
+      slot_offset: 4
+      calc_checksum: true
     }
   }
 
@@ -23,6 +25,7 @@ physics:
       stream_expire: []
       sub_run_stream: false
       hostname: "131.225.150.201"
+      n_headers: 10
 
       threshold_calc: 3
       threshold_sigma: 5
