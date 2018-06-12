@@ -12,6 +12,7 @@ physics:
       validate_header: true
       raw_data_label: daq
       fragment_type_label: TOY2
+      slot_offset: 4
     }
 
     rawhit:             @local::standard_fasthitfinderVST
@@ -28,7 +29,7 @@ physics:
       stream_take: [1, 10]
       stream_expire: [1000, 10000]
       hostname: "131.225.150.201"
-      n_headers: 1
+      n_headers: 10
 
       threshold_calc: 3
       threshold_sigma: 5

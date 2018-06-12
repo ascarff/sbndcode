@@ -10,6 +10,7 @@ physics:
       validate_header: true
       raw_data_label: daq
       fragment_type_label: TOY2
+      slot_offset: 4
     }
 
   }
@@ -26,7 +27,7 @@ physics:
       sub_run_stream: true
       sub_run_expire: -1
       hostname: "131.225.150.201"
-      n_headers: 1
+      n_headers: 10
 
       threshold_calc: 3
       threshold_sigma: 5

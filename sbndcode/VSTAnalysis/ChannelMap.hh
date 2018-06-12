@@ -22,11 +22,9 @@ public:
   static readout_channel Wire2Channel(wire_id_t wire, uint32_t slot_offset=0) {
     // TEMPORARY IMPLEMENTATION FOR TEST ON LARIAT DATA
 
-    // 480 total channels. 64 channels per fem, 8 fem per crate. 1 crate total.
     uint32_t crate = wire / (ChannelMap::n_fem_per_crate * ChannelMap::n_channel_per_fem);
-    // 480 total channels. 64 channels per fem. 8 fem per crate.
     uint32_t slot = (wire / ChannelMap::n_channel_per_fem) % ChannelMap::n_fem_per_crate + slot_offset;
-    // channel ind counts up from 0 -> 480. 64 channels per fem.
+    // channel ind counts up from 0 -> N. 64 channels per fem.
     uint32_t channel_ind = wire % (ChannelMap::n_fem_per_crate * ChannelMap::n_channel_per_fem);
 
     return readout_channel {crate, slot, channel_ind};
@@ -65,18 +63,11 @@ public:
   }
 
   // TODO @INSTALLATION: Implement
-  // TEMPORARY IMPLEMENTATION FOR TEST ON LARIAT DATA
-  static const uint32_t n_crate = 1;
-  static const uint32_t n_fem_per_crate = 8;
-  static const uint32_t n_channel_per_fem = 64;
-  static const uint32_t n_wire = 480;
-  /*
   // TEMPORARY IMPLEMENTATION FOR TEST ON NEVIS TEST STAND DATA
   static const uint32_t n_crate = 1;
-  static const uint32_t n_fem_per_crate = 8;
+  static const uint32_t n_fem_per_crate = 10;
   static const uint32_t n_channel_per_fem = 64;
-  static const uint32_t n_wire = 64;
-  */
+  static const uint32_t n_wire = 640;
 };
 #endif
 
