@@ -58,6 +58,12 @@ private:
     unsigned n_mode_skip;
     bool calc_checksum;
     unsigned slot_offset;
+    bool v_checksum;
+    bool v_event_no;
+    bool v_slot_no;
+    bool v_adc_count_non_zero;
+    bool v_inc_event_no;
+    bool v_inc_trig_frame_no;
     Config(fhicl::ParameterSet const & p);
   };
 

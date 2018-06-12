@@ -116,6 +116,14 @@ daq::DaqDecoder::Config::Config(fhicl::ParameterSet const & param) {
   calc_checksum = param.get<bool>("calc_checksum", false);
   // the id of the 0th slot
   slot_offset = param.get<unsigned>("slot_offset", 0);
+
+  // turning off various config stuff
+  v_checksum = param.get<bool>("v_check_checksum", true);
+  v_event_no = param.get<bool>("v_crosscheck_event_no", true);
+  v_slot_no = param.get<bool>("v_slot_no", true);
+  v_adc_count_non_zero = param.get<bool>("v_adc_count_non_zero", true);
+  v_inc_event_no = param.get<bool>("v_inc_event_no", true);
+  v_inc_trig_frame_no = param.get<bool>("v_inc_trig_frame_no", true);
 }
 
 void daq::DaqDecoder::produce(art::Event & event)
@@ -185,14 +193,14 @@ void daq::DaqDecoder::process_fragment(art::Event &event, const artdaq::Fragment
 }
 void daq::DaqDecoder::validate_header(const daqAnalysis::HeaderData &header) {
   bool printed = false;
-  if (_config.calc_checksum && header.checksum != header.computed_checksum) {
+  if (_config.v_checksum && _config.calc_checksum && header.checksum != header.computed_checksum) {
    unsigned checksum = header.checksum;
    unsigned computed_checksum = header.computed_checksum;
     mf::LogError("Bad Header") << std::hex << "computed checksum " << 
       checksum << " does not match firmware checksum " << computed_checksum ;
     printed = true;
   }
-  if (header.art_event_no != header.event_number) {
+  if (_config.v_event_no && header.art_event_no != header.event_number) {
     unsigned art_event_no = header.art_event_no;
     unsigned frag_event_no = header.event_number;
     mf::LogError("Bad Header") << "Art event number " << art_event_no <<
@@ -202,7 +210,7 @@ void daq::DaqDecoder::validate_header(const daqAnalysis::HeaderData &header) {
 
   // negative overflow will wrap around and also be large than n_fem_per_crate,
   // so this covers both the case where the slot id is too big and too small
-  if (header.slot - header.slot_offset >= daqAnalysis::ChannelMap::n_fem_per_crate) {
+  if (_config.v_slot_no && header.slot - header.slot_offset >= daqAnalysis::ChannelMap::n_fem_per_crate) {
     unsigned n_fem_per_crate = daqAnalysis::ChannelMap::n_fem_per_crate;
     unsigned slot = header.slot;
     unsigned slot_offset = header.slot_offset;
@@ -230,7 +238,7 @@ void daq::DaqDecoder::validate_header(const daqAnalysis::HeaderData &header) {
     printed = true;
   }*/
 
-  if (header.adc_word_count == 0) {
+  if (_config.v_adc_count_non_zero && header.adc_word_count == 0) {
     unsigned fem_ind = header.Ind();
     unsigned crate = header.crate;
     unsigned slot = header.slot;
@@ -238,13 +246,13 @@ void daq::DaqDecoder::validate_header(const daqAnalysis::HeaderData &header) {
       slot << ", fem ID " << fem_ind << "is 0" ;
     printed = true;
   }
-  if (header.event_number < _last_event_number) {
+  if (_config.v_inc_event_no && header.event_number < _last_event_number) {
     unsigned event_number = header.event_number;
     mf::LogError("Bad Header") << "Non incrementing event numbers. Last event number: " << 
       _last_event_number << ". This event number: " << event_number ;
     printed = true;
   }
-  if (header.trig_frame_number < _last_trig_frame_number) {
+  if (_config.v_inc_trig_frame_no && header.trig_frame_number < _last_trig_frame_number) {
     unsigned trig_frame_number = header.trig_frame_number;
     mf::LogError("Bad Header") << "Non incrementing trig frame numbers. Last trig frame: " << 
       _last_trig_frame_number << " This trig frame: " << trig_frame_number ;
