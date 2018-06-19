@@ -2,6 +2,7 @@
 #include "hitfindermodulesVST.fcl"
 #include "channelstatus_sbnd.fcl"
 #include "resourcemonitorservices_sbnd.fcl"
+#include "vst_channel_map.fcl"
 
 physics:
 {
@@ -64,6 +65,7 @@ services:
   Geometry: @local::lariat_geo
   ExptGeoHelperInterface: @local::lariat_geometry_helper
   ChannelStatusService:   @local::vst_channelstatus
+  VSTChannelMap: @local::nevis_integration_channel_map_VST
   @table::sbnd_resourcemonitorservices
 } 
 

@@ -1,3 +1,5 @@
+#include "vst_channel_map.fcl"
+
 events_to_generate: 50
 run_number: 105
 
@@ -33,7 +35,6 @@ physics: {
       produce_header: true
       validate_header: true
       baseline_calc: false
-      slot_offset: 4
     }
   }
 
@@ -84,6 +85,7 @@ outputs:
 services:
 {
   TFileService: { fileName: "out.root"}
+  VSTChannelMap: @local::nevis_integration_channel_map_VST
 } 
 
 source: {

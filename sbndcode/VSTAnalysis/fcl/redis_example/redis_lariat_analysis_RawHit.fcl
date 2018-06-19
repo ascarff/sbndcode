@@ -2,6 +2,7 @@
 #include "resourcemonitorservices_sbnd.fcl"
 #include "hitfindermodulesVST.fcl"
 #include "channelstatus_sbnd.fcl"
+#include "vst_channel_map.fcl"
 
 physics:
 {

@@ -1,3 +1,5 @@
+#include "vst_channel_map.fcl"
+
 physics:
 {
   producers:

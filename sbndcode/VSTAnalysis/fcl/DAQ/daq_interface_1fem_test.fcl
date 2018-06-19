@@ -1,3 +1,4 @@
+#include "vst_channel_map.fcl"
 
 physics:
 {
@@ -98,7 +99,7 @@ source:
 }
 
 services: {
-
+  VSTChannelMap: @local::nevis_1FEM_channel_map_VST
   message: {
     destinations : {
       log1 : { type : cout } 

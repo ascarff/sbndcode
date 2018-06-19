@@ -1,3 +1,4 @@
+#include "vst_channel_map.fcl"
 #include "resourcemonitorservices_sbnd.fcl"
 
 physics:
@@ -45,6 +46,7 @@ source:
 }
 
 services: {
+  VSTChannelMap: @local::lariat_data_channel_map_VST
   @table::sbnd_resourcemonitorservices
 }
 

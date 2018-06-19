@@ -1,3 +1,5 @@
+#include "vst_channel_map.fcl"
+
 physics:
 {
   analyzers:
@@ -30,12 +32,13 @@ physics:
 services:
 {
   TFileService: { fileName: "out.root"}
+  VSTChannelMap: @local::lariat_data_channel_map_VST
 } 
 
 source:
 {
   module_type: RootInput
-  fileNames: ["/sbnd/data/users/gputnam/lariat_data.root"]
+  fileNames: ["/sbnd/data/users/gputnam/VST/lariat_data.root"]
 }
 
 process_name: DAQANALYSIS
