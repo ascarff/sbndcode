@@ -18,6 +18,7 @@
 #include "../ChannelData.hh"
 #include "../HeaderData.hh"
 #include "../Analysis.hh"
+#include "../VSTChannelMap.hh"
 
 #include "Redis.hh"
 
@@ -45,12 +46,16 @@ public:
   // Required functions.
   void analyze(art::Event const & e) override;
 private:
+  // handle to the channel map service
+  art::ServiceHandle<daqAnalysis::VSTChannelMap> _channel_map;
+
   daqAnalysis::Analysis _analysis;
   daqAnalysis::Redis *_redis_manager;
 };
 
 daqAnalysis::OnlineAnalysis::OnlineAnalysis(fhicl::ParameterSet const & p):
   art::EDAnalyzer::EDAnalyzer(p),
+  _channel_map(),
   _analysis(p) 
 {
   Redis::Config config;
@@ -70,7 +75,7 @@ daqAnalysis::OnlineAnalysis::OnlineAnalysis(fhicl::ParameterSet const & p):
   config.timing = _analysis._config.timing;
 
   // setup redis
-  _redis_manager = new Redis(config);
+  _redis_manager = new Redis(config, _channel_map.get());
 }
 
 void daqAnalysis::OnlineAnalysis::analyze(art::Event const & e) {

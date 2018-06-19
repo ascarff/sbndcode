@@ -80,7 +80,7 @@ public:
     unsigned NStreams() { return stream_take.size() + (sub_run_stream ? 1:0); }
   };
 
-  explicit Redis(Config &config);
+  explicit Redis(Config &config, daqAnalysis::VSTChannelMap *channel_map);
   ~Redis();
   // send info associated w/ ChannelData
   void ChannelData(std::vector<daqAnalysis::ChannelData> *per_channel_data, std::vector<daqAnalysis::NoiseSample> *noise_samples, 
@@ -108,6 +108,9 @@ protected:
     const art::ValidHandle<std::vector<raw::RawDigit>> &digits, const std::vector<unsigned> &channel_to_index);
   // clear out a pipeline of n_commands commands
   void FinishPipeline(size_t n_commands);
+
+  // handle to the channel map service
+  daqAnalysis::VSTChannelMap *_channel_map;
 
   redisContext *context;
   std::time_t _now;

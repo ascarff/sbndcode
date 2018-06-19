@@ -3,6 +3,7 @@ find_ups_product( TRACE v3_06_06 )
 
 simple_plugin( DaqDecoder module
   daqAnalysis_MODE
+  sbndcode_VSTAnalysis_VSTChannelMap_service
   sbnddaq-datatypes_Overlays 
   sbnddaq-datatypes_NevisTPC
   ${LARDATAOBJ}

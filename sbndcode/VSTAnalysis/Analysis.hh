@@ -17,11 +17,13 @@
 #include "art/Framework/Principal/Handle.h"
 #include "art/Framework/Principal/Run.h" 
 #include "art/Framework/Principal/SubRun.h" 
+#include "art/Framework/Services/Registry/ServiceHandle.h"
 #include "lardataobj/RawData/RawDigit.h"
 #include "lardataobj/RecoBase/Hit.h"
 
 #include "ChannelData.hh"
 #include "HeaderData.hh"
+#include "VSTChannelMap.hh"
 #include "FFT.hh"
 #include "Noise.hh"
 
@@ -129,6 +131,12 @@ public:
   bool ReadyToProcess();
   bool EmptyEvent();
 
+private:
+  // Declare member data here.
+  // handle to the channel map service
+  art::ServiceHandle<daqAnalysis::VSTChannelMap> _channel_map;
+
+public:
   // configuration is available publicly
   AnalysisConfig _config;
   // keeping track of wire id to index into stuff from Decoder
@@ -143,7 +151,6 @@ public:
   std::vector<std::vector<double>> _fem_summed_fft;
 
 private:
-  // Declare member data here.
   unsigned _event_ind;
   FFTManager _fft_manager;
   // keep track of timing data (maybe)

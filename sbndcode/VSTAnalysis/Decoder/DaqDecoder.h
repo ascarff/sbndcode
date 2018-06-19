@@ -17,6 +17,7 @@
 #include "sbnddaq-datatypes/Overlays/NevisTPCFragment.hh"
 
 #include "../HeaderData.hh"
+#include "../VSTChannelMap.hh"
 
 /*
   * The Decoder module takes as input "NevisTPCFragments" and
@@ -57,7 +58,6 @@ private:
     bool validate_header;
     unsigned n_mode_skip;
     bool calc_checksum;
-    unsigned slot_offset;
     bool v_checksum;
     bool v_event_no;
     bool v_slot_no;
@@ -75,9 +75,13 @@ private:
   // validate Nevis header
   void validate_header(const daqAnalysis::HeaderData &header);
 
+  // handle to the channel map service
+  art::ServiceHandle<daqAnalysis::VSTChannelMap> _channel_map;
+
   // Gets the WIRE ID of the channel. This wire id can be then passed
   // to the Lariat geometry.
   raw::ChannelID_t get_wire_id(const sbnddaq::NevisTPCHeader *header, uint16_t nevis_channel_id);
+
   art::InputTag _tag;
   Config _config;
   // keeping track of incrementing numbers

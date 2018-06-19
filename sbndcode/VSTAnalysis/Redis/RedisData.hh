@@ -14,7 +14,7 @@
 
 #include "../ChannelData.hh"
 #include "../HeaderData.hh"
-#include "../ChannelMap.hh"
+#include "../VSTChannelMap.hh"
 
 namespace daqAnalysis {
   // stream types
@@ -200,41 +200,16 @@ public:
   // implementing templated functions in header (because cpp is bad)
 
   // constructor
-  DetectorMetric() :
-    _wire_data(ChannelMap::n_wire, 1),
-    _fem_data(ChannelMap::NFEM(), ChannelMap::n_channel_per_fem),
-    _crate_data(ChannelMap::n_crate, ChannelMap::n_fem_per_crate*ChannelMap::n_channel_per_fem)
+  DetectorMetric(daqAnalysis::VSTChannelMap *channel_map) :
+    _wire_data(channel_map->NChannels(), 1),
+    _fem_data(channel_map->NFEM(), 1),
+    _crate_data(channel_map->NCrates(), channel_map->NChannels()) /* NOTE: assume there is only one crate */
   {
     // TODO @INSTALLATION: Make sure that this implementation also works for the VST installation
-
-    unsigned n_fem = ChannelMap::NFEM();
-    unsigned n_crate = ChannelMap::n_crate;
-    unsigned n_wire = ChannelMap::n_wire;
-    unsigned n_fem_per_crate = ChannelMap::n_fem_per_crate;
-    unsigned n_channel_per_fem = ChannelMap::n_channel_per_fem;
-
-    unsigned n_channel_last_fem = n_channel_per_fem;
-    // last fem might have fewer channels
-    if (n_wire % n_channel_per_fem != 0) {
-      // shouldn't be missing a whole fem
-      assert(n_channel_per_fem * n_fem - n_wire < n_channel_per_crate);
-
-      // last fem has fewer channels
-      n_channel_last_fem = n_channel_per_fem - (n_fem * n_channel_per_fem - n_wire);
+    // set the number of channels per fem
+    for (unsigned slot = 0; slot < channel_map->NFEM(); slot++) {
+      _fem_data.SetPointsPerTime(slot, channel_map->NSlotChannels(slot));
     }
-
-    unsigned n_fem_last_crate = n_fem_per_crate;
-    // if numbers don't add up, the last crate might not have n_fem_per_crate and the last fem might not have n_channel_per_fem
-    if (n_fem % n_fem_per_crate != 0) {
-      // shouldn't be missing a whole crate
-      assert(n_crate * n_fem_per_crate - n_fem < n_fem_per_crate);
-
-      // last crate has fewer fem
-      n_fem_last_crate = n_fem_per_crate - (n_crate * n_fem_per_crate - n_fem);
-    }
-
-    _fem_data.SetPointsPerTime(n_fem - 1, n_channel_last_fem); 
-    _crate_data.SetPointsPerTime(n_crate - 1, (n_fem_last_crate-1)*n_channel_per_fem + n_channel_last_fem);
   }
 
   // add in data
@@ -298,8 +273,8 @@ public:
     for (unsigned fem_ind = 0; fem_ind < n_fem; fem_ind++) {
       // @VST: this is ok because there is only 1 crate
       // TEMPORARY IMPLEMENTATION
-      unsigned fem = fem_ind % ChannelMap::n_fem_per_crate;
-      unsigned crate = fem_ind / ChannelMap::n_fem_per_crate;
+      unsigned fem = fem_ind;
+      unsigned crate = 0;
       redisAppendCommand(context, "SET stream/%s:%i:%s:crate:%i:fem:%i %f",
         stream_name, index, REDIS_NAME, crate, fem, DataFEM(fem_ind)); 
 
@@ -426,8 +401,8 @@ public:
   // base class destructors should be virtual
   virtual ~HeaderMetric() {}
 
-  HeaderMetric()
-    : _fem(ChannelMap::NFEM(), 1)
+  HeaderMetric(daqAnalysis::VSTChannelMap *channel_map)
+    : _fem(channel_map->NFEM(), 1)
   {}
 
   void Fill(daqAnalysis::HeaderData &header, unsigned fem_ind) {
@@ -459,8 +434,8 @@ public:
     for (unsigned fem_ind = 0; fem_ind < n_fem; fem_ind++) {
       // @VST: this is ok because there is only 1 crate
       // TEMPORARY IMPLEMENTATION
-      unsigned fem = fem_ind % ChannelMap::n_fem_per_crate;
-      unsigned crate = fem_ind / ChannelMap::n_fem_per_crate;
+      unsigned fem = fem_ind;
+      unsigned crate = 0;
       redisAppendCommand(context, "SET stream/%s:%i:%s:crate:%i:fem:%i %u",
         stream_name, index, REDIS_NAME, crate, fem, Data(fem_ind)); 
 

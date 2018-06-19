@@ -10,7 +10,6 @@
 
 #include "../ChannelData.hh"
 #include "../HeaderData.hh"
-#include "../ChannelMap.hh"
 
 #include "RedisData.hh"
 
