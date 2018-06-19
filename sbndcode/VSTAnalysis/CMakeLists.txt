@@ -21,6 +21,9 @@ if( DEFINED ENV{TRACE_INC} )
   add_subdirectory(Decoder)
 endif()
 
+# filter modules for running online monitoring
+add_subdirectory(OnlineFilters)
+
 link_directories($ENV{FFTW_LIBRARY})
 
 art_dictionary(DICTIONARY_LIBRARIES daqAnalysis_VST)
