@@ -18,7 +18,7 @@ nevis_integration_channel_map_VST:
 {
   n_channels: 640
   n_fem: 10
-  slot_offset: 5
+  slot_offset: 4
   crate_id: 15
 }
 

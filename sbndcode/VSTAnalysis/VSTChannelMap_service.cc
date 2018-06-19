@@ -107,7 +107,7 @@ unsigned daqAnalysis::VSTChannelMap::Channel2Wire(unsigned channel, unsigned slo
 // TODO: FIX?
 unsigned daqAnalysis::VSTChannelMap::Channel2Wire(daqAnalysis::ReadoutChannel channel) const {
   unsigned slot = channel.slot - _slot_offset;
-  unsigned channel_base = std::accumulate(_channel_per_fem.begin(), _channel_per_fem.begin() + slot, 0);
+  unsigned channel_base = std::accumulate(_channel_per_fem.begin(), _channel_per_fem.begin() + slot + 1, 0);
   unsigned channel_ind = channel_base + channel.channel_ind;
   return Channel2Wire(channel_ind);
 }
@@ -140,7 +140,7 @@ unsigned daqAnalysis::VSTChannelMap::ReadoutChannel2Ind(unsigned channel, unsign
 }
 
 unsigned daqAnalysis::VSTChannelMap::ReadoutChannel2Ind(daqAnalysis::ReadoutChannel channel) const {
-  return std::accumulate(_channel_per_fem.begin(), _channel_per_fem.begin() + (channel.slot - _slot_offset), channel.channel_ind);
+  return std::accumulate(_channel_per_fem.begin(), _channel_per_fem.begin() + (channel.slot - _slot_offset) + 1, channel.channel_ind);
 }
 
 
