@@ -17,7 +17,7 @@
 #include "../ChannelData.hh"
 #include "../HeaderData.hh"
 #include "../Noise.hh"
-#include "../ChannelMap.hh"
+#include "../VSTChannelMap.hh"
 #include "../FFT.hh"
 
 #include "Redis.hh"
@@ -26,7 +26,8 @@
 using namespace daqAnalysis;
 using namespace std;
 
-Redis::Redis(Redis::Config &config):
+Redis::Redis(Redis::Config &config, daqAnalysis::VSTChannelMap *channel_map):
+  _channel_map(channel_map),
   context(redisConnect(config.hostname, 6379)),
   _now(std::time(nullptr)),
   _start(std::time(nullptr)),
@@ -44,20 +45,20 @@ Redis::Redis(Redis::Config &config):
   _first_run(true),
 
   // allocate and zero-initalize all of the metrics
-  _rms(config.NStreams(), RedisRMS()),
-  _baseline(config.NStreams(), RedisBaseline()),
-  _baseline_rms(config.NStreams(), RedisBaselineRMS()),
-  _dnoise(config.NStreams(), RedisDNoise()),
-  _pulse_height(config.NStreams(), RedisPulseHeight()),
-  _occupancy(config.NStreams(), RedisOccupancy()),
-  _rawhit_pulse_height(config.NStreams(),RedisRawHitPulseHeight()),
-  _rawhit_occupancy(config.NStreams(), RedisRawHitOccupancy()),
+  _rms(config.NStreams(), RedisRMS(channel_map)),
+  _baseline(config.NStreams(), RedisBaseline(channel_map)),
+  _baseline_rms(config.NStreams(), RedisBaselineRMS(channel_map)),
+  _dnoise(config.NStreams(), RedisDNoise(channel_map)),
+  _pulse_height(config.NStreams(), RedisPulseHeight(channel_map)),
+  _occupancy(config.NStreams(), RedisOccupancy(channel_map)),
+  _rawhit_pulse_height(config.NStreams(),RedisRawHitPulseHeight(channel_map)),
+  _rawhit_occupancy(config.NStreams(), RedisRawHitOccupancy(channel_map)),
 
   // and the header stuff
-  _frame_no(config.NStreams(), RedisFrameNo()),
-  _trig_frame_no(config.NStreams(), RedisTrigFrameNo()),
-  _event_no(config.NStreams(), RedisEventNo()),
-  _blocks(config.NStreams(), RedisBlocks()),
+  _frame_no(config.NStreams(), RedisFrameNo(channel_map)),
+  _trig_frame_no(config.NStreams(), RedisTrigFrameNo(channel_map)),
+  _event_no(config.NStreams(), RedisEventNo(channel_map)),
+  _blocks(config.NStreams(), RedisBlocks(channel_map)),
 
   _fft_manager((config.waveform_input_size > 0) ? config.waveform_input_size: 0),
   _do_timing(config.timing)
@@ -122,7 +123,7 @@ void Redis::FillHeaderData(vector<daqAnalysis::HeaderData> *header_data) {
     // update header info in each stream
     for (size_t i = 0; i < _n_streams; i++) {
       // index into the fem data cache
-      unsigned fem_ind = header.Ind();
+      unsigned fem_ind = _channel_map->SlotIndex(header);
       _event_no[i].Fill(header, fem_ind);
       _frame_no[i].Fill(header, fem_ind);
       _trig_frame_no[i].Fill(header, fem_ind);
@@ -204,7 +205,7 @@ void Redis::Snapshot(vector<daqAnalysis::ChannelData> *per_channel_data, vector<
 
   // stuff per fem
   if (fem_summed_waveforms->size() != 0) {
-    for (unsigned fem_ind = 0; fem_ind < ChannelMap::NFEM(); fem_ind++) {
+    for (unsigned fem_ind = 0; fem_ind < _channel_map->NFEM(); fem_ind++) {
       // sending the summed waveforms to redis
       // delete old list
       redisAppendCommand(context, "DEL snapshot:waveform:fem:%i", fem_ind);
@@ -235,7 +236,7 @@ void Redis::Snapshot(vector<daqAnalysis::ChannelData> *per_channel_data, vector<
   }
   // send fft's
   if (fem_summed_fft->size() != 0) {
-    for (unsigned fem_ind = 0; fem_ind < ChannelMap::NFEM(); fem_ind++) {
+    for (unsigned fem_ind = 0; fem_ind < _channel_map->NFEM(); fem_ind++) {
       // sending the ffts of summed waveforms to redis
       // delete old list
       redisAppendCommand(context, "DEL snapshot:fft:fem:%i", fem_ind);
@@ -459,15 +460,15 @@ void Redis::FillChannelData(vector<daqAnalysis::ChannelData> *per_channel_data) 
   }
 
   unsigned n_channels = per_channel_data->size();
-  unsigned n_fem = ChannelMap::NFEM();
+  unsigned n_fem = _channel_map->NFEM();
   bool at_end_of_detector = false;
 
   // iterate over crates and fems
-  for (unsigned crate = 0; crate < daqAnalysis::ChannelMap::n_crate; crate++) {
-    for (unsigned fem = 0; fem < daqAnalysis::ChannelMap::n_fem_per_crate; fem++) {
+  for (unsigned crate = 0; crate < _channel_map->NCrates(); crate++) {
+    for (unsigned fem = 0; fem < _channel_map->NFEM(); fem++) {
       // @VST INSTALLATION: OK -- crate is always 0
       // index into the fem data cache
-      unsigned fem_ind = crate * ChannelMap::n_fem_per_crate + fem;
+      unsigned fem_ind = fem;
 
       // detect if at end of fem's
       if (fem_ind >= n_fem) {
@@ -475,9 +476,9 @@ void Redis::FillChannelData(vector<daqAnalysis::ChannelData> *per_channel_data) 
         break;
       }
 
-      for (unsigned channel = 0; channel < daqAnalysis::ChannelMap::n_channel_per_fem; channel++) {
+      for (unsigned channel = 0; channel < _channel_map->NSlotChannels(fem_ind); channel ++) {
         // get the wire number
-	uint16_t wire = daqAnalysis::ChannelMap::Channel2Wire(crate, fem, channel);
+	uint16_t wire = _channel_map->Channel2Wire(channel, fem, crate, true);
         // detect if at end of detector
         if (wire >= n_channels) {
           at_end_of_detector = true;
@@ -488,7 +489,7 @@ void Redis::FillChannelData(vector<daqAnalysis::ChannelData> *per_channel_data) 
         // get index of channel on fem
         unsigned fem_channel_ind = channel;
         // and get index of channel on crate
-        unsigned crate_channel_ind = channel + fem_ind * daqAnalysis::ChannelMap::n_channel_per_fem;
+        unsigned crate_channel_ind = _channel_map->ReadoutChannel2Ind(channel, fem, crate, true);
  
         // fill metrics for each stream
         for (size_t i = 0; i < _n_streams; i++) {

@@ -21,10 +21,23 @@ if( DEFINED ENV{TRACE_INC} )
   add_subdirectory(Decoder)
 endif()
 
+# filter modules for running online monitoring
+add_subdirectory(OnlineFilters)
+
 link_directories($ENV{FFTW_LIBRARY})
 
 art_dictionary(DICTIONARY_LIBRARIES daqAnalysis_VST)
 
+simple_plugin( VSTChannelMap service
+  ${LARDATAOBJ}
+  lardataobj_RawData
+  ${ART_UTILITIES}
+  ${FHICLCPP}
+  ${ART_FRAMEWORK_CORE}
+  ${ROOT_BASIC_LIB_LIST}
+  ${ART_FRAMEWORK_SERVICES_OPTIONAL_TFILESERVICE_SERVICE}
+)
+  
 cet_make_library( LIBRARY_NAME daqAnalysis_MODE
 	SOURCE
 		Mode.cc
@@ -38,6 +51,7 @@ cet_make_library( LIBRARY_NAME daqAnalysis_VST
 		ChannelData.cc
 	LIBRARIES
 		daqAnalysis_MODE
+  		sbndcode_VSTAnalysis_VSTChannelMap_service
 		${LARDATAOBJ} 
 		lardataobj_RawData
 		lardata_Utilities
@@ -77,6 +91,7 @@ cet_make_library( LIBRARY_NAME daqAnalysis_VST
 
 simple_plugin( VSTAnalysis module
   daqAnalysis_VST
+  sbndcode_VSTAnalysis_VSTChannelMap_service
   ${LARDATAOBJ}
   lardataobj_RawData
   ${ART_UTILITIES}
@@ -85,6 +100,7 @@ simple_plugin( VSTAnalysis module
   ${ROOT_BASIC_LIB_LIST}
   ${ART_FRAMEWORK_SERVICES_OPTIONAL_TFILESERVICE_SERVICE}
 )
+
 
 Simple_plugin( RawHitFinderVST module
                         lardata_ArtDataHelper

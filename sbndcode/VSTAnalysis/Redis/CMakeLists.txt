@@ -9,6 +9,7 @@ cet_make_library( LIBRARY_NAME daqAnalysis_Redis
 	LIBRARIES
 		daqAnalysis_VST
 		daqAnalysis_MODE
+		sbndcode_VSTAnalysis_VSTChannelMap_service
 		hiredis
 		sbnddaq-datatypes_Overlays
 		sbnddaq-datatypes_NevisTPC
@@ -51,6 +52,7 @@ cet_make_library( LIBRARY_NAME daqAnalysis_Redis
 simple_plugin( OnlineAnalysis module
   daqAnalysis_Redis
   daqAnalysis_VST
+  sbndcode_VSTAnalysis_VSTChannelMap_service
   ${LARDATAOBJ}
   lardataobj_RawData
   ${ART_UTILITIES}

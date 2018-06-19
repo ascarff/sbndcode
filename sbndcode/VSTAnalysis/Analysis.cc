@@ -40,7 +40,7 @@
 
 #include "Analysis.hh"
 #include "ChannelData.hh"
-#include "ChannelMap.hh"
+#include "VSTChannelMap.hh"
 #include "HeaderData.hh"
 #include "FFT.hh"
 #include "Noise.hh"
@@ -50,15 +50,17 @@
 using namespace daqAnalysis;
 
 Analysis::Analysis(fhicl::ParameterSet const & p) :
+  _channel_map(), // get a handle to the VST Channel Map service
+  //art::ServiceHandle<daqAnalysis::VSTChannelMap>()->GetProvider()), // get a handle to the VST Channel Map service
   _config(p),
-  _channel_index_map(ChannelMap::n_wire),
-  _per_channel_data(ChannelMap::n_wire),
-  _per_channel_data_reduced((_config.reduce_data) ? ChannelMap::n_wire : 0), // setup reduced event vector if we need it
-  _noise_samples(ChannelMap::n_wire),
+  _channel_index_map(_channel_map->NChannels()),
+  _per_channel_data(_channel_map->NChannels()),
+  _per_channel_data_reduced((_config.reduce_data) ? _channel_map->NChannels() : 0), // setup reduced event vector if we need it
+  _noise_samples(_channel_map->NChannels()),
   _header_data(std::max(_config.n_headers,0)),
-  _thresholds( (_config.threshold_calc == 3) ? ChannelMap::n_wire : 0),
-  _fem_summed_waveforms((_config.sum_waveforms) ? ChannelMap::NFEM() : 0),
-  _fem_summed_fft((_config.sum_waveforms && _config.fft_summed_waveforms) ? ChannelMap::NFEM() : 0),
+  _thresholds( (_config.threshold_calc == 3) ? _channel_map->NChannels() : 0),
+  _fem_summed_waveforms((_config.sum_waveforms) ? _channel_map->NFEM() : 0),
+  _fem_summed_fft((_config.sum_waveforms && _config.fft_summed_waveforms) ? _channel_map->NFEM() : 0),
   _fft_manager(  (_config.static_input_size > 0) ? _config.static_input_size: 0),
   _analyzed(false)
 {
@@ -165,7 +167,7 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
   //#####################################################    
 
   // clear out containers from last iter
-  for (unsigned i = 0; i < ChannelMap::n_wire; i++) {
+  for (unsigned i = 0; i < _channel_map->NChannels(); i++) {
     _per_channel_data[i].waveform.clear();
     _per_channel_data[i].fft_real.clear();
     _per_channel_data[i].fft_imag.clear();
@@ -173,7 +175,7 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
   }
   // also for summed waveforms
   if (_config.sum_waveforms) {
-    for (unsigned i = 0; i < ChannelMap::NFEM(); i++) {
+    for (unsigned i = 0; i < _channel_map->NFEM(); i++) {
       _fem_summed_waveforms[i].clear();
       if (_config.fft_summed_waveforms) {
         _fem_summed_fft[i].clear();
@@ -239,7 +241,7 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
   // now calculate stuff that depends on stuff between channels
 
   // DNoise
-  for (unsigned i = 0; i < ChannelMap::n_wire - 1; i++) {
+  for (unsigned i = 0; i < _channel_map->NChannels() - 1; i++) {
     unsigned next_channel = i + 1; 
 
     if (!_per_channel_data[i].empty && !_per_channel_data[next_channel].empty) {
@@ -263,7 +265,7 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
     }
   }
   // don't set last dnoise
-  _per_channel_data[ChannelMap::n_wire - 1].next_channel_dnoise = 0;
+  _per_channel_data[_channel_map->NChannels() - 1].next_channel_dnoise = 0;
 
   if (_config.timing) {
     _timing.EndTime(&_timing.coherent_noise_calc);
@@ -299,14 +301,15 @@ void Analysis::SumWaveforms(art::Event const & event) {
   // summed waveforms
   // TODO @INSTALLATION: Make sure this still works
   if (_config.sum_waveforms) {
-    size_t n_fem = ChannelMap::NFEM();
+    size_t n_fem = _channel_map->NFEM();
     std::vector<std::vector<const std::vector<int16_t> *>> channel_waveforms_per_fem(n_fem);
     std::vector<std::vector<int16_t>> all_baselines(n_fem);
     // collect the waveforms
-    for (unsigned i = 0; i < ChannelMap::n_wire; i++) {
+    for (unsigned i = 0; i < _channel_map->NChannels(); i++) {
       unsigned raw_digits_i = _channel_index_map[i];
-      daqAnalysis::ChannelMap::readout_channel info = daqAnalysis::ChannelMap::Wire2Channel(i);
-      size_t fem_ind = info.slot + info.crate * ChannelMap::n_fem_per_crate; 
+      unsigned channel_ind = _channel_map->Wire2Channel(i);
+      daqAnalysis::ReadoutChannel info = _channel_map->Ind2ReadoutChannel(channel_ind); 
+      unsigned fem_ind = _channel_map->SlotIndex(info);
       channel_waveforms_per_fem[fem_ind].push_back(&(*raw_digits_handle)[raw_digits_i].ADCs());
       all_baselines[fem_ind].push_back(_per_channel_data[i].baseline);
     }
@@ -337,7 +340,7 @@ void Analysis::SumWaveforms(art::Event const & event) {
 
 void Analysis::ProcessHeader(const daqAnalysis::HeaderData &header) {
   if (_config.header_index) {
-    _header_data[header.Ind()] = header;
+    _header_data[_channel_map->SlotIndex(header)] = header;
   }
   else {
     _header_data[0] = header;
@@ -365,7 +368,7 @@ void Analysis::ProcessChannel(const raw::RawDigit &digits, const std::vector<art
 
 void Analysis::ProcessChannel(const raw::RawDigit &digits) {
   auto channel = digits.Channel();
-  if (channel >= ChannelMap::n_wire) return;
+  if (channel >= _channel_map->NChannels()) return;
   // handle empty events
   if (digits.NADC() == 0) {
     // default constructor handles empty event
@@ -471,7 +474,7 @@ void Analysis::ProcessChannel(const raw::RawDigit &digits) {
     else if (_config.threshold_calc == 3) {
       // if using plane data, make collection planes reach a higher threshold
       float n_sigma = _config.threshold_sigma;
-      if (_config.use_planes && ChannelMap::PlaneType(channel) == 2) n_sigma = n_sigma * 1.5;
+      if (_config.use_planes && _channel_map->PlaneType(channel) == 2) n_sigma = n_sigma * 1.5;
     
       threshold = _thresholds[channel].Threshold(adc_vec, _per_channel_data[channel].baseline, n_sigma);
     }
@@ -485,7 +488,7 @@ void Analysis::ProcessChannel(const raw::RawDigit &digits) {
       _timing.StartTime();
     }
     // get Peaks
-    unsigned peak_plane = (_config.use_planes) ? ChannelMap::PlaneType(channel) : 0;
+    unsigned peak_plane = (_config.use_planes) ? _channel_map->PlaneType(channel) : 0;
   
     PeakFinder peaks(adc_vec, _per_channel_data[channel].baseline, threshold, 
         _config.n_smoothing_samples, _config.n_above_threshold, peak_plane);

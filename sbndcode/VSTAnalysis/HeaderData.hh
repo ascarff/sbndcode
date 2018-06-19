@@ -6,8 +6,6 @@
 #include <sstream> 
 #include <stdlib.h>
 
-#include "ChannelMap.hh"
-
 namespace daqAnalysis {
 // Header Data associated with a NevisTPCHeader
 class HeaderData {
@@ -37,9 +35,6 @@ class HeaderData {
   uint32_t sub_run_no;
   uint32_t art_event_no;
 
-  // config info
-  uint32_t slot_offset;
-
   // by default make words noticable
   // Nevis uses DEADBEEF as a default, so distinguish from
   // that use BEEFDEAD
@@ -62,12 +57,6 @@ class HeaderData {
     sub_run_no(0)
   {}
 
-  // Returns the logical index of the header
-  // @VST This is ok because crate will always be 0
-  uint32_t Ind() const {
-    return slot - slot_offset;
-  }
-
   // print the data -- for debugging
   std::string Print() const {
     std::stringstream buffer;
@@ -76,7 +65,6 @@ class HeaderData {
 
     buffer << "crate: " << ((unsigned)crate) << std::endl;
     buffer << "slot: " << ((unsigned)slot) << std::endl;
-    buffer << "slot offset: " << slot_offset << std::endl;
     buffer << "event no: " << event_number << std::endl;
     buffer << "frame no: " << frame_number << std::endl;
     buffer << "checksum: " << checksum << std::endl;
