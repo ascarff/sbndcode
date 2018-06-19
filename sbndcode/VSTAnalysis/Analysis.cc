@@ -249,9 +249,17 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
           (*raw_digits_handle)[raw_digits_i].ADCs(), _noise_samples[next_channel], (*raw_digits_handle)[raw_digits_next_channel].ADCs());
       // Don't use same noise sample to scale dnoise
       // This should probably be ok, as long as the dnoise sample is large enough
-      float dnoise_scale = sqrt(_per_channel_data[i].rms * _per_channel_data[i].rms + 
-                                _per_channel_data[next_channel].rms * _per_channel_data[next_channel].rms);
-      _per_channel_data[i].next_channel_dnoise = unscaled_dnoise / dnoise_scale; 
+
+      // but special case when rms is too small
+      if (_per_channel_data[i].rms > 1e-4 && _per_channel_data[next_channel].rms > 1e-4) {
+        float dnoise_scale = sqrt(_per_channel_data[i].rms * _per_channel_data[i].rms + 
+                                  _per_channel_data[next_channel].rms * _per_channel_data[next_channel].rms);
+    
+        _per_channel_data[i].next_channel_dnoise = unscaled_dnoise / dnoise_scale; 
+      }
+      else {
+        _per_channel_data[i].next_channel_dnoise = 1.;
+      }
     }
   }
   // don't set last dnoise
