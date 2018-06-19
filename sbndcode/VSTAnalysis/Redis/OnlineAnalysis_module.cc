@@ -1,6 +1,7 @@
 #include <vector>
 #include <iostream>
 #include <string>
+#include <ctime>
 
 #include "TROOT.h"
 #include "TTree.h"
@@ -51,6 +52,7 @@ private:
 
   daqAnalysis::Analysis _analysis;
   daqAnalysis::Redis *_redis_manager;
+  bool _config_use_trig_frame_time;
 };
 
 daqAnalysis::OnlineAnalysis::OnlineAnalysis(fhicl::ParameterSet const & p):
@@ -59,7 +61,7 @@ daqAnalysis::OnlineAnalysis::OnlineAnalysis(fhicl::ParameterSet const & p):
   _analysis(p) 
 {
   Redis::Config config;
-  // config
+  // config for redis
   config.stream_take = p.get<std::vector<unsigned>>("stream_take");
   config.stream_expire = p.get<std::vector<unsigned>>("stream_expire");
   config.snapshot_time = p.get<int>("snapshot_time", -1);
@@ -76,6 +78,9 @@ daqAnalysis::OnlineAnalysis::OnlineAnalysis(fhicl::ParameterSet const & p):
 
   // setup redis
   _redis_manager = new Redis(config, _channel_map.get());
+
+  // config for online analysis module
+  _config_use_trig_frame_time = p.get<bool>("use_trig_frame_time", false);
 }
 
 void daqAnalysis::OnlineAnalysis::analyze(art::Event const & e) {
@@ -86,7 +91,15 @@ void daqAnalysis::OnlineAnalysis::analyze(art::Event const & e) {
     sub_run = _analysis._header_data[0].sub_run_no;
   }
   if (_analysis.ReadyToProcess() && !_analysis.EmptyEvent()) {
-    _redis_manager->StartSend(sub_run);
+    // if configured to, get the time from the event
+    if (_config_use_trig_frame_time) {
+      std::time_t now = _analysis._header_data[0].Time();
+      _redis_manager->StartSend(now, sub_run);
+    }
+    // else use default time (now)
+    else {
+      _redis_manager->StartSend(sub_run);
+    }
     // sum waveforms if we're gonna take a snapshot
     if (_redis_manager->WillTakeSnapshot()) {
       _analysis.SumWaveforms(e);

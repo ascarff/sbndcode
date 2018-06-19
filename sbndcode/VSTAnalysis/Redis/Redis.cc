@@ -79,12 +79,17 @@ Redis::~Redis() {
   redisFree(context);
 }
 
+
 void Redis::StartSend(unsigned sub_run) {
-  _now = std::time(nullptr);
+  StartSend(std::time(nullptr), sub_run);
+}
+
+void Redis::StartSend(std::time_t now, unsigned sub_run) {
+  _now = now;
 
   for (size_t i = 0; i < _stream_take.size(); i++) {
     // calculate whether each stream is sending to redis on this event
-    _stream_send[i] = _stream_last[i] != _now && (_now - _start) % _stream_take[i] == 0;
+    _stream_send[i] = _stream_last[i] != _now && (_now - _stream_last[i]) >= _stream_take[i];
     if (_stream_send[i]) {
       _stream_last[i] = _now;
     }
@@ -437,7 +442,7 @@ void Redis::Snapshot(vector<daqAnalysis::ChannelData> *per_channel_data, vector<
 }
 
 bool Redis::WillTakeSnapshot() {
-  return _snapshot_time > 0 && (_now - _start) % _snapshot_time == 0 && _last_snapshot != _now;
+  return _snapshot_time > 0 && (_now - _last_snapshot) >= _snapshot_time && _last_snapshot != _now;
 }
 
 void Redis::ChannelData(vector<daqAnalysis::ChannelData> *per_channel_data, vector<NoiseSample> *noise_samples, vector<vector<int>> *fem_summed_waveforms, 
@@ -446,7 +451,7 @@ void Redis::ChannelData(vector<daqAnalysis::ChannelData> *per_channel_data, vect
   SendChannelData();
   FillChannelData(per_channel_data);
 
-  bool take_snapshot = _snapshot_time > 0 && (_now - _start) % _snapshot_time == 0 && _last_snapshot != _now;
+  bool take_snapshot = _snapshot_time > 0 && (_now - _last_snapshot) >= _snapshot_time && _last_snapshot != _now;
   if (take_snapshot) {
     Snapshot(per_channel_data, noise_samples, fem_summed_waveforms, fem_summed_fft, digits, channel_to_index);
     _last_snapshot = _now;

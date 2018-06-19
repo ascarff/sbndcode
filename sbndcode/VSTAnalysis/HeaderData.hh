@@ -5,6 +5,7 @@
 #include <iostream>
 #include <sstream> 
 #include <stdlib.h>
+#include <ctime>
 
 namespace daqAnalysis {
 // Header Data associated with a NevisTPCHeader
@@ -56,6 +57,12 @@ class HeaderData {
     run_no(0),
     sub_run_no(0)
   {}
+
+  // Returns the unix timestamp associated with the trig frame no
+  // TODO: implement
+  std::time_t Time() const {
+    return 0;
+  }
 
   // print the data -- for debugging
   std::string Print() const {

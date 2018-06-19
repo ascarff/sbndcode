@@ -90,6 +90,7 @@ public:
   void HeaderData(std::vector<daqAnalysis::HeaderData> *header_data);
   // must be called before calling Send functions
   void StartSend(unsigned sub_run=0);
+  void StartSend(std::time_t now, unsigned sub_run=0);
   // must be called after calling Send functions
   void FinishSend();
   // whether the code will call Snapshot() on ChannelData
