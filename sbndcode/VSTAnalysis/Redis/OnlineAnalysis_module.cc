@@ -52,7 +52,7 @@ private:
 
   daqAnalysis::Analysis _analysis;
   daqAnalysis::Redis *_redis_manager;
-  bool _config_use_trig_frame_time;
+  bool _config_use_event_time;
 };
 
 daqAnalysis::OnlineAnalysis::OnlineAnalysis(fhicl::ParameterSet const & p):
@@ -80,7 +80,7 @@ daqAnalysis::OnlineAnalysis::OnlineAnalysis(fhicl::ParameterSet const & p):
   _redis_manager = new Redis(config, _channel_map.get());
 
   // config for online analysis module
-  _config_use_trig_frame_time = p.get<bool>("use_trig_frame_time", false);
+  _config_use_event_time = p.get<bool>("use_event_time", false);
 }
 
 void daqAnalysis::OnlineAnalysis::analyze(art::Event const & e) {
@@ -92,9 +92,8 @@ void daqAnalysis::OnlineAnalysis::analyze(art::Event const & e) {
   }
   if (_analysis.ReadyToProcess() && !_analysis.EmptyEvent()) {
     // if configured to, get the time from the event
-    if (_config_use_trig_frame_time) {
-      std::time_t now = _analysis._header_data[0].Time();
-      _redis_manager->StartSend(now, sub_run);
+    if (_config_use_event_time) {
+      _redis_manager->StartSend(e.time().value(), sub_run);
     }
     // else use default time (now)
     else {

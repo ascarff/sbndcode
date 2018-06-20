@@ -58,12 +58,6 @@ class HeaderData {
     sub_run_no(0)
   {}
 
-  // Returns the unix timestamp associated with the trig frame no
-  // TODO: implement
-  std::time_t Time() const {
-    return 0;
-  }
-
   // print the data -- for debugging
   std::string Print() const {
     std::stringstream buffer;
