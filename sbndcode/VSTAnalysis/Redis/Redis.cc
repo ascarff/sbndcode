@@ -112,8 +112,14 @@ void Redis::FinishSend() {
   }
   // if a new subrun, set the value in redis
   if (_this_subrun != _last_subrun) {
-    redisCommand(context, "SET last_subrun_no %u", _last_subrun);
+    void *reply = redisCommand(context, "SET last_subrun_no %u", _last_subrun);
+    freeReplyObject(reply);
   }
+
+  // send Redis "Alive" signal
+  void *reply = redisCommand(context, "SET ONLINE_ANALYSIS_ALIVE %u", std::time(nullptr));
+  freeReplyObject(reply);
+  
   _last_subrun = _this_subrun;
   _first_run = false;
 }
