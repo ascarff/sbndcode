@@ -65,10 +65,11 @@ daqAnalysis::OnlineAnalysis::OnlineAnalysis(fhicl::ParameterSet const & p):
   config.stream_take = p.get<std::vector<unsigned>>("stream_take");
   config.stream_expire = p.get<std::vector<unsigned>>("stream_expire");
   config.snapshot_time = p.get<int>("snapshot_time", -1);
-  config.hostname = p.get<std::string>("hostname", "127.0.0.1").c_str();
+  config.hostname = p.get<std::string>("hostname", "127.0.0.1");
   config.sub_run_stream = p.get<bool>("sub_run_stream", false);
   config.sub_run_stream_expire = p.get<unsigned>("sub_run_expire", 0);
   config.first_subrun = p.get<unsigned>("first_subrun", 0);
+  config.monitor_name = p.get<std::string>("monitor_name", "");
   
   // have Redis alloc fft if you don't calculate them and you know the input size
   config.waveform_input_size = (!_analysis._config.fft_per_channel && _analysis._config.static_input_size > 0) ?

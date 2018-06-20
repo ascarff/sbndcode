@@ -28,7 +28,7 @@ using namespace std;
 
 Redis::Redis(Redis::Config &config, daqAnalysis::VSTChannelMap *channel_map):
   _channel_map(channel_map),
-  context(redisConnect(config.hostname, 6379)),
+  context(redisConnect(config.hostname.c_str(), 6379)),
   _now(std::time(nullptr)),
   _start(std::time(nullptr)),
   _snapshot_time(config.snapshot_time),
@@ -61,7 +61,8 @@ Redis::Redis(Redis::Config &config, daqAnalysis::VSTChannelMap *channel_map):
   _blocks(config.NStreams(), RedisBlocks(channel_map)),
 
   _fft_manager((config.waveform_input_size > 0) ? config.waveform_input_size: 0),
-  _do_timing(config.timing)
+  _do_timing(config.timing),
+  _config(config)
 {
   // set the subrun stream last correctly
   if (config.sub_run_stream) {
@@ -117,7 +118,8 @@ void Redis::FinishSend() {
   }
 
   // send Redis "Alive" signal
-  void *reply = redisCommand(context, "SET ONLINE_ANALYSIS_ALIVE %u", std::time(nullptr));
+  std::cout << "MONITOR NAME: " <<  _config.monitor_name.c_str() << std::endl;
+  void *reply = redisCommand(context, "SET MONITOR_%s_ALIVE %u", _config.monitor_name.c_str(), std::time(nullptr));
   freeReplyObject(reply);
   
   _last_subrun = _this_subrun;

@@ -20,6 +20,7 @@ physics:
     OnlineAnalysis:
     {
       module_type: OnlineAnalysis
+      monitor_name: "ONLINE"
       producer_name: daq
       snapshot_time: -1
       //stream_take: [5, 30, 600, 3600]

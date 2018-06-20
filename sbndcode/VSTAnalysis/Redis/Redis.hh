@@ -59,7 +59,8 @@ class daqAnalysis::Redis {
 public:
   class Config {
     public:
-    const char *hostname;
+    std::string monitor_name;
+    std::string hostname;
     std::vector<unsigned> stream_take;
     std::vector<unsigned> stream_expire;
     bool sub_run_stream;
@@ -163,6 +164,9 @@ protected:
 
   bool _do_timing;
   daqAnalysis::RedisTiming _timing;
+
+  // store config
+  Config _config;
 };
 
 #endif /* Redis_h */
