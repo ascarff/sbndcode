@@ -47,21 +47,49 @@ physics:
   end_paths: [analyze]
 }
 
-source: {
+source:
+{
   module_type: TransferInput
-  timeoutInUsecs: 100000000  
+
+  # The timeout shouldn't be much smaller than the period between events, otherwise 
+  # there's a spew of timeout messages
+
+  timeoutInUsecs: 10000000  
+
+  commanderPluginType: xmlrpc
   dispatcherHost: localhost
-  dispatcherPort: 5266
+  dispatcherPort: 7166
+
   transfer_plugin: {
-    #transferPluginType: Shmem 
-    transferPluginType: NthEvent
-    nth: 1
-    unique_label: "OnlineMonitor"
-    physical_transfer_plugin: {
+
+     unique_label: "OnlineSnapshotShmem0"
       transferPluginType: Shmem
-      shm_key: 0x40471453
+      shm_key: 0x40471454
       max_fragment_size_words: 2097152
       first_event_builder_rank: 0
+	  source_rank: 5
+	  destination_rank: 6
+  }
+
+  dispatcher_config: {
+    unique_label: "OnlineSnapshotShmem0"
+    path: [ out ]
+    physics: {}
+    outputs: {
+      out: {
+        module_type: TransferOutput
+        transfer_plugin: {
+
+	   unique_label: "OnlineSnapshotShmem0"
+            transferPluginType: Shmem
+    
+            shm_key: 0x40471454
+
+            max_fragment_size_words: 2097152
+              first_event_builder_rank: 0
+	      destination_rank: 6
+        }
+      } 
     }
   }
 }

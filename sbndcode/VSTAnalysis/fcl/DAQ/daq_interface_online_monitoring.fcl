@@ -1,3 +1,4 @@
+#include "vst_channel_map.fcl"
 
 physics:
 {
@@ -8,9 +9,8 @@ physics:
       module_type: DaqDecoder
       produce_header: true
       validate_header: true
-      raw_data_label: daq
-      slot_offset: 4
-      fragment_type_label: NEVISTPC
+      //raw_data_label: daq
+      //fragment_type_label: NEVISTPC
     }
 
   }
@@ -52,7 +52,6 @@ physics:
   analyze: [OnlineAnalysis]
   end_paths: [analyze]
 }
-
 source:
 {
   module_type: TransferInput
@@ -67,23 +66,18 @@ source:
   dispatcherPort: 7166
 
   transfer_plugin: {
-    transferPluginType: NthEvent
-    nth: 1
-    unique_label: "OnlineMonitor"
 
-    physical_transfer_plugin: {
-
+     unique_label: "OnlineMonitorShmem0"
       transferPluginType: Shmem
-      shm_key: 0x40471452
+      shm_key: 0x40471453
       max_fragment_size_words: 2097152
       first_event_builder_rank: 0
 	  source_rank: 5
 	  destination_rank: 6
-    }
   }
 
   dispatcher_config: {
-    unique_label: "OnlineMonitor"
+    unique_label: "OnlineMonitorShmem0"
     path: [ out ]
     physics: {}
     outputs: {
@@ -91,20 +85,14 @@ source:
         module_type: TransferOutput
         transfer_plugin: {
 
-          transferPluginType: NthEvent
-          nth: 1
-
-          unique_label: "OnelineMonitor"
-
-          physical_transfer_plugin: {
+	   unique_label: "OnlineMonitorShmem0"
             transferPluginType: Shmem
     
-            shm_key: 0x40471452
+            shm_key: 0x40471453
 
             max_fragment_size_words: 2097152
               first_event_builder_rank: 0
 	      destination_rank: 6
-          }
         }
       } 
     }
@@ -112,6 +100,8 @@ source:
 }
 
 services: {
+
+  VSTChannelMap: @local::nevis_integration_channel_map_VST 
 
   message: {
     destinations : {
@@ -125,7 +115,7 @@ services: {
       udp_message_forwarding : {
         type : "UDP" 
         threshold : "INFO" 
-        port : 300001
+        port : 30001
         host : "lariat-daq04.fnal.gov" 
       }
     }
