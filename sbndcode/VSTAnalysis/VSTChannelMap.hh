@@ -6,6 +6,7 @@
 #include "fhiclcpp/ParameterSet.h"
 
 #include "HeaderData.hh"
+#include "NevisTPCMetaData.hh"
 
 namespace daqAnalysis {
 
@@ -34,6 +35,7 @@ public:
 
   // defined slot index for the two different ways that information is encoded
   unsigned SlotIndex(daqAnalysis::HeaderData header) const;
+  unsigned SlotIndex(daqAnalysis::NevisTPCMetaData metadata) const;
   unsigned SlotIndex(daqAnalysis::ReadoutChannel header) const;
 
   bool IsGoodSlot(unsigned slot) const;

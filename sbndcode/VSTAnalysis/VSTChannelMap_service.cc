@@ -152,6 +152,11 @@ unsigned daqAnalysis::VSTChannelMap::SlotIndex(daqAnalysis::ReadoutChannel chann
   return channel.slot - _slot_offset;
 }
 
+unsigned daqAnalysis::VSTChannelMap::SlotIndex(daqAnalysis::NevisTPCMetaData metadata) const {
+  return metadata.slot - _slot_offset;
+}
+
+
 bool daqAnalysis::VSTChannelMap::IsGoodSlot(unsigned slot) const {
   // negative overflow will wrap around and also be large than n_fem_per_crate,
   // so this covers both the case where the slot id is too big and too small

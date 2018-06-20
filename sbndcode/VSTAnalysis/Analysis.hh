@@ -23,6 +23,7 @@
 
 #include "ChannelData.hh"
 #include "HeaderData.hh"
+#include "NevisTPCMetaData.hh"
 #include "VSTChannelMap.hh"
 #include "FFT.hh"
 #include "Noise.hh"
@@ -92,7 +93,7 @@ public:
     int static_input_size;
 
     int n_headers;
-    bool header_index;
+    int n_metadata;
 
     float threshold;
     float threshold_sigma;
@@ -126,6 +127,7 @@ public:
   void ProcessChannel(const raw::RawDigit &digits);
   void ProcessChannel(const raw::RawDigit &digits, const std::vector<art::Ptr<recob::Hit> > &hits);
   void ProcessHeader(const daqAnalysis::HeaderData &header);
+  void ProcessMetaData(const daqAnalysis::NevisTPCMetaData &metadata); 
 
   // if the containers filled by the analysis are ready to be processed
   bool ReadyToProcess();
@@ -146,6 +148,7 @@ public:
   std::vector<daqAnalysis::ReducedChannelData> _per_channel_data_reduced;
   std::vector<daqAnalysis::NoiseSample> _noise_samples;
   std::vector<daqAnalysis::HeaderData> _header_data;
+  std::vector<daqAnalysis::NevisTPCMetaData> _nevis_tpc_metadata;
   std::vector<RunningThreshold> _thresholds;
   std::vector<std::vector<int>> _fem_summed_waveforms;
   std::vector<std::vector<double>> _fem_summed_fft;

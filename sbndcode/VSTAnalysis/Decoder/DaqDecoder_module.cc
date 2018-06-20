@@ -94,6 +94,9 @@ daq::DaqDecoder::DaqDecoder(fhicl::ParameterSet const & param):
   if (_config.produce_header) {
     produces<std::vector<daqAnalysis::HeaderData>>();
   }
+  if (_config.produce_metadata) {
+    produces<std::vector<daqAnalysis::NevisTPCMetaData>>();
+  }
 }
 
 daq::DaqDecoder::Config::Config(fhicl::ParameterSet const & param) {
@@ -104,8 +107,10 @@ daq::DaqDecoder::Config::Config(fhicl::ParameterSet const & param) {
   wait_usec = (int) (wait_time / 1000000.);
   // whether to calcualte the pedestal (and set it in SetPedestal())
   baseline_calc = param.get<bool>("baseline_calc", false);
-  // whether to put HeaderInfo in the art root file
+  // whether to put headerinfo in the art root file
   produce_header = param.get<bool>("produce_header", false);
+  // whether to put NevisTPCMetaData in the art root file
+  produce_metadata = param.get<bool>("produce_metadata", false);
   // whether to check if Header looks good and print out error info
   validate_header = param.get<bool>("validate_header", false);
   // how many adc values to skip in mode/pedestal finding
@@ -133,6 +138,7 @@ void daq::DaqDecoder::produce(art::Event & event)
   std::unique_ptr<std::vector<raw::RawDigit>> product_collection(new std::vector<raw::RawDigit>);
   // storage for header info
   std::unique_ptr<std::vector<daqAnalysis::HeaderData>> header_collection(new std::vector<daqAnalysis::HeaderData>);
+
   for (auto const &rawfrag: *daq_handle) {
     process_fragment(event, rawfrag, product_collection, header_collection);
   }
@@ -141,6 +147,16 @@ void daq::DaqDecoder::produce(art::Event & event)
   if (_config.produce_header) {
     event.put(std::move(header_collection));
   }
+
+  if (_config.produce_metadata) {
+    // put metadata in event
+    std::unique_ptr<std::vector<daqAnalysis::NevisTPCMetaData>> metadata_collection(new std::vector<daqAnalysis::NevisTPCMetaData>);
+    for (auto const &header: *header_collection) {
+      metadata_collection->emplace_back(header);
+    }
+    event.put(std::move(metadata_collection));
+  }
+
 }
 
 
@@ -161,9 +177,9 @@ void daq::DaqDecoder::process_fragment(art::Event &event, const artdaq::Fragment
   size_t n_waveforms = fragment.decode_data(waveform_map);
   (void)n_waveforms;
 
-  if (_config.produce_header || _config.validate_header) {
+  if (_config.produce_header || _config.validate_header || _config.produce_metadata /*make header info to convert into metdata later*/) {
     auto header_data = Fragment2HeaderData(event, frag, 1.0, _config.calc_checksum);
-    if (_config.produce_header) {
+    if (_config.produce_header || _config.produce_metadata) {
       // Construct HeaderData from the Nevis Header and throw it in the collection
       header_collection->push_back(header_data);
     }

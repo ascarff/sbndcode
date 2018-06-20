@@ -58,6 +58,7 @@ Analysis::Analysis(fhicl::ParameterSet const & p) :
   _per_channel_data_reduced((_config.reduce_data) ? _channel_map->NChannels() : 0), // setup reduced event vector if we need it
   _noise_samples(_channel_map->NChannels()),
   _header_data(std::max(_config.n_headers,0)),
+  _nevis_tpc_metadata(std::max(_config.n_metadata,0)),
   _thresholds( (_config.threshold_calc == 3) ? _channel_map->NChannels() : 0),
   _fem_summed_waveforms((_config.sum_waveforms) ? _channel_map->NFEM() : 0),
   _fem_summed_fft((_config.sum_waveforms && _config.fft_summed_waveforms) ? _channel_map->NFEM() : 0),
@@ -125,10 +126,6 @@ Analysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &param) {
   static_input_size = param.get<int>("static_input_size", -1);
   // how many headers to expect (set to negative if don't process) 
   n_headers = param.get<int>("n_headers", -1);
-  // header indexing method
-  // 0 == always index at 0
-  // 1 == use HeaderInfo::Ind()
-  header_index = (bool) param.get<unsigned>("header_index", 1);
 
   // whether to calculate/save certain things
   sum_waveforms = param.get<bool>("sum_waveforms", false);
@@ -281,6 +278,13 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
       ProcessHeader(header);
     }
   }
+  // or metadata if that's how we're doing things
+  if (_config.n_metadata > 0) {
+    auto const &metdata_handle = event.getValidHandle<std::vector<daqAnalysis::NevisTPCMetaData>>(_config.daq_tag);
+    for (auto const &metadata: *metdata_handle) {
+      ProcessMetaData(metadata);
+    }
+  }
   if (_config.timing) {
     _timing.EndTime(&_timing.copy_headers);
   }
@@ -339,12 +343,11 @@ void Analysis::SumWaveforms(art::Event const & event) {
 }
 
 void Analysis::ProcessHeader(const daqAnalysis::HeaderData &header) {
-  if (_config.header_index) {
-    _header_data[_channel_map->SlotIndex(header)] = header;
-  }
-  else {
-    _header_data[0] = header;
-  }
+  _header_data[_channel_map->SlotIndex(header)] = header;
+}
+
+void Analysis::ProcessMetaData(const daqAnalysis::NevisTPCMetaData &metadata) {
+  _nevis_tpc_metadata[_channel_map->SlotIndex(metadata)] = metadata;
 }
 
 void Analysis::ProcessChannel(const raw::RawDigit &digits, const std::vector<art::Ptr<recob::Hit> > &hits){
