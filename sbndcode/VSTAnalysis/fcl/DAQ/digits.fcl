@@ -1,3 +1,5 @@
+#include "vst_channel_map.fcl"
+
 physics:
 {
   producers:
@@ -7,7 +9,6 @@ physics:
       module_type: DaqDecoder
       produce_header: false
       baseline_calc: true
-      slot_offset: 9
     }
   }
 
@@ -29,6 +30,11 @@ outputs:
       "keep raw::RawDigits_daq__DIGITS"
     ]
   }
+}
+
+services:
+{
+  VSTChannelMap: @local::nevis_integration_channel_map_VST
 }
 
 source:
