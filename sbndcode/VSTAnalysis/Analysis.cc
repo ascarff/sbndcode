@@ -126,6 +126,8 @@ Analysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &param) {
   static_input_size = param.get<int>("static_input_size", -1);
   // how many headers to expect (set to negative if don't process) 
   n_headers = param.get<int>("n_headers", -1);
+  // how many metadata to expect (set to negative if don't process) 
+  n_metadata = param.get<int>("n_metadata", -1);
 
   // whether to calculate/save certain things
   sum_waveforms = param.get<bool>("sum_waveforms", false);
