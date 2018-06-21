@@ -118,7 +118,6 @@ void Redis::FinishSend() {
   }
 
   // send Redis "Alive" signal
-  std::cout << "MONITOR NAME: " <<  _config.monitor_name.c_str() << std::endl;
   void *reply = redisCommand(context, "SET MONITOR_%s_ALIVE %u", _config.monitor_name.c_str(), std::time(nullptr));
   freeReplyObject(reply);
   

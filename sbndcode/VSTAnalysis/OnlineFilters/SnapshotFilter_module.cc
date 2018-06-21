@@ -27,7 +27,7 @@ namespace daqAnalysis {
 // Filter intended to be used with an Online Monitoring instance
 // with "snapshots" enabled.
 //
-// Returns true on the nth event of each subrun, where n is set
+// Returns true on the nth event of each subrun (0 indedex), where n is set
 // in the fhicl configuration by `event_delay` (0 by default)
 class daqAnalysis::SnapshotFilter : public art::EDFilter {
 public:
