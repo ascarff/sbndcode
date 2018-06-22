@@ -23,12 +23,15 @@ physics:
       monitor_name: "ONLINE"
       producer_name: daq
       snapshot_time: -1
-      //stream_take: [5, 30, 600, 3600]
-      //stream_expire: [86400, 86400, -1, -1]
+
       stream_take: [1, 10]
       stream_expire: [1000, 10000]
-      sub_run_stream: true
-      sub_run_expire: 10000
+
+      //stream_take: [5, 30, 600, 3600]
+      //stream_expire: [86400, 86400, -1, -1]
+      //sub_run_stream: true
+      //sub_run_expire: 10000
+
       hostname: "131.225.150.201"
       n_headers: 10
 
