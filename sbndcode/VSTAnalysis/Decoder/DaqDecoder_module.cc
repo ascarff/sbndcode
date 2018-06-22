@@ -260,6 +260,8 @@ void daq::DaqDecoder::validate_header(const daqAnalysis::HeaderData &header) {
 // Computes the checksum, given a nevis tpc header
 // Ideally this would be in sbnddaq-datatypes, but it's not and I can't
 // make changes to it, so put it here for now
+//
+// Also note that this only works for uncompressed data
 uint32_t daq::DaqDecoder::compute_checksum(sbnddaq::NevisTPCFragment &fragment) {
   uint32_t checksum = 0;
 
