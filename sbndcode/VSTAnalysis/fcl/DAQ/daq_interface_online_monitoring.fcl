@@ -70,7 +70,7 @@ source:
 
   transfer_plugin: {
 
-     unique_label: "OnlineMonitorShmem0"
+     unique_label: "OnlineMonitorShmem2"
       transferPluginType: Shmem
       shm_key: 0x40471453
       max_fragment_size_words: 2097152
@@ -80,7 +80,7 @@ source:
   }
 
   dispatcher_config: {
-    unique_label: "OnlineMonitorShmem0"
+    unique_label: "OnlineMonitorShmem2"
     path: [ out ]
     physics: {}
     outputs: {
@@ -88,7 +88,7 @@ source:
         module_type: TransferOutput
         transfer_plugin: {
 
-	   unique_label: "OnlineMonitorShmem0"
+	   unique_label: "OnlineMonitorShmem2"
             transferPluginType: Shmem
     
             shm_key: 0x40471453
@@ -111,13 +111,13 @@ services: {
       log1 : { type : cout } 
       udp_artdaq_messageviwer : { 
         type : "UDP" 
-        threshold : "INFO" 
+        threshold : "DEBUG" 
         port : 30000 
         host : "lariat-daq04.fnal.gov" 
       }
       udp_message_forwarding : {
         type : "UDP" 
-        threshold : "INFO" 
+        threshold : "DEBUG" 
         port : 30001
         host : "lariat-daq04.fnal.gov" 
       }
