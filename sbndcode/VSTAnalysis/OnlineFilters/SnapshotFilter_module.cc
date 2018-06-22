@@ -67,7 +67,12 @@ bool daqAnalysis::SnapshotFilter::filter(art::Event & e)
     _event_number ++;
   }
   _last_subrun = this_subrun;
-  return _event_number == _event_delay;
+
+  bool run = _event_number == _event_delay;
+  if (run) {
+    mf::LogDebug("SNAPSHOT FILTER") << "Snapshot filter running on subrun: " << this_subrun << " local event no: " << _event_number << " art event no: " << e.event() << std::endl;
+  }
+  return run;
 }
 
 DEFINE_ART_MODULE(daqAnalysis::SnapshotFilter)
