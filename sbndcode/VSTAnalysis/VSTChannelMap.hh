@@ -1,6 +1,9 @@
 #ifndef VSTChannelMap_h
 #define VSTChannelMap_h
 
+#include <map>
+#include <vector>
+
 #include "art/Framework/Services/Registry/ActivityRegistry.h"
 #include "art/Framework/Services/Registry/ServiceMacros.h"
 #include "fhiclcpp/ParameterSet.h"
@@ -40,7 +43,8 @@ public:
 
   bool IsGoodSlot(unsigned slot) const;
 
-  unsigned NSlotChannels(unsigned slot) const;
+  unsigned NSlotWire(unsigned clost) const;
+  unsigned NSlotChannel() const;
 
   // Hard code this for online monitoring
   // 1 == induction plane
@@ -59,11 +63,12 @@ private:
   // Declare member data here.
   unsigned _n_channels;
   unsigned _n_fem;
+  unsigned _channel_per_fem;
   unsigned _slot_offset;
   unsigned _crate_id;
-  std::vector<unsigned> _channel_to_wire;
-  std::vector<unsigned> _wire_to_channel;
-  std::vector<unsigned> _channel_per_fem;
+  std::map<unsigned, unsigned> _channel_to_wire;
+  std::map<unsigned, unsigned> _wire_to_channel;
+  std::vector<unsigned> _wire_per_fem;
 };
 
 }// end namespace

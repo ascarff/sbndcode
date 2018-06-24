@@ -488,7 +488,7 @@ void Redis::FillChannelData(vector<daqAnalysis::ChannelData> *per_channel_data) 
         break;
       }
 
-      for (unsigned channel = 0; channel < _channel_map->NSlotChannels(fem_ind); channel ++) {
+      for (unsigned channel = 0; channel < _channel_map->NSlotWire(fem_ind); channel ++) {
         // get the wire number
 	uint16_t wire = _channel_map->Channel2Wire(channel, fem, crate, true);
         // detect if at end of detector

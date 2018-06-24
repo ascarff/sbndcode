@@ -30,36 +30,87 @@ daqAnalysis::VSTChannelMap::VSTChannelMap(fhicl::ParameterSet const & p, art::Ac
   _n_fem(p.get<unsigned>("n_fem")),
   _slot_offset(p.get<unsigned>("slot_offset", 0)),
   _crate_id(p.get<unsigned>("crate_id", 0)),
-  _channel_to_wire(_n_channels, 0),
-  _wire_to_channel(_n_channels, 0),
-  _channel_per_fem(_n_fem, 0)
+  _channel_to_wire(),
+  _wire_to_channel(),
+  _wire_per_fem(_n_fem, 0)
 {
-  unsigned n_channels = p.get<unsigned>("n_channels");
-
   // Setup channel map
 
   // read channel map from file if defined
   if (p.has_key("map_file_name")) {
+    // in this case, we need to know the number of channel per fem
+    _channel_per_fem = p.get<unsigned>("channel_per_fem");
     fstream input(p.get<string>("map_file_name"), fstream::in);
-
+    /* 
+     * Data format is (from Jose):
+     *
+     * (int)TPC_wire (string)plane (string)adapter_connector (int)adapter_pin (int)analog_connector (int)analog_pin (int)ASIC (int)ASIC_ch (int)FEMB_ch (int)FEMB (int)WIB (int)FEM_slot (int)FEM_ch
+     *
+     * Not all FEM channels are used. Those that are unused have a TPC_wire value of -1.
+     * Wire ID's are per plane and FEM channel ID's are per slot
+     * Wire ID's are 1-indexed and FEM channel ID's are 0-indexed
+     *
+     *
+     * For analysis code, we want to make the wire ID's and the FEM channel ID's defined globally and make both 0-indexed.
+     * So define induction plane = [0, 240) and collection plane = [240, 480).
+     * And define global_channel_id = slot_id * 64 + channel_id;
+    */
+    unsigned channel_count = 0;
     unsigned line_no = 0;
     string line;
-    unsigned channel;
-    unsigned wire;
+
+    // line fields
+    int tpc_wire;
+    string wire_plane;
+    string adapter_connector;
+    int adapter_pin; 
+    int analog_connector;
+    int analog_pin;
+    int ASIC;
+    int ASIC_ch;
+    int FEMB_ch;
+    int FEMB;
+    int WIB;
+    unsigned FEM_slot;
+    unsigned FEM_ch;
+
     while (getline(input, line)) {
       istringstream sline(line);
       // checks if line is formatted properly
-      if (!(sline >> channel >> wire >> std::ws) && sline.peek() != EOF) {
+      bool formatted = (sline >> tpc_wire >> wire_plane >> adapter_connector >> adapter_pin >> analog_connector >>
+          analog_pin >> ASIC >> ASIC_ch >> FEMB_ch >> FEMB >> WIB >> FEM_slot >> FEM_ch >> std::ws).good();
+      if (!formatted && sline.peek() != EOF) {
         cerr << "ERROR: misformatted line " << line_no << endl;
         exit(1);
       }
-      _channel_to_wire[channel] = wire;
-      _wire_to_channel[wire] = channel;
       line_no ++;
+      if (tpc_wire < 0) {
+        continue;
+      }
+      unsigned wire_id;
+      if (wire_plane == "Induction") {
+        wire_id = (unsigned)tpc_wire - 1;
+      }
+      else if (wire_plane == "Collection") {
+        wire_id = (unsigned)tpc_wire + _n_channels/2 - 1;
+      }
+      else {
+        cerr << "ERROR: bad plane value: " << wire_plane << std::endl;
+        exit(1);
+      }
+      unsigned channel_id = (FEM_slot - _slot_offset) * _channel_per_fem + FEM_ch;
+
+      // set channel map
+      _channel_to_wire[channel_id] = wire_id;
+      _wire_to_channel[wire_id] = channel_id;
+      // incl wire per fem
+      _wire_per_fem[FEM_slot - _slot_offset] += 1;
+
+      channel_count ++;
     }
     // checks if file has correct number of lines
-    if (line_no != n_channels) {
-      cerr << "ERROR: incorrect number of lines defined in file " << line_no << " lines for " << n_channels << " channels." << std::endl;
+    if (channel_count != _n_channels) {
+      cerr << "ERROR: incorrect number of channels defined in file " << channel_count << " lines for " << _n_channels << " channels." << std::endl;
       exit(1);
     }
   }
@@ -68,33 +119,25 @@ daqAnalysis::VSTChannelMap::VSTChannelMap(fhicl::ParameterSet const & p, art::Ac
       _channel_to_wire[i] = i;
       _wire_to_channel[i] = i;
     }
-  }
-
-  // Setup channel per FEM
-  if (p.has_key("channel_per_fem")) {
-    _channel_per_fem = p.get<std::vector<unsigned>>("channel_per_fem");
-    if (_channel_per_fem.size() != _n_fem) {
-      cerr << "ERROR: incorrect vector size " << _channel_per_fem.size() << " for number of FEM " << _n_fem << std::endl;
+    // setup channels per fem
+    // assume channels are spread equally over FEM
+    if (_n_channels % _n_fem != 0) {
+      std::cerr << "ERROR: Must have equal number of channels per FEM" << std::endl;
       exit(1);
     }
-  }
-  else {
-    // if no vector defined, assume channels are spread equally over FEM
-    unsigned channel_per_each_fem = (n_channels / _n_fem) + ((n_channels % _n_fem == 0) ? 0 : 1);
-    for (unsigned i = 0; i < _n_fem - 1; i ++) {
-      _channel_per_fem[i] = channel_per_each_fem;
+    _channel_per_fem = _n_channels / _n_fem;
+    for (unsigned i = 0; i < _n_fem; i++) {
+      _wire_per_fem[i] = _channel_per_fem;
     }
-    // except for the last one, whcih only gets the number of remaining channels
-    _channel_per_fem[_n_fem - 1] = _n_channels - (_n_fem - 1) * channel_per_each_fem;
-
   }
 }
 
 unsigned daqAnalysis::VSTChannelMap::NFEM() const { return _n_fem; } 
 unsigned daqAnalysis::VSTChannelMap::NChannels() const { return _n_channels; }
-unsigned daqAnalysis::VSTChannelMap::Channel2Wire(unsigned i) const { return _channel_to_wire[i]; }
-unsigned daqAnalysis::VSTChannelMap::Wire2Channel(unsigned i) const { return _wire_to_channel[i]; }
-unsigned daqAnalysis::VSTChannelMap::NSlotChannels(unsigned i) const { return _channel_per_fem[i]; }
+unsigned daqAnalysis::VSTChannelMap::Channel2Wire(unsigned i) const { return _channel_to_wire.at(i); }
+unsigned daqAnalysis::VSTChannelMap::Wire2Channel(unsigned i) const { return _wire_to_channel.at(i); }
+unsigned daqAnalysis::VSTChannelMap::NSlotWire(unsigned i) const { return _wire_per_fem[i]; }
+unsigned daqAnalysis::VSTChannelMap::NSlotChannel() const { return _channel_per_fem; }
 
 unsigned daqAnalysis::VSTChannelMap::Channel2Wire(unsigned channel, unsigned slot, unsigned crate, bool add_offset) const {
   daqAnalysis::ReadoutChannel readout;
@@ -104,30 +147,15 @@ unsigned daqAnalysis::VSTChannelMap::Channel2Wire(unsigned channel, unsigned slo
   return Channel2Wire(readout);
 }
 
-// TODO: FIX?
 unsigned daqAnalysis::VSTChannelMap::Channel2Wire(daqAnalysis::ReadoutChannel channel) const {
-  unsigned slot = channel.slot - _slot_offset;
-  unsigned channel_base = std::accumulate(_channel_per_fem.begin(), _channel_per_fem.begin() + slot, 0);
-  unsigned channel_ind = channel_base + channel.channel_ind;
-  return Channel2Wire(channel_ind);
+  return Channel2Wire(ReadoutChannel2Ind(channel));
 }
 
-// TODO: FIX?
 daqAnalysis::ReadoutChannel daqAnalysis::VSTChannelMap::Ind2ReadoutChannel(unsigned channel_no) const {
-  assert(channel_no < _n_channels);
-
   daqAnalysis::ReadoutChannel ret;
   ret.crate = _crate_id;
-  
-  unsigned channel_base = 0;
-  for (unsigned i = 0; i < _n_fem; i ++) {
-    channel_base += _channel_per_fem[i]; 
-    if (channel_base > channel_no) {
-      ret.slot = _slot_offset + i; 
-      ret.channel_ind = channel_no - (channel_base - _channel_per_fem[i]);
-      break;
-    }
-  }
+  ret.slot = channel_no / _channel_per_fem + _slot_offset;
+  ret.channel_ind = channel_no % _channel_per_fem;
   return ret;
 }
 
@@ -140,7 +168,7 @@ unsigned daqAnalysis::VSTChannelMap::ReadoutChannel2Ind(unsigned channel, unsign
 }
 
 unsigned daqAnalysis::VSTChannelMap::ReadoutChannel2Ind(daqAnalysis::ReadoutChannel channel) const {
-  return std::accumulate(_channel_per_fem.begin(), _channel_per_fem.begin() + (channel.slot - _slot_offset), channel.channel_ind);
+  return (channel.slot - _slot_offset) * _channel_per_fem + channel.channel_ind; 
 }
 
 

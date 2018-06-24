@@ -22,3 +22,14 @@ nevis_integration_channel_map_VST:
   crate_id: 15
 }
 
+# for the VST
+channel_map_VST:
+{
+  n_channels: 480
+  n_fem: 10
+  slot_offset: 4
+  crate_id: 15
+  channel_per_fem: 64
+  map_file_name: "/sbnd/data/users/gputnam/VST/channelMap_output_NevisTPCCALIB_generator_LArIAT_Pin_Mapping_06212018_v2.txt"
+}
+
