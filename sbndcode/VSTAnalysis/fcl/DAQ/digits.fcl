@@ -23,7 +23,7 @@ outputs:
   out1:
   {
     module_type: RootOutput
-    fileName: "/tmp/digits_sbnd_r%06r_%#.root"
+    fileName: "/tmp/digits_sbnd_r%06r_%06s.root"
     dataTier:    "digits"
     streamName:  "all"
     outputCommands: [
