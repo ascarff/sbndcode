@@ -45,6 +45,7 @@ physics:
       use_planes: false
       verbose: false
       baseline_calc: 2
+      n_mode_skip: 3
 
       HitsModuleLabel: "rawhit"
       UseRawHits: false
