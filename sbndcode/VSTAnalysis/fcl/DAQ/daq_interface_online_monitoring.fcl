@@ -1,6 +1,3 @@
-#include "geometry_lariat.fcl"
-#include "hitfindermodulesVST.fcl"
-#include "channelstatus_sbnd.fcl"
 #include "vst_channel_map.fcl"
 
 physics:
@@ -15,7 +12,6 @@ physics:
       //raw_data_label: daq
       //fragment_type_label: NEVISTPC
     }
-    rawhit:  @local::standard_fasthitfinderVST
   }
 
   analyzers:
@@ -50,7 +46,7 @@ physics:
 
       HitsModuleLabel: "rawhit"
       UseRawHits: false
-      ProcessRawHits: true
+      ProcessRawHits: false
 
       sum_waveforms: false
       fft_per_channel: false
@@ -58,7 +54,7 @@ physics:
     }
   }
 
-  my_producer_modules: [daq, rawhit]
+  my_producer_modules: [daq]
 
   analyze: [OnlineAnalysis]
   end_paths: [analyze]
@@ -113,9 +109,6 @@ source:
 services: {
 
   VSTChannelMap: @local::nevis_integration_channel_map_VST 
-  Geometry: @local::lariat_geo
-  ExptGeoHelperInterface: @local::lariat_geometry_helper
-  ChannelStatusService:   @local::vst_channelstatus
 
   message: {
     destinations : {
