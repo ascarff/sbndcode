@@ -78,7 +78,7 @@ source:
 
   transfer_plugin: {
 
-     unique_label: "OnlineMonitorShmem2"
+     unique_label: "OnlineMonitorShmem0"
       transferPluginType: Shmem
       shm_key: 0x40471453
       max_fragment_size_words: 2097152
@@ -88,7 +88,7 @@ source:
   }
 
   dispatcher_config: {
-    unique_label: "OnlineMonitorShmem2"
+    unique_label: "OnlineMonitorShmem0"
     path: [ out ]
     physics: {}
     outputs: {
@@ -96,7 +96,7 @@ source:
         module_type: TransferOutput
         transfer_plugin: {
 
-	   unique_label: "OnlineMonitorShmem2"
+	   unique_label: "OnlineMonitorShmem0"
             transferPluginType: Shmem
     
             shm_key: 0x40471453
