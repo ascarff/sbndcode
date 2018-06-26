@@ -116,6 +116,8 @@ public:
     bool timing;
     bool fUseRawHits;
     bool fProcessRawHits;
+    bool fUseNevisClock;
+    bool fDoPurityAna;
 
     std::string fHitsModuleLabel;
 
@@ -160,6 +162,8 @@ private:
   daqAnalysis::Timing _timing;
   // whether we have analyzed stuff
   bool _analyzed;
+  uint32_t _sub_run_start_time;
+  uint32_t _sub_run_holder;
 };
 
 

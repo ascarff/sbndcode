@@ -51,7 +51,7 @@ daqAnalysis::HeaderData Fragment2HeaderData(art::Event &event, const artdaq::Fra
   ret.event_number = raw_header->getEventNum();
   ret.frame_number = raw_header->getFrameNum();
   ret.checksum = raw_header->getChecksum();
-
+  
   if (calc_checksum) {
     ret.computed_checksum = daq::DaqDecoder::compute_checksum(fragment);
   }
@@ -64,6 +64,7 @@ daqAnalysis::HeaderData Fragment2HeaderData(art::Event &event, const artdaq::Fra
   
   ret.frame_time = ret.frame_number * frame_to_dt;
   ret.trig_frame_time = ret.trig_frame_number * frame_to_dt;
+  ret.two_mhzsample = raw_header->get2mhzSample();
 
   // run id stuff
   ret.run_no = event.run();
@@ -87,7 +88,7 @@ daq::DaqDecoder::DaqDecoder(fhicl::ParameterSet const & param):
   _config(param),
   _last_event_number(0),
   _last_trig_frame_number(0)
-{
+ {
   
   // produce stuff
   produces<std::vector<raw::RawDigit>>();

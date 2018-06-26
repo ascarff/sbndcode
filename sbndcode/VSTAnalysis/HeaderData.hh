@@ -35,6 +35,7 @@ class HeaderData {
   uint32_t run_no;
   uint32_t sub_run_no;
   uint32_t art_event_no;
+  uint32_t two_mhzsample;
 
   // by default make words noticable
   // Nevis uses DEADBEEF as a default, so distinguish from
@@ -55,7 +56,8 @@ class HeaderData {
     checksum_word(0xBEEFDEAD),
     trig_frame_sample_word(0xBEEFDEAD),
     run_no(0),
-    sub_run_no(0)
+    sub_run_no(0),
+    two_mhzsample(0xBEEFDEAD)
   {}
 
   // print the data -- for debugging
@@ -74,6 +76,7 @@ class HeaderData {
     buffer << "trigger frame no: " << trig_frame_number << std::endl;
     buffer << "frame time: " << frame_time << std::endl;
     buffer << "trigger frame time: " << trig_frame_time << std::endl;
+    buffer << "two_mhzsample: " << two_mhzsample << std::endl; 
     buffer << std::hex << "checksum: " << checksum << std::endl;
     buffer << std::hex << "computed checksum: " << computed_checksum << std::endl;
 

@@ -67,11 +67,11 @@ daqAnalysis::VSTAnalysis::VSTAnalysis(fhicl::ParameterSet const & p):
 }
 
 void daqAnalysis::VSTAnalysis::analyze(art::Event const & e) {
-  _analysis.AnalyzeEvent(e);
-  // call sum waveforms explicitly
+    _analysis.AnalyzeEvent(e);
+    // call sum waveforms explicitly
   _analysis.SumWaveforms(e);
   if (_analysis.ReadyToProcess()) {
-    _output->Fill();
+     _output->Fill();
   }
 }
 
