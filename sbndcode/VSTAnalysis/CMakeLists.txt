@@ -13,13 +13,13 @@ add_subdirectory(VSTCalibration)
 # don't try to build if not set up
 if( DEFINED ENV{HIREDIS_INC} )
   add_subdirectory(Redis)
+  add_subdirectory(Decoder)
 endif()
 
 # add header-decoder stuff
 # don't try to build if not set up
-if( DEFINED ENV{TRACE_INC} )
-  add_subdirectory(Decoder)
-endif()
+#if( DEFINED ENV{TRACE_INC} )
+#endif()
 
 # filter modules for running online monitoring
 add_subdirectory(OnlineFilters)
@@ -49,6 +49,7 @@ cet_make_library( LIBRARY_NAME daqAnalysis_VST
 		Noise.cc
 		PeakFinder.cc
 		ChannelData.cc
+    Purity.cc
 	LIBRARIES
 		daqAnalysis_MODE
   		sbndcode_VSTAnalysis_VSTChannelMap_service
@@ -69,6 +70,7 @@ cet_make_library( LIBRARY_NAME daqAnalysis_VST
 		${ROOT_BASIC_LIB_LIST} 
 		fftw3
                            larcore_Geometry_Geometry_service
+                           larcorealg_Geometry
                            lardataobj_Simulation
                            lardata_Utilities
                            lardataobj_RawData

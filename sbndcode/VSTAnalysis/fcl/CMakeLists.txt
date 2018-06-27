@@ -8,5 +8,5 @@ install_source(EXTRAS  ${fcl_files} )
 
 # add_subdirectory(DAQ)
 # add_subdirectory(analysis_example)
-# add_subdirectory(pipeline_example)
+add_subdirectory(pipeline_example)
 # add_subdirectory(redis_example)

@@ -46,7 +46,7 @@
 #include "sam_sbnd.fcl"
 
 #include "geometry_lariat.fcl"                           
-#include "channelstatus_lariat.fcl"  
+##include "channelstatus_lariat.fcl"  
 
 BEGIN_PROLOG
 

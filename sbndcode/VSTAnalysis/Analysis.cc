@@ -47,6 +47,7 @@
 #include "Noise.hh"
 #include "PeakFinder.hh"
 #include "Mode.hh"
+#include "Purity.hh"
 
 using namespace daqAnalysis;
 
@@ -211,7 +212,10 @@ else if(_config.fDoPurityAna){
     }
     
     //See if its in the COSMICON region >6.5 seconds +- 10ms +- 10ms Dom Buffer
-    if(timestamp  - _sub_run_start_time > 6.7){}//ADD PURITY FUNCTION HERE 
+    if(timestamp  - _sub_run_start_time > 6.7){
+      double lifetime = CalculateLifetime(rawhits, false);
+      std::cout<<"Lifetime = "<<lifetime<<" ticks\n";
+    }//ADD PURITY FUNCTION HERE 
  }
  
 
