@@ -47,7 +47,7 @@ public:
 
   bool IsGoodSlot(unsigned slot) const;
 
-  unsigned NSlotWire(unsigned clost) const;
+  unsigned NSlotWire(unsigned slot) const;
   unsigned NSlotChannel() const;
 
   // Hard code this for online monitoring

@@ -205,7 +205,6 @@ public:
     _fem_data(channel_map->NFEM(), 1),
     _crate_data(channel_map->NCrates(), channel_map->NChannels()) /* NOTE: assume there is only one crate */
   {
-    // TODO @INSTALLATION: Make sure that this implementation also works for the VST installation
     // set the number of channels per fem
     for (unsigned slot = 0; slot < channel_map->NFEM(); slot++) {
       _fem_data.SetPointsPerTime(slot, channel_map->NSlotWire(slot));

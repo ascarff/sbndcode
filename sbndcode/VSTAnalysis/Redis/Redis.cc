@@ -473,7 +473,6 @@ void Redis::FillChannelData(vector<daqAnalysis::ChannelData> *per_channel_data) 
 
   unsigned n_channels = per_channel_data->size();
   unsigned n_fem = _channel_map->NFEM();
-  bool at_end_of_detector = false;
 
   // iterate over crates and fems
   for (unsigned crate = 0; crate < _channel_map->NCrates(); crate++) {
@@ -482,22 +481,12 @@ void Redis::FillChannelData(vector<daqAnalysis::ChannelData> *per_channel_data) 
       // index into the fem data cache
       unsigned fem_ind = fem;
 
-      // detect if at end of fem's
-      if (fem_ind >= n_fem) {
-        at_end_of_detector = true;
-        break;
-      }
+      for (unsigned channel = 0; channel < _channel_map->NSlotChannel(); channel ++) {
+        if (!_channel_map->IsMappedChannel(channel, fem, crate, true) continue;
 
-      for (unsigned channel = 0; channel < _channel_map->NSlotWire(fem_ind); channel ++) {
         // get the wire number
 	uint16_t wire = _channel_map->Channel2Wire(channel, fem, crate, true);
-        // detect if at end of detector
-        if (wire >= n_channels) {
-          at_end_of_detector = true;
-          break;
-        }
 
-        // TODO @INSTALLATION: Make sure this is ok
         // get index of channel on fem
         unsigned fem_channel_ind = channel;
         // and get index of channel on crate
@@ -517,15 +506,6 @@ void Redis::FillChannelData(vector<daqAnalysis::ChannelData> *per_channel_data) 
 
       }
 
-      // if at end, break
-      if (at_end_of_detector) {
-        break;
-      }
-  
-    }
-    // if at end, break
-    if (at_end_of_detector) {
-      break;
     }
   }
   if (_do_timing) {
