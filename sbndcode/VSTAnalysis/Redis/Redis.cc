@@ -471,9 +471,6 @@ void Redis::FillChannelData(vector<daqAnalysis::ChannelData> *per_channel_data) 
     _timing.StartTime();
   }
 
-  unsigned n_channels = per_channel_data->size();
-  unsigned n_fem = _channel_map->NFEM();
-
   // iterate over crates and fems
   for (unsigned crate = 0; crate < _channel_map->NCrates(); crate++) {
     for (unsigned fem = 0; fem < _channel_map->NFEM(); fem++) {
@@ -482,7 +479,7 @@ void Redis::FillChannelData(vector<daqAnalysis::ChannelData> *per_channel_data) 
       unsigned fem_ind = fem;
 
       for (unsigned channel = 0; channel < _channel_map->NSlotChannel(); channel ++) {
-        if (!_channel_map->IsMappedChannel(channel, fem, crate, true) continue;
+        if (!_channel_map->IsMappedChannel(channel, fem, crate, true)) continue;
 
         // get the wire number
 	uint16_t wire = _channel_map->Channel2Wire(channel, fem, crate, true);
