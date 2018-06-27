@@ -22,7 +22,7 @@ physics:
 
       monitor_name: "SNAPSHOT"
       producer_name: daq
-      snapshot_time: 60
+      snapshot_time: 10
       stream_take: []
       stream_expire: []
       sub_run_stream: false
@@ -40,6 +40,7 @@ physics:
       n_mode_skip: 3
 
       sum_waveforms: true
+      fft_summed_waveforms: true
     }
   }
 
@@ -106,7 +107,7 @@ source:
 }
 
 services: {
-  VSTChannelMap: @local::nevis_integration_channel_map_VST 
+  VSTChannelMap: @local::channel_map_VST 
 
   message: {
     destinations : {
