@@ -44,23 +44,26 @@ daqAnalysis::VSTChannelMap::VSTChannelMap(fhicl::ParameterSet const & p, art::Ac
     /* 
      * Data format is (from Jose):
      *
-     * (int)TPC_wire (string)plane (string)adapter_connector (int)adapter_pin (int)analog_connector (int)analog_pin (int)ASIC (int)ASIC_ch (int)FEMB_ch (int)FEMB (int)WIB (int)FEM_slot (int)FEM_ch
+     * (int)jon_wire (int)jen_wire (string)plane (string)adapter_connector (int)adapter_pin (int)analog_connector (int)analog_pin 
+     * (int)ASIC (int)ASIC_ch (int)FEMB_ch (int)FEMB (int)WIB (int)ADCdec (string)ADChex (int)FEM_slot (int)FEM_ch
+     *
+     * There are two definitions of the TPC wire index -- the "Jon" and the "Jen". We want "Jon", as that corresponds to the 
+     * mapping defined in lariatsoft. 
      *
      * Not all FEM channels are used. Those that are unused have a TPC_wire value of -1.
-     * Wire ID's are per plane and FEM channel ID's are per slot
-     * Wire ID's are 1-indexed and FEM channel ID's are 0-indexed
+     * WIRE ID's are global and FEM channel ID's are per slot
      *
      *
-     * For analysis code, we want to make the wire ID's and the FEM channel ID's defined globally and make both 0-indexed.
-     * So define induction plane = [0, 240) and collection plane = [240, 480).
-     * And define global_channel_id = slot_id * 64 + channel_id;
+     * For analysis code, we want to make the FEM channel ID's defined globally
+     * So define global_channel_id = slot_id * 64 + channel_id;
     */
     unsigned channel_count = 0;
     unsigned line_no = 0;
     string line;
 
     // line fields
-    int tpc_wire;
+    int jon_wire;
+    int jen_wire;
     string wire_plane;
     string adapter_connector;
     int adapter_pin; 
@@ -71,33 +74,25 @@ daqAnalysis::VSTChannelMap::VSTChannelMap(fhicl::ParameterSet const & p, art::Ac
     int FEMB_ch;
     int FEMB;
     int WIB;
+    int ADC_dec;
+    string ADC_hex;
     unsigned FEM_slot;
     unsigned FEM_ch;
 
     while (getline(input, line)) {
       istringstream sline(line);
       // checks if line is formatted properly
-      bool formatted = (sline >> tpc_wire >> wire_plane >> adapter_connector >> adapter_pin >> analog_connector >>
-          analog_pin >> ASIC >> ASIC_ch >> FEMB_ch >> FEMB >> WIB >> FEM_slot >> FEM_ch >> std::ws).good();
+      bool formatted = (sline >> jon_wire >> jen_wire >> wire_plane >> adapter_connector >> adapter_pin >> analog_connector >>
+          analog_pin >> ASIC >> ASIC_ch >> FEMB_ch >> FEMB >> WIB >> ADC_dec >> ADC_hex >> FEM_slot >> FEM_ch >> std::ws).good();
       if (!formatted && sline.peek() != EOF) {
         cerr << "ERROR: misformatted line " << line_no << endl;
         exit(1);
       }
       line_no ++;
-      if (tpc_wire < 0) {
+      if (jon_wire < 0) {
         continue;
       }
-      unsigned wire_id;
-      if (wire_plane == "Induction") {
-        wire_id = (unsigned)tpc_wire - 1;
-      }
-      else if (wire_plane == "Collection") {
-        wire_id = (unsigned)tpc_wire + _n_channels/2 - 1;
-      }
-      else {
-        cerr << "ERROR: bad plane value: " << wire_plane << std::endl;
-        exit(1);
-      }
+      unsigned wire_id = jon_wire;
       unsigned channel_id = (FEM_slot - _slot_offset) * _channel_per_fem + FEM_ch;
 
       // set channel map
