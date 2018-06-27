@@ -90,8 +90,8 @@ public:
   // send info associated w/ HeaderData
   void HeaderData(std::vector<daqAnalysis::HeaderData> *header_data);
   // must be called before calling Send functions
-  void StartSend(unsigned sub_run=0);
-  void StartSend(std::time_t now, unsigned sub_run=0);
+  void StartSend(unsigned run, unsigned sub_run);
+  void StartSend(std::time_t now, unsigned run, unsigned sub_run);
   // must be called after calling Send functions
   void FinishSend();
   // whether the code will call Snapshot() on ChannelData
@@ -138,6 +138,10 @@ protected:
   unsigned _this_subrun;
   // last subrun analyzed
   unsigned _last_subrun;
+  // current run analyzed
+  unsigned _this_run;
+  // last run analyzed
+  unsigned _last_run;
   // last time a snapshot was sent
   std::time_t _last_snapshot;
   // whether this is the first run

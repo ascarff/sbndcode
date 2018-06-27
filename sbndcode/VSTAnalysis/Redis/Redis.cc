@@ -41,6 +41,8 @@ Redis::Redis(Redis::Config &config, daqAnalysis::VSTChannelMap *channel_map):
   _n_streams(config.NStreams()),
   _this_subrun(config.first_subrun),
   _last_subrun(config.first_subrun),
+  _this_run(0),
+  _last_run(0),
   _last_snapshot(0),
   _first_run(true),
 
@@ -81,11 +83,11 @@ Redis::~Redis() {
 }
 
 
-void Redis::StartSend(unsigned sub_run) {
-  StartSend(std::time(nullptr), sub_run);
+void Redis::StartSend(unsigned run, unsigned sub_run) {
+  StartSend(std::time(nullptr), run, sub_run);
 }
 
-void Redis::StartSend(std::time_t now, unsigned sub_run) {
+void Redis::StartSend(std::time_t now, unsigned run, unsigned sub_run) {
   _now = now;
 
   for (size_t i = 0; i < _stream_take.size(); i++) {
@@ -105,6 +107,7 @@ void Redis::StartSend(std::time_t now, unsigned sub_run) {
     }
   }
   _this_subrun = sub_run;
+  _this_run = run;
 }
 
 void Redis::FinishSend() {
@@ -116,12 +119,19 @@ void Redis::FinishSend() {
     void *reply = redisCommand(context, "SET last_subrun_no %u", _last_subrun);
     freeReplyObject(reply);
   }
+  // same with run
+  if (_this_run != _last_run) {
+    void *reply = redisCommand(context, "SET this_run_no %u", _this_run);
+    freeReplyObject(reply);
+  }
 
   // send Redis "Alive" signal
   void *reply = redisCommand(context, "SET MONITOR_%s_ALIVE %u", _config.monitor_name.c_str(), std::time(nullptr));
   freeReplyObject(reply);
   
   _last_subrun = _this_subrun;
+  _last_run = _this_run;
+
   _first_run = false;
 }
 
@@ -175,12 +185,16 @@ void Redis::SendHeaderData() {
   // special case the sub run stream
   if (_sub_run_stream) {
     unsigned sub_run_ind = _n_streams - 1;  
+    std::stringstream ss;
+    ss << "sub_run_" << _this_run;
+    const char *sub_run_ident = ss.str().c_str();
+
     // send headers to redis if need be
     if (_stream_send[sub_run_ind]) {
-      n_commands += _event_no[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
-      n_commands += _frame_no[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
-      n_commands += _trig_frame_no[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
-      n_commands += _blocks[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
+      n_commands += _event_no[sub_run_ind].Send(context, _last_subrun, sub_run_ident, _sub_run_stream_expire);
+      n_commands += _frame_no[sub_run_ind].Send(context, _last_subrun, sub_run_ident, _sub_run_stream_expire);
+      n_commands += _trig_frame_no[sub_run_ind].Send(context, _last_subrun, sub_run_ident, _sub_run_stream_expire);
+      n_commands += _blocks[sub_run_ind].Send(context, _last_subrun, sub_run_ident, _sub_run_stream_expire);
 
       // the metric was taken iff it was sent to redis
       _event_no[sub_run_ind].Clear();
@@ -565,15 +579,20 @@ void Redis::SendChannelData() {
       if (_do_timing) {
         _timing.StartTime();
       }
+
+      std::stringstream ss;
+      ss << "sub_run_" << _this_run;
+      const char *sub_run_ident = ss.str().c_str();
+
       // metrics control the sending of everything else
-      n_commands += _rms[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
-      n_commands += _baseline[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
-      n_commands += _baseline_rms[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
-      n_commands += _dnoise[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
-      n_commands += _occupancy[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
-      n_commands += _pulse_height[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
-      n_commands += _rawhit_occupancy[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
-      n_commands += _rawhit_pulse_height[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
+      n_commands += _rms[sub_run_ind].Send(context, _last_subrun, sub_run_ident, _sub_run_stream_expire);
+      n_commands += _baseline[sub_run_ind].Send(context, _last_subrun, sub_run_ident, _sub_run_stream_expire);
+      n_commands += _baseline_rms[sub_run_ind].Send(context, _last_subrun, sub_run_ident, _sub_run_stream_expire);
+      n_commands += _dnoise[sub_run_ind].Send(context, _last_subrun, sub_run_ident, _sub_run_stream_expire);
+      n_commands += _occupancy[sub_run_ind].Send(context, _last_subrun, sub_run_ident, _sub_run_stream_expire);
+      n_commands += _pulse_height[sub_run_ind].Send(context, _last_subrun, sub_run_ident, _sub_run_stream_expire);
+      n_commands += _rawhit_occupancy[sub_run_ind].Send(context, _last_subrun, sub_run_ident, _sub_run_stream_expire);
+      n_commands += _rawhit_pulse_height[sub_run_ind].Send(context, _last_subrun, sub_run_ident, _sub_run_stream_expire);
 
       // the metric was taken iff it was sent to redis
       // clear all of the metrics

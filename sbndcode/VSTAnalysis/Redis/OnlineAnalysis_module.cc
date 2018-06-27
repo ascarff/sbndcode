@@ -87,18 +87,17 @@ daqAnalysis::OnlineAnalysis::OnlineAnalysis(fhicl::ParameterSet const & p):
 void daqAnalysis::OnlineAnalysis::analyze(art::Event const & e) {
   _analysis.AnalyzeEvent(e);
   auto const& raw_digits_handle = e.getValidHandle<std::vector<raw::RawDigit>>(_analysis._config.daq_tag);
-  unsigned sub_run = 0;
-  if (_analysis._config.n_headers > 0) {
-    sub_run = _analysis._header_data[0].sub_run_no;
-  }
+  unsigned sub_run = e.subRun();
+  unsigned run = e.run();
+
   if (_analysis.ReadyToProcess() && !_analysis.EmptyEvent()) {
     // if configured to, get the time from the event
     if (_config_use_event_time) {
-      _redis_manager->StartSend(e.time().value(), sub_run);
+      _redis_manager->StartSend(e.time().value(), run, sub_run);
     }
     // else use default time (now)
     else {
-      _redis_manager->StartSend(sub_run);
+      _redis_manager->StartSend(run, sub_run);
     }
     // sum waveforms if we're gonna take a snapshot
     if (_redis_manager->WillTakeSnapshot()) {
