@@ -1,3 +1,6 @@
+#include "geometry_lariat.fcl"
+#include "hitfindermodulesVST.fcl"
+#include "channelstatus_sbnd.fcl"
 #include "vst_channel_map.fcl"
 
 physics:
@@ -12,6 +15,7 @@ physics:
       //raw_data_label: daq
       //fragment_type_label: NEVISTPC
     }
+    rawhit:  @local::standard_fasthitfinderVST
   }
 
   analyzers:
@@ -46,7 +50,7 @@ physics:
 
       HitsModuleLabel: "rawhit"
       UseRawHits: false
-      ProcessRawHits: false
+      ProcessRawHits: true
 
       sum_waveforms: false
       fft_per_channel: false
@@ -54,7 +58,7 @@ physics:
     }
   }
 
-  my_producer_modules: [daq]
+  my_producer_modules: [daq, rawhit]
 
   analyze: [OnlineAnalysis]
   end_paths: [analyze]
@@ -74,7 +78,7 @@ source:
 
   transfer_plugin: {
 
-     unique_label: "OnlineMonitorShmem2"
+     unique_label: "OnlineMonitorShmem0"
       transferPluginType: Shmem
       shm_key: 0x40471453
       max_fragment_size_words: 2097152
@@ -84,7 +88,7 @@ source:
   }
 
   dispatcher_config: {
-    unique_label: "OnlineMonitorShmem2"
+    unique_label: "OnlineMonitorShmem0"
     path: [ out ]
     physics: {}
     outputs: {
@@ -92,7 +96,7 @@ source:
         module_type: TransferOutput
         transfer_plugin: {
 
-	   unique_label: "OnlineMonitorShmem2"
+	   unique_label: "OnlineMonitorShmem0"
             transferPluginType: Shmem
     
             shm_key: 0x40471453
@@ -109,6 +113,9 @@ source:
 services: {
 
   VSTChannelMap: @local::nevis_integration_channel_map_VST 
+  Geometry: @local::lariat_geo
+  ExptGeoHelperInterface: @local::lariat_geometry_helper
+  ChannelStatusService:   @local::vst_channelstatus
 
   message: {
     destinations : {

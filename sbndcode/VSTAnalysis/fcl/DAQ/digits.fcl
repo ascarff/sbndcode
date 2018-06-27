@@ -9,6 +9,8 @@ physics:
       module_type: DaqDecoder
       produce_header: false
       baseline_calc: true
+      n_mode_skip: 3
+      
     }
   }
 
@@ -23,7 +25,8 @@ outputs:
   out1:
   {
     module_type: RootOutput
-    fileName: "/tmp/digits_sbnd_r%06r_%#.root"
+    fileName: "/daqdata/digits_sbnd_r%06r_%06s.root"
+    #fileName: "/tmp/digits_sbnd_r%06r_%06s.root"
     dataTier:    "digits"
     streamName:  "all"
     outputCommands: [

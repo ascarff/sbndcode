@@ -139,16 +139,25 @@ unsigned daqAnalysis::VSTChannelMap::Wire2Channel(unsigned i) const { return _wi
 unsigned daqAnalysis::VSTChannelMap::NSlotWire(unsigned i) const { return _wire_per_fem[i]; }
 unsigned daqAnalysis::VSTChannelMap::NSlotChannel() const { return _channel_per_fem; }
 
+bool daqAnalysis::VSTChannelMap::IsMappedChannel(unsigned channel_no) const {
+  // if the map can't find the key before hitting the end, then the key doesn't exist
+  return _channel_to_wire.find(channel_no) != _channel_to_wire.end();
+}
+
 unsigned daqAnalysis::VSTChannelMap::Channel2Wire(unsigned channel, unsigned slot, unsigned crate, bool add_offset) const {
-  daqAnalysis::ReadoutChannel readout;
-  readout.channel_ind = channel;
-  readout.slot = slot + (add_offset ? _slot_offset : 0);
-  readout.crate = crate;
-  return Channel2Wire(readout);
+  return Channel2Wire(ReadoutChannel2Ind(channel, slot, crate, add_offset));
 }
 
 unsigned daqAnalysis::VSTChannelMap::Channel2Wire(daqAnalysis::ReadoutChannel channel) const {
   return Channel2Wire(ReadoutChannel2Ind(channel));
+}
+
+bool daqAnalysis::VSTChannelMap::IsMappedChannel(unsigned channel, unsigned slot, unsigned crate, bool add_offset) const {
+  return IsMappedChannel(ReadoutChannel2Ind(channel, slot, crate, add_offset));
+}
+
+bool daqAnalysis::VSTChannelMap::IsMappedChannel(daqAnalysis::ReadoutChannel channel) const {
+  return IsMappedChannel(ReadoutChannel2Ind(channel));
 }
 
 daqAnalysis::ReadoutChannel daqAnalysis::VSTChannelMap::Ind2ReadoutChannel(unsigned channel_no) const {
