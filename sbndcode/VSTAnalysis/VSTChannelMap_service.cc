@@ -15,6 +15,8 @@
 #include <cctype>
 #include <stdlib.h>
 #include <cassert>
+#include <numeric>
+#include <iterator>
 
 #include "art/Framework/Services/Registry/ActivityRegistry.h"
 #include "art/Framework/Services/Registry/ServiceMacros.h"
@@ -32,7 +34,8 @@ daqAnalysis::VSTChannelMap::VSTChannelMap(fhicl::ParameterSet const & p, art::Ac
   _crate_id(p.get<unsigned>("crate_id", 0)),
   _channel_to_wire(),
   _wire_to_channel(),
-  _wire_per_fem(_n_fem, 0)
+  _wire_per_fem(_n_fem, 0),
+  _fem_active_channels(_n_fem)
 {
   // Setup channel map
 
@@ -102,6 +105,9 @@ daqAnalysis::VSTChannelMap::VSTChannelMap(fhicl::ParameterSet const & p, art::Ac
       _wire_per_fem[FEM_slot - _slot_offset] += 1;
 
       channel_count ++;
+
+      // include in list of channels on FEM
+      _fem_active_channels[FEM_slot - _slot_offset].push_back(FEM_ch);
     }
     // checks if file has correct number of lines
     if (channel_count != _n_channels) {
@@ -123,6 +129,8 @@ daqAnalysis::VSTChannelMap::VSTChannelMap(fhicl::ParameterSet const & p, art::Ac
     _channel_per_fem = _n_channels / _n_fem;
     for (unsigned i = 0; i < _n_fem; i++) {
       _wire_per_fem[i] = _channel_per_fem;
+      _fem_active_channels[i] = std::vector<unsigned>(_channel_per_fem);
+      std::iota(std::begin(_fem_active_channels[i]), std::end(_fem_active_channels[i]), 0);
     }
   }
 }
@@ -193,6 +201,19 @@ bool daqAnalysis::VSTChannelMap::IsGoodSlot(unsigned slot) const {
   // negative overflow will wrap around and also be large than n_fem_per_crate,
   // so this covers both the case where the slot id is too big and too small
   return (slot - _slot_offset) < _n_fem;
+}
+
+unsigned daqAnalysis::VSTChannelMap::ReadoutChannel2FEMInd(unsigned channel, unsigned slot, unsigned crate, bool add_offset) const {
+  daqAnalysis::ReadoutChannel readout;
+  readout.channel_ind = channel;
+  readout.slot = slot + (add_offset ? _slot_offset : 0);
+  readout.crate = crate;
+  return ReadoutChannel2FEMInd(readout);
+}
+
+unsigned daqAnalysis::VSTChannelMap::ReadoutChannel2FEMInd(daqAnalysis::ReadoutChannel channel) const {
+  auto const& list = _fem_active_channels[channel.slot - _slot_offset];
+  return std::distance(list.begin(), std::find(list.begin(), list.end(), channel.channel_ind));
 }
 
 DEFINE_ART_SERVICE(daqAnalysis::VSTChannelMap)

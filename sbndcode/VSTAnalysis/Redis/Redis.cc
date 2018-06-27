@@ -485,9 +485,10 @@ void Redis::FillChannelData(vector<daqAnalysis::ChannelData> *per_channel_data) 
 	uint16_t wire = _channel_map->Channel2Wire(channel, fem, crate, true);
 
         // get index of channel on fem
-        unsigned fem_channel_ind = channel;
-        // and get index of channel on crate
-        unsigned crate_channel_ind = _channel_map->ReadoutChannel2Ind(channel, fem, crate, true);
+        unsigned fem_channel_ind = _channel_map->ReadoutChannel2FEMInd(channel, fem, crate, true);
+
+        // since there is only one crate, we can use the wire id as the crate index
+        unsigned crate_channel_ind = wire;
  
         // fill metrics for each stream
         for (size_t i = 0; i < _n_streams; i++) {
