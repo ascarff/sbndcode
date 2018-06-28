@@ -120,12 +120,6 @@ services: {
         type : cout 
         threshold : "DEBUG" 
       } 
-      udp_artdaq_messageviwer : { 
-        type : "UDP" 
-        threshold : "DEBUG" 
-        port : 30000 
-        host : "lariat-daq04.fnal.gov" 
-      }
       udp_message_forwarding : {
         type : "UDP" 
         threshold : "DEBUG" 
