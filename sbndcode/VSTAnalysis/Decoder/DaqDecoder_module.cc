@@ -78,6 +78,8 @@ daqAnalysis::HeaderData Fragment2HeaderData(art::Event &event, const artdaq::Fra
   ret.checksum_word = raw_header->checksum;
   ret.trig_frame_sample_word = raw_header->trig_frame_sample;
 
+  ret.art_time = event.time().value();
+
   return ret;
 }
 
@@ -117,6 +119,8 @@ daq::DaqDecoder::Config::Config(fhicl::ParameterSet const & param) {
   n_mode_skip = param.get<unsigned>("n_mode_skip", 1);
   // whether to verify checksum
   calc_checksum = param.get<bool>("calc_checksum", false);
+  // whether to subtract pedestal
+  subtract_pedestal = param.get<bool>("subtract_pedestal", false);
 
   // turning off various config stuff
   v_checksum = param.get<bool>("v_check_checksum", true);
@@ -201,11 +205,26 @@ void daq::DaqDecoder::process_fragment(art::Event &event, const artdaq::Fragment
     for (auto digit: waveform.second) {
       raw_digits_waveform.push_back( (int16_t) digit);
     }  
-    // construct the next RawDigit object
-    product_collection->emplace_back(wire_id, raw_digits_waveform.size(), raw_digits_waveform);
     // calculate the mode and set it as the pedestal
-    if (_config.baseline_calc) {
-      (*product_collection)[product_collection->size() - 1].SetPedestal( Mode(raw_digits_waveform, _config.n_mode_skip) ); 
+    if (_config.baseline_calc || _config.subtract_pedestal) {
+      auto mode = Mode(raw_digits_waveform, _config.n_mode_skip);
+      if (_config.subtract_pedestal) {
+        for (unsigned i = 0; i < raw_digits_waveform.size(); i++) {
+          raw_digits_waveform[i] -= mode;
+        }
+      }
+
+      // construct the next RawDigit object
+      product_collection->emplace_back(wire_id, raw_digits_waveform.size(), raw_digits_waveform);
+
+      if (_config.baseline_calc) {
+        (*product_collection)[product_collection->size() - 1].SetPedestal( mode);
+      }
+    }
+    // just push back
+    else {
+      product_collection->emplace_back(wire_id, raw_digits_waveform.size(), raw_digits_waveform);
+
     }
   }
 }
