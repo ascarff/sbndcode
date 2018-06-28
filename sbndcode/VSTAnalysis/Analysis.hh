@@ -118,6 +118,7 @@ public:
     bool fProcessRawHits;
     bool fUseNevisClock;
     bool fDoPurityAna;
+    bool fCosmicRun;
 
     std::string fHitsModuleLabel;
 
