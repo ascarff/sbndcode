@@ -8,7 +8,8 @@ physics:
     {
       module_type: DaqDecoder
       produce_header: false
-      baseline_calc: false
+      baseline_calc: true
+      n_mode_skip: 3
     }
   }
 
