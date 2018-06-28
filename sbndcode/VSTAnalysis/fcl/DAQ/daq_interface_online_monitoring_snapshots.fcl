@@ -22,7 +22,7 @@ physics:
 
       monitor_name: "SNAPSHOT"
       producer_name: daq
-      snapshot_time: 10
+      snapshot_time: 60
       stream_take: []
       stream_expire: []
       sub_run_stream: false
