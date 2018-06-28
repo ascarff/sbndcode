@@ -47,6 +47,7 @@
 #include "Noise.hh"
 #include "PeakFinder.hh"
 #include "Mode.hh"
+#include "Purity.hh"
 
 using namespace daqAnalysis;
 
@@ -216,12 +217,13 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
 	_sub_run_start_time = timestamp; 
       }
       
-      //See if its in the COSMICON region >6.5 seconds +- 10ms +- 10ms Dom Buffer
-      std::cout << " timestamp  - _sub_run_start_time: " << timestamp  - _sub_run_start_time << std::endl;
-      if(timestamp  - _sub_run_start_time > 6.7){}//ADD PURITY FUNCTION HERE 
-    }
-  }
-
+    //See if its in the COSMICON region >6.5 seconds +- 10ms +- 10ms Dom Buffer
+    if(timestamp  - _sub_run_start_time > 6.7){
+      double lifetime = CalculateLifetime(rawhits, false);
+      std::cout<<"Lifetime = "<<lifetime<<" ticks\n";
+    }//ADD PURITY FUNCTION HERE 
+ }
+ 
   // clear out containers from last iter
   for (unsigned i = 0; i < _channel_map->NChannels(); i++) {
     _per_channel_data[i].waveform.clear();

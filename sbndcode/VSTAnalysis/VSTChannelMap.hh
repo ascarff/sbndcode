@@ -36,6 +36,10 @@ public:
   unsigned ReadoutChannel2Ind(daqAnalysis::ReadoutChannel channel) const;
   unsigned ReadoutChannel2Ind(unsigned channel, unsigned slot, unsigned crate, bool add_offset=false) const;
 
+  bool IsMappedChannel(unsigned channel_no) const;
+  bool IsMappedChannel(unsigned channel_ind, unsigned slot_ind, unsigned crate_ind, bool add_offset=false) const;
+  bool IsMappedChannel(daqAnalysis::ReadoutChannel channel) const;
+
   // defined slot index for the two different ways that information is encoded
   unsigned SlotIndex(daqAnalysis::HeaderData header) const;
   unsigned SlotIndex(daqAnalysis::NevisTPCMetaData metadata) const;

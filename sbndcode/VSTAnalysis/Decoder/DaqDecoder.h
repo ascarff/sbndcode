@@ -83,6 +83,9 @@ private:
   // to the Lariat geometry.
   raw::ChannelID_t get_wire_id(const sbnddaq::NevisTPCHeader *header, uint16_t nevis_channel_id);
 
+  // whether the given nevis readout channel is mapped to a wire
+  bool is_mapped_channel(const sbnddaq::NevisTPCHeader *header, uint16_t nevis_channel_id);
+
   art::InputTag _tag;
   Config _config;
   // keeping track of incrementing numbers

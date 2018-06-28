@@ -160,6 +160,10 @@ void daq::DaqDecoder::produce(art::Event & event)
 
 }
 
+bool daq::DaqDecoder::is_mapped_channel(const sbnddaq::NevisTPCHeader *header, uint16_t nevis_channel_id) {
+  // rely on ChannelMap for implementation
+  return _channel_map->IsMappedChannel(nevis_channel_id, header->getSlot(), header->getFEMID());
+}
 
 raw::ChannelID_t daq::DaqDecoder::get_wire_id(const sbnddaq::NevisTPCHeader *header, uint16_t nevis_channel_id) {
   // rely on ChannelMap for implementation
@@ -172,7 +176,6 @@ void daq::DaqDecoder::process_fragment(art::Event &event, const artdaq::Fragment
 
   // convert fragment to Nevis fragment
   sbnddaq::NevisTPCFragment fragment(frag);
-
 
   std::unordered_map<uint16_t,sbnddaq::NevisTPC_Data_t> waveform_map;
   size_t n_waveforms = fragment.decode_data(waveform_map);
@@ -190,6 +193,9 @@ void daq::DaqDecoder::process_fragment(art::Event &event, const artdaq::Fragment
   }
 
   for (auto waveform: waveform_map) {
+    // ignore channels that aren't mapped to a wire
+    if (!is_mapped_channel(fragment.header(), waveform.first)) continue;
+
     std::vector<int16_t> raw_digits_waveform;
     raw::ChannelID_t wire_id = get_wire_id(fragment.header(), waveform.first);
     // TODO: is this too expensive an operation?
