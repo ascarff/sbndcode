@@ -174,7 +174,8 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
 
   //Purity Trigger - Gray you will probably want to change this for syntax
   if(_config.fCosmicRun == true && config.fDoPurityAna){
-
+    double lifetime = CalculateLifetime(rawhits, false);
+    std::cout<<"Lifetime = "<<lifetime<<" ticks\n";
   } 
   else{
     if (_config.n_headers > 0 && _config.fUseNevisClock && _config.fDoPurityAna) {
@@ -189,8 +190,9 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
       }
       //Do The purity calculation if its within the limit of the clock 
       std::cout << "timestamp: " << ((header.frame_number)*_config.frame_to_dt + (header.two_mhzsample)*5e-7) - _sub_run_start_time << std::endl;
-      if((((header.frame_number)*_config.frame_to_dt + (header.two_mhzsample)*5e-7) - _sub_run_start_time ) > 6.5 + 0.1){}//ADD PURITY FUNCTION HERE 
-      
+      if((((header.frame_number)*_config.frame_to_dt + (header.two_mhzsample)*5e-7) - _sub_run_start_time ) > 0.03){ 
+	double lifetime = CalculateLifetime(rawhits, false);
+	std::cout<<"Lifetime = "<<lifetime<<" ticks\n";}
       //The $30 clock runs at 8ns a tick, the cosmics start at 6.5 seconds in. The Nevis clock is 64MHz. Hence for every tick of the $30~1/2 a tick in the Nevis clock. You feel really useful when all you have done is to put this line in. We might want to hard code the in the config the buffer times. config.frame_to_dt needs to be checked. Also two_mhzsample is 2 in the test data.  
     }
     // or metadata if that's how we're doing things 
@@ -204,7 +206,8 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
 	_sub_run_start_time = (metadata.frame_number)*_config.frame_to_dt + (metadata.two_mhzsample)*5e-7;
 	
 	//Do The purity calculation
-	if((((metadata.frame_number)*_config.frame_to_dt + (metadata.two_mhzsample)*5e-7) -  _sub_run_start_time) > 6.5 + 0.1){}//ADD PURITY FUNCTION HERE 
+	if((((metadata.frame_number)*_config.frame_to_dt + (metadata.two_mhzsample)*5e-7) -  _sub_run_start_time) > 0.03){ double lifetime = CalculateLifetime(rawhits, false);
+	  std::cout<<"Lifetime = "<<lifetime<<" ticks\n";}
       }
     }
     else if(_config.fDoPurityAna){
