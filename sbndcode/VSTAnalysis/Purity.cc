@@ -448,7 +448,7 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 	TCanvas *cWvT  = new TCanvas("WvT","Peaktime vs WireID",10,10,800,600); 	//Creating canvases to draw onto. Purely for visual inspection
 	TCanvas *cIWvT  = new TCanvas("IWvT","Peaktime vs WireID",10,10,800,600);
 	TCanvas *cIvT  = new TCanvas("IvT","Integral vs WireID",10,10,800,600);	
-	//TCanvas *cTrial  = new TCanvas("Trial","Trial",10,10,800,600);	
+	TCanvas *cTrial  = new TCanvas("Trial","Trial",10,10,800,600);	
 	cWvT->cd();
 		gStyle->SetOptStat(0);
 		WvT->SetMarkerStyle(3);
@@ -519,10 +519,10 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 		gfun->SetLineColor(kGreen);
 		gfun->Draw("SAME");
 	cTrial->SaveAs("Trial.root");
-
+*/
 	if(fVerbose) cout << "Plotted All canvases" << endl;
 	if(fVerbose) cout << "Lifetime is: " << (lifetime/2000)  << "ms" << endl;
 	if(fVerbose) cout << endl << endl << endl << endl;
-*/
+
   return tauvec;
 }

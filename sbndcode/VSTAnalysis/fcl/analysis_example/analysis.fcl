@@ -22,6 +22,9 @@ physics:
       timing: false
       sum_waveforms: false
       fill_waveforms: true
+
+      UseNevisClock: true
+      DoPurityAna:  true
     }
   }
 

@@ -183,6 +183,7 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
 	
       }
       //Do The purity calculation if its within the limit of the clock 
+      std::cout << "time: " << (((header.frame_number)*_config.frame_to_dt + (header.two_mhzsample)*5e-7) - _sub_run_start_time ) << std::endl;///////////////////////////////////
       if((((header.frame_number)*_config.frame_to_dt + (header.two_mhzsample)*5e-7) - _sub_run_start_time ) > 6.5 + 0.1){}//ADD PURITY FUNCTION HERE 
 
 //The $30 clock runs at 8ns a tick, the cosmics start at 6.5 seconds in. The Nevis clock is 64MHz. Hence for every tick of the $30~1/2 a tick in the Nevis clock. You feel really useful when all you have done is to put this line in. We might want to hard code the in the config the buffer times. config.frame_to_dt needs to be checked. Also two_mhzsample is 2 in the test data.  
@@ -210,7 +211,7 @@ else if(_config.fDoPurityAna){
       _sub_run_holder = event.subRun();
       _sub_run_start_time = timestamp; 
     }
-    
+    std::cout << "time: " << timestamp  - _sub_run_start_time << std::endl;///
     //See if its in the COSMICON region >6.5 seconds +- 10ms +- 10ms Dom Buffer
     if(timestamp  - _sub_run_start_time > 6.7){
       double lifetime = CalculateLifetime(rawhits, false);
