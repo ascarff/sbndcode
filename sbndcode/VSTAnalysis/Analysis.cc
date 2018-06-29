@@ -48,6 +48,7 @@
 #include "PeakFinder.hh"
 #include "Mode.hh"
 #include "Purity.hh"
+#include "EventInfo.hh"
 
 using namespace daqAnalysis;
 
@@ -60,6 +61,7 @@ Analysis::Analysis(fhicl::ParameterSet const & p) :
   _per_channel_data_reduced((_config.reduce_data) ? _channel_map->NChannels() : 0), // setup reduced event vector if we need it
   _noise_samples(_channel_map->NChannels()),
   _header_data(std::max(_config.n_headers,0)),
+  _event_info(),
   _nevis_tpc_metadata(std::max(_config.n_metadata,0)),
   _thresholds( (_config.threshold_calc == 3) ? _channel_map->NChannels() : 0),
   _fem_summed_waveforms((_config.sum_waveforms) ? _channel_map->NFEM() : 0),
@@ -164,6 +166,7 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
 
   _event_ind ++;
 
+  
   // Getting the Hit Information                                                
   art::Handle<std::vector<recob::Hit> > hitListHandle;
   std::vector<art::Ptr<recob::Hit> > rawhits;
@@ -171,10 +174,10 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
     {art::fill_ptr_vector(rawhits, hitListHandle);}
   //  std::cout << "Number of Hits: " << rawhits.size() << std::endl;           
 
-
+  double lifetime = 0;
   //Purity Trigger - Gray you will probably want to change this for syntax
-  if(_config.fCosmicRun == true && config.fDoPurityAna){
-    double lifetime = CalculateLifetime(rawhits, false);
+  if(_config.fCosmicRun == true && _config.fDoPurityAna){
+    lifetime = CalculateLifetime(rawhits, false);
     std::cout<<"Lifetime = "<<lifetime<<" ticks\n";
   } 
   else{
@@ -191,9 +194,26 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
       //Do The purity calculation if its within the limit of the clock 
       std::cout << "timestamp: " << ((header.frame_number)*_config.frame_to_dt + (header.two_mhzsample)*5e-7) - _sub_run_start_time << std::endl;
       if((((header.frame_number)*_config.frame_to_dt + (header.two_mhzsample)*5e-7) - _sub_run_start_time ) > 0.03){ 
-	double lifetime = CalculateLifetime(rawhits, false);
-	std::cout<<"Lifetime = "<<lifetime<<" ticks\n";}
+	lifetime = CalculateLifetime(rawhits, false);
+	std::cout<<"Lifetime = "<<lifetime<<" ticks\n";
+      }
       //The $30 clock runs at 8ns a tick, the cosmics start at 6.5 seconds in. The Nevis clock is 64MHz. Hence for every tick of the $30~1/2 a tick in the Nevis clock. You feel really useful when all you have done is to put this line in. We might want to hard code the in the config the buffer times. config.frame_to_dt needs to be checked. Also two_mhzsample is 2 in the test data.  
+    }
+    else if(_config.n_headers > 0  && _config.fDoPurityAna) {
+      //Get the Unix time stamp given to the fragment.
+      std::uint64_t timestamp = (event.time()).value();
+      
+      //Check to see if the subrun has changed
+      if((event.subRun()) != _sub_run_holder){
+	_sub_run_holder = event.subRun();
+	_sub_run_start_time = timestamp; 
+      }
+      
+      //See if its in the COSMICON region >6.5 seconds +- 10ms +- 10ms Dom Buffer
+      if(timestamp  - _sub_run_start_time > 6.7){
+	lifetime = CalculateLifetime(rawhits, false);
+	std::cout<<"Lifetime = "<<lifetime<<" ticks\n";
+      }//ADD PURITY FUNCTION HERE 
     }
     // or metadata if that's how we're doing things 
     else if (_config.n_metadata > 0  && _config.fUseNevisClock && _config.fDoPurityAna) {
@@ -204,12 +224,30 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
       if((metadata.sub_run_no) != _sub_run_holder){
 	_sub_run_holder = metadata.sub_run_no;
 	_sub_run_start_time = (metadata.frame_number)*_config.frame_to_dt + (metadata.two_mhzsample)*5e-7;
+      }
 	
 	//Do The purity calculation
-	if((((metadata.frame_number)*_config.frame_to_dt + (metadata.two_mhzsample)*5e-7) -  _sub_run_start_time) > 0.03){ double lifetime = CalculateLifetime(rawhits, false);
-	  std::cout<<"Lifetime = "<<lifetime<<" ticks\n";}
-      }
+	if((((metadata.frame_number)*_config.frame_to_dt + (metadata.two_mhzsample)*5e-7) -  _sub_run_start_time) > 0.03){ 	  lifetime = CalculateLifetime(rawhits, false);
+	  std::cout<<"Lifetime = "<<lifetime<<" ticks\n";
+	}
     }
+else if(_config.n_metadata > 0  && _config.fDoPurityAna) {
+      //Get the Unix time stamp given to the fragment.
+      std::uint64_t timestamp = (event.time()).value();
+      
+      //Check to see if the subrun has changed
+      if((event.subRun()) != _sub_run_holder){
+	_sub_run_holder = event.subRun();
+	_sub_run_start_time = timestamp; 
+      }
+      
+      //See if its in the COSMICON region >6.5 seconds +- 10ms +- 10ms Dom Buffer
+      if(timestamp  - _sub_run_start_time > 6.7){
+	lifetime = CalculateLifetime(rawhits, false);
+	std::cout<<"Lifetime = "<<lifetime<<" ticks\n";
+      }//ADD PURITY FUNCTION HERE 
+    }
+  
     else if(_config.fDoPurityAna){
       //Get the Unix time stamp given to the fragment.
       std::uint64_t timestamp = (event.time()).value();
@@ -220,12 +258,18 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
 	_sub_run_start_time = timestamp; 
       }
       
-    //See if its in the COSMICON region >6.5 seconds +- 10ms +- 10ms Dom Buffer
-    if(timestamp  - _sub_run_start_time > 6.7){
-      double lifetime = CalculateLifetime(rawhits, false);
-      std::cout<<"Lifetime = "<<lifetime<<" ticks\n";
-    }//ADD PURITY FUNCTION HERE 
- }
+      //See if its in the COSMICON region >6.5 seconds +- 10ms +- 10ms Dom Buffer
+      if(timestamp  - _sub_run_start_time > 6.7){
+	lifetime = CalculateLifetime(rawhits, false);
+	std::cout<<"Lifetime = "<<lifetime<<" ticks\n";
+      }//ADD PURITY FUNCTION HERE 
+    }
+  }
+
+  //Finally add the Lifetime to the event info information 
+  if(_config.fDoPurityAna){
+    ProcessEventInfo(lifetime);
+  }
  
   // clear out containers from last iter
   for (unsigned i = 0; i < _channel_map->NChannels(); i++) {
@@ -409,6 +453,10 @@ void Analysis::SumWaveforms(art::Event const & event) {
 void Analysis::ProcessHeader(const daqAnalysis::HeaderData &header) {
   _header_data[_channel_map->SlotIndex(header)] = header;
 }
+	      
+void Analysis::ProcessEventInfo(double &lifetime){
+  _event_info.SetPurity(lifetime); 
+ }
 
 void Analysis::ProcessMetaData(const daqAnalysis::NevisTPCMetaData &metadata) {
   _nevis_tpc_metadata[_channel_map->SlotIndex(metadata)] = metadata;

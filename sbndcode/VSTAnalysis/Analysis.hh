@@ -27,6 +27,7 @@
 #include "VSTChannelMap.hh"
 #include "FFT.hh"
 #include "Noise.hh"
+#include "EventInfo.hh"
 
 /*
   * Main analysis code of the online Monitoring.
@@ -131,6 +132,7 @@ public:
   void ProcessChannel(const raw::RawDigit &digits, const std::vector<art::Ptr<recob::Hit> > &hits);
   void ProcessHeader(const daqAnalysis::HeaderData &header);
   void ProcessMetaData(const daqAnalysis::NevisTPCMetaData &metadata); 
+  void ProcessEventInfo(double &lifetime);
 
   // if the containers filled by the analysis are ready to be processed
   bool ReadyToProcess();
@@ -151,6 +153,7 @@ public:
   std::vector<daqAnalysis::ReducedChannelData> _per_channel_data_reduced;
   std::vector<daqAnalysis::NoiseSample> _noise_samples;
   std::vector<daqAnalysis::HeaderData> _header_data;
+  daqAnalysis::EventInfo _event_info;
   std::vector<daqAnalysis::NevisTPCMetaData> _nevis_tpc_metadata;
   std::vector<RunningThreshold> _thresholds;
   std::vector<std::vector<int>> _fem_summed_waveforms;

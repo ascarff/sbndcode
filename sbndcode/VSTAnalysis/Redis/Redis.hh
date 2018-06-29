@@ -17,6 +17,7 @@
 #include "../HeaderData.hh"
 #include "../Noise.hh"
 #include "../FFT.hh"
+#include "../EventInfo.hh"
 
 #include "RedisData.hh"
 
@@ -32,6 +33,7 @@ public:
   float copy_data;
   float send_metrics;
   float send_header_data;
+  float send_event_info;
   float send_waveform;
   float send_fft;
   float correlation;
@@ -42,6 +44,7 @@ public:
     copy_data(0),
     send_metrics(0),
     send_header_data(0),
+    send_event_info(0),
     send_waveform(0),
     send_fft(0),
     correlation(0),
@@ -89,7 +92,8 @@ public:
       const art::ValidHandle<std::vector<raw::RawDigit>> &digits, const std::vector<unsigned> &channel_to_index);
   // send info associated w/ HeaderData
   void HeaderData(std::vector<daqAnalysis::HeaderData> *header_data);
-  // must be called before calling Send functions
+  void EventInfo(std::vector<daqAnalysis::EventInfo> *evnt_info);
+// must be called before calling Send functions
   void StartSend(unsigned sub_run=0);
   void StartSend(std::time_t now, unsigned sub_run=0);
   // must be called after calling Send functions
@@ -103,7 +107,9 @@ protected:
   void FillChannelData(std::vector<daqAnalysis::ChannelData> *per_channel_data);
   // send info associated w/ HeaderData
   void SendHeaderData();
+  void SendEventInfo();
   void FillHeaderData(std::vector<daqAnalysis::HeaderData> *header_data);
+  void FillEventInfo(std::vector<daqAnalysis::EventInfo> *evnt_info);
   // snapshot stuff
   void Snapshot(std::vector<daqAnalysis::ChannelData> *per_channel_data, std::vector<daqAnalysis::NoiseSample> *noise, 
     std::vector<std::vector<int>> *fem_summed_waveforms, std::vector<std::vector<double>> *fem_summed_fft,
@@ -158,6 +164,8 @@ protected:
   std::vector<daqAnalysis::RedisTrigFrameNo> _trig_frame_no;
   std::vector<daqAnalysis::RedisEventNo> _event_no;
   std::vector<daqAnalysis::RedisBlocks> _blocks;
+  
+  std::vector<daqAnalysis::RedisPurity> _purity;
 
   // FFT's for snapshots
   FFTManager _fft_manager;

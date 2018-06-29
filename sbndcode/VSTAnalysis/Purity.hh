@@ -45,7 +45,9 @@
 #include "Math/Minimizer.h"
 #include "Math/Factory.h"
 
-namespace daqAnalysis{
+namespace daqAnalysis{ 
+  
+
   double CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits, bool fVerbose); //Calculate electron lifetime from collection of hits
 }
 

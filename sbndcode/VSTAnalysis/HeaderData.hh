@@ -94,7 +94,11 @@ class HeaderData {
     buffer << std::hex << "trig_frame_sample_word: " << trig_frame_sample_word << std::endl;
 
     return buffer.str();
+
+    
   }
+
+
 };
 }
 

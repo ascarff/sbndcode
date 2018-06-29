@@ -19,6 +19,7 @@
 #include "../Noise.hh"
 #include "../VSTChannelMap.hh"
 #include "../FFT.hh"
+#include "../EventInfo.hh"
 
 #include "Redis.hh"
 #include "RedisData.hh"
@@ -59,6 +60,7 @@ Redis::Redis(Redis::Config &config, daqAnalysis::VSTChannelMap *channel_map):
   _trig_frame_no(config.NStreams(), RedisTrigFrameNo(channel_map)),
   _event_no(config.NStreams(), RedisEventNo(channel_map)),
   _blocks(config.NStreams(), RedisBlocks(channel_map)),
+  _purity(config.NStreams(), RedisPurity(channel_map)),
 
   _fft_manager((config.waveform_input_size > 0) ? config.waveform_input_size: 0),
   _do_timing(config.timing),
@@ -130,6 +132,11 @@ void Redis::HeaderData(vector<daqAnalysis::HeaderData> *header_data) {
   FillHeaderData(header_data);
 }
 
+void Redis::EventInfo(vector<daqAnalysis::EventInfo> *event_info) {
+  SendEventInfo();
+  FillEventInfo(event_info);
+}
+
 void Redis::FillHeaderData(vector<daqAnalysis::HeaderData> *header_data) {
   for (auto &header: *header_data) {
     // update header info in each stream
@@ -150,6 +157,22 @@ void Redis::FillHeaderData(vector<daqAnalysis::HeaderData> *header_data) {
     _blocks[i].Update();
   }
 }
+
+void Redis::FillEventInfo(vector<daqAnalysis::EventInfo> *event_info) {
+  for (auto &event_inf: *event_info) {
+    // update header info in each stream
+    for (size_t i = 0; i < _n_streams; i++) {
+      // index into the fem data cache
+      unsigned fem_ind = _channel_map->SlotIndex(event_inf);
+      _purity[i].Fill(event_inf, fem_ind);
+    }
+  }
+  // update all of the metrics
+  for (size_t i = 0; i < _n_streams; i++) {
+    _purity[i].Update();
+  }
+}
+
 
 void Redis::SendHeaderData() {
   if (_do_timing) {
@@ -198,6 +221,43 @@ void Redis::SendHeaderData() {
   } 
 
 }
+
+void Redis::SendEventInfo() {
+  if (_do_timing) {
+    _timing.StartTime();
+  }
+  unsigned n_commands = 0;
+  for (size_t i = 0; i < _stream_take.size(); i++) {
+    // send headers to redis if need be
+    if (_stream_send[i]) {
+      unsigned index = _now / _stream_take[i];
+      const char *stream_name = std::to_string(_stream_take[i]).c_str(); 
+      n_commands += _purity[i].Send(context, index, stream_name, _stream_expire[i]);
+      // the metric was taken iff it was sent to redis
+      _purity[i].Clear();
+    }
+  }
+  // special case the sub run stream
+  if (_sub_run_stream) {
+    unsigned sub_run_ind = _n_streams - 1;  
+    // send headers to redis if need be
+    if (_stream_send[sub_run_ind]) {
+      n_commands += _purity[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
+
+      // the metric was taken iff it was sent to redis
+      _purity[sub_run_ind].Clear();
+    }
+  }
+  
+  // actually send the commands out of the pipeline
+  FinishPipeline(n_commands);
+  
+  if (_do_timing) {
+    _timing.EndTime(&_timing.send_event_info);
+  } 
+
+}
+
 
 inline size_t pushFFTDat(char *buffer, float re, float im) {
   float dat = re*re + im*im;

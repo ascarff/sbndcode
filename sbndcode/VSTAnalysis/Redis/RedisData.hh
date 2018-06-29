@@ -15,6 +15,7 @@
 #include "../ChannelData.hh"
 #include "../HeaderData.hh"
 #include "../VSTChannelMap.hh"
+#include "../EventInfo.hh"
 
 namespace daqAnalysis {
   // stream types
@@ -41,12 +42,14 @@ namespace daqAnalysis {
   // header metric base class
   template<class Stream, char const *REDIS_NAME>
   class HeaderMetric;
+  class EventInfoMetric;
 
   // and the metric classes
   class RedisEventNo;
   class RedisFrameNo;
   class RedisTrigFrameNo;
   class RedisBlocks;
+  class RedisPurity;
 }
 
 // keeps a running mean of a metric w/ n_data instances and n_points_per_time data points per each time instance
@@ -397,6 +400,8 @@ class daqAnalysis::HeaderMetric {
 public:
   // how to calculate the metric given a channel data reference
   virtual unsigned Calculate(daqAnalysis::HeaderData &header) = 0;
+  //I've cheated and tucked this in here. 
+  virtual unsigned Calculate(daqAnalysis::EventInfo &header) = 0;
 
   // base class destructors should be virtual
   virtual ~HeaderMetric() {}
@@ -408,6 +413,14 @@ public:
   void Fill(daqAnalysis::HeaderData &header, unsigned fem_ind) {
     // calculate and add to each container
     unsigned val = Calculate(header);
+
+    // each container is aware of how often it is filled per time instance
+    _fem.Fill(fem_ind, 0, val);
+  }
+
+  void Fill(daqAnalysis::EventInfo &event_info, unsigned fem_ind) {
+    // calculate and add to each container
+    unsigned val = Calculate(event_info);
 
     // each container is aware of how often it is filled per time instance
     _fem.Fill(fem_ind, 0, val);
@@ -457,6 +470,7 @@ extern char REDIS_NAME_EVENT_NO[];
 extern char REDIS_NAME_FRAME_NO[];
 extern char REDIS_NAME_TRIG_FRAME_NO[];
 extern char REDIS_NAME_BLOCKS[];
+extern char REDIS_NAME_PURITY[];
 
 class daqAnalysis::RedisEventNo: public daqAnalysis::HeaderMetric<StreamDataMax, REDIS_NAME_EVENT_NO> {
   // inherit constructor
@@ -492,6 +506,15 @@ class daqAnalysis::RedisBlocks: public daqAnalysis::HeaderMetric<StreamDataSum, 
   // implement calculate
  inline unsigned Calculate(daqAnalysis::HeaderData &header) override
    { return 1; /* always 1 header per header */ }
+};
+
+class daqAnalysis::RedisPurity: public daqAnalysis::HeaderMetric<StreamDataMax, REDIS_NAME_PURITY> {
+  // inherit constructor                                                                           
+  //  using daqAnalysis::HeaderMetric<StreamDataMax, REDIS_NAME_PURITY>::HeaderMetric;
+
+  // implement calculate   
+  inline  unsigned Calculate(daqAnalysis::EventInfo &eventinfo)
+  {return eventinfo.purity; }
 };
 
 #endif
