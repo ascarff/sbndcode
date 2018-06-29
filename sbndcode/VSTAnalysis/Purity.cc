@@ -102,21 +102,26 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 	if(fVerbose) cout << "Size of Collect vector is: " << n << endl;			//Size of Collection hits	
 	if(fVerbose) cout << "Size of Induction vector is: " << nI << endl;			//Size of Induction hits
 
+  if(n==0){
+    if(fVerbose) cout<<"No collection plane hits. Skipping event..\n";
+    return 1;
+  }
+
 	Unique.clear();
 	Unique.push_back(Collect[0]);						//Unique vector to store only 1 of each hit
 	int uniqval = 1;							//Initialize to first element to compare to
-        for(int b = 1;b < n; b++){						//Value is unique unless found otherwise
-                bool uniq = true;
-     	        for(int c = 0; c < uniqval; c++){
-             	        if(Collect[b]==Unique[c]){
-             	        uniq = false;
-         	        }
-     	        }
-                if(uniq){							//If the value is unique then it adds it to the Unique vector
-                        Unique.push_back(Collect[b]);
+  for(int b = 1;b < n; b++){						//Value is unique unless found otherwise
+    bool uniq = true;
+    for(int c = 0; c < uniqval; c++){
+      if(Collect[b]==Unique[c]){
+       	uniq = false;
+   	  }
+    }
+    if(uniq){							//If the value is unique then it adds it to the Unique vector
+      Unique.push_back(Collect[b]);
 			uniqval = Unique.size();
-                }
-        }
+    }
+  }
 	if(uniqval < minuniqcount){						//Minimum Collecection unique hit # cut
 		if(fVerbose) cout << "Minimum Unique Hits of " << minuniqcount << " not met. Skipping event..." << endl;
 		return 1;

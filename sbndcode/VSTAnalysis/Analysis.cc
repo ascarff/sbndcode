@@ -214,8 +214,9 @@ else if(_config.fDoPurityAna){
     std::cout << "time: " << timestamp  - _sub_run_start_time << std::endl;///
     //See if its in the COSMICON region >6.5 seconds +- 10ms +- 10ms Dom Buffer
     if(timestamp  - _sub_run_start_time > 6.7){
-      double lifetime = CalculateLifetime(rawhits, false);
-      std::cout<<"Lifetime = "<<lifetime<<" ticks\n";
+      try{double lifetime = CalculateLifetime(rawhits, true);
+      std::cout<<"Lifetime = "<<lifetime<<" ticks\n";}
+      catch(...){}
     }//ADD PURITY FUNCTION HERE 
  }
  
