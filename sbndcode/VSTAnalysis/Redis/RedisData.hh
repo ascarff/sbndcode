@@ -38,18 +38,25 @@ namespace daqAnalysis {
   class RedisDNoise;
   class RedisRawHitOccupancy;
   class RedisRawHitPulseHeight;
+  class RedisPurity;
 
   // header metric base class
   template<class Stream, char const *REDIS_NAME>
   class HeaderMetric;
-  class EventInfoMetric;
 
-  // and the metric classes
+    // and the metric classes
   class RedisEventNo;
   class RedisFrameNo;
   class RedisTrigFrameNo;
   class RedisBlocks;
+
+  ///Event (channel independent metrics ) 
+  template<class Stream, char const *REDIS_NAME>
+  class EventInfoMetric;
+
+  // and the metric classes 
   class RedisPurity;
+
 }
 
 // keeps a running mean of a metric w/ n_data instances and n_points_per_time data points per each time instance
@@ -208,7 +215,6 @@ public:
     _fem_data(channel_map->NFEM(), 1),
     _crate_data(channel_map->NCrates(), channel_map->NChannels()) /* NOTE: assume there is only one crate */
   {
-    // TODO @INSTALLATION: Make sure that this implementation also works for the VST installation
     // set the number of channels per fem
     for (unsigned slot = 0; slot < channel_map->NFEM(); slot++) {
       _fem_data.SetPointsPerTime(slot, channel_map->NSlotWire(slot));
@@ -394,14 +400,11 @@ class daqAnalysis::RedisRawHitPulseHeight: public daqAnalysis::DetectorMetric<St
   {return channel.Hitmean_peak_height; }
 };
 
-
 template<class Stream, char const *REDIS_NAME>
 class daqAnalysis::HeaderMetric {
 public:
   // how to calculate the metric given a channel data reference
   virtual unsigned Calculate(daqAnalysis::HeaderData &header) = 0;
-  //I've cheated and tucked this in here. 
-  virtual unsigned Calculate(daqAnalysis::EventInfo &header) = 0;
 
   // base class destructors should be virtual
   virtual ~HeaderMetric() {}
@@ -413,14 +416,6 @@ public:
   void Fill(daqAnalysis::HeaderData &header, unsigned fem_ind) {
     // calculate and add to each container
     unsigned val = Calculate(header);
-
-    // each container is aware of how often it is filled per time instance
-    _fem.Fill(fem_ind, 0, val);
-  }
-
-  void Fill(daqAnalysis::EventInfo &event_info, unsigned fem_ind) {
-    // calculate and add to each container
-    unsigned val = Calculate(event_info);
 
     // each container is aware of how often it is filled per time instance
     _fem.Fill(fem_ind, 0, val);
@@ -470,7 +465,6 @@ extern char REDIS_NAME_EVENT_NO[];
 extern char REDIS_NAME_FRAME_NO[];
 extern char REDIS_NAME_TRIG_FRAME_NO[];
 extern char REDIS_NAME_BLOCKS[];
-extern char REDIS_NAME_PURITY[];
 
 class daqAnalysis::RedisEventNo: public daqAnalysis::HeaderMetric<StreamDataMax, REDIS_NAME_EVENT_NO> {
   // inherit constructor
@@ -508,13 +502,77 @@ class daqAnalysis::RedisBlocks: public daqAnalysis::HeaderMetric<StreamDataSum, 
    { return 1; /* always 1 header per header */ }
 };
 
-class daqAnalysis::RedisPurity: public daqAnalysis::HeaderMetric<StreamDataMax, REDIS_NAME_PURITY> {
-  // inherit constructor                                                                           
-  //  using daqAnalysis::HeaderMetric<StreamDataMax, REDIS_NAME_PURITY>::HeaderMetric;
 
-  // implement calculate   
-  inline  unsigned Calculate(daqAnalysis::EventInfo &eventinfo)
+template<class Stream, char const *REDIS_NAME>
+class daqAnalysis::EventInfoMetric {
+public:
+  // how to calculate the metric given a channel data reference
+  virtual unsigned Calculate(daqAnalysis::EventInfo &event_info) = 0;
+
+  // base class destructors should be virtual
+  virtual ~EventInfoMetric() {}
+
+  EventInfoMetric(daqAnalysis::VSTChannelMap *channel_map)
+    : _fem(channel_map->NFEM(), 1)
+  {}
+
+  void Fill(daqAnalysis::EventInfo &event_info, unsigned fem_ind) {
+    // calculate and add to each container
+    unsigned val = Calculate(event_info);
+
+    // each container is aware of how often it is filled per time instance
+    _fem.Fill(fem_ind, 0, val);
+  }
+
+  unsigned Data(unsigned index) {
+    return _fem.Data(index);
+  }
+
+  // to be called once per time instance
+  void Update() {
+    _fem.Update();
+  }
+
+  // called when stuff is sent to Redis
+  void Clear() {
+    _fem.Clear();
+  }
+
+  // send stuff to Redis
+  unsigned Send(redisContext *context, unsigned index, const char *stream_name, unsigned stream_expire) {
+    // send FEM stuff
+    unsigned n_fem = _fem.Size();
+    for (unsigned fem_ind = 0; fem_ind < n_fem; fem_ind++) {
+      // @VST: this is ok because there is only 1 crate
+      // TEMPORARY IMPLEMENTATION
+      unsigned fem = fem_ind;
+      unsigned crate = 0;
+      redisAppendCommand(context, "SET stream/%s:%i:%s:crate:%i:fem:%i %u",
+        stream_name, index, REDIS_NAME, crate, fem, Data(fem_ind)); 
+
+      if (stream_expire != 0) {
+        redisAppendCommand(context, "EXPIRE stream/%s:%i:%s:crate:%i:fem:%i %u",
+         stream_name, index, REDIS_NAME, crate, fem, stream_expire); 
+      }
+    } 
+    return n_fem * ((stream_expire == 0) ? 1 : 2);
+  }
+
+protected:
+  Stream _fem;
+
+};
+
+extern char REDIS_NAME_PURITY[];
+
+class daqAnalysis::RedisPurity: public daqAnalysis::EventInfoMetric<StreamDataMax, REDIS_NAME_PURITY> {
+  // inherit constructor
+  using daqAnalysis::EventInfoMetric<StreamDataMax, REDIS_NAME_PURITY>::EventInfoMetric;
+
+  // implement calculate
+  inline  unsigned Calculate(daqAnalysis::EventInfo &eventinfo) override
   {return eventinfo.purity; }
 };
+
 
 #endif

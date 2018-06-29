@@ -42,6 +42,8 @@ Redis::Redis(Redis::Config &config, daqAnalysis::VSTChannelMap *channel_map):
   _n_streams(config.NStreams()),
   _this_subrun(config.first_subrun),
   _last_subrun(config.first_subrun),
+  _this_run(0),
+  _last_run(0),
   _last_snapshot(0),
   _first_run(true),
 
@@ -60,7 +62,9 @@ Redis::Redis(Redis::Config &config, daqAnalysis::VSTChannelMap *channel_map):
   _trig_frame_no(config.NStreams(), RedisTrigFrameNo(channel_map)),
   _event_no(config.NStreams(), RedisEventNo(channel_map)),
   _blocks(config.NStreams(), RedisBlocks(channel_map)),
-  _purity(config.NStreams(), RedisPurity(channel_map)),
+  
+  //event info
+  _purity(config.NStreams(), RedisPurity(channel_map)), 
 
   _fft_manager((config.waveform_input_size > 0) ? config.waveform_input_size: 0),
   _do_timing(config.timing),
@@ -83,11 +87,11 @@ Redis::~Redis() {
 }
 
 
-void Redis::StartSend(unsigned sub_run) {
-  StartSend(std::time(nullptr), sub_run);
+void Redis::StartSend(unsigned run, unsigned sub_run) {
+  StartSend(std::time(nullptr), run, sub_run);
 }
 
-void Redis::StartSend(std::time_t now, unsigned sub_run) {
+void Redis::StartSend(std::time_t now, unsigned run, unsigned sub_run) {
   _now = now;
 
   for (size_t i = 0; i < _stream_take.size(); i++) {
@@ -107,6 +111,7 @@ void Redis::StartSend(std::time_t now, unsigned sub_run) {
     }
   }
   _this_subrun = sub_run;
+  _this_run = run;
 }
 
 void Redis::FinishSend() {
@@ -118,23 +123,83 @@ void Redis::FinishSend() {
     void *reply = redisCommand(context, "SET last_subrun_no %u", _last_subrun);
     freeReplyObject(reply);
   }
+  // same with run
+  if (_this_run != _last_run) {
+    void *reply = redisCommand(context, "SET this_run_no %u", _this_run);
+    freeReplyObject(reply);
+  }
 
   // send Redis "Alive" signal
   void *reply = redisCommand(context, "SET MONITOR_%s_ALIVE %u", _config.monitor_name.c_str(), std::time(nullptr));
   freeReplyObject(reply);
   
   _last_subrun = _this_subrun;
+  _last_run = _this_run;
+
   _first_run = false;
+}
+
+void Redis::EventInfo(daqAnalysis::EventInfo *event_info) {
+  SendEventInfo();
+  FillEventInfo(event_info);
+}
+
+void Redis::FillEventInfo(daqAnalysis::EventInfo *event_info){
+      // update event_inf info in each stream
+    for (unsigned i = 0; i < _n_streams; i++) {
+      // index into the fem data cache
+      _purity[i].Fill(*event_info, i);
+    }
+  // update all of the metrics
+  for (size_t i = 0; i < _n_streams; i++) {
+    _purity[i].Update();
+  }
+
+}
+
+void Redis::SendEventInfo(){
+  if (_do_timing) {
+    _timing.StartTime();
+  }
+  unsigned n_commands = 0;
+  for (size_t i = 0; i < _stream_take.size(); i++) {
+    // send headers to redis if need be
+    if (_stream_send[i]) {
+      unsigned index = _now / _stream_take[i];
+      const char *stream_name = std::to_string(_stream_take[i]).c_str(); 
+      n_commands += _purity[i].Send(context, index, stream_name, _stream_expire[i]);
+      _purity[i].Clear();
+    }
+  }
+  // special case the sub run stream
+  if (_sub_run_stream) {
+    unsigned sub_run_ind = _n_streams - 1;  
+    std::stringstream ss;
+    ss << "sub_run_" << _this_run;
+    const char *sub_run_ident = ss.str().c_str();
+
+    // send headers to redis if need be
+    if (_stream_send[sub_run_ind]) {
+      n_commands += _purity[sub_run_ind].Send(context, _last_subrun, sub_run_ident, _sub_run_stream_expire);
+
+      // the metric was taken iff it was sent to redis
+      _purity[sub_run_ind].Clear();
+    }
+  }
+  
+  // actually send the commands out of the pipeline
+  FinishPipeline(n_commands);
+  
+  if (_do_timing) {
+    _timing.EndTime(&_timing.send_header_data);
+  } 
+
+
 }
 
 void Redis::HeaderData(vector<daqAnalysis::HeaderData> *header_data) {
   SendHeaderData();
   FillHeaderData(header_data);
-}
-
-void Redis::EventInfo(vector<daqAnalysis::EventInfo> *event_info) {
-  SendEventInfo();
-  FillEventInfo(event_info);
 }
 
 void Redis::FillHeaderData(vector<daqAnalysis::HeaderData> *header_data) {
@@ -157,22 +222,6 @@ void Redis::FillHeaderData(vector<daqAnalysis::HeaderData> *header_data) {
     _blocks[i].Update();
   }
 }
-
-void Redis::FillEventInfo(vector<daqAnalysis::EventInfo> *event_info) {
-  for (auto &event_inf: *event_info) {
-    // update header info in each stream
-    for (size_t i = 0; i < _n_streams; i++) {
-      // index into the fem data cache
-      unsigned fem_ind = _channel_map->SlotIndex(event_inf);
-      _purity[i].Fill(event_inf, fem_ind);
-    }
-  }
-  // update all of the metrics
-  for (size_t i = 0; i < _n_streams; i++) {
-    _purity[i].Update();
-  }
-}
-
 
 void Redis::SendHeaderData() {
   if (_do_timing) {
@@ -198,12 +247,16 @@ void Redis::SendHeaderData() {
   // special case the sub run stream
   if (_sub_run_stream) {
     unsigned sub_run_ind = _n_streams - 1;  
+    std::stringstream ss;
+    ss << "sub_run_" << _this_run;
+    const char *sub_run_ident = ss.str().c_str();
+
     // send headers to redis if need be
     if (_stream_send[sub_run_ind]) {
-      n_commands += _event_no[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
-      n_commands += _frame_no[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
-      n_commands += _trig_frame_no[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
-      n_commands += _blocks[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
+      n_commands += _event_no[sub_run_ind].Send(context, _last_subrun, sub_run_ident, _sub_run_stream_expire);
+      n_commands += _frame_no[sub_run_ind].Send(context, _last_subrun, sub_run_ident, _sub_run_stream_expire);
+      n_commands += _trig_frame_no[sub_run_ind].Send(context, _last_subrun, sub_run_ident, _sub_run_stream_expire);
+      n_commands += _blocks[sub_run_ind].Send(context, _last_subrun, sub_run_ident, _sub_run_stream_expire);
 
       // the metric was taken iff it was sent to redis
       _event_no[sub_run_ind].Clear();
@@ -221,43 +274,6 @@ void Redis::SendHeaderData() {
   } 
 
 }
-
-void Redis::SendEventInfo() {
-  if (_do_timing) {
-    _timing.StartTime();
-  }
-  unsigned n_commands = 0;
-  for (size_t i = 0; i < _stream_take.size(); i++) {
-    // send headers to redis if need be
-    if (_stream_send[i]) {
-      unsigned index = _now / _stream_take[i];
-      const char *stream_name = std::to_string(_stream_take[i]).c_str(); 
-      n_commands += _purity[i].Send(context, index, stream_name, _stream_expire[i]);
-      // the metric was taken iff it was sent to redis
-      _purity[i].Clear();
-    }
-  }
-  // special case the sub run stream
-  if (_sub_run_stream) {
-    unsigned sub_run_ind = _n_streams - 1;  
-    // send headers to redis if need be
-    if (_stream_send[sub_run_ind]) {
-      n_commands += _purity[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
-
-      // the metric was taken iff it was sent to redis
-      _purity[sub_run_ind].Clear();
-    }
-  }
-  
-  // actually send the commands out of the pipeline
-  FinishPipeline(n_commands);
-  
-  if (_do_timing) {
-    _timing.EndTime(&_timing.send_event_info);
-  } 
-
-}
-
 
 inline size_t pushFFTDat(char *buffer, float re, float im) {
   float dat = re*re + im*im;
@@ -531,10 +547,6 @@ void Redis::FillChannelData(vector<daqAnalysis::ChannelData> *per_channel_data) 
     _timing.StartTime();
   }
 
-  unsigned n_channels = per_channel_data->size();
-  unsigned n_fem = _channel_map->NFEM();
-  bool at_end_of_detector = false;
-
   // iterate over crates and fems
   for (unsigned crate = 0; crate < _channel_map->NCrates(); crate++) {
     for (unsigned fem = 0; fem < _channel_map->NFEM(); fem++) {
@@ -542,26 +554,17 @@ void Redis::FillChannelData(vector<daqAnalysis::ChannelData> *per_channel_data) 
       // index into the fem data cache
       unsigned fem_ind = fem;
 
-      // detect if at end of fem's
-      if (fem_ind >= n_fem) {
-        at_end_of_detector = true;
-        break;
-      }
+      for (unsigned channel = 0; channel < _channel_map->NSlotChannel(); channel ++) {
+        if (!_channel_map->IsMappedChannel(channel, fem, crate, true)) continue;
 
-      for (unsigned channel = 0; channel < _channel_map->NSlotWire(fem_ind); channel ++) {
         // get the wire number
 	uint16_t wire = _channel_map->Channel2Wire(channel, fem, crate, true);
-        // detect if at end of detector
-        if (wire >= n_channels) {
-          at_end_of_detector = true;
-          break;
-        }
 
-        // TODO @INSTALLATION: Make sure this is ok
         // get index of channel on fem
-        unsigned fem_channel_ind = channel;
-        // and get index of channel on crate
-        unsigned crate_channel_ind = _channel_map->ReadoutChannel2Ind(channel, fem, crate, true);
+        unsigned fem_channel_ind = _channel_map->ReadoutChannel2Ind(channel, fem, crate, true);
+
+        // since there is only one crate, we can use the wire id as the crate index
+        unsigned crate_channel_ind = wire;
  
         // fill metrics for each stream
         for (size_t i = 0; i < _n_streams; i++) {
@@ -577,15 +580,6 @@ void Redis::FillChannelData(vector<daqAnalysis::ChannelData> *per_channel_data) 
 
       }
 
-      // if at end, break
-      if (at_end_of_detector) {
-        break;
-      }
-  
-    }
-    // if at end, break
-    if (at_end_of_detector) {
-      break;
     }
   }
   if (_do_timing) {
@@ -647,15 +641,20 @@ void Redis::SendChannelData() {
       if (_do_timing) {
         _timing.StartTime();
       }
+
+      std::stringstream ss;
+      ss << "sub_run_" << _this_run;
+      const char *sub_run_ident = ss.str().c_str();
+
       // metrics control the sending of everything else
-      n_commands += _rms[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
-      n_commands += _baseline[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
-      n_commands += _baseline_rms[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
-      n_commands += _dnoise[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
-      n_commands += _occupancy[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
-      n_commands += _pulse_height[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
-      n_commands += _rawhit_occupancy[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
-      n_commands += _rawhit_pulse_height[sub_run_ind].Send(context, _last_subrun, "sub_run", _sub_run_stream_expire);
+      n_commands += _rms[sub_run_ind].Send(context, _last_subrun, sub_run_ident, _sub_run_stream_expire);
+      n_commands += _baseline[sub_run_ind].Send(context, _last_subrun, sub_run_ident, _sub_run_stream_expire);
+      n_commands += _baseline_rms[sub_run_ind].Send(context, _last_subrun, sub_run_ident, _sub_run_stream_expire);
+      n_commands += _dnoise[sub_run_ind].Send(context, _last_subrun, sub_run_ident, _sub_run_stream_expire);
+      n_commands += _occupancy[sub_run_ind].Send(context, _last_subrun, sub_run_ident, _sub_run_stream_expire);
+      n_commands += _pulse_height[sub_run_ind].Send(context, _last_subrun, sub_run_ident, _sub_run_stream_expire);
+      n_commands += _rawhit_occupancy[sub_run_ind].Send(context, _last_subrun, sub_run_ident, _sub_run_stream_expire);
+      n_commands += _rawhit_pulse_height[sub_run_ind].Send(context, _last_subrun, sub_run_ident, _sub_run_stream_expire);
 
       // the metric was taken iff it was sent to redis
       // clear all of the metrics

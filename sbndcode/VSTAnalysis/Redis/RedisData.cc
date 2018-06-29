@@ -10,7 +10,6 @@
 
 #include "../ChannelData.hh"
 #include "../HeaderData.hh"
-#include "../EventInfo.hh"
 
 #include "RedisData.hh"
 
@@ -207,5 +206,6 @@ char REDIS_NAME_EVENT_NO[] = "event_no";
 char REDIS_NAME_TRIG_FRAME_NO[] = "trig_frame_no";
 char REDIS_NAME_FRAME_NO[] = "frame_no";
 char REDIS_NAME_BLOCKS[] = "blocks";
-char REDIS_NAME_PURITY[] = "purity";
 
+//Eventinfo
+char REDIS_NAME_PURITY[]="purity";
