@@ -69,6 +69,7 @@ public:
     int snapshot_time;
     int waveform_input_size;
     bool timing;
+    bool flush_data;
     Config(): 
       hostname("127.0.0.1"),
       sub_run_stream(false),
@@ -96,6 +97,8 @@ public:
   void FinishSend();
   // whether the code will call Snapshot() on ChannelData
   bool WillTakeSnapshot();
+  // clear out all remaining data in the manager
+  void FlushData();
 
 protected:
   // per-channel data to redis
