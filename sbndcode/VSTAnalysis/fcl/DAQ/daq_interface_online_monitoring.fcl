@@ -26,6 +26,7 @@ physics:
       stream_expire: [86400, 86400, -1, -1]
       sub_run_stream: true
       sub_run_expire: -1
+      use_event_time: true # run offline
 
       hostname: "131.225.150.201"
       n_headers: 10
