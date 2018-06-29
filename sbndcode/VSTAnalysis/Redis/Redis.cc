@@ -82,6 +82,23 @@ Redis::~Redis() {
   redisFree(context);
 }
 
+// flush the reamining data
+void Redis::FlushData() {
+  // don't flush if configured
+  if (!_config.flush_data) return;
+
+  // send the time data if you would have in the next second
+  _now += 1;
+  StartSend(_now, _this_run, _this_subrun);
+  // but definitely send sub_run stream if there
+  if (_sub_run_stream) {
+    unsigned sub_run_ind = _n_streams - 1;
+    _stream_send[sub_run_ind] = true;
+    _stream_last[sub_run_ind] = _this_subrun;
+  }
+  SendChannelData();
+  SendHeaderData();
+}
 
 void Redis::StartSend(unsigned run, unsigned sub_run) {
   StartSend(std::time(nullptr), run, sub_run);
