@@ -78,8 +78,6 @@ daqAnalysis::HeaderData Fragment2HeaderData(art::Event &event, const artdaq::Fra
   ret.checksum_word = raw_header->checksum;
   ret.trig_frame_sample_word = raw_header->trig_frame_sample;
 
-  ret.art_time = event.time().value();
-
   return ret;
 }
 
