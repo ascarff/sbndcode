@@ -68,7 +68,7 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 	int rhsize=rawhits.size();
 	if (rhsize < mincount){
 		if(fVerbose) cout << "Minimum Hits of " << mincount << " not met. Skipping event..." << endl;
-		return 1;
+		return -1;
 	}
 
 	if(fVerbose) cout << "Amount of hits in event is: " << rhsize << ". Passed the minimum hit cut of: " << mincount << endl;
@@ -104,7 +104,7 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 
   if(n==0){
     if(fVerbose) cout<<"No collection plane hits. Skipping event..\n";
-    return 1;
+    return -1;
   }
 
 	Unique.clear();
@@ -124,7 +124,7 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
   }
 	if(uniqval < minuniqcount){						//Minimum Collecection unique hit # cut
 		if(fVerbose) cout << "Minimum Unique Hits of " << minuniqcount << " not met. Skipping event..." << endl;
-		return 1;
+		return -1;
 	}
 	
 	if(fVerbose) cout << "Amount of unique collection plane hits in event is: " << uniqval << ". Passed the minimum unique hit cut of: " << minuniqcount << endl;
@@ -155,9 +155,9 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 
 	if(fVerbose) cout << "Completed first fitting of Collection and Induction planes" << endl;
 	
-										//Collection Plane
-   	Double_t chisqr = fFunc->GetChisquare()/fFunc->GetNDF();  		// Obtain chi^2 divided by number of degrees of freedom
-   	if(chisqr!=chisqr) return 1;                   				// Skip the event if the chi square is a nan value
+	//Collection Plane
+  Double_t chisqr = fFunc->GetChisquare()/fFunc->GetNDF();  		// Obtain chi^2 divided by number of degrees of freedom
+  if(chisqr!=chisqr) return -1;                   				// Skip the event if the chi square is a nan value
 
 	float slope = fFunc->GetParameter(0);
 	float yint = fFunc->GetParameter(1);
@@ -200,6 +200,12 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 	slope = fFunc->GetParameter(0);						//Updating the slope value for the new fit
 	if(fVerbose) cout << "Refitted Collection slope is: " << slope << endl;
 
+  // Cut on minimum chi2
+  if(fFunc->GetChisquare()/fFunc->GetNDF()){
+    if(fVerbose) cout << "Bad chi square. Skipping event...\n";
+    return -1;
+  }
+
 	//Induction
 	for(int q=0; q<2; q++){					  		// make fit twice to make sure to pick up every hit
 		INew_PTime.clear();
@@ -241,7 +247,7 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 	}
 	//if((abs(phi-1.57080)<angle)){						//In Dom's code
 	//	if(fVerbose) cout << "Dom's Angle cut. Skipping event..." << endl;
-	//	//return 1;
+	//	//return -1;
 	//}
 		
 	float normalization = abs(cos(theta)*sin(phi));				//This is part of the normalization factor for the charges	
@@ -319,7 +325,7 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 		}
 			//else{
 			//	if(fVerbose) cout << "The exponential rate is positive. Skipping event..." << endl;
-			//	return 1;
+			//	return -1;
 			//}
 	}
 	FitTrialTimeminx = *min_element(begin(FitTrialTime),end(FitTrialTime));
@@ -376,7 +382,7 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 	TF1 *p4sig;								//Create the Function +4sig defined later below
 	TF1 *m4sig;								//Create the Function -4sig defined later below
 
-	if((4*landau1)<1200){
+	if((4.5*landau1)<1200){
 		p4sig = new TF1("p4sig", "exp([0]+([1]*x))+1.5*[2]",FitTrialTimeminx,FitTrialTimemaxx);
 		m4sig = new TF1("m4sig", "0",FitTrialTimeminx,FitTrialTimemaxx);
 		//m4sig = new TF1("m4sig", "exp([0]+([1]*x))-5.0*[2]",FitTrialTimeminx,FitTrialTimemaxx);
@@ -402,7 +408,7 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 
 	min->SetFunction(f);
 										// set tolerance , etc... This is in the LArIAT code
-	min->SetMaxFunctionCalls(10000000); 					// for Minuit/Minuit2 
+	min->SetMaxFunctionCalls(10000); 					// for Minuit/Minuit2 
 	min->SetMaxIterations(10000); 	 					// for GSL 
 	min->SetTolerance(0.0001);
 	min->SetPrintLevel(1);
@@ -429,7 +435,7 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 	if( xs[0]!=xs[0] || xs[1]!=xs[1] || xs[2]!=xs[2] ) 
 	{
 	 if(false) if(fVerbose) cout << "MINIMIZATION GAVE NAN VALUE!!!! Skipping the event" << endl; 
-	 return 1;
+	 return -1;
 	}
 
 	double tauvec = xs[0];
@@ -499,12 +505,12 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 		NormalIvT->SetMarkerStyle(3);
 		NormalIvT->Draw("AP");							//Data. No connecting line
 
-		Final->SetMarkerStyle(29);
-		Final->SetMarkerColor(kMagenta);
-		Final->Draw("SAME");
+		//Final->SetMarkerStyle(29);
+		//Final->SetMarkerColor(kMagenta);
+		//Final->Draw("SAME");
 
-		FfNewFunc->SetLineColor(kGreen);
-		FfNewFunc->Draw("SAME");
+		//FfNewFunc->SetLineColor(kGreen);
+		//FfNewFunc->Draw("SAME");
 		p4sig->SetLineColor(kGreen);
 		p4sig->Draw("SAME");
 		m4sig->SetLineColor(kGreen);
@@ -518,8 +524,8 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 	cTrial->cd();
 		gStyle->SetOptStat(0);
 		h1->Draw();
-		ogfun->SetLineColor(kBlue);
-		ogfun->Draw("SAME");
+		//ogfun->SetLineColor(kBlue);
+		//ogfun->Draw("SAME");
 
 		gfun->SetLineColor(kGreen);
 		gfun->Draw("SAME");
