@@ -1,3 +1,6 @@
+#include "geometry_lariat.fcl"
+#include "hitfindermodulesVST.fcl"
+#include "channelstatus_sbnd.fcl"
 #include "vst_channel_map.fcl"
 
 physics:
@@ -11,6 +14,8 @@ physics:
       validate_header: true
       v_inc_trig_frame_no: false # these are wonky, don't worry about them
     }
+    rawhit:  @local::standard_fasthitfinderVST
+
   }
 
   analyzers:
@@ -23,9 +28,10 @@ physics:
       snapshot_time: -1
 
       stream_take: [5, 30, 600, 3600]
-      stream_expire: [86400, 86400, -1, -1]
+      stream_expire: [86400, 86400, 0, 0]
       sub_run_stream: true
-      sub_run_expire: -1
+      sub_run_expire: 0
+      use_event_time: true # run offline
 
       hostname: "131.225.150.201"
       n_headers: 10
@@ -42,7 +48,7 @@ physics:
 
       HitsModuleLabel: "rawhit"
       UseRawHits: false
-      ProcessRawHits: false
+      ProcessRawHits: true
 
       sum_waveforms: false
       fft_per_channel: false
@@ -50,7 +56,7 @@ physics:
     }
   }
 
-  my_producer_modules: [daq]
+  my_producer_modules: [daq, rawhit]
 
   analyze: [OnlineAnalysis]
   end_paths: [analyze]
@@ -105,6 +111,9 @@ source:
 services: {
 
   VSTChannelMap: @local::channel_map_VST 
+  Geometry: @local::lariat_geo
+  ExptGeoHelperInterface: @local::lariat_geometry_helper
+  ChannelStatusService:   @local::vst_channelstatus
 
   message: {
     destinations : {
@@ -112,12 +121,6 @@ services: {
         type : cout 
         threshold : "DEBUG" 
       } 
-      udp_artdaq_messageviwer : { 
-        type : "UDP" 
-        threshold : "DEBUG" 
-        port : 30000 
-        host : "lariat-daq04.fnal.gov" 
-      }
       udp_message_forwarding : {
         type : "UDP" 
         threshold : "DEBUG" 
