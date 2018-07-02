@@ -166,8 +166,8 @@ private:
   daqAnalysis::Timing _timing;
   // whether we have analyzed stuff
   bool _analyzed;
-  uint32_t _sub_run_start_time;
-  uint32_t _sub_run_holder;
+  uint32_t _prev_start_time;
+
 };
 
 

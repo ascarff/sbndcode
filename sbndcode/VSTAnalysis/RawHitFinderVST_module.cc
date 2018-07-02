@@ -90,6 +90,8 @@ namespace hit {
       int                 fAreaMethod;          //TYPE OF AREA CALCULATION.  
       std::vector<double> fAreaNorms;           //FACTORS FOR CONVERTING AREA TO SAME UNIT AS PEAK HEIGHT.
       bool                fUncompressWithPed;   //OPTION TO UNCOMPRESS WITH PEDESTAL.
+      bool                fPedestalSubtracted; 
+      bool                fCollectionNeg;
 
     //    TFile *f = new TFile("TimeVsWire","RECREATE");
 
@@ -133,6 +135,9 @@ namespace hit {
     fAreaMethod         = p.get< int          >("AreaMethod");
     fAreaNorms          = p.get< std::vector< double > >("AreaNorms");
     fUncompressWithPed  = p.get< bool         >("UncompressWithPed", true);
+    fPedestalSubtracted = p.get< bool         >("PedestalSubtracted", false);
+    fCollectionNeg      = p.get< bool         >("CollectionNeg", false);
+    
     mf::LogInfo("RawHitFinderVST_module") << "fDigitModuleLabel: " << fDigitModuleLabel << std::endl;
   }
 
@@ -234,19 +239,35 @@ namespace hit {
 
       std::vector<geo::WireID> Wire = geom->ChannelToWire(channel);
 
-      //sbnd is one channel per wire so the vector should be size one.                                                                                                        
+      //sbnd is one channel per wire so the vector should be size one.                                                                                   
+      sigType = geom->SignalType(channel);
+                     
       //geo::PlaneID  PlaneID = (Wire[0]).planeID();
      
       for(unsigned int bin = 0; bin < fDataSize; ++bin){ 
 	
-	//	if(TMath::Abs(rawadc[bin])>20){//-digitVec->GetPedestal()>10){
-	// std::cout << " channel: " << channel << "rawadc[bin]: " << rawadc[bin] << " digitVec->GetPedestal(): " << digitVec->GetPedestal() <<" bin: " << bin  << " holder[bin]:" << rawadc[bin]-digitVec->GetPedestal() <<std::endl ;
+	//     	if(  geom->SignalType(channel) == geo::kCollection && TMath::Abs(rawadc[bin]-digitVec->GetPedestal())>10){
+	//std::cout << " channel: " << channel << "rawadc[bin]: " << rawadc[bin] << " digitVec->GetPedestal(): " << digitVec->GetPedestal() <<" bin: " << bin  << " holder[bin]:" << rawadc[bin]-digitVec->GetPedestal() <<std::endl ;
         //Graph_map_daq[PlaneID]->SetPoint(Graph_map_daq[PlaneID]->GetN(),channel,bin); 
-	//}
-        holder[bin]=(rawadc[bin]-digitVec->GetPedestal());
+	//	}
+	if(fPedestalSubtracted){
+	  if(fCollectionNeg && sigType == geo::kCollection){
+	    holder[bin]=-rawadc[bin];
+	  }
+	  else {
+	    holder[bin]=rawadc[bin];
+	  }
+	}  
+        else{
+	  if(fCollectionNeg && sigType == geo::kCollection){
+	    holder[bin]=-(rawadc[bin]-digitVec->GetPedestal());
+	  }
+	  else { 
+	    holder[bin]=(rawadc[bin]-digitVec->GetPedestal());
+	  }
+	}
       }
 
-      sigType = geom->SignalType(channel);
 
       peakHeight.clear();
       endTimes.clear();

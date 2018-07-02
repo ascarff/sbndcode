@@ -71,8 +71,7 @@ Analysis::Analysis(fhicl::ParameterSet const & p) :
 
 {
   _event_ind = 0;
-  _sub_run_start_time = -99999;
-  _sub_run_holder = -99999;
+  _prev_start_time = 0;
 }
 
 Analysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &param) {
@@ -166,6 +165,7 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
 
   _event_ind ++;
 
+  std::cout << "Test" << std::endl;
   
   // Getting the Hit Information                                                
   art::Handle<std::vector<recob::Hit> > hitListHandle;
@@ -185,91 +185,77 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
       auto const &headers_handle = event.getValidHandle<std::vector<daqAnalysis::HeaderData>>(_config.daq_tag);
       //Take the fisrt FEM header. 
       auto const header = headers_handle->at(0);
-      //The first event has the subrun is triggered by the $30. We need to store that.
-      if((header.sub_run_no) != _sub_run_holder){
-	_sub_run_holder = header.sub_run_no;
-	_sub_run_start_time = (header.frame_number)*_config.frame_to_dt + (header.two_mhzsample)*5e-7;
-	
-      }
+
       //Do The purity calculation if its within the limit of the clock 
-      std::cout << "timestamp: " << ((header.frame_number)*_config.frame_to_dt + (header.two_mhzsample)*5e-7) - _sub_run_start_time << std::endl;
-      if((((header.frame_number)*_config.frame_to_dt + (header.two_mhzsample)*5e-7) - _sub_run_start_time ) > 0.03){ 
+      //std::cout << "timestamp: " << ((header.frame_number)*_config.frame_to_dt + (header.two_mhzsample)*5e-7) - _prev_start_time << std::endl;
+      if((((header.frame_number)*_config.frame_to_dt + (header.two_mhzsample)*5e-7) - _prev_start_time ) > 0.03){ 
 	lifetime = CalculateLifetime(rawhits, false);
 	std::cout<<"Lifetime = "<<lifetime<<" ticks\n";
       }
       //The $30 clock runs at 8ns a tick, the cosmics start at 6.5 seconds in. The Nevis clock is 64MHz. Hence for every tick of the $30~1/2 a tick in the Nevis clock. You feel really useful when all you have done is to put this line in. We might want to hard code the in the config the buffer times. config.frame_to_dt needs to be checked. Also two_mhzsample is 2 in the test data.  
+
+        _prev_start_time = (header.frame_number)*_config.frame_to_dt + (header.two_mhzsample)*5e-7;
+
     }
     else if(_config.n_headers > 0  && _config.fDoPurityAna) {
       //Get the Unix time stamp given to the fragment.
       std::uint64_t timestamp = (event.time()).value();
       
-      //Check to see if the subrun has changed
-      if((event.subRun()) != _sub_run_holder){
-	_sub_run_holder = event.subRun();
-	_sub_run_start_time = timestamp; 
-      }
-      
-      //See if its in the COSMICON region >6.5 seconds +- 10ms +- 10ms Dom Buffer
-      if(timestamp  - _sub_run_start_time > 6.7){
+      //If if there is 0.03 seconds between the events. If so maybe we have gone to COSMICON   
+      if(timestamp  - _prev_start_time > 0.03){
 	lifetime = CalculateLifetime(rawhits, false);
 	std::cout<<"Lifetime = "<<lifetime<<" ticks\n";
       }//ADD PURITY FUNCTION HERE 
+      _prev_start_time = timestamp;
+      
     }
     // or metadata if that's how we're doing things 
     else if (_config.n_metadata > 0  && _config.fUseNevisClock && _config.fDoPurityAna) {
       auto const &metadata_handle = event.getValidHandle<std::vector<daqAnalysis::NevisTPCMetaData>>(_config.daq_tag);
       //Take only the first FEM header 
       auto const metadata = metadata_handle->at(0);
-      //The first event has the subrun is triggered by the $30. We need to store that.
-      if((metadata.sub_run_no) != _sub_run_holder){
-	_sub_run_holder = metadata.sub_run_no;
-	_sub_run_start_time = (metadata.frame_number)*_config.frame_to_dt + (metadata.two_mhzsample)*5e-7;
-      }
 	
 	//Do The purity calculation
-	if((((metadata.frame_number)*_config.frame_to_dt + (metadata.two_mhzsample)*5e-7) -  _sub_run_start_time) > 0.03){ 	  lifetime = CalculateLifetime(rawhits, false);
+	if((((metadata.frame_number)*_config.frame_to_dt + (metadata.two_mhzsample)*5e-7) -  _prev_start_time) > 0.03){ 	  lifetime = CalculateLifetime(rawhits, false);
 	  std::cout<<"Lifetime = "<<lifetime<<" ticks\n";
 	}
+
+	_prev_start_time = (metadata.frame_number)*_config.frame_to_dt + (metadata.two_mhzsample)*5e-7;
     }
 else if(_config.n_metadata > 0  && _config.fDoPurityAna) {
       //Get the Unix time stamp given to the fragment.
       std::uint64_t timestamp = (event.time()).value();
       
-      //Check to see if the subrun has changed
-      if((event.subRun()) != _sub_run_holder){
-	_sub_run_holder = event.subRun();
-	_sub_run_start_time = timestamp; 
-      }
       
-      //See if its in the COSMICON region >6.5 seconds +- 10ms +- 10ms Dom Buffer
-      if(timestamp  - _sub_run_start_time > 6.7){
+      //If if there is 0.03 seconds between the events. If so maybe we have gone to COSMICON
+      if(timestamp  - _prev_start_time > 0.03){
 	lifetime = CalculateLifetime(rawhits, false);
 	std::cout<<"Lifetime = "<<lifetime<<" ticks\n";
       }//ADD PURITY FUNCTION HERE 
+      
+      _prev_start_time = timestamp;
     }
   
     else if(_config.fDoPurityAna){
       //Get the Unix time stamp given to the fragment.
       std::uint64_t timestamp = (event.time()).value();
       
-      //Check to see if the subrun has changed
-      if((event.subRun()) != _sub_run_holder){
-	_sub_run_holder = event.subRun();
-	_sub_run_start_time = timestamp; 
-      }
-      
-      //See if its in the COSMICON region >6.5 seconds +- 10ms +- 10ms Dom Buffer
-      if(timestamp  - _sub_run_start_time > 6.7){
+      //If if there is 0.2 seconds between the events. If so maybe we have gone to COSMICON   
+      if(timestamp  - _prev_start_time > 0.03){
 	lifetime = CalculateLifetime(rawhits, false);
 	std::cout<<"Lifetime = "<<lifetime<<" ticks\n";
       }//ADD PURITY FUNCTION HERE 
+
+      _prev_start_time = timestamp;
     }
   }
 
   //Finally add the Lifetime to the event info information 
   if(_config.fDoPurityAna){
-    ProcessEventInfo(lifetime);
+      ProcessEventInfo(lifetime);
   }
+
+  std::cout << "test 2" << std::endl;
  
   // clear out containers from last iter
   for (unsigned i = 0; i < _channel_map->NChannels(); i++) {
@@ -455,8 +441,9 @@ void Analysis::ProcessHeader(const daqAnalysis::HeaderData &header) {
 }
 	      
 void Analysis::ProcessEventInfo(double &lifetime){
-  _event_info.SetPurity(lifetime); 
- }
+    //Sorry for wasting space and making a vector. 
+    _event_info.SetPurity(lifetime); 
+}
 
 void Analysis::ProcessMetaData(const daqAnalysis::NevisTPCMetaData &metadata) {
   _nevis_tpc_metadata[_channel_map->SlotIndex(metadata)] = metadata;

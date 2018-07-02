@@ -107,6 +107,9 @@ void daqAnalysis::OnlineAnalysis::analyze(art::Event const & e) {
     _redis_manager->ChannelData(&_analysis._per_channel_data, &_analysis._noise_samples, &_analysis._fem_summed_waveforms, 
         &_analysis._fem_summed_fft, raw_digits_handle, _analysis._channel_index_map);
     // send headers if _analysis was configured to copy them
+
+    _redis_manager->EventInfo(&_analysis._event_info);
+
     if (_analysis._config.n_headers > 0) {
         _redis_manager->HeaderData(&_analysis._header_data);
     }
