@@ -203,7 +203,8 @@ public:
   DetectorMetric(daqAnalysis::VSTChannelMap *channel_map) :
     _wire_data(channel_map->NChannels(), 1),
     _fem_data(channel_map->NFEM(), 1),
-    _crate_data(channel_map->NCrates(), channel_map->NChannels()) /* NOTE: assume there is only one crate */
+    _crate_data(channel_map->NCrates(), channel_map->NChannels()), /* NOTE: assume there is only one crate */
+    _wire_message_times(channel_map->NChannels(), 0)
   {
     // set the number of channels per fem
     for (unsigned slot = 0; slot < channel_map->NFEM(); slot++) {
@@ -218,7 +219,12 @@ public:
 
     // persist through nan's
     if (std::isnan(dat)) {
-      mf::LogError("NAN Metric") << "Metric " << REDIS_NAME << " is NAN on wire " << wire << std::endl;
+      // don't send error messages too often
+      time_t now = std::time(nullptr);
+      if (now - _wire_message_times[wire] > 10) {
+        _wire_message_times[wire] = now;
+        mf::LogError("NAN Metric") << "Metric " << REDIS_NAME << " is NAN on wire " << wire << std::endl;
+      }
       return;
     }
 
@@ -301,6 +307,8 @@ protected:
   Stream _wire_data;
   Stream _fem_data;
   Stream _crate_data;
+
+  std::vector<unsigned> _wire_message_times;
 };
 
 // string literals can't be template arguments for some reason, so declare them here

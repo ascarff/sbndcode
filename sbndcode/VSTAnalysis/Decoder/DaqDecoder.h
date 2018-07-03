@@ -59,6 +59,7 @@ private:
     bool validate_header;
     unsigned n_mode_skip;
     bool calc_checksum;
+    bool subtract_pedestal;
     bool v_checksum;
     bool v_event_no;
     bool v_slot_no;

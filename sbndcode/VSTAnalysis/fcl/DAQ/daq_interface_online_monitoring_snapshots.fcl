@@ -22,11 +22,13 @@ physics:
 
       monitor_name: "SNAPSHOT"
       producer_name: daq
-      snapshot_time: 10
+      snapshot_time: 60
       stream_take: []
       stream_expire: []
       sub_run_stream: false
       hostname: "131.225.150.201"
+      use_event_time: true # run offline
+
       n_headers: 10
 
       threshold_calc: 3
@@ -115,12 +117,6 @@ services: {
         type : cout 
         threshold : "DEBUG" 
       } 
-      udp_artdaq_messageviwer : { 
-        type : "UDP" 
-        threshold : "DEBUG" 
-        port : 30000 
-        host : "lariat-daq04.fnal.gov" 
-      }
       udp_message_forwarding : {
         type : "UDP" 
         threshold : "DEBUG" 
