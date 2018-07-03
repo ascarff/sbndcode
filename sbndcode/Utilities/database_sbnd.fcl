@@ -20,6 +20,11 @@ sbnd_detpedestalservice: {
   DetPedestalRetrievalAlg: @local::standard_pedestalretrievalalg
 }
 
+vst_detpedestalservice: {
+  service_provider: SIOVDetPedestalService
+  DetPedestalRetrievalAlg: @local::standard_pedestalretrievalalg
+}
+
 # Ditto: we set the pedestals to reflect the current simulation settings from
 # detsimmodules_sbnd.fcl
 sbnd_detpedestalservice.DetPedestalRetrievalAlg.DefaultCollMean: 625

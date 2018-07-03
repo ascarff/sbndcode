@@ -41,5 +41,5 @@ physics:
 }
 
 
-services.RawDrawingOptions.MinimumSignal:              10.
+services.RawDrawingOptions.MinimumSignal:              5.
 
