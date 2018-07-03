@@ -14,9 +14,8 @@ physics:
       n_smoothing_samples: 1
       use_planes: false
       verbose: false
-      baseline_calc: 2
+      baseline_calc: 0
       refine_baseline: false
-      n_mode_skip: 3
 
       fft_per_channel: false
       timing: false
