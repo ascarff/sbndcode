@@ -8,9 +8,9 @@ fragment_receiver: {
   fragment_type: NevisTPC
   fragment_id: 0
   board_id: 0
-  //InputFilename: "/sbnd/data/users/gputnam/nevis_fake_data/integration_data.dat"
+  #InputFilename: "/sbnd/data/users/gputnam/nevis_fake_data/integration_data.dat"
   InputFilename: "integration_data.dat"
-  //InputFilename: "/home/nfs/gputnam/daq-dev2/srcs/sbndcode/sbndcode/VSTAnalysis/fcl/pipeline_example/output_working.dat"
+  #InputFilename: "/home/nfs/gputnam/daq-dev2/srcs/sbndcode/sbndcode/VSTAnalysis/fcl/pipeline_example/output_working.dat"
   WaitTime: 1
   ChunkSize: 8192
   SamplesPerChannel: 7667

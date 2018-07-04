@@ -1,20 +1,23 @@
-#include "geometry_lariat.fcl"
+#include "geometry_lariat.fcl"                                   
 #include "hitfindermodulesVST.fcl"
 #include "channelstatus_sbnd.fcl"
-#include "resourcemonitorservices_sbnd.fcl"
-#include "vst_channel_map.fcl"
+#include "vst_channel_map.fcl"  
 
 physics:
 {
   producers:
   {
-    #caldata:
-    #{
-    #  module_type: CalWireVST
-    #  digit_producer_name: daq 
-    #}
+    daq:
+    {
+      wait_time: 0
+      module_type: DaqDecoder
+      produce_header: true
+      validate_header: true
+      calc_checksum: true 
+      baseline_calc: false
+    }
     
-    rawhit:             @local::standard_fasthitfinderVST
+     rawhit:             @local::standard_fasthitfinderVST
   }
 
   analyzers:
@@ -23,28 +26,34 @@ physics:
     {
       module_type: VSTAnalysis
       producer_name: daq
+      n_headers: 10
+
       threshold_calc: 3
       threshold_sigma: 5
       noise_range_sampling: 1
-      n_smoothing_samples: 9
-      use_planes: true
+      use_planes: false
       verbose: false
       baseline_calc: 2
+      refine_baseline: true
 
+      fft_per_channel: true
+      fill_waveforms: true
+      timing: false
+      sum_waveforms: true
+      fft_summed_waveforms: true
+      verbose: false
+      
       HitsModuleLabel: "rawhit"
       UseRawHits: false
       PedestalSubtracted: true
       CollectionNeg: true
-      UseNevisClock: true 
+      UseNevisClock: true
       DoPurityAna: true
 
-      fft_per_channel: false
-      timing: false
-      sum_waveforms: false 
     }
   }
 
-  my_producer_modules: [rawhit]
+  my_producer_modules: [daq,rawhit]
 
   outstream: [out1]
   analyze: [VSTAnalysis]
@@ -55,9 +64,7 @@ outputs:
 {
   out1:
   {
-    module_type: RootOutput 
-    #dropAllEvents:true		
-   			    
+    module_type: RootOutput
     fileName: "decoder_out.root"
   }
 }
@@ -65,23 +72,23 @@ outputs:
 services:
 {
   TFileService: { fileName: "out.root"}
-  Geometry: @local::lariat_geo
-  ExptGeoHelperInterface: @local::lariat_geometry_helper
-  ChannelStatusService:   @local::vst_channelstatus
   VSTChannelMap: @local::nevis_integration_channel_map_VST
-  @table::sbnd_resourcemonitorservices
+  //message: @local::standard_debug
 } 
 
 source:
 {
   module_type: RootInput
-  fileNames: ["/home/nfs/gputnam/lariat_data.root"]
+  fileNames: ["/sbnd/data/users/gputnam/VST/nevis_test_stand_data/integration/fragments.root"]
 }
+
 
 physics.producers.rawhit.DigitModuleLabel:    "daq"
 physics.producers.rawhit.MinSigInd:           13
 physics.producers.rawhit.MinSigCol:           13
-physics.producers.rawhit.UncompressWithPed:         false 
+physics.producers.rawhit.UncompressWithPed:         false
 
-process_name: PIPELINE
+
+
+process_name: SIMPLEPIPELINE
 
