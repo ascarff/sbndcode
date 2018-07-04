@@ -107,6 +107,9 @@ vst_disp:
   EventDisplay:                                @local::sbnd_evd
 }
 
+vst_services.DetPedestalService.DetPedestalRetrievalAlg.DefaultCollMean:  0
+vst_services.DetPedestalService.DetPedestalRetrievalAlg.DefaultIndMean:   0
+
 
 #######################################
 

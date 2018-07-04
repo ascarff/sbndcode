@@ -276,8 +276,6 @@ else if(_config.n_metadata > 0  && _config.fDoPurityAna) {
       ProcessEventInfo(lifetime);
   }
 
-  std::cout << "test 2" << std::endl;
- 
   // clear out containers from last iter
   for (unsigned i = 0; i < _channel_map->NChannels(); i++) {
     _per_channel_data[i].waveform.clear();

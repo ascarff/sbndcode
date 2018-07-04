@@ -73,5 +73,4 @@ lariat_geometry_services: {
   AuxDetGeometry:                 @local::lariat_auxdetgeo
 } # VST_geometry_services
 
-
 END_PROLOG

@@ -8,6 +8,12 @@ physics:
 {
   producers:
   {
+    #caldata:
+    #{
+    #  module_type: CalWireVST
+    #  digit_producer_name: daq 
+    #}
+    
     rawhit:             @local::standard_fasthitfinderVST
   }
 
