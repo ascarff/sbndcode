@@ -14,7 +14,7 @@ add_subdirectory(SimulationFilters)
 add_subdirectory(AnalysisTree)
 add_subdirectory(VSTAnalysis)
 add_subdirectory(RecoUtils)
-add_subdirectory(BadEventDisplay)
+
 
 # subdirectory for gallery stuff
 add_subdirectory(gallery)
