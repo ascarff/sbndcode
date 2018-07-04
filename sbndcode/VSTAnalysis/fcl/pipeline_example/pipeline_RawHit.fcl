@@ -27,6 +27,8 @@ physics:
 
       HitsModuleLabel: "rawhit"
       UseRawHits: false
+      PedestalSubtracted: true
+      CollectionNeg: true
 
       fft_per_channel: false
       timing: false
