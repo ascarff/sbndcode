@@ -35,6 +35,8 @@ physics:
       UseRawHits: false
       PedestalSubtracted: true
       CollectionNeg: true
+      fUseNevisClock: true 
+      fDoPurityAna: true
 
       fft_per_channel: false
       timing: false
