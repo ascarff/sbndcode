@@ -8,12 +8,6 @@ physics:
 {
   producers:
   {
-    #caldata:
-    #{
-    #  module_type: CalWireVST
-    #  digit_producer_name: daq 
-    #}
-    
     rawhit:             @local::standard_fasthitfinderVST
   }
 
@@ -33,10 +27,8 @@ physics:
 
       HitsModuleLabel: "rawhit"
       UseRawHits: false
-      PedestalSubtracted: true
-      CollectionNeg: true
-      UseNevisClock: true 
       DoPurityAna: true
+      CosmicRun: true 
 
       fft_per_channel: false
       timing: false
@@ -79,9 +71,11 @@ source:
 }
 
 physics.producers.rawhit.DigitModuleLabel:    "daq"
-physics.producers.rawhit.MinSigInd:           13
-physics.producers.rawhit.MinSigCol:           13
+physics.producers.rawhit.MinSigInd:           10
+physics.producers.rawhit.MinSigCol:           7
 physics.producers.rawhit.UncompressWithPed:         false 
+physics.producers.rawhit.CollectionNeg: true
+physics.producers.rawhit.PedestalSubtracted: true
 
 process_name: PIPELINE
 

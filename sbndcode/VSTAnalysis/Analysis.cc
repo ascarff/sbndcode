@@ -159,7 +159,7 @@ Analysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &param) {
   // Muon Triggering Bools
   fUseNevisClock = param.get<bool>("UseNevisClock", false);
   fDoPurityAna = param.get<bool>("DoPurityAna", true);
-  fCosmicRun = param.get<bool>("Cosmicrun ", false);
+  fCosmicRun = param.get<bool>("CosmicRun", false);
 }
 
 void Analysis::AnalyzeEvent(art::Event const & event) {
@@ -171,12 +171,12 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
   std::vector<art::Ptr<recob::Hit> > rawhits;
   if(event.getByLabel(_config.fHitsModuleLabel,hitListHandle))
     {art::fill_ptr_vector(rawhits, hitListHandle);}
-  //  std::cout << "Number of Hits: " << rawhits.size() << std::endl;           
+  std::cout << "Number of Hits: " << rawhits.size() << std::endl;           
 
   double lifetime = 0;
   //Purity Trigger - Gray you will probably want to change this for syntax
   if(_config.fCosmicRun == true && _config.fDoPurityAna){
-    lifetime = CalculateLifetime(rawhits, false);
+    lifetime = CalculateLifetime(rawhits, true);
     std::cout<<"Lifetime = "<<lifetime<<" ticks\n";
   } 
   else{

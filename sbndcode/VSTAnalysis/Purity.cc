@@ -128,7 +128,7 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 	}
 	
 	if(fVerbose) cout << "Amount of unique collection plane hits in event is: " << uniqval << ". Passed the minimum unique hit cut of: " << minuniqcount << endl;
-
+	
 	TGraph *WvT = new TGraph(n,&Collect[0],&PTime[0]);			//Two graphs for Wire and PTime
 	TGraph *IWvT = new TGraph(nI,&Induction[0],&IPTime[0]);			//Need the & and [0] notation in order for TGraph to take a vector instead of an array
 	if(fVerbose) cout << "Made PTime vs WireID for Collection and Induction planes" << endl;
@@ -137,22 +137,22 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 	float maxx = *min_element(begin(Collect),end(Collect));									
 	float Iminx = *max_element(begin(Induction),end(Induction));		//Getting min and max of the Induction Wire hits
 	float Imaxx = *min_element(begin(Induction),end(Induction));
-
+	
 	TF1 *fFunc = new TF1("Linear","[0]*x+[1]", minx, maxx);			//(Collection)Two parameters are slope and y-intercept.
 	TF1 *fIFunc = new TF1("ILinear","[0]*x+[1]", Iminx, Imaxx);		//(Induction)Two parameters are slope and y-intercept
-
+	
 	if(fVerbose) cout << "Made functions for Collection and Induction Planes" << endl;
-
+	
 	fFunc->SetParNames("Slope","Peak Time Intercept");			//Initializing for collection. Completely Arbitrary
 	fFunc->SetParameters(1,1);						//Setting slope and intercept to 1
-
+	
 	fIFunc->SetParNames("Slope1","Peak Time Intercept 1");			//Initializing for induction. Completely Arbitrary
 	fIFunc->SetParameters(1,1);
 	if(fVerbose) cout << "Initialized parameters for fits on Wvt and IWvt" << endl;
-
+	
 	WvT->Fit("Linear","NQ");							//Does the fitting for Collection plane
 	IWvT->Fit("ILinear","NQ");						//Does the fitting for Induction plane
-
+	
 	if(fVerbose) cout << "Completed first fitting of Collection and Induction planes" << endl;
 	
 	//Collection Plane
@@ -201,7 +201,8 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 	if(fVerbose) cout << "Refitted Collection slope is: " << slope << endl;
 
   // Cut on minimum chi2
-  if(fFunc->GetChisquare()/fFunc->GetNDF()){
+    if(fFunc->GetChisquare()/fFunc->GetNDF() == 0){
+    std::cout << "chi2: " << fFunc->GetChisquare() << " NDF: " << fFunc->GetNDF() << " if:  " << fFunc->GetChisquare()/fFunc->GetNDF() << std::endl;
     if(fVerbose) cout << "Bad chi square. Skipping event...\n";
     return -1;
   }

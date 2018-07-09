@@ -239,17 +239,19 @@ namespace hit {
 
       std::vector<geo::WireID> Wire = geom->ChannelToWire(channel);
 
-      //sbnd is one channel per wire so the vector should be size one.                                                                                   
       sigType = geom->SignalType(channel);
-                     
-      //geo::PlaneID  PlaneID = (Wire[0]).planeID();
-     
+       
+      //High voltage killed a load of induction wires. Lets remove them. This will probably be fixed after some run number add this number in at some point. 
+      if(sigType == geo::kInduction && evt.run()<9999 &&  (Wire[0].Wire > 70 && Wire[0].Wire < 150)){continue;}  
+
       for(unsigned int bin = 0; bin < fDataSize; ++bin){ 
 	
 	//     	if(  geom->SignalType(channel) == geo::kCollection && TMath::Abs(rawadc[bin]-digitVec->GetPedestal())>10){
 	//std::cout << " channel: " << channel << "rawadc[bin]: " << rawadc[bin] << " digitVec->GetPedestal(): " << digitVec->GetPedestal() <<" bin: " << bin  << " holder[bin]:" << rawadc[bin]-digitVec->GetPedestal() <<std::endl ;
         //Graph_map_daq[PlaneID]->SetPoint(Graph_map_daq[PlaneID]->GetN(),channel,bin); 
 	//	}
+
+	//Might be both Collection and Induction are negative. If so change but it dones't really affect things for the hit finder. 
 	if(fPedestalSubtracted){
 	  if(fCollectionNeg && sigType == geo::kCollection){
 	    holder[bin]=-rawadc[bin];
@@ -295,6 +297,7 @@ namespace hit {
 
         //THE INDUCTION PLANE METHOD HAS NOT YET BEEN MODIFIED AND TESTED FOR REAL DATA.
         if(sigType == geo::kInduction){
+
           threshold = fMinSigInd;
           //	std::cout<< "Threshold is " << threshold << std::endl;
           // fitWidth = fIndWidth;

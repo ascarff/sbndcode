@@ -1,119 +1,126 @@
 #
-# File:    evdservices_sbnd.fcl
-# Purpose: service settings for SBND event display in LArSoft
+# File:    services_sbnd.fcl
+# Purpose: collection of standard service settings for SBND
 # Version: 1.2
 # 
 # Provides:
 # 
-# - sbnd_disp: bundle of event display services
-# - sbnd_graphcluster: configuration of a GraphCluster module
+# - sbnd_basic_services: bundle of services including message configuration,
+#   geometry, and basic art services
+# - sbnd_random_services: services for random number management
+# - sbnd_services: bundle of services including message configuration, core
+#   services (geometry, properties, conditions); missing optical for now;
+#   targeted to reconstruction jobs (no backtracker though)
+# - sbnd_prod_services: extends the scope of sbnd_services with services
+#   intended for production (e.g. SAM storage)
 # 
 # Use as:
 #     
 #     services: {
-#       @table::sbnd_disp
+#       @table::sbnd_services
 #       # ...
 #     }
 # 
 # Changes:
+# 20160623 (petrillo@fnal.gov) [v1.2]
+#   created a sbnd_prod_services table;
+#   SAM-related service removed from sbnd_services
 # 20160601 (petrillo@fnal.gov) [v1.1]
-#   update for LArSoft 5.12
-# 20160712 (petrillo@fnal.gov) [v1.2]
-#   added simulation services
+#   moved to sbndcode/LArSoftConfigurations;
+#   message configuration content moved to messages_sbnd.fcl;
+#   simulation service content moved to simulationservices_sbnd.fcl
+#   
+#
 #
 
-#include "simulationservices_sbnd.fcl"
-#include "evdservices_base.fcl"
-#include "calorimetry.fcl"
+#include "messages_sbnd.fcl"
+#include "resourcemonitorservices_sbnd.fcl"
+#include "seedservice_sbnd.fcl"
+#include "geometry_sbnd.fcl"
+#include "larproperties_sbnd.fcl"
+#include "detectorclocks_sbnd.fcl"
+#include "detectorproperties_sbnd.fcl"
+#include "opticaldetectorservices_sbnd.fcl"
+#include "channelstatus_sbnd.fcl"
+#include "database_sbnd.fcl"
+#include "sam_sbnd.fcl"
+
+#include "geometry_lariat.fcl"                           
+##include "channelstatus_lariat.fcl"  
 
 BEGIN_PROLOG
 
-sbnd_colordrawingopt:                       @local::standard_colordrawingopt
-sbnd_rawdrawingopt:                         @local::standard_rawdrawingopt
-sbnd_recodrawingopt: {
-  @table::standard_recodrawingopt
-  
-  # override product labels; these follow the ones from standard_reco_sbnd_basic.fcl v. 1.2
- HitModuleLabels:           ["gaushit"]         # list of module labels in which to look for recob::Hits
- EndPoint2DModuleLabels:    ["linecluster"]     # list of module labels in which to look for recob::EndPoint2Ds
- SpacePointModuleLabels:    ["pmalgtrackmaker"] # list of module labels in which to look for recob::SpacePoints     
- ProngModuleLabels:         []                  # list of module labels in which to look for recob::Prongs     
- ClusterModuleLabels:       ["linecluster"]     # list of module labels in which to look for recob::Clusters  
- PFParticleModuleLabels:    ["pmalgtrackmaker"] # list of module labels in which to look for recob::PFParticles 
- TrackModuleLabels:         ["pmalgtrackmaker"] # list of module labels in which to look for recob::Tracks     
- ShowerModuleLabels:        []                  # list of module labels in which to look for recob::Showers    
- VertexModuleLabels:        []                  # list of module labels in which to look for recob::Vertexs    
- SeedModuleLabels:          ["pmalgtrackmaker"] # list of module labels in which to look for recob::Seeds  
- OpFlashModuleLabels:       [""]                # list of module labels in which to look for recob::OpFlashes
- CosmicTagModuleLabels:     [""]                # list of module labels in which to look for recob::Tracks
- TrkVtxTrackLabels:         ["pmalgtrackmaker"] # list of track producers for track/vertex associations
- TrkVtxCosmicLabels:        []                  # list of vertex producers for track/vertex associations
- TrkVtxFilterLabels:        []                  # list of producers of associations between the two above
-
-} # sbnd_recodrawingopt
-
-
-sbnd_analysisdrawingopt:                    @local::standard_analysisdrawingopt
-sbnd_simdrawingopt:                         @local::standard_simdrawingopt
-sbnd_scanopt:                               @local::standard_scanopt
-sbnd_evd:                                   @local::standard_evd
-sbnd_infotransfer:                          @local::standard_infotransfer
-
-sbnd_evdlayoutopt:                          @local::standard_evdlayoutopt
-sbnd_evdlayoutopt.ShowSideBar:              1
-sbnd_evdlayoutopt.AutoZoomInterest:         0
-sbnd_evdlayoutopt.PrintTotalCharge:         0
-sbnd_evdlayoutopt.ShowEndPointSection:      1
-sbnd_evdlayoutopt.ShowEndPointMarkers:      1
-sbnd_evdlayoutopt.ChangeWire:               1
-
-sbnd_rawdrawingopt.TotalTicks: 3000
-
-sbnd_disp:                                                                       
-{                                                                                  
-                                               @table::sbnd_simulation_services
-  ColorDrawingOptions:                         @local::sbnd_colordrawingopt
-  SimulationDrawingOptions:                    @local::sbnd_simdrawingopt
-  RawDrawingOptions:                           @local::sbnd_rawdrawingopt
-  RecoDrawingOptions:                          @local::sbnd_recodrawingopt
-  AnalysisDrawingOptions:                      @local::sbnd_analysisdrawingopt
-  EvdLayoutOptions:                            @local::sbnd_evdlayoutopt
-  ScanOptions:                                 @local::sbnd_scanopt
-  InfoTransfer:                                @local::sbnd_infotransfer
-  EventDisplay:                                @local::sbnd_evd
-}
-
-
-vst_rawdrawingopt:                         @local::standard_rawdrawingopt
-vst_rawdrawingopt.RawDataLabel:            "daq"
-vst_rawdrawingopt.DetPedestalRetrievalAlg.DefaultCollMean:  0
-vst_rawdrawingopt.DetPedestalRetrievalAlg.DefaultIndMean:   0
-vst_disp.DetPedestalService.DetPedestalRetrievalAlg.DefaultCollMean:  0
-vst_disp.DetPedestalService.DetPedestalRetrievalAlg.DefaultIndMean:  0
-vst_rawdrawingopt.TotalTicks: 4000
-vst_simdrawingopt:                         @local::standard_simdrawingopt
-vst_simdrawingopt.ShowMCTruthVectors:      false
-vst_disp:
+#
+# sbnd_basic_services
+#
+# Services mostly art-related, that it's hard to get away without
+# (includes geometry)
+#
+sbnd_basic_services:
 {
-                                               @table::vst_simulation_services
-  ColorDrawingOptions:                         @local::sbnd_colordrawingopt
-  SimulationDrawingOptions:                    @local::vst_simdrawingopt
-  RawDrawingOptions:                           @local::vst_rawdrawingopt
-  RecoDrawingOptions:                          @local::sbnd_recodrawingopt
-  AnalysisDrawingOptions:                      @local::sbnd_analysisdrawingopt
-  EvdLayoutOptions:                            @local::sbnd_evdlayoutopt
-  ScanOptions:                                 @local::sbnd_scanopt
-  InfoTransfer:                                @local::sbnd_infotransfer
-  EventDisplay:                                @local::sbnd_evd
-}
+  scheduler:                      { defaultExceptions: false } # Make all uncaught exceptions fatal
+  message:                        @local::sbnd_message_services
+                                  @table::sbnd_resourcemonitorservices
+                                  @table::sbnd_geometry_services
+} # sbnd_basic_services
 
+vst_basic_services:
+{
+  scheduler:                      { defaultExceptions: false } # Make all uncaught exceptions fatal
+  message:                        @local::sbnd_message_services
+                                  @table::sbnd_resourcemonitorservices
+                                  @table::lariat_geometry_services
+} # vst_basic_services
+
+#
+# services for random number management
+#
+sbnd_random_services: {
+  RandomNumberGenerator: {} # art random number generator manager
+  NuRandomService:        @local::sbnd_seedservice
+} # sbnd_random_services
+
+
+#
+# sbnd_services
+#
+# Complete set of reconstruction services
+# (simulation specific services are defined in simulationservices_sbnd.fcl)
+#
+sbnd_services:
+{
+                                  @table::sbnd_basic_services
+  LArPropertiesService:           @local::sbnd_properties    
+  DetectorClocksService:          @local::sbnd_detectorclocks
+  DetectorPropertiesService:      @local::sbnd_detproperties 
+# OpDigiProperties:               @local::sbnd_opdigiproperties
+  ChannelStatusService:           @local::sbnd_channelstatus
+  DetPedestalService:             @local::sbnd_detpedestalservice  # from database_sbnd.fcl
+} # sbnd_services
+
+
+vst_services:
+{
+                                  @table::vst_basic_services
+  LArPropertiesService:           @local::sbnd_properties
+  DetectorClocksService:          @local::vst_detectorclocks
+  DetectorPropertiesService:      @local::vst_detproperties
+# OpDigiProperties:               @local::sbnd_opdigiproperties
+  ChannelStatusService:           @local::vst_channelstatus
+  DetPedestalService:             @local::sbnd_detpedestalservice  # from database_sbnd.fcl
+} # sbnd_services
 vst_services.DetPedestalService.DetPedestalRetrievalAlg.DefaultCollMean:  0
 vst_services.DetPedestalService.DetPedestalRetrievalAlg.DefaultIndMean:   0
 
+#
+# sbnd_prod_services
+#
+# Complete set of reconstruction services, in addition to production-specific services
+#
+sbnd_prod_services: {
+                       @table::sbnd_services
+  FileCatalogMetadata: @local::sbnd_file_catalog_mc
+} # sbnd_prod_services
 
-#######################################
-
-sbnd_graphcluster:                          @local::standard_graphcluster
 
 END_PROLOG
-
