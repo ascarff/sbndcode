@@ -23,7 +23,17 @@ class NevisTPCMetaData {
     return buffer.str();
   }
 
-  NevisTPCMetaData() {}
+  std::string PrintRaw() const {
+    std::stringstream buffer;
+    buffer << "slot: " << slot << std::endl;
+    buffer << "time: " << std::hex << time << std::endl;
+    return buffer.str();
+  }
+
+  NevisTPCMetaData():
+  slot(0),
+  time(0),  
+  {}
 
   explicit NevisTPCMetaData(daqAnalysis::HeaderData const& header) {
     slot = header.slot;

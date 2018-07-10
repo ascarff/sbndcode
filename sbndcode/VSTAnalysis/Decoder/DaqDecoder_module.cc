@@ -151,9 +151,6 @@ void daq::DaqDecoder::produce(art::Event & event)
   }
 
   event.put(std::move(product_collection));
-  if (_config.produce_header) {
-    event.put(std::move(header_collection));
-  }
 
   if (_config.produce_metadata) {
     // put metadata in event
@@ -162,6 +159,10 @@ void daq::DaqDecoder::produce(art::Event & event)
       metadata_collection->emplace_back(header);
     }
     event.put(std::move(metadata_collection));
+  }
+
+  if (_config.produce_header) {
+    event.put(std::move(header_collection));
   }
 
 }

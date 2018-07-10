@@ -1,0 +1,51 @@
+#include "vst_channel_map.fcl"
+
+physics:
+{
+  producers:
+  {
+    daq:
+    {
+      module_type: DaqDecoder
+      produce_header: false
+      produce_metadata: true
+      baseline_calc: true
+      n_mode_skip: 3
+    }
+  }
+
+  my_producer_modules: [daq]
+
+  outstream: [out1]
+  end_paths: [outstream]
+}
+
+outputs:
+{
+  out1:
+  {
+    module_type: RootOutput
+    #fileName: "digits.root"
+    fileName: "/daqdata/digits_sbnd_r%06r_%06s.root"
+    #fileName: "/tmp/digits_sbnd_r%06r_%06s.root"
+    dataTier:    "digits"
+    streamName:  "all"
+    outputCommands: [
+      "keep *",
+      "drop artdaq::Fragments_daq_*_DAQ",
+      "drop art::TriggerResults_TriggerResults_*_DIGITS"
+    ]
+  }
+}
+
+services:
+{
+  VSTChannelMap: @local::channel_map_VST 
+}
+
+source:
+{
+  module_type: RootInput
+}
+
+process_name: DIGITS
