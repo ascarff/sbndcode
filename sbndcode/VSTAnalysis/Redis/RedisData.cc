@@ -79,6 +79,8 @@ void daqAnalysis::StreamDataVariableMean::AddInstance(unsigned index) {
   // clear instance data
   _instance_data[index] = 0;
   _n_values_current_instance[index] = 0;
+  // increment _n_values if there was data
+  _n_values[index] += 1;
 }
 
 
@@ -100,7 +102,6 @@ void daqAnalysis::StreamDataVariableMean::Update() {
   // add instance data and increment n_values
   for (unsigned index = 0; index < _instance_data.size(); index++) {
     AddInstance(index);
-    _n_values[index] += 1;
   }
 }
 

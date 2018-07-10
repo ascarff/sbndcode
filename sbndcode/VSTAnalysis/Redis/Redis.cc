@@ -34,7 +34,7 @@ Redis::Redis(Redis::Config &config, daqAnalysis::VSTChannelMap *channel_map):
   _snapshot_time(config.snapshot_time),
   _stream_take(config.stream_take),
   _stream_expire(config.stream_expire),
-  _stream_last(config.NStreams(), _now),
+  _stream_last(config.NStreams(), 0),
   _stream_send(config.NStreams(), false),
   _sub_run_stream(config.sub_run_stream),
   _sub_run_stream_expire(config.sub_run_stream_expire),
@@ -66,11 +66,6 @@ Redis::Redis(Redis::Config &config, daqAnalysis::VSTChannelMap *channel_map):
   _do_timing(config.timing),
   _config(config)
 {
-  // set the subrun stream last correctly
-  if (config.sub_run_stream) {
-    _stream_last[_n_streams - 1] = config.first_subrun;
-  }
-
   if (context != NULL && context->err) {
     std::cerr << "Redis error: " <<  context->errstr << std::endl;
     exit(1);
@@ -124,6 +119,21 @@ void Redis::StartSend(unsigned run, unsigned sub_run) {
 
 void Redis::StartSend(uint64_t now, unsigned run, unsigned sub_run) {
   _now = now;
+
+  // if stream last haven't been set yet, initialize them
+  if (_stream_take.size() > 0) {
+    if (_stream_last[0] == 0) {
+      for (size_t i = 0; i < _stream_take.size(); i ++) {
+        _stream_last[i] = _now;
+      } 
+    }
+  }
+  if (_sub_run_stream) {
+    unsigned sub_run_ind = _n_streams - 1; 
+    if (_stream_last[sub_run_ind] == 0) {
+      _stream_last[sub_run_ind] = sub_run;
+    }
+  }
 
   for (size_t i = 0; i < _stream_take.size(); i++) {
     // calculate whether each stream is sending to redis on this event

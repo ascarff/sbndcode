@@ -334,9 +334,9 @@ extern char REDIS_NAME_RAWHIT_OCCUPANCY[];
 extern char REDIS_NAME_RAWHIT_PULSE_HEIGHT[];
 
 // RMS is Variable Mean because sometimes noise calculation algorithm can fail
-class daqAnalysis::RedisRMS: public daqAnalysis::DetectorMetric<StreamDataVariableMean, REDIS_NAME_RMS> {
+class daqAnalysis::RedisRMS: public daqAnalysis::DetectorMetric<StreamDataMean, REDIS_NAME_RMS> {
   // inherit constructor
-  using daqAnalysis::DetectorMetric<StreamDataVariableMean, REDIS_NAME_RMS>::DetectorMetric;
+  using daqAnalysis::DetectorMetric<StreamDataMean, REDIS_NAME_RMS>::DetectorMetric;
 
   // implement calculate
  inline float Calculate(daqAnalysis::ChannelData &channel) override
@@ -362,9 +362,9 @@ class daqAnalysis::RedisRawHitOccupancy: public daqAnalysis::DetectorMetric<Stre
   { return channel.Hitoccupancy; }
 };
 
-class daqAnalysis::RedisDNoise: public daqAnalysis::DetectorMetric<StreamDataVariableMean, REDIS_NAME_DNOISE> {
+class daqAnalysis::RedisDNoise: public daqAnalysis::DetectorMetric<StreamDataMean, REDIS_NAME_DNOISE> {
   // inherit constructor
-  using daqAnalysis::DetectorMetric<StreamDataVariableMean, REDIS_NAME_DNOISE>::DetectorMetric;
+  using daqAnalysis::DetectorMetric<StreamDataMean, REDIS_NAME_DNOISE>::DetectorMetric;
 
   // implement calculate
  inline float Calculate(daqAnalysis::ChannelData &channel) override
