@@ -18,6 +18,7 @@
 
 #include "../HeaderData.hh"
 #include "../VSTChannelMap.hh"
+#include "../GoodHeader.hh"
 
 /*
   * The Decoder module takes as input "NevisTPCFragments" and
@@ -79,6 +80,9 @@ private:
 
   // handle to the channel map service
   art::ServiceHandle<daqAnalysis::VSTChannelMap> _channel_map;
+
+  // handle to good header service
+  art::ServiceHandle<daqAnalysis::GoodHeader> _good_header;
 
   // Gets the WIRE ID of the channel. This wire id can be then passed
   // to the Lariat geometry.

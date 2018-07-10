@@ -280,6 +280,9 @@ void daq::DaqDecoder::validate_header(const daqAnalysis::HeaderData &header) {
   // store numbers for next time
   _last_event_number = header.event_number;
   _last_trig_frame_number = header.trig_frame_number;
+
+  // tell the service
+  _good_header->is_good_header = !printed;
   return; 
 }
 

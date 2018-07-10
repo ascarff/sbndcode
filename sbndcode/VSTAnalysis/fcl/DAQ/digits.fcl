@@ -37,6 +37,7 @@ outputs:
 
 services:
 {
+  GoodHeader: {}
   VSTChannelMap: @local::channel_map_VST 
   #VSTChannelMap: @local::nevis_integration_channel_map_VST
 }

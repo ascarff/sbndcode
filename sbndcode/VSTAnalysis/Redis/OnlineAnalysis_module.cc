@@ -17,6 +17,7 @@
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
 #include "../ChannelData.hh"
+#include "../GoodHeader.hh"
 #include "../HeaderData.hh"
 #include "../Analysis.hh"
 #include "../VSTChannelMap.hh"
@@ -56,6 +57,9 @@ private:
   daqAnalysis::Analysis _analysis;
   daqAnalysis::Redis *_redis_manager;
   bool _config_use_event_time;
+  bool _config_check_good_header;
+  // handle to good header service
+  art::ServiceHandle<daqAnalysis::GoodHeader> _good_header;
 };
 
 daqAnalysis::OnlineAnalysis::OnlineAnalysis(fhicl::ParameterSet const & p):
@@ -87,9 +91,14 @@ daqAnalysis::OnlineAnalysis::OnlineAnalysis(fhicl::ParameterSet const & p):
 
   // config for online analysis module
   _config_use_event_time = p.get<bool>("use_event_time", false);
+  _config_check_good_header = p.get<bool>("check_good_header", false);
 }
 
 void daqAnalysis::OnlineAnalysis::analyze(art::Event const & e) {
+  if (_config_check_good_header && !_good_header->is_good_header) {
+    std::cout << "EXITING EARLY\n";
+    return;
+  }
   _analysis.AnalyzeEvent(e);
   auto const& raw_digits_handle = e.getValidHandle<std::vector<raw::RawDigit>>(_analysis._config.daq_tag);
   unsigned sub_run = e.subRun();
