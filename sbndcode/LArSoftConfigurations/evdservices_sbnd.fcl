@@ -52,6 +52,7 @@ sbnd_recodrawingopt: {
 
 } # sbnd_recodrawingopt
 
+
 sbnd_analysisdrawingopt:                    @local::standard_analysisdrawingopt
 sbnd_simdrawingopt:                         @local::standard_simdrawingopt
 sbnd_scanopt:                               @local::standard_scanopt
@@ -84,7 +85,12 @@ sbnd_disp:
 
 
 vst_rawdrawingopt:                         @local::standard_rawdrawingopt
-vst_rawdrawingopt.TotalTicks: 787
+vst_rawdrawingopt.RawDataLabel:            "daq"
+vst_rawdrawingopt.DetPedestalRetrievalAlg.DefaultCollMean:  0
+vst_rawdrawingopt.DetPedestalRetrievalAlg.DefaultIndMean:   0
+vst_disp.DetPedestalService.DetPedestalRetrievalAlg.DefaultCollMean:  0
+vst_disp.DetPedestalService.DetPedestalRetrievalAlg.DefaultIndMean:  0
+vst_rawdrawingopt.TotalTicks: 4000
 vst_simdrawingopt:                         @local::standard_simdrawingopt
 vst_simdrawingopt.ShowMCTruthVectors:      false
 vst_disp:

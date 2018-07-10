@@ -306,6 +306,7 @@ public:
   void Print(const char *stream_name) {
     std::cout << "METRIC: " << REDIS_NAME << std::endl;
     std::cout << "STREAM NAME: " << stream_name << std::endl;
+    unsigned n_wires = _wire_data.Size();
     for (unsigned wire = 0; wire < n_wires; wire++) {
       std::cout << "WIRE: " << wire << " DATA: " << DataWire(wire) << std::endl;
     }

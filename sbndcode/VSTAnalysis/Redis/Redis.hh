@@ -70,6 +70,7 @@ public:
     int waveform_input_size;
     bool timing;
     bool flush_data;
+    bool print_data;
     Config(): 
       hostname("127.0.0.1"),
       sub_run_stream(false),
@@ -103,6 +104,8 @@ public:
 protected:
   // per-channel data to redis
   void SendChannelData();
+  // per channel data to stdout
+  void PrintChannelData();
   void FillChannelData(std::vector<daqAnalysis::ChannelData> *per_channel_data);
   // send info associated w/ HeaderData
   void SendHeaderData();

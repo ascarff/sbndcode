@@ -46,7 +46,7 @@
 #include "sam_sbnd.fcl"
 
 #include "geometry_lariat.fcl"                           
-
+##include "channelstatus_lariat.fcl"  
 
 BEGIN_PROLOG
 
@@ -109,7 +109,8 @@ vst_services:
   ChannelStatusService:           @local::vst_channelstatus
   DetPedestalService:             @local::sbnd_detpedestalservice  # from database_sbnd.fcl
 } # sbnd_services
-
+vst_services.DetPedestalService.DetPedestalRetrievalAlg.DefaultCollMean:  0
+vst_services.DetPedestalService.DetPedestalRetrievalAlg.DefaultIndMean:   0
 
 #
 # sbnd_prod_services
