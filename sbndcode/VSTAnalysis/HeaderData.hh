@@ -36,8 +36,10 @@ class HeaderData {
   uint32_t sub_run_no;
   uint32_t art_event_no;
 
-  uint32_t time_stamp_hi;
-  uint32_t time_stamp_lo;
+  uint32_t event_time_stamp_hi;
+  uint32_t event_time_stamp_lo;
+
+  uint64_t frag_time_stamp;
 
   // by default make words noticable
   // Nevis uses DEADBEEF as a default, so distinguish from
@@ -77,8 +79,9 @@ class HeaderData {
     buffer << "trigger frame no: " << trig_frame_number << std::endl;
     buffer << "frame time: " << frame_time << std::endl;
     buffer << "trigger frame time: " << trig_frame_time << std::endl;
-    buffer << "ART event time lo: " << time_stamp_lo << std::endl;
-    buffer << "ART event time hi: " << time_stamp_hi << std::endl;
+    buffer << "ART event time lo: " << event_time_stamp_lo << std::endl;
+    buffer << "ART event time hi: " << event_time_stamp_hi << std::endl;
+    buffer << "Fragment timestamp: " << frag_time_stamp << std::endl;
     buffer << std::hex << "checksum: " << checksum << std::endl;
     buffer << std::hex << "computed checksum: " << computed_checksum << std::endl;
 

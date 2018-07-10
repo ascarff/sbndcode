@@ -12,16 +12,14 @@ namespace daqAnalysis {
 // Metadata associated with a NevisTPCHeader
 class NevisTPCMetaData {
   public:
-    uint32_t trig_frame_number;
-    uint32_t frame_number;
+    uint64_t time;
     uint16_t slot;
 
   // print the data -- for debugging
   std::string Print() const {
     std::stringstream buffer;
     buffer << "slot: " << slot << std::endl;
-    buffer << "frame no: " << frame_number << std::endl;
-    buffer << "trigger frame no: " << trig_frame_number << std::endl;
+    buffer << "time: " << time << std::endl;
     return buffer.str();
   }
 
@@ -29,8 +27,7 @@ class NevisTPCMetaData {
 
   explicit NevisTPCMetaData(daqAnalysis::HeaderData const& header) {
     slot = header.slot;
-    trig_frame_number = header.trig_frame_number;
-    frame_number = header.frame_number;
+    time = header.frag_time_stamp;
   }
 };
 }
