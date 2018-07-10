@@ -17,7 +17,7 @@ endif()
 
 # add header-decoder stuff
 # don't try to build if not set up
-if( DEFINED ENV{TRACE_INC} )
+if( DEFINED ENV{SBNDDAQ_DATATYPES_INC} )
   add_subdirectory(Decoder)
 endif()
 
