@@ -31,8 +31,8 @@ class NevisTPCMetaData {
   }
 
   NevisTPCMetaData():
-  slot(0),
   time(0),  
+  slot(0)
   {}
 
   explicit NevisTPCMetaData(daqAnalysis::HeaderData const& header) {
