@@ -39,8 +39,8 @@ Redis::Redis(Redis::Config &config, daqAnalysis::VSTChannelMap *channel_map):
   _sub_run_stream(config.sub_run_stream),
   _sub_run_stream_expire(config.sub_run_stream_expire),
   _n_streams(config.NStreams()),
-  _this_subrun(config.first_subrun),
-  _last_subrun(config.first_subrun),
+  _this_subrun(0),
+  _last_subrun(0),
   _this_run(0),
   _last_run(0),
   _last_snapshot(0),
@@ -96,15 +96,33 @@ void Redis::FlushData() {
     _stream_send[sub_run_ind] = true;
     _stream_last[sub_run_ind] = _this_subrun;
   }
-  SendChannelData();
-  SendHeaderData();
+
+  if (!_config.print_data) {
+    SendChannelData();
+    SendHeaderData();
+
+    void *reply;
+    reply = redisCommand(context, "SET last_subrun_no %u", _this_subrun);
+    freeReplyObject(reply);
+    
+    // same with run
+    reply = redisCommand(context, "SET this_run_no %u", _this_run);
+    freeReplyObject(reply);
+    
+    // send Redis "Alive" signal
+    reply = redisCommand(context, "SET MONITOR_%s_ALIVE %u", _config.monitor_name.c_str(), std::time(nullptr));
+    freeReplyObject(reply);
+  }
+  else {
+    PrintChannelData();
+  }
 }
 
 void Redis::StartSend(unsigned run, unsigned sub_run) {
   StartSend(std::time(nullptr), run, sub_run);
 }
 
-void Redis::StartSend(std::time_t now, unsigned run, unsigned sub_run) {
+void Redis::StartSend(uint64_t now, unsigned run, unsigned sub_run) {
   _now = now;
 
   for (size_t i = 0; i < _stream_take.size(); i++) {
@@ -125,26 +143,34 @@ void Redis::StartSend(std::time_t now, unsigned run, unsigned sub_run) {
   }
   _this_subrun = sub_run;
   _this_run = run;
+
+  // update the run and subrun if its the first event
+  if (_last_run == 0) _last_run = run;
+  if (_last_subrun == 0) _last_subrun = sub_run;
+  
 }
 
 void Redis::FinishSend() {
   if (_do_timing) {
     _timing.Print();
   }
-  // if a new subrun, set the value in redis
-  if (_this_subrun != _last_subrun) {
-    void *reply = redisCommand(context, "SET last_subrun_no %u", _last_subrun);
-    freeReplyObject(reply);
-  }
-  // same with run
-  if (_this_run != _last_run) {
-    void *reply = redisCommand(context, "SET this_run_no %u", _this_run);
-    freeReplyObject(reply);
-  }
 
-  // send Redis "Alive" signal
-  void *reply = redisCommand(context, "SET MONITOR_%s_ALIVE %u", _config.monitor_name.c_str(), std::time(nullptr));
-  freeReplyObject(reply);
+  if (!_config.print_data) {
+    // if a new subrun, set the value in redis
+    if (_this_subrun != _last_subrun) {
+      void *reply = redisCommand(context, "SET last_subrun_no %u", _last_subrun);
+      freeReplyObject(reply);
+    }
+    // same with run
+    if (_this_run != _last_run) {
+      void *reply = redisCommand(context, "SET this_run_no %u", _this_run);
+      freeReplyObject(reply);
+    }
+
+    // send Redis "Alive" signal
+    void *reply = redisCommand(context, "SET MONITOR_%s_ALIVE %u", _config.monitor_name.c_str(), std::time(nullptr));
+    freeReplyObject(reply);
+  }
   
   _last_subrun = _this_subrun;
   _last_run = _this_run;
@@ -153,7 +179,9 @@ void Redis::FinishSend() {
 }
 
 void Redis::HeaderData(vector<daqAnalysis::HeaderData> *header_data) {
-  SendHeaderData();
+  if (!_config.print_data) {
+    SendHeaderData();
+  }
   FillHeaderData(header_data);
 }
 
@@ -186,7 +214,7 @@ void Redis::SendHeaderData() {
   for (size_t i = 0; i < _stream_take.size(); i++) {
     // send headers to redis if need be
     if (_stream_send[i]) {
-      unsigned index = _now / _stream_take[i];
+      uint64_t index = _now / _stream_take[i];
       const char *stream_name = std::to_string(_stream_take[i]).c_str(); 
       n_commands += _event_no[i].Send(context, index, stream_name, _stream_expire[i]);
       n_commands += _frame_no[i].Send(context, index, stream_name, _stream_expire[i]);
@@ -480,16 +508,23 @@ void Redis::Snapshot(vector<daqAnalysis::ChannelData> *per_channel_data, vector<
 }
 
 bool Redis::WillTakeSnapshot() {
-  return _snapshot_time > 0 && (_now - _last_snapshot) >= _snapshot_time && _last_snapshot != _now;
+  int64_t time_diff = ((int)_now - _last_snapshot);
+  return _snapshot_time > 0 && time_diff >= _snapshot_time && _last_snapshot != _now;
 }
 
 void Redis::ChannelData(vector<daqAnalysis::ChannelData> *per_channel_data, vector<NoiseSample> *noise_samples, vector<vector<int>> *fem_summed_waveforms, 
     std::vector<std::vector<double>> *fem_summed_fft, const art::ValidHandle<std::vector<raw::RawDigit>> &digits, const std::vector<unsigned> &channel_to_index) {
 
-  SendChannelData();
+  if (!_config.print_data) {
+    SendChannelData();
+  }
+  else {
+    PrintChannelData();
+  }
   FillChannelData(per_channel_data);
 
-  bool take_snapshot = _snapshot_time > 0 && (_now - _last_snapshot) >= _snapshot_time && _last_snapshot != _now;
+  int64_t time_diff = ((int)_now - _last_snapshot);
+  bool take_snapshot = _snapshot_time > 0 && time_diff >= _snapshot_time && _last_snapshot != _now;
   if (take_snapshot) {
     Snapshot(per_channel_data, noise_samples, fem_summed_waveforms, fem_summed_fft, digits, channel_to_index);
     _last_snapshot = _now;
@@ -554,6 +589,41 @@ void Redis::FillChannelData(vector<daqAnalysis::ChannelData> *per_channel_data) 
   }
 }
 
+void Redis::PrintChannelData() {
+  for (size_t i = 0; i < _stream_take.size(); i++) {
+    if (_stream_send[i]) {
+      const char *stream_name = std::to_string(_stream_take[i]).c_str(); 
+      _rms[i].Print(stream_name);
+      _baseline[i].Print(stream_name);
+      _baseline_rms[i].Print(stream_name);
+      _dnoise[i].Print(stream_name);
+      _occupancy[i].Print(stream_name);
+      _pulse_height[i].Print(stream_name);
+      _rawhit_occupany[i].Print(stream_name);
+      _rawhit_pulse_height[i].Print(stream_name);
+    }
+  }
+
+  // special case the sub run stream
+  if (_sub_run_stream) {
+    unsigned sub_run_ind = _n_streams - 1;  
+    if (_stream_send[sub_run_ind]) {
+    
+      std::stringstream ss;
+      ss << "sub_run_" << _this_run;
+      const char *sub_run_ident = ss.str().c_str();
+      _rms[sub_run_ind].Print(stream_name);
+      _baseline[sub_run_ind].Print(stream_name);
+      _baseline_rms[sub_run_ind].Print(stream_name);
+      _dnoise[sub_run_ind].Print(stream_name);
+      _occupancy[sub_run_ind].Print(stream_name);
+      _pulse_height[sub_run_ind].Print(stream_name);
+      _rawhit_occupany[sub_run_ind].Print(stream_name);
+      _rawhit_pulse_height[sub_run_ind].Print(stream_name);
+    }
+  }
+}
+
 void Redis::SendChannelData() {
   unsigned n_commands = 0;
   for (size_t i = 0; i < _stream_take.size(); i++) {
@@ -562,7 +632,7 @@ void Redis::SendChannelData() {
       if (_do_timing) {
         _timing.StartTime();
       }
-      unsigned index = _now / _stream_take[i];
+      uint64_t index = _now / _stream_take[i];
       const char *stream_name = std::to_string(_stream_take[i]).c_str(); 
       // metrics control the sending of everything else
       n_commands += _rms[i].Send(context, index, stream_name, _stream_expire[i]);

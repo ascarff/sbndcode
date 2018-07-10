@@ -92,7 +92,7 @@ public:
   void HeaderData(std::vector<daqAnalysis::HeaderData> *header_data);
   // must be called before calling Send functions
   void StartSend(unsigned run, unsigned sub_run);
-  void StartSend(std::time_t now, unsigned run, unsigned sub_run);
+  void StartSend(uint64_t now, unsigned run, unsigned sub_run);
   // must be called after calling Send functions
   void FinishSend();
   // whether the code will call Snapshot() on ChannelData
@@ -118,7 +118,7 @@ protected:
   daqAnalysis::VSTChannelMap *_channel_map;
 
   redisContext *context;
-  std::time_t _now;
+  uint64_t _now;
   std::time_t _start;
   int _snapshot_time;
   // vector of time deltas for each stream
@@ -128,7 +128,7 @@ protected:
   // the i-th stream with _stream_expire[i] = dt will keep data in redis for dt seconds
   std::vector<unsigned> _stream_expire;
   // last time each stream sent something to redis
-  std::vector<std::time_t> _stream_last;
+  std::vector<uint64_t> _stream_last;
   // whether, this time around, the i-th stream will send to redis. Calculated in StartSend()
   std::vector<bool> _stream_send;
   // whether there is a sub run stream
@@ -146,7 +146,7 @@ protected:
   // last run analyzed
   unsigned _last_run;
   // last time a snapshot was sent
-  std::time_t _last_snapshot;
+  uint64_t _last_snapshot;
   // whether this is the first run
   bool _first_run;
 

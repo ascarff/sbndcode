@@ -74,6 +74,7 @@ daqAnalysis::OnlineAnalysis::OnlineAnalysis(fhicl::ParameterSet const & p):
   config.first_subrun = p.get<unsigned>("first_subrun", 0);
   config.monitor_name = p.get<std::string>("monitor_name", "");
   config.flush_data = p.get<bool>("flush_data", true);
+  config.print_data = p.get<bool>("print_data", false);
   
   // have Redis alloc fft if you don't calculate them and you know the input size
   config.waveform_input_size = (!_analysis._config.fft_per_channel && _analysis._config.static_input_size > 0) ?
@@ -97,7 +98,10 @@ void daqAnalysis::OnlineAnalysis::analyze(art::Event const & e) {
   if (_analysis.ReadyToProcess() && !_analysis.EmptyEvent()) {
     // if configured to, get the time from the event
     if (_config_use_event_time) {
-      _redis_manager->StartSend(e.time().value(), run, sub_run);
+      //std::cout << "TIME HIGH: " << e.time().timeHigh() << std::endl;
+      //std::cout << "TIME LOW: " << e.time().timeLow() << std::endl;
+      //std::cout << "TIME VAL: " << e.time().value() << std::endl;
+      _redis_manager->StartSend(e.time().timeLow(), run, sub_run);
     }
     // else use default time (now)
     else {
