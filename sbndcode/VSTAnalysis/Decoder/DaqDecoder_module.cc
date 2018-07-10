@@ -78,6 +78,9 @@ daqAnalysis::HeaderData Fragment2HeaderData(art::Event &event, const artdaq::Fra
   ret.checksum_word = raw_header->checksum;
   ret.trig_frame_sample_word = raw_header->trig_frame_sample;
 
+  ret.time_stamp_lo = event.time().timeLow();
+  ret.time_stamp_hi = event.time().timeHigh();
+
   return ret;
 }
 
@@ -205,7 +208,7 @@ void daq::DaqDecoder::process_fragment(art::Event &event, const artdaq::Fragment
     }  
     // calculate the mode and set it as the pedestal
     if (_config.baseline_calc || _config.subtract_pedestal) {
-      auto mode = Mode(raw_digits_waveform, _config.n_mode_skip);
+      int16_t mode = Mode(raw_digits_waveform, _config.n_mode_skip);
       if (_config.subtract_pedestal) {
         for (unsigned i = 0; i < raw_digits_waveform.size(); i++) {
           raw_digits_waveform[i] -= mode;
