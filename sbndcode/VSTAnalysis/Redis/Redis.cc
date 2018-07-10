@@ -599,7 +599,7 @@ void Redis::PrintChannelData() {
       _dnoise[i].Print(stream_name);
       _occupancy[i].Print(stream_name);
       _pulse_height[i].Print(stream_name);
-      _rawhit_occupany[i].Print(stream_name);
+      _rawhit_occupancy[i].Print(stream_name);
       _rawhit_pulse_height[i].Print(stream_name);
     }
   }
@@ -611,14 +611,14 @@ void Redis::PrintChannelData() {
     
       std::stringstream ss;
       ss << "sub_run_" << _this_run;
-      const char *sub_run_ident = ss.str().c_str();
+      const char *stream_name = ss.str().c_str();
       _rms[sub_run_ind].Print(stream_name);
       _baseline[sub_run_ind].Print(stream_name);
       _baseline_rms[sub_run_ind].Print(stream_name);
       _dnoise[sub_run_ind].Print(stream_name);
       _occupancy[sub_run_ind].Print(stream_name);
       _pulse_height[sub_run_ind].Print(stream_name);
-      _rawhit_occupany[sub_run_ind].Print(stream_name);
+      _rawhit_occupancy[sub_run_ind].Print(stream_name);
       _rawhit_pulse_height[sub_run_ind].Print(stream_name);
     }
   }
