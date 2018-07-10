@@ -69,7 +69,6 @@ source:
 
 services: {
 
-  GoodHeader: {}
   VSTChannelMap: @local::channel_map_VST 
   Geometry: @local::lariat_geo
   ExptGeoHelperInterface: @local::lariat_geometry_helper

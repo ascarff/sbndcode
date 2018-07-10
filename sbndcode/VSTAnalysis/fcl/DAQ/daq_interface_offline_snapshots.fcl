@@ -67,7 +67,6 @@ source:
 }
 
 services: {
-  GoodHeader: {}
   VSTChannelMap: @local::channel_map_VST 
 
   message: {
