@@ -200,7 +200,12 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 	slope = fFunc->GetParameter(0);						//Updating the slope value for the new fit
 	if(fVerbose) cout << "Refitted Collection slope is: " << slope << endl;
 
-  // Cut on minimum chi2
+	if(New_PTime.size() == 0){
+	  if(fVerbose) cout << "No Hits associated to the track exiting..." << endl;
+	  return -1 ;
+	    }
+
+  // Cut on minimum chi2 -- SET WHEN WE HAVE A FEW MUONS. 
     if(fFunc->GetChisquare()/fFunc->GetNDF() == 0){
     std::cout << "chi2: " << fFunc->GetChisquare() << " NDF: " << fFunc->GetNDF() << " if:  " << fFunc->GetChisquare()/fFunc->GetNDF() << std::endl;
     if(fVerbose) cout << "Bad chi square. Skipping event...\n";
@@ -254,15 +259,14 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 	float normalization = abs(cos(theta)*sin(phi));				//This is part of the normalization factor for the charges	
 	Normal_Integ.resize(Newn);						//Making the vector the same size as New_Integ
 	transform(New_Integ.begin(), New_Integ.end(), Normal_Integ.begin(),bind(multiplies<float>(),std::placeholders::_1,normalization*(1/(sqrt(6.28319)*shaping_time*us2tick))));
-										//^^^^^^^Normalization^^^^^^^
+	//^^^^^^^Normalization^^^^^^
+
+
 	TGraph *NormalIvT = new TGraph(Newn, &New_PTime[0],&Normal_Integ[0]); 	//Graph like IvT but normalized
-	
 	Double_t NewPTminx = *min_element(begin(New_PTime),end(New_PTime));	//Getting min of the Collection PTime hits
 	Double_t NewPTmaxx = *max_element(begin(New_PTime),end(New_PTime));	//Getting max of the Collection PTime hits
-	
 	TF1 *fNewFunc = new TF1("New_Int","expo", NewPTminx, NewPTmaxx);	//Exponential plot for fitting NormalIvT
 	NormalIvT->Fit("New_Int","NQ");						//Fitting NormalIvT with fNewFunc
-
 	double expo0 = fNewFunc->GetParameter(0);				//Getting the "Normalization constant"
 	double expo1 = fNewFunc->GetParameter(1);				//Decay rate
 	if(fVerbose) cout << "The 'normalization' constant is: " << expo0 << endl;
@@ -324,10 +328,10 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 			h2->Fit("gfun","NQ");
 			landau1=gfun->GetParameter(2);
 		}
-			//else{
-			//	if(fVerbose) cout << "The exponential rate is positive. Skipping event..." << endl;
-			//	return -1;
-			//}
+		else{
+		  if(fVerbose) cout << "The exponential rate is positive. Skipping event..." << endl;
+		     	return -1;
+		}
 	}
 	FitTrialTimeminx = *min_element(begin(FitTrialTime),end(FitTrialTime));
 	FitTrialTimemaxx = *max_element(begin(FitTrialTime),end(FitTrialTime));

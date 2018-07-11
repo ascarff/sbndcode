@@ -242,7 +242,7 @@ namespace hit {
       sigType = geom->SignalType(channel);
        
       //High voltage killed a load of induction wires. Lets remove them. This will probably be fixed after some run number add this number in at some point. 
-      if(sigType == geo::kInduction && evt.run()<9999 &&  (Wire[0].Wire > 70 && Wire[0].Wire < 150)){continue;}  
+      if(sigType == geo::kInduction && evt.run()<9999 &&  (Wire[0].Wire > 69 && Wire[0].Wire < 150)){continue;}  
 
       for(unsigned int bin = 0; bin < fDataSize; ++bin){ 
 	
