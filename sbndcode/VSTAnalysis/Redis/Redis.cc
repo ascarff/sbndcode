@@ -280,7 +280,8 @@ void Redis::Snapshot(vector<daqAnalysis::ChannelData> *per_channel_data, vector<
   // record the time for reference
   redisAppendCommand(context, "SET snapshot:time %i", _now);
   redisAppendCommand(context, "SET snapshot:sub_run %i", _this_subrun);
-  n_commands += 2;
+  redisAppendCommand(context, "SET snapshot:run %i", _this_run);
+  n_commands += 3;
 
   if (_do_timing) _timing.StartTime();
 
