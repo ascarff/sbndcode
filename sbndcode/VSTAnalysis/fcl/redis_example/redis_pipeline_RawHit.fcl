@@ -71,7 +71,7 @@ source:
 
 services:
 {
-  VSTChannelMap: @local::nevis_integration_channel_map_VST
+  VSTChannelMap: @local::channel_map_VST
   Geometry: @local::lariat_geo
   ExptGeoHelperInterface: @local::lariat_geometry_helper
   ChannelStatusService:   @local::vst_channelstatus

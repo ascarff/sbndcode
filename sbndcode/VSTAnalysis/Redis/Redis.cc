@@ -145,12 +145,12 @@ void Redis::EventInfo(daqAnalysis::EventInfo *event_info) {
 }
 
 void Redis::FillEventInfo(daqAnalysis::EventInfo *event_info){
-      // update event_inf info in each stream
-    for (unsigned i = 0; i < _n_streams; i++) {
-      // index into the fem data cache
-      _purity[i].Fill(*event_info, i);
-    }
+
   // update all of the metrics
+  for (size_t i = 0; i < _n_streams; i++) {
+    _purity[i].Fill(*event_info);
+  }
+
   for (size_t i = 0; i < _n_streams; i++) {
     _purity[i].Update();
   }
@@ -162,15 +162,13 @@ void Redis::SendEventInfo(){
     _timing.StartTime();
   }
   unsigned n_commands = 0;
-  for (size_t i = 0; i < _stream_take.size(); i++) {
-    // send headers to redis if need be
-    if (_stream_send[i]) {
+  for (size_t i = 0; i < _n_streams; i++) {
       unsigned index = _now / _stream_take[i];
       const char *stream_name = std::to_string(_stream_take[i]).c_str(); 
       n_commands += _purity[i].Send(context, index, stream_name, _stream_expire[i]);
       _purity[i].Clear();
-    }
   }
+
   // special case the sub run stream
   if (_sub_run_stream) {
     unsigned sub_run_ind = _n_streams - 1;  

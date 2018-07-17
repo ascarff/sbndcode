@@ -72,7 +72,7 @@ outputs:
 services:
 {
   TFileService: { fileName: "out.root"}
-  VSTChannelMap: @local::nevis_integration_channel_map_VST
+  VSTChannelMap: @local::channel_map_VST
   //message: @local::standard_debug
 } 
 

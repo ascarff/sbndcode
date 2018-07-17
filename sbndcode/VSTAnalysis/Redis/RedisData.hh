@@ -51,7 +51,7 @@ namespace daqAnalysis {
   class RedisBlocks;
 
   ///Event (channel independent metrics ) 
-  template<class Stream, char const *REDIS_NAME>
+  template<class Stream, char const *REDIS_NAME> 
   class EventInfoMetric;
 
   // and the metric classes 
@@ -70,6 +70,7 @@ public:
   void Clear();
   // take the data value and reset it
   float Data(unsigned index);
+
   // returns n_data
   unsigned Size() { return _data.size(); }
   // called per iter
@@ -513,61 +514,55 @@ public:
   virtual ~EventInfoMetric() {}
 
   EventInfoMetric(daqAnalysis::VSTChannelMap *channel_map)
-    : _fem(channel_map->NFEM(), 1)
+    : _event(0, 1)
   {}
 
-  void Fill(daqAnalysis::EventInfo &event_info, unsigned fem_ind) {
+  void Fill(daqAnalysis::EventInfo &event_info) {
     // calculate and add to each container
     unsigned val = Calculate(event_info);
 
-    // each container is aware of how often it is filled per time instance
-    _fem.Fill(fem_ind, 0, val);
+    // each container is aware of how often it is filled per time instance Only one data stream hence first value is set to 0. 
+    _event.Fill(0,0, val);
   }
 
-  unsigned Data(unsigned index) {
-    return _fem.Data(index);
+  unsigned Data() {
+    //This stream has only one Data set per event. The purity does not change per FEM! (Well at least in lariat) 
+    return _event.Data(0);
   }
 
   // to be called once per time instance
   void Update() {
-    _fem.Update();
+    _event.Update();
   }
 
   // called when stuff is sent to Redis
   void Clear() {
-    _fem.Clear();
+    _event.Clear();
   }
 
   // send stuff to Redis
   unsigned Send(redisContext *context, unsigned index, const char *stream_name, unsigned stream_expire) {
-    // send FEM stuff
-    unsigned n_fem = _fem.Size();
-    for (unsigned fem_ind = 0; fem_ind < n_fem; fem_ind++) {
-      // @VST: this is ok because there is only 1 crate
-      // TEMPORARY IMPLEMENTATION
-      unsigned fem = fem_ind;
-      unsigned crate = 0;
-      redisAppendCommand(context, "SET stream/%s:%i:%s:crate:%i:fem:%i %u",
-        stream_name, index, REDIS_NAME, crate, fem, Data(fem_ind)); 
+
+      redisAppendCommand(context, "SET stream/%s:%i:%s: %u",
+        stream_name, index, REDIS_NAME, Data()); 
 
       if (stream_expire != 0) {
-        redisAppendCommand(context, "EXPIRE stream/%s:%i:%s:crate:%i:fem:%i %u",
-         stream_name, index, REDIS_NAME, crate, fem, stream_expire); 
-      }
-    } 
-    return n_fem * ((stream_expire == 0) ? 1 : 2);
+        redisAppendCommand(context, "EXPIRE stream/%s:%i:%s: %u",
+         stream_name, index, REDIS_NAME, stream_expire); 
+      } 
+    return ((stream_expire == 0) ? 1 : 2);
   }
 
 protected:
-  Stream _fem;
+  Stream _event;
 
 };
 
 extern char REDIS_NAME_PURITY[];
 
-class daqAnalysis::RedisPurity: public daqAnalysis::EventInfoMetric<StreamDataMax, REDIS_NAME_PURITY> {
+class daqAnalysis::RedisPurity: public daqAnalysis::EventInfoMetric<StreamDataMean, REDIS_NAME_PURITY> {
   // inherit constructor
-  using daqAnalysis::EventInfoMetric<StreamDataMax, REDIS_NAME_PURITY>::EventInfoMetric;
+  using daqAnalysis::EventInfoMetric<StreamDataMean, REDIS_NAME_PURITY>::EventInfoMetric;
 
   // implement calculate
   inline  unsigned Calculate(daqAnalysis::EventInfo &eventinfo) override
