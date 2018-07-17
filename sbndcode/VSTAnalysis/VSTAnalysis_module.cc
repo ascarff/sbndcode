@@ -61,6 +61,9 @@ daqAnalysis::VSTAnalysis::VSTAnalysis(fhicl::ParameterSet const & p):
   if (_analysis._config.n_headers > 0) {
     _output->Branch("header_data", &_analysis._header_data);
   }
+  if (_analysis._config.n_metadata > 0) {
+    _output->Branch("nevis_tpc_metadata", &_analysis._nevis_tpc_metadata);
+  }
   if (_analysis._config.sum_waveforms) {
     _output->Branch("summed_waveforms", &_analysis._fem_summed_waveforms);
   }

@@ -32,7 +32,7 @@ physics:
       n_headers: 10
 
       threshold_calc: 3
-      threshold_sigma: 5
+      threshold_sigma: 8
       noise_range_sampling: 1
       n_smoothing_samples: 1
       n_above_threshold: 2
@@ -63,49 +63,7 @@ physics:
 
 source:
 {
-  module_type: TransferInput
-
-  # The timeout shouldn't be much smaller than the period between events, otherwise 
-  # there's a spew of timeout messages
-
-  timeoutInUsecs: 10000000  
-
-  commanderPluginType: xmlrpc
-  dispatcherHost: localhost
-  dispatcherPort: 7166
-
-  transfer_plugin: {
-
-     unique_label: "OnlineSnapshotShmem2"
-      transferPluginType: Shmem
-      shm_key: 0x40471454
-      max_fragment_size_words: 2097152
-      first_event_builder_rank: 0
-	  source_rank: 5
-	  destination_rank: 6
-  }
-
-  dispatcher_config: {
-    unique_label: "OnlineSnapshotShmem2"
-    path: [ out ]
-    physics: {}
-    outputs: {
-      out: {
-        module_type: TransferOutput
-        transfer_plugin: {
-
-	   unique_label: "OnlineSnapshotShmem2"
-            transferPluginType: Shmem
-    
-            shm_key: 0x40471454
-
-            max_fragment_size_words: 2097152
-              first_event_builder_rank: 0
-	      destination_rank: 6
-        }
-      } 
-    }
-  }
+  module_type: RootInput
 }
 
 services: {
@@ -117,12 +75,12 @@ services: {
         type : cout 
         threshold : "DEBUG" 
       } 
-      udp_message_forwarding : {
-        type : "UDP" 
-        threshold : "DEBUG" 
-        port : 30001
-        host : "lariat-daq04.fnal.gov" 
-      }
+      #udp_message_forwarding : {
+      #  type : "UDP" 
+      #  threshold : "DEBUG" 
+      #  port : 30001
+      #  host : "lariat-daq04.fnal.gov" 
+      #}
     }
   }
 }

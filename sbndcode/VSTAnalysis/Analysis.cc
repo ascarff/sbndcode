@@ -416,7 +416,6 @@ else if(_config.n_metadata > 0  && _config.fDoPurityAna) {
 void Analysis::SumWaveforms(art::Event const & event) {
   auto const& raw_digits_handle = event.getValidHandle<std::vector<raw::RawDigit>>(_config.daq_tag);
   // summed waveforms
-  // TODO @INSTALLATION: Make sure this still works
   if (_config.sum_waveforms) {
     size_t n_fem = _channel_map->NFEM();
     std::vector<std::vector<const std::vector<int16_t> *>> channel_waveforms_per_fem(n_fem);

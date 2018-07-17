@@ -11,7 +11,7 @@ physics:
     {
       module_type: DaqDecoder
       produce_header: true
-      validate_header: true
+      validate_header: false
       v_inc_trig_frame_no: false # these are wonky, don't worry about them
     }
     rawhit:  @local::standard_fasthitfinderVST
@@ -27,21 +27,22 @@ physics:
       producer_name: daq
       snapshot_time: -1
 
-      stream_take: [5, 30, 600, 3600]
-      stream_expire: [86400, 86400, 0, 0]
+      stream_take: [5, 30]
+      stream_expire: [10000, 60000]
       sub_run_stream: true
       sub_run_expire: 0
       use_event_time: true # run offline
+      check_good_header: true
 
       hostname: "131.225.150.201"
       n_headers: 10
 
       threshold_calc: 3
-      threshold_sigma: 5
+      threshold_sigma: 8
       noise_range_sampling: 1
       n_smoothing_samples: 1
       n_above_threshold: 2
-      use_planes: false
+      use_planes: true
       verbose: false
       baseline_calc: 2
       n_mode_skip: 3
@@ -63,49 +64,7 @@ physics:
 }
 source:
 {
-  module_type: TransferInput
-
-  # The timeout shouldn't be much smaller than the period between events, otherwise 
-  # there's a spew of timeout messages
-
-  timeoutInUsecs: 10000000  
-
-  commanderPluginType: xmlrpc
-  dispatcherHost: localhost
-  dispatcherPort: 7166
-
-  transfer_plugin: {
-
-     unique_label: "OnlineMonitorShmem2"
-      transferPluginType: Shmem
-      shm_key: 0x40471453
-      max_fragment_size_words: 2097152
-      first_event_builder_rank: 0
-	  source_rank: 5
-	  destination_rank: 6
-  }
-
-  dispatcher_config: {
-    unique_label: "OnlineMonitorShmem2"
-    path: [ out ]
-    physics: {}
-    outputs: {
-      out: {
-        module_type: TransferOutput
-        transfer_plugin: {
-
-	   unique_label: "OnlineMonitorShmem2"
-            transferPluginType: Shmem
-    
-            shm_key: 0x40471453
-
-            max_fragment_size_words: 2097152
-              first_event_builder_rank: 0
-	      destination_rank: 6
-        }
-      } 
-    }
-  }
+  module_type: RootInput
 }
 
 services: {
@@ -121,12 +80,6 @@ services: {
         type : cout 
         threshold : "DEBUG" 
       } 
-      udp_message_forwarding : {
-        type : "UDP" 
-        threshold : "DEBUG" 
-        port : 30001
-        host : "lariat-daq04.fnal.gov" 
-      }
     }
   }
 }

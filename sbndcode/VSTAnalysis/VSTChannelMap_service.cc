@@ -15,6 +15,8 @@
 #include <cctype>
 #include <stdlib.h>
 #include <cassert>
+#include <numeric>
+#include <iterator>
 
 #include "art/Framework/Services/Registry/ActivityRegistry.h"
 #include "art/Framework/Services/Registry/ServiceMacros.h"
@@ -32,7 +34,8 @@ daqAnalysis::VSTChannelMap::VSTChannelMap(fhicl::ParameterSet const & p, art::Ac
   _crate_id(p.get<unsigned>("crate_id", 0)),
   _channel_to_wire(),
   _wire_to_channel(),
-  _wire_per_fem(_n_fem, 0)
+  _wire_per_fem(_n_fem, 0),
+  _fem_active_channels(_n_fem)
 {
   // Setup channel map
 
@@ -44,23 +47,26 @@ daqAnalysis::VSTChannelMap::VSTChannelMap(fhicl::ParameterSet const & p, art::Ac
     /* 
      * Data format is (from Jose):
      *
-     * (int)TPC_wire (string)plane (string)adapter_connector (int)adapter_pin (int)analog_connector (int)analog_pin (int)ASIC (int)ASIC_ch (int)FEMB_ch (int)FEMB (int)WIB (int)FEM_slot (int)FEM_ch
+     * (int)jon_wire (int)jen_wire (string)plane (string)adapter_connector (int)adapter_pin (int)analog_connector (int)analog_pin 
+     * (int)ASIC (int)ASIC_ch (int)FEMB_ch (int)FEMB (int)WIB (int)ADCdec (string)ADChex (int)FEM_slot (int)FEM_ch
+     *
+     * There are two definitions of the TPC wire index -- the "Jon" and the "Jen". We want "Jon", as that corresponds to the 
+     * mapping defined in lariatsoft. 
      *
      * Not all FEM channels are used. Those that are unused have a TPC_wire value of -1.
-     * Wire ID's are per plane and FEM channel ID's are per slot
-     * Wire ID's are 1-indexed and FEM channel ID's are 0-indexed
+     * WIRE ID's are global and FEM channel ID's are per slot
      *
      *
-     * For analysis code, we want to make the wire ID's and the FEM channel ID's defined globally and make both 0-indexed.
-     * So define induction plane = [0, 240) and collection plane = [240, 480).
-     * And define global_channel_id = slot_id * 64 + channel_id;
+     * For analysis code, we want to make the FEM channel ID's defined globally
+     * So define global_channel_id = slot_id * 64 + channel_id;
     */
     unsigned channel_count = 0;
     unsigned line_no = 0;
     string line;
 
     // line fields
-    int tpc_wire;
+    int jon_wire;
+    int jen_wire;
     string wire_plane;
     string adapter_connector;
     int adapter_pin; 
@@ -71,33 +77,25 @@ daqAnalysis::VSTChannelMap::VSTChannelMap(fhicl::ParameterSet const & p, art::Ac
     int FEMB_ch;
     int FEMB;
     int WIB;
+    int ADC_dec;
+    string ADC_hex;
     unsigned FEM_slot;
     unsigned FEM_ch;
 
     while (getline(input, line)) {
       istringstream sline(line);
       // checks if line is formatted properly
-      bool formatted = (sline >> tpc_wire >> wire_plane >> adapter_connector >> adapter_pin >> analog_connector >>
-          analog_pin >> ASIC >> ASIC_ch >> FEMB_ch >> FEMB >> WIB >> FEM_slot >> FEM_ch >> std::ws).good();
+      bool formatted = (sline >> jon_wire >> jen_wire >> wire_plane >> adapter_connector >> adapter_pin >> analog_connector >>
+          analog_pin >> ASIC >> ASIC_ch >> FEMB_ch >> FEMB >> WIB >> ADC_dec >> ADC_hex >> FEM_slot >> FEM_ch >> std::ws).good();
       if (!formatted && sline.peek() != EOF) {
         cerr << "ERROR: misformatted line " << line_no << endl;
         exit(1);
       }
       line_no ++;
-      if (tpc_wire < 0) {
+      if (jon_wire < 0) {
         continue;
       }
-      unsigned wire_id;
-      if (wire_plane == "Induction") {
-        wire_id = (unsigned)tpc_wire - 1;
-      }
-      else if (wire_plane == "Collection") {
-        wire_id = (unsigned)tpc_wire + _n_channels/2 - 1;
-      }
-      else {
-        cerr << "ERROR: bad plane value: " << wire_plane << std::endl;
-        exit(1);
-      }
+      unsigned wire_id = jon_wire;
       unsigned channel_id = (FEM_slot - _slot_offset) * _channel_per_fem + FEM_ch;
 
       // set channel map
@@ -107,6 +105,9 @@ daqAnalysis::VSTChannelMap::VSTChannelMap(fhicl::ParameterSet const & p, art::Ac
       _wire_per_fem[FEM_slot - _slot_offset] += 1;
 
       channel_count ++;
+
+      // include in list of channels on FEM
+      _fem_active_channels[FEM_slot - _slot_offset].push_back(FEM_ch);
     }
     // checks if file has correct number of lines
     if (channel_count != _n_channels) {
@@ -128,6 +129,8 @@ daqAnalysis::VSTChannelMap::VSTChannelMap(fhicl::ParameterSet const & p, art::Ac
     _channel_per_fem = _n_channels / _n_fem;
     for (unsigned i = 0; i < _n_fem; i++) {
       _wire_per_fem[i] = _channel_per_fem;
+      _fem_active_channels[i] = std::vector<unsigned>(_channel_per_fem);
+      std::iota(std::begin(_fem_active_channels[i]), std::end(_fem_active_channels[i]), 0);
     }
   }
 }
@@ -198,6 +201,19 @@ bool daqAnalysis::VSTChannelMap::IsGoodSlot(unsigned slot) const {
   // negative overflow will wrap around and also be large than n_fem_per_crate,
   // so this covers both the case where the slot id is too big and too small
   return (slot - _slot_offset) < _n_fem;
+}
+
+unsigned daqAnalysis::VSTChannelMap::ReadoutChannel2FEMInd(unsigned channel, unsigned slot, unsigned crate, bool add_offset) const {
+  daqAnalysis::ReadoutChannel readout;
+  readout.channel_ind = channel;
+  readout.slot = slot + (add_offset ? _slot_offset : 0);
+  readout.crate = crate;
+  return ReadoutChannel2FEMInd(readout);
+}
+
+unsigned daqAnalysis::VSTChannelMap::ReadoutChannel2FEMInd(daqAnalysis::ReadoutChannel channel) const {
+  auto const& list = _fem_active_channels[channel.slot - _slot_offset];
+  return std::distance(list.begin(), std::find(list.begin(), list.end(), channel.channel_ind));
 }
 
 DEFINE_ART_SERVICE(daqAnalysis::VSTChannelMap)

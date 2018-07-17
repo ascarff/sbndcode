@@ -8,9 +8,9 @@ physics:
     {
       module_type: DaqDecoder
       produce_header: false
+      produce_metadata: true
       baseline_calc: true
       n_mode_skip: 3
-      subtract_pedestal: true
     }
   }
 
@@ -25,12 +25,15 @@ outputs:
   out1:
   {
     module_type: RootOutput
+    #fileName: "digits.root"
     fileName: "/daqdata/digits_sbnd_r%06r_%06s.root"
     #fileName: "/tmp/digits_sbnd_r%06r_%06s.root"
     dataTier:    "digits"
     streamName:  "all"
     outputCommands: [
-      "keep raw::RawDigits_daq__DIGITS"
+      "keep *",
+      "drop artdaq::Fragments_daq_*_DAQ",
+      "drop art::TriggerResults_TriggerResults_*_DIGITS"
     ]
   }
 }
@@ -38,7 +41,6 @@ outputs:
 services:
 {
   VSTChannelMap: @local::channel_map_VST 
-  #VSTChannelMap: @local::nevis_integration_channel_map_VST
 }
 
 source:

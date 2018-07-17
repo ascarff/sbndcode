@@ -214,7 +214,8 @@ public:
   DetectorMetric(daqAnalysis::VSTChannelMap *channel_map) :
     _wire_data(channel_map->NChannels(), 1),
     _fem_data(channel_map->NFEM(), 1),
-    _crate_data(channel_map->NCrates(), channel_map->NChannels()) /* NOTE: assume there is only one crate */
+    _crate_data(channel_map->NCrates(), channel_map->NChannels()), /* NOTE: assume there is only one crate */
+    _wire_message_times(channel_map->NChannels(), 0)
   {
     // set the number of channels per fem
     for (unsigned slot = 0; slot < channel_map->NFEM(); slot++) {
@@ -229,7 +230,12 @@ public:
 
     // persist through nan's
     if (std::isnan(dat)) {
-      mf::LogError("NAN Metric") << "Metric " << REDIS_NAME << " is NAN on wire " << wire << std::endl;
+      // don't send error messages too often
+      time_t now = std::time(nullptr);
+      if (now - _wire_message_times[wire] > 10) {
+        _wire_message_times[wire] = now;
+        mf::LogError("NAN Metric") << "Metric " << REDIS_NAME << " is NAN on wire " << wire << std::endl;
+      }
       return;
     }
 
@@ -266,15 +272,15 @@ public:
   }
 
   // send stuff to Redis
-  unsigned Send(redisContext *context, unsigned index, const char *stream_name, unsigned stream_expire) {
+  unsigned Send(redisContext *context, uint64_t index, const char *stream_name, unsigned stream_expire) {
     // send all the wire stuff
     unsigned n_wires = _wire_data.Size();
     for (unsigned wire = 0; wire < n_wires; wire++) {
-      redisAppendCommand(context, "SET stream/%s:%i:%s:wire:%i %f",
+      redisAppendCommand(context, "SET stream/%s:%lu:%s:wire:%i %f",
         stream_name, index, REDIS_NAME,wire, DataWire(wire)); 
 
       if (stream_expire != 0) {
-        redisAppendCommand(context, "EXPIRE stream/%s:%i:%s:wire:%i %u",
+        redisAppendCommand(context, "EXPIRE stream/%s:%lu:%s:wire:%i %u",
           stream_name, index, REDIS_NAME,wire, stream_expire); 
       }
     } 
@@ -285,22 +291,22 @@ public:
       // TEMPORARY IMPLEMENTATION
       unsigned fem = fem_ind;
       unsigned crate = 0;
-      redisAppendCommand(context, "SET stream/%s:%i:%s:crate:%i:fem:%i %f",
+      redisAppendCommand(context, "SET stream/%s:%lu:%s:crate:%lu:fem:%i %f",
         stream_name, index, REDIS_NAME, crate, fem, DataFEM(fem_ind)); 
 
       if (stream_expire != 0) {
-        redisAppendCommand(context, "EXPIRE stream/%s:%i:%s:crate:%i:fem:%i %u",
+        redisAppendCommand(context, "EXPIRE stream/%s:%lu:%s:crate:%lu:fem:%i %u",
          stream_name, index, REDIS_NAME, crate, fem, stream_expire); 
       }
     } 
     // and the crate stuff
     unsigned n_crate = _crate_data.Size();
     for (unsigned crate = 0; crate < n_crate; crate++) {
-      redisAppendCommand(context, "SET stream/%s:%i:%s:crate:%i %f",
+      redisAppendCommand(context, "SET stream/%s:%lu:%s:crate:%i %f",
          stream_name, index, REDIS_NAME, crate, DataCrate(crate));
 
       if (stream_expire != 0) {
-        redisAppendCommand(context, "EXPIRE stream/%s:%i:%s:crate:%i %u",
+        redisAppendCommand(context, "EXPIRE stream/%s:%lu:%s:crate:%i %u",
            stream_name, index, REDIS_NAME, crate, stream_expire);
       }
     }
@@ -308,10 +314,21 @@ public:
     return (n_wires + n_fem + n_crate) * ((stream_expire == 0) ? 1:2);
   }
 
+  void Print(const char *stream_name) {
+    std::cout << "METRIC: " << REDIS_NAME << std::endl;
+    std::cout << "STREAM NAME: " << stream_name << std::endl;
+    unsigned n_wires = _wire_data.Size();
+    for (unsigned wire = 0; wire < n_wires; wire++) {
+      std::cout << "WIRE: " << wire << " DATA: " << DataWire(wire) << std::endl;
+    }
+  }
+
 protected:
   Stream _wire_data;
   Stream _fem_data;
   Stream _crate_data;
+
+  std::vector<unsigned> _wire_message_times;
 };
 
 // string literals can't be template arguments for some reason, so declare them here
@@ -328,9 +345,9 @@ extern char REDIS_NAME_RAWHIT_OCCUPANCY[];
 extern char REDIS_NAME_RAWHIT_PULSE_HEIGHT[];
 
 // RMS is Variable Mean because sometimes noise calculation algorithm can fail
-class daqAnalysis::RedisRMS: public daqAnalysis::DetectorMetric<StreamDataVariableMean, REDIS_NAME_RMS> {
+class daqAnalysis::RedisRMS: public daqAnalysis::DetectorMetric<StreamDataMean, REDIS_NAME_RMS> {
   // inherit constructor
-  using daqAnalysis::DetectorMetric<StreamDataVariableMean, REDIS_NAME_RMS>::DetectorMetric;
+  using daqAnalysis::DetectorMetric<StreamDataMean, REDIS_NAME_RMS>::DetectorMetric;
 
   // implement calculate
  inline float Calculate(daqAnalysis::ChannelData &channel) override
@@ -356,9 +373,9 @@ class daqAnalysis::RedisRawHitOccupancy: public daqAnalysis::DetectorMetric<Stre
   { return channel.Hitoccupancy; }
 };
 
-class daqAnalysis::RedisDNoise: public daqAnalysis::DetectorMetric<StreamDataVariableMean, REDIS_NAME_DNOISE> {
+class daqAnalysis::RedisDNoise: public daqAnalysis::DetectorMetric<StreamDataMean, REDIS_NAME_DNOISE> {
   // inherit constructor
-  using daqAnalysis::DetectorMetric<StreamDataVariableMean, REDIS_NAME_DNOISE>::DetectorMetric;
+  using daqAnalysis::DetectorMetric<StreamDataMean, REDIS_NAME_DNOISE>::DetectorMetric;
 
   // implement calculate
  inline float Calculate(daqAnalysis::ChannelData &channel) override
@@ -437,7 +454,7 @@ public:
   }
 
   // send stuff to Redis
-  unsigned Send(redisContext *context, unsigned index, const char *stream_name, unsigned stream_expire) {
+  unsigned Send(redisContext *context, uint64_t index, const char *stream_name, unsigned stream_expire) {
     // send FEM stuff
     unsigned n_fem = _fem.Size();
     for (unsigned fem_ind = 0; fem_ind < n_fem; fem_ind++) {
@@ -445,11 +462,11 @@ public:
       // TEMPORARY IMPLEMENTATION
       unsigned fem = fem_ind;
       unsigned crate = 0;
-      redisAppendCommand(context, "SET stream/%s:%i:%s:crate:%i:fem:%i %u",
+      redisAppendCommand(context, "SET stream/%s:%lu:%s:crate:%lu:fem:%i %u",
         stream_name, index, REDIS_NAME, crate, fem, Data(fem_ind)); 
 
       if (stream_expire != 0) {
-        redisAppendCommand(context, "EXPIRE stream/%s:%i:%s:crate:%i:fem:%i %u",
+        redisAppendCommand(context, "EXPIRE stream/%s:%lu:%s:crate:%lu:fem:%i %u",
          stream_name, index, REDIS_NAME, crate, fem, stream_expire); 
       }
     } 

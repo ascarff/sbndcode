@@ -67,7 +67,6 @@ lariat_auxdetgeometry_helper:
 #
 lariat_geometry_services: {
   ExptGeoHelperInterface:         @local::lariat_geometry_helper
-#  ExptGeoHelperInterface:        @local::standard_geometry_helper
   Geometry:                       @local::lariat_geo
   AuxDetExptGeoHelperInterface:   @local::lariat_auxdetgeometry_helper
   AuxDetGeometry:                 @local::lariat_auxdetgeo

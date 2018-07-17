@@ -18,8 +18,9 @@ endif()
 
 # add header-decoder stuff
 # don't try to build if not set up
-#if( DEFINED ENV{TRACE_INC} )
-#endif()
+if( DEFINED ENV{SBNDDAQ_DATATYPES_INC} )
+  add_subdirectory(Decoder)
+endif()
 
 # filter modules for running online monitoring
 add_subdirectory(OnlineFilters)

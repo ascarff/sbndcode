@@ -36,6 +36,9 @@ public:
   unsigned ReadoutChannel2Ind(daqAnalysis::ReadoutChannel channel) const;
   unsigned ReadoutChannel2Ind(unsigned channel, unsigned slot, unsigned crate, bool add_offset=false) const;
 
+  unsigned ReadoutChannel2FEMInd(daqAnalysis::ReadoutChannel channel) const;
+  unsigned ReadoutChannel2FEMInd(unsigned channel, unsigned slot, unsigned crate, bool add_offset=false) const;
+
   bool IsMappedChannel(unsigned channel_no) const;
   bool IsMappedChannel(unsigned channel_ind, unsigned slot_ind, unsigned crate_ind, bool add_offset=false) const;
   bool IsMappedChannel(daqAnalysis::ReadoutChannel channel) const;
@@ -47,7 +50,7 @@ public:
 
   bool IsGoodSlot(unsigned slot) const;
 
-  unsigned NSlotWire(unsigned clost) const;
+  unsigned NSlotWire(unsigned slot) const;
   unsigned NSlotChannel() const;
 
   // Hard code this for online monitoring
@@ -73,6 +76,7 @@ private:
   std::map<unsigned, unsigned> _channel_to_wire;
   std::map<unsigned, unsigned> _wire_to_channel;
   std::vector<unsigned> _wire_per_fem;
+  std::vector<std::vector<unsigned>> _fem_active_channels;
 };
 
 }// end namespace

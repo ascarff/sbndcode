@@ -286,7 +286,8 @@ float RunningThreshold::Threshold(std::vector<int16_t> &waveform, int16_t baseli
   // if there's no history, just use the raw RMS
   if (_n_past_rms == 0) {
     // 2x penalty since rawRMS will overestimate the true RMS
-    return rawRMS(waveform, baseline) * n_sigma / 2;
+    // edit: no penalty for now
+    return rawRMS(waveform, baseline) * n_sigma;
   }
   else {
     float rms = 0;

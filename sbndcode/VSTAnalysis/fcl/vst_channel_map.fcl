@@ -30,6 +30,5 @@ channel_map_VST:
   slot_offset: 4
   crate_id: 15
   channel_per_fem: 64
-  map_file_name: "/sbnd/data/users/gputnam/VST/channelMap_output_NevisTPCCALIB_generator_LArIAT_Pin_Mapping_06212018_v2.txt"
+  map_file_name: "/sbnd/data/users/sbnd/VST_CHANNEL_MAP/channel_map.txt"
 }
-
