@@ -13,7 +13,6 @@ add_subdirectory(VSTCalibration)
 # don't try to build if not set up
 if( DEFINED ENV{HIREDIS_INC} )
   add_subdirectory(Redis)
-  add_subdirectory(Decoder)
 endif()
 
 # add header-decoder stuff

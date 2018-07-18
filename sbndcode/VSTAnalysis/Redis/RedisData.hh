@@ -531,7 +531,7 @@ public:
   virtual ~EventInfoMetric() {}
 
   EventInfoMetric(daqAnalysis::VSTChannelMap *channel_map)
-    : _event(0, 1)
+    : _event(1, 1)
   {}
 
   void Fill(daqAnalysis::EventInfo &event_info) {
@@ -559,12 +559,10 @@ public:
 
   // send stuff to Redis
   unsigned Send(redisContext *context, unsigned index, const char *stream_name, unsigned stream_expire) {
-
-      redisAppendCommand(context, "SET stream/%s:%i:%s: %u",
+      redisAppendCommand(context, "SET stream/%s:%lu:%s: %u",
         stream_name, index, REDIS_NAME, Data()); 
-
       if (stream_expire != 0) {
-        redisAppendCommand(context, "EXPIRE stream/%s:%i:%s: %u",
+        redisAppendCommand(context, "EXPIRE stream/%s:%lu:%s: %u",
          stream_name, index, REDIS_NAME, stream_expire); 
       } 
     return ((stream_expire == 0) ? 1 : 2);

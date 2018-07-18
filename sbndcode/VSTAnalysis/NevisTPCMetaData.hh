@@ -21,8 +21,6 @@ class NevisTPCMetaData {
   std::string Print() const {
     std::stringstream buffer;
     buffer << "slot: " << slot << std::endl;
-    buffer << "frame no: " << frame_number << std::endl;
-    buffer << "trigger frame no: " << trig_frame_number << std::endl;
     buffer << "two mhz sample: " << two_mhzsample << std::endl;
     buffer << "sub_run_no: " << sub_run_no << std::endl;
     buffer << "time: " << time << std::endl;
@@ -43,8 +41,6 @@ class NevisTPCMetaData {
 
   explicit NevisTPCMetaData(daqAnalysis::HeaderData const& header) {
     slot = header.slot;
-    trig_frame_number = header.trig_frame_number;
-    frame_number = header.frame_number;
     two_mhzsample = header.two_mhzsample;
     sub_run_no = header.sub_run_no;
     time = header.frag_time_stamp;

@@ -187,6 +187,8 @@ void Redis::FinishSend() {
   // send Redis "Alive" signal
   void *reply = redisCommand(context, "SET MONITOR_%s_ALIVE %u", _config.monitor_name.c_str(), std::time(nullptr));
   freeReplyObject(reply);
+
+  }
   
   _last_subrun = _this_subrun;
   _last_run = _this_run;
@@ -195,8 +197,11 @@ void Redis::FinishSend() {
 }
 
 void Redis::EventInfo(daqAnalysis::EventInfo *event_info) {
+  //If -1 there has been a failure in the purity analysis and so we don't want to process that event. 
+  if(event_info->purity != -1){
   SendEventInfo();
   FillEventInfo(event_info);
+  }
 }
 
 void Redis::FillEventInfo(daqAnalysis::EventInfo *event_info){
