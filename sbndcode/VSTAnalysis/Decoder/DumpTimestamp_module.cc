@@ -56,6 +56,7 @@ void daqAnalysis::DumpTimestamp::analyze(art::Event const & event) {
   auto const& daq_handle = event.getValidHandle<artdaq::Fragments>(_tag);
 
   std::cout << "RUN: " << event.run() << " SUBRUN: " << event.subRun() << " EVENT: " << event.event() << std::endl;
+  std::cout << "EVENT TIME " << event.time().timeLow() << std::endl;
   for (auto const &rawfrag: *daq_handle) { 
     std::cout << "TIMESTAMP: " << rawfrag.timestamp() << std::endl;
   } 
