@@ -39,7 +39,11 @@ class HeaderData {
   uint32_t event_time_stamp_hi;
   uint32_t event_time_stamp_lo;
 
+  // software time stamp on fragment generation
   uint64_t frag_time_stamp;
+
+  // hardware time stamp on "frame number"
+  uint64_t frame_time_stamp;
 
   // by default make words noticable
   // Nevis uses DEADBEEF as a default, so distinguish from
@@ -82,6 +86,7 @@ class HeaderData {
     buffer << "ART event time lo: " << event_time_stamp_lo << std::endl;
     buffer << "ART event time hi: " << event_time_stamp_hi << std::endl;
     buffer << "Fragment timestamp: " << frag_time_stamp << std::endl;
+    buffer << "Frame timestamp:  "<< frame_time_stamp << std::endl;
     buffer << std::hex << "checksum: " << checksum << std::endl;
     buffer << std::hex << "computed checksum: " << computed_checksum << std::endl;
 

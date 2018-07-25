@@ -86,7 +86,6 @@ public:
   struct AnalysisConfig {
     public:
     std::string output_file_name;
-    float frame_to_dt;
     bool verbose;
     int n_events;
     art::InputTag daq_tag;
