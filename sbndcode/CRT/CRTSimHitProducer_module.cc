@@ -102,6 +102,7 @@ namespace sbnd {
     double        fTimeCoincidenceLimit;///< minimum time between two overlapping hit crt strips [ticks]
     double        fQPed;                ///< Pedestal offset of SiPMs [ADC]
     double        fQSlope;              ///< Pedestal slope of SiPMs [ADC/photon]
+    bool          fUseReadoutWindow;    ///< Only reconstruct hits within readout window
 
     // Positions of the CRT planes
     std::vector<double> crtPlanes = {-359.1, -357.3, 357.3, 359.1, -358.9, -357.1, 661.52, 663.32, 865.52, 867.32, -240.65, -238.85, 655.35, 657.15};
@@ -142,6 +143,7 @@ namespace sbnd {
     fTimeCoincidenceLimit = (p.get<double> ("TimeCoincidenceLimit"));
     fQPed                 = (p.get<double> ("QPed"));
     fQSlope               = (p.get<double> ("QSlope"));
+    fUseReadoutWindow     = (p.get<bool> ("UseReadoutWindow"));
   }
 
   void CRTSimHitProducer::beginJob()
@@ -156,11 +158,17 @@ namespace sbnd {
     std::map<uint8_t, std::vector<std::pair<int,float>>> tpesmap;
     tpesmap[0] = {std::make_pair(0,0)};
 
+    int nHits = 0;
+
     if(fVerbose){
       std::cout<<"============================================"<<std::endl
                <<"Run = "<<event.run()<<", SubRun = "<<event.subRun()<<", Event = "<<event.id().event()<<std::endl
                <<"============================================"<<std::endl;
     }
+
+    // Detector properties
+    double readoutWindow  = (double)fDetectorProperties->ReadOutWindowSize();
+    double driftTimeTicks = 2.0*(2.*fGeometryService->DetHalfWidth()+3.)/fDetectorProperties->DriftVelocity();
 
     // Retrieve list of CRT hits
     art::Handle< std::vector<crt::CRTData>> crtListHandle;
@@ -188,6 +196,9 @@ namespace sbnd {
       int crtT1 = crtList[i]->T0();
       double t1 = (double)crtT1;
       t1 = t1/8.;
+      if(fUseReadoutWindow){
+        if(!(t1 >= -driftTimeTicks && t1 <= readoutWindow)) continue;
+      }
       uint32_t channel = crtList[i]->Channel();
       int strip = (channel >> 1) & 15;
       int module = (channel >> 5);
@@ -207,7 +218,6 @@ namespace sbnd {
           t2 = t2/8.;
 
           // Calculate the number of photoelectrons at each SiPM
-          // (Hardcoded numbers from the CRT simulation)
           double npe1 = ((double)crtList[i]->ADC() - fQPed)/fQSlope;
           double npe2 = ((double)crtList[i+1]->ADC() - fQPed)/fQSlope;
 
@@ -296,6 +306,7 @@ namespace sbnd {
             crtHit.z_pos = meanZ;
             crtHit.z_err = errZ;
             CRTHitcol->push_back(crtHit);
+            nHits++;
           }
         }
 
@@ -331,6 +342,7 @@ namespace sbnd {
               crtHit.z_pos = meanZ;
               crtHit.z_err = errZ;
               CRTHitcol->push_back(crtHit);
+              nHits++;
             }
 
             // If it's a Y plane
@@ -362,6 +374,7 @@ namespace sbnd {
               crtHit.z_pos = meanZ;
               crtHit.z_err = errZ;
               CRTHitcol->push_back(crtHit);
+              nHits++;
             }
           }
         }
@@ -369,6 +382,8 @@ namespace sbnd {
     }
 
     event.put(std::move(CRTHitcol));
+
+    if(fVerbose) std::cout<<"Number of CRT hits produced = "<<nHits<<std::endl;
     
   } // produce()
 

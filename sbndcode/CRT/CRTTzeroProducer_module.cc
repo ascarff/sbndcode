@@ -128,23 +128,19 @@ void CRTTzeroProducer::produce(art::Event & evt)
   // Output collections  
   std::unique_ptr<art::Assns<crt::CRTTzero, crt::CRTHit>> outputHits(new art::Assns<crt::CRTTzero, crt::CRTHit>);
   //  auto outputHits    = std::make_unique<art::Assns<crt::CRTTzero, crt::CRTHit>>();
-  // need later version of art (later than v2_05_01) to use PtrMaker.
-  // do it the old-fashioned way instead
   art::PtrMaker<crt::CRTHit> hitPtrMaker(evt, rawHandle.id());
   art::PtrMaker<crt::CRTTzero> tzeroPtrMaker(evt, *this);
-  //lar::PtrMaker<crt::CRTHit> hitPtrMaker(evt, rawHandle.id());
-  //lar::PtrMaker<crt::CRTTzero> tzeroPtrMaker(evt, *this);
  
   int N_CRTHits = CRTHitCollection.size();
     std::cout << "number of crt hits " << N_CRTHits << std::endl;
 
-  int iflag[1000] = {};
-
+  //int iflag[1000] = {};
+  std::vector<int> iflag;
+  for(int i = 0; i < N_CRTHits; i++) iflag.push_back(0);
+int nTzero = 0;
   uint planeA, planeB;
   for(int  i = 0; i < N_CRTHits; i++) {//A 
-        
     if (iflag[i]==0) {  // new tzero
-
       //temporary hit collection for each tzero
       std::vector<art::Ptr<crt::CRTHit>> CRTHitCol;
       crt::CRTHit CRTHiteventA = CRTHitCollection[i];
@@ -161,8 +157,8 @@ void CRTTzeroProducer::produce(art::Event & evt)
       CRTcanTzero.ts0_ns=0;
       CRTcanTzero.ts1_ns=0;
       for (int j=0; j<7 ;++j) { // NUMBER OF PLANES, CHANGE TO 7
-        CRTcanTzero.nhits[i]=0;
-        CRTcanTzero.pes[i]=0;
+        CRTcanTzero.nhits[j]=0;
+        CRTcanTzero.pes[j]=0;
       }
 
       // 
@@ -204,6 +200,7 @@ void CRTTzeroProducer::produce(art::Event & evt)
       CRTcanTzero.ts1_ns_err=0.;
       CRTcanTzero.ts0_ns_err=0.;
       CRTTzeroCol->push_back(CRTcanTzero);
+      nTzero++;
 
       //associate hits to this Tzero
       art::Ptr<crt::CRTTzero> aptz = tzeroPtrMaker(CRTTzeroCol->size()-1);
@@ -218,7 +215,7 @@ void CRTTzeroProducer::produce(art::Event & evt)
     evt.put(std::move(CRTTzeroCol));
     evt.put(std::move(outputHits));
   }
-  
+  std::cout<<"Number of TZeros = "<<nTzero<<std::endl;
 }
 
 void CRTTzeroProducer::beginJob()
@@ -229,7 +226,6 @@ void CRTTzeroProducer::beginJob()
 void CRTTzeroProducer::endJob()
 {
   // Implementation of optional member function here.
-
 }
 
 DEFINE_ART_MODULE(CRTTzeroProducer)

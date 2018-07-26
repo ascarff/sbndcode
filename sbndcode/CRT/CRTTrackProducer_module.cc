@@ -143,7 +143,7 @@ CRTTrackProducer::CRTTrackProducer(fhicl::ParameterSet const & p)
 
 void CRTTrackProducer::produce(art::Event & evt)
 {
-
+int nTrack = 0;
   // Implementation of required member function here.
   art::Handle< std::vector<crt::CRTHit> > rawHandle;
   evt.getByLabel(data_label_hits_, rawHandle); //what is the product instance name? no BernZMQ
@@ -185,19 +185,21 @@ void CRTTrackProducer::produce(art::Event & evt)
   art::FindManyP<crt::CRTHit> fmht(rawHandletzero, evt, data_label_tzeros_);
 
   std::vector<std::vector<float>> crtTracks;
-
+  std::vector<std::vector<float>> crtHits;
   //loop over tzeros
+  
   for(size_t tzIter = 0; tzIter < tzerolist.size(); ++tzIter){   
     
     //count planes with hits for this tzero
-    int np =0 ; int ipflag[7] = {}; // CHANGED FROM 4 TO 7
+    int np =0 ; //int ipflag[7] = {}; // CHANGED FROM 4 TO 7
     int tothits =0;
     for (int ip=0;ip<7;++ip) { // CHANGED FROM 4 TO 7
-      if (tzerolist[tzIter]->nhits[ip]>0)  { np++; ipflag[ip]=1; tothits+=tzerolist[tzIter]->nhits[ip];}  
+      if (tzerolist[tzIter]->nhits[ip]>0)  { np++; /*ipflag[ip]=1;*/ tothits+=tzerolist[tzIter]->nhits[ip];}  
     }
 
     if (np>1) {
     std::vector<art::Ptr<crt::CRTHit> > hitlist=fmht.at(tzIter);
+    //for(size_t hit_i = 0; hit_i < hitlist.size(); hit
       if (track_method_type_==1) {
         double time_s_A = hitlist[0]->ts0_s;
 
@@ -210,7 +212,7 @@ void CRTTrackProducer::produce(art::Event & evt)
           for (size_t bh = ah+1; bh< hitlist.size(); ++bh){        
             int planeB = hitlist[bh]->plane;
 
-            if (planeB!=planeA) {  // make a track               
+            if (planeB!=planeA && !((planeA==3&&planeB==4)||(planeA==4&&planeB==3))) {  // make a track               
               temphit=*hitlist[bh];
               CRTavehit Bhit = copyme(temphit);
               crt::CRTTrack CRTcanTrack=shcut(Ahit,Bhit,time_s_A,0);
@@ -228,19 +230,19 @@ void CRTTrackProducer::produce(art::Event & evt)
       else if ((track_method_type_==2) || (track_method_type_==3 && np==2 && tothits==2)) {        
 
         //loop over hits and get average x,y,z,pe for each plane CHANGED FROM 4 TO 7
-        std::vector<float> thittime0[4];
-        std::vector<float> thittime1[4];
-        std::vector<float> tx[4];
-        std::vector<float> ty[4];
-        std::vector<float> tz[4];
-        std::vector<float> pe[4];
+        std::vector<float> thittime0[7];
+        std::vector<float> thittime1[7];
+        std::vector<float> tx[7];
+        std::vector<float> ty[7];
+        std::vector<float> tz[7];
+        std::vector<float> pe[7];
         
         double time_s_A = hitlist[0]->ts0_s;
         //      double time_s_err = hitlist[0]->ts0_s_err;
         double time_s_err = 0.;
         double time1_ns_A = hitlist[0]->ts1_ns;
         double time0_ns_A = hitlist[0]->ts0_ns;
-        
+       
         //loop over hits for this tzero, sort by plane
         for (size_t ah = 0; ah< hitlist.size(); ++ah){        
           int ip = hitlist[ah]->plane;       
@@ -251,90 +253,52 @@ void CRTTrackProducer::produce(art::Event & evt)
           tz[ip].push_back(hitlist[ah]->z_pos);
           pe[ip].push_back(hitlist[ah]->peshit);        
         } // loop over hits
-        
-        // now take averages if there are multiple hits in the same plane at the same time
-        uint planeA,planeB,planeC,planeD;
-        float totpe=0.0;
-        float avet1=0.0; float rmst1 =0.0; 
-        float avet0=0.0; float rmst0 =0.0; 
-        float avex=0.0; float rmsx =0.0; 
-        float avey=0.0; float rmsy =0.0; 
-        float avez=0.0; float rmsz =0.0; 
 
-        uint32_t at0;        int32_t at1;   uint16_t rt0,rt1;
-        planeA=-1;      planeB=-1;      planeC=-1;      planeD=-1;
-        int ip=0;
-
-        while (ip<4 && ipflag[ip]==0) ip++; //CHANGED
-        planeA=ip;
-        ip++;
-        while (ip<4 && ipflag[ip]==0) ip++; //CHANGED
-        planeB=ip;
-        
-        //First track A-B
-        ///average over hits in plane A
-        vmanip(thittime0[planeA],&avet0,&rmst0);
-        vmanip(thittime1[planeA],&avet1,&rmst1);
-        at0 = (uint32_t)(avet0+time0_ns_A); rt0 = (uint16_t)rmst0;   
-        at1 = (int32_t)(avet1+time1_ns_A); rt1 = (uint16_t)rmst1;
-        vmanip(tx[planeA],&avex,&rmsx);
-        vmanip(ty[planeA],&avey,&rmsy);
-        vmanip(tz[planeA],&avez,&rmsz);
-        totpe=std::accumulate(pe[planeA].begin(), pe[planeA].end(), 0.0);
-        CRTavehit pA = fillme(at0,rt0,at1,rt1,avex,rmsx,avey,rmsy,avez,rmsz,totpe,planeA);      
-
-        //  average over hits in plane B
-        vmanip(thittime0[planeB],&avet0,&rmst0);
-        vmanip(thittime1[planeB],&avet1,&rmst1);
-        at0 = (uint32_t)(avet0+time0_ns_A); rt0 = (uint16_t)rmst0;   
-        at1 = (int32_t)(avet1+time1_ns_A); rt1 = (uint16_t)rmst1;
-        vmanip(tx[planeB],&avex,&rmsx);
-        vmanip(ty[planeB],&avey,&rmsy);
-        vmanip(tz[planeB],&avez,&rmsz);
-        totpe=std::accumulate(pe[planeB].begin(), pe[planeB].end(), 0.0);
-        CRTavehit pB = fillme(at0,rt0,at1,rt1,avex,rmsx,avey,rmsy,avez,rmsz,totpe,planeB);      
-        crt::CRTTrack CRTcanTrack=shcut(pA,pB,time_s_A,time_s_err);
-        CRTTrackCol->emplace_back(CRTcanTrack);
-
-        //second and third track
-        if (np>2 && ip<3) {
-          ip++;
-          while (ip<4 && ipflag[ip]==0) ip++; //CHANGED FROM 4 TO 7
-          planeC=ip;
-          //        std::cout << "plane C is " << planeC << std::endl;
-          vmanip(thittime0[planeC],&avet0,&rmst0);
-          vmanip(thittime1[planeC],&avet1,&rmst1);
-          at0 = (uint32_t)(avet0+time0_ns_A); rt0 = (uint16_t)rmst0;   
-          at1 = (int32_t)(avet1+time1_ns_A); rt1 = (uint16_t)rmst1;
-          vmanip(tx[planeC],&avex,&rmsx);
-          vmanip(ty[planeC],&avey,&rmsy);
-          vmanip(tz[planeC],&avez,&rmsz);
-          totpe=std::accumulate(pe[planeC].begin(), pe[planeC].end(), 0.0);
-          CRTavehit pC = fillme(at0,rt0,at1,rt1,avex,rmsx,avey,rmsy,avez,rmsz,totpe,planeC);
-          CRTcanTrack=shcut(pA,pC,time_s_A,time_s_err);
-          CRTTrackCol->emplace_back(CRTcanTrack);
-          CRTcanTrack=shcut(pB,pC,time_s_A,time_s_err);
-          CRTTrackCol->emplace_back(CRTcanTrack);
-
-          // last 3 tracks
-          if (np==4) {
-            planeD=3;
-            //          std::cout << "plane D is " << planeD << std::endl;
-            vmanip(thittime0[planeD],&avet0,&rmst0);
-            vmanip(thittime1[planeD],&avet1,&rmst1);
+        CRTavehit aveHits[7];
+        //loop over planes and calculate average hits
+        for (int ip = 0; ip < 7; ip++){
+          if (tx[ip].size()>0){
+            uint32_t at0; int32_t at1; uint16_t rt0,rt1;
+            float totpe=0.0;
+            float avet1=0.0; float rmst1 =0.0; 
+            float avet0=0.0; float rmst0 =0.0; 
+            float avex=0.0; float rmsx =0.0; 
+            float avey=0.0; float rmsy =0.0; 
+            float avez=0.0; float rmsz =0.0;
+            vmanip(thittime0[ip],&avet0,&rmst0);
+            vmanip(thittime1[ip],&avet1,&rmst1);
             at0 = (uint32_t)(avet0+time0_ns_A); rt0 = (uint16_t)rmst0;   
             at1 = (int32_t)(avet1+time1_ns_A); rt1 = (uint16_t)rmst1;
-            vmanip(tx[planeD],&avex,&rmsx);
-            vmanip(ty[planeD],&avey,&rmsy);
-            vmanip(tz[planeD],&avez,&rmsz);
-            totpe=std::accumulate(pe[planeD].begin(), pe[planeD].end(), 0.0);
-            CRTavehit pD =fillme(at0,rt0,at1,rt1,avex,rmsx,avey,rmsy,avez,rmsz,totpe,planeD);          
-            CRTcanTrack=shcut(pA,pD,time_s_A,time_s_err);
-            CRTTrackCol->emplace_back(CRTcanTrack);
-            CRTcanTrack=shcut(pB,pD,time_s_A,time_s_err);
-            CRTTrackCol->emplace_back(CRTcanTrack);
-            CRTcanTrack=shcut(pC,pD,time_s_A,time_s_err);
-            CRTTrackCol->emplace_back(CRTcanTrack);
+            vmanip(tx[ip],&avex,&rmsx);
+            vmanip(ty[ip],&avey,&rmsy);
+            vmanip(tz[ip],&avez,&rmsz);
+            totpe=std::accumulate(pe[ip].begin(), pe[ip].end(), 0.0);
+            CRTavehit aveHit = fillme(at0,rt0,at1,rt1,avex,rmsx,avey,rmsy,avez,rmsz,totpe,ip);
+            aveHits[ip] = aveHit;
+          }
+          else {
+            CRTavehit aveHit = fillme(0,0,0,0,-99999,-99999,-99999,-99999,-99999,-99999,-99999,ip);
+            aveHits[ip] = aveHit;
+          }
+        }  
+
+        // find pairs of hits in different planes
+        for (size_t ah = 0; ah< 6; ++ah){        
+          CRTavehit Ahit = aveHits[ah];
+          if( Ahit.x_pos==-99999 ) continue;
+
+          for (size_t bh = ah+1; bh< 7; ++bh){        
+            if ( aveHits[bh].x_pos==-99999 ) continue;
+
+            if (ah!=bh && !(ah==3&&bh==4)) {  // make a track               
+              CRTavehit Bhit = aveHits[bh];
+              crt::CRTTrack CRTcanTrack=shcut(Ahit,Bhit,time_s_A,time_s_err);
+              CRTTrackCol->emplace_back(CRTcanTrack);
+              std::vector<float> crtTrack = {Ahit.x_pos, Ahit.y_pos, Ahit.z_pos, Bhit.x_pos, Bhit.y_pos, Bhit.z_pos};
+              crtTracks.push_back(crtTrack);
+              nTrack++;
+            }
+
           }
 
         }
@@ -348,8 +312,8 @@ void CRTTrackProducer::produce(art::Event & evt)
   //store track collection into event
   if(store_track_ == 1)
     evt.put(std::move(CRTTrackCol));
-
-/*  TCanvas *c1 = new TCanvas("c1","",700,500);
+/*
+  TCanvas *c1 = new TCanvas("c1","",700,500);
   int nTracks = crtTracks.size();
   std::cout<<"Number of tracks = "<<nTracks<<std::endl;
   TPolyLine3D *tracks[1000];
@@ -357,10 +321,13 @@ void CRTTrackProducer::produce(art::Event & evt)
     tracks[i] = new TPolyLine3D(2);
     tracks[i]->SetPoint(0, crtTracks[i][0], crtTracks[i][1], crtTracks[i][2]);
     tracks[i]->SetPoint(1, crtTracks[i][3], crtTracks[i][4], crtTracks[i][5]);
+    tracks[i]->SetLineColor(i+1);
     tracks[i]->Draw();
   }
   c1->SaveAs("crtTracks.root");
-  */
+*/
+  std::cout<<"Number of tracks = "<<nTrack<<std::endl;
+  
 }
 
 void CRTTrackProducer::beginJob()
