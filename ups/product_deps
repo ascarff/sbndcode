@@ -35,7 +35,7 @@ fwdir   product_dir scripts
 # Add the dependent product and version
 
 product          version
-larsoft          v06_82_00
+larsoft          v06_85_00
 genie_xsec       v2_12_10
 sbnd_data        v01_02_00 - optional
 sbndutil         v01_58_00 - optional
@@ -49,6 +49,8 @@ only_for_build  cetbuildtools   v7_03_03
 qualifier     genie_xsec               larsoft       sbndutil        sbnd_data  notes
 c2:debug      DefaultPlusMECWithNC     c2:debug      c2:debug        -nq-
 c2:prof       DefaultPlusMECWithNC     c2:prof       c2:prof         -nq-
+e17:debug     DefaultPlusMECWithNC     e17:debug     e17:debug       -nq-
+e17:prof      DefaultPlusMECWithNC     e17:prof      e17:prof        -nq-
 e15:debug     DefaultPlusMECWithNC     e15:debug     e15:debug       -nq-
 e15:prof      DefaultPlusMECWithNC     e15:prof      e15:prof        -nq-
 e14:debug     DefaultPlusMECWithNC     e14:debug     e14:debug       -nq-
