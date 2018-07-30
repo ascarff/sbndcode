@@ -1,0 +1,57 @@
+# FHiCL document used to run the "driver" executable. To learn more
+#  about the FHiCL language, please look at
+#  cdcvs.fnal.gov/redmine/documents/327 , the "FHiCL Quick Start Guide"
+
+#include "crttzeroproducer.fcl"
+#include "crttrackproducer.fcl"
+
+events_to_generate: 200
+run_number: 101
+
+services:{
+  TFileService: { fileName: "CRTTrackProducer_QP_%ifb_%tc_%#.root" }
+}
+
+physics:
+{ 
+
+  analyzers:
+  {
+   
+  }
+
+  producers:
+  {
+
+    crttzero: @local::standard_crttzeroproducer
+
+    crttrack: @local::standard_crttrackproducer
+
+  }
+
+  a1: [ crttzero, crttrack ]
+  p1: [ ]
+  e1: [ rootout ]
+  #end_paths: [ a1, e1 ]
+
+}
+
+outputs:
+{
+
+ rootout:
+  {
+    module_type: RootOutput
+    fileName: "%ifb_%tc_%#_wCRTTracks.root"
+    ##fileName: "mergedFile1_tracks.root"
+    compressionLevel: 1
+  }
+
+}
+
+source:
+{
+  module_type: RootInput
+}
+
+process_name: CRTTrackProducer

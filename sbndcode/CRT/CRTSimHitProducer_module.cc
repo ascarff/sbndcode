@@ -24,6 +24,9 @@
 #include "art/Framework/Principal/SubRun.h"
 #include "art/Framework/Services/Optional/TFileService.h" 
 #include "art/Framework/Services/Optional/TFileDirectory.h"
+#include "art/Framework/Services/Registry/ServiceHandle.h"
+#include "art/Framework/Core/ModuleMacros.h"
+#include "canvas/Persistency/Common/FindManyP.h"
 
 #include "canvas/Utilities/InputTag.h"
 #include "fhiclcpp/ParameterSet.h"
@@ -50,6 +53,7 @@
 #include "lardata/DetectorInfoServices/DetectorClocksService.h"
 #include "lardataobj/RawData/ExternalTrigger.h"
 #include "larcoreobj/SimpleTypesAndConstants/PhysicalConstants.h"
+#include "larcoreobj/SimpleTypesAndConstants/geo_types.h"
 
 // ROOT
 #include "TTree.h"
@@ -57,6 +61,7 @@
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TVector3.h"
+#include "TGeoManager.h"
 
 namespace {
   // Local namespace for local functions
@@ -65,6 +70,17 @@ namespace {
 }
 
 namespace sbnd {
+
+  struct CRTStrip {
+    double t0; 
+    uint32_t channel; 
+    double x; 
+    double ex; 
+    int id1; 
+    int id2; 
+    double pes;
+    std::pair<std::string, unsigned> tagger;
+  };
   
   class CRTSimHitProducer : public art::EDProducer {
   public:
@@ -90,9 +106,15 @@ namespace sbnd {
 
     void reconfigure(fhicl::ParameterSet const & p);
 
-    std::vector<double> ChannelToLimits(uint32_t channel, size_t crt_i, double x, double ex);
+    std::vector<double> ChannelToLimits(CRTStrip strip);
 
-    std::vector<double> CrtOverlap(std::vector<double> strip1, std::vector<double> strip2, int plane);
+    std::vector<double> CrtOverlap(std::vector<double> strip1, std::vector<double> strip2);
+
+    std::pair<std::string,unsigned> ChannelToTagger(uint32_t channel);
+
+    bool CheckModuleOverlap(uint32_t channel);
+
+    crt::CRTHit FillCrtHit(std::vector<uint8_t> tfeb_id, std::map<uint8_t, std::vector<std::pair<int,float>>> tpesmap, float peshit, double time, double x, double ex, double y, double ey, double z, double ez, std::string tagger); 
 
   private:
 
@@ -103,12 +125,6 @@ namespace sbnd {
     double        fQPed;                ///< Pedestal offset of SiPMs [ADC]
     double        fQSlope;              ///< Pedestal slope of SiPMs [ADC/photon]
     bool          fUseReadoutWindow;    ///< Only reconstruct hits within readout window
-
-    // Positions of the CRT planes
-    std::vector<double> crtPlanes = {-359.1, -357.3, 357.3, 359.1, -358.9, -357.1, 661.52, 663.32, 865.52, 867.32, -240.65, -238.85, 655.35, 657.15};
-    std::vector<int> fixCoord   = {0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2}; // Fixed coordinate for each plane
-    std::vector<int> widthCoord = {2, 1, 2, 1, 0, 2, 2, 0, 2, 0, 1, 0, 1, 0}; // Width direction for each plane
-    std::vector<int> lenCoord   = {1, 2, 1, 2, 2, 0, 0, 2, 0, 2, 0, 1, 0, 1}; // Length direction for each plane
    
     // Other variables shared between different methods.
     geo::GeometryCore const* fGeometryService;                 ///< pointer to Geometry provider
@@ -181,24 +197,19 @@ namespace sbnd {
 
     // Fill a vector of pairs of time and width direction for each CRT plane
     // The y crossing point of z planes and z crossing point of y planes would be constant
-    struct CRTStrip {double t0; uint32_t channel; double x; double ex; int id1; int id2; double pes;};
-    std::vector<std::vector<CRTStrip>> crtStrips;
-    for(size_t plane_i = 0; plane_i < crtPlanes.size(); plane_i++){
-      std::vector<CRTStrip> temp;
-      crtStrips.push_back(temp);
-    }
+    std::map<std::pair<std::string, unsigned>, std::vector<CRTStrip>> taggerStrips;
 
     if(fVerbose) std::cout<<"Number of SiPM hits = "<<crtList.size()<<"\n";
 
     // Loop over all the SiPM hits in 2 (should be in pairs due to trigger)
     for (size_t i = 0; i < crtList.size(); i+=2){
       // Get the time, channel, center and width
-      int crtT1 = crtList[i]->T0();
-      double t1 = (double)crtT1;
-      t1 = t1/8.;
+      double t1 = (double)(int)crtList[i]->T0()/8.;
+
       if(fUseReadoutWindow){
         if(!(t1 >= -driftTimeTicks && t1 <= readoutWindow)) continue;
       }
+
       uint32_t channel = crtList[i]->Channel();
       int strip = (channel >> 1) & 15;
       int module = (channel >> 5);
@@ -207,176 +218,110 @@ namespace sbnd {
       const geo::AuxDetSensitiveGeo stripGeo = fAuxDetGeoCore->ChannelToAuxDetSensitive(name, 2*strip);
       double width = 2*stripGeo.HalfWidth1();
 
-      // Loop over all the planes
-      for (size_t plane_i = 0; plane_i < crtPlanes.size(); plane_i++){
-        // Sort the hit SiPMs by what plane they're in
-        if (std::abs(center[fixCoord[plane_i]] - crtPlanes[plane_i])<0.1){
+      std::pair<std::string,unsigned> tagger = ChannelToTagger(channel);
+      
+      int id1 = crtList[i]->TrackID();
+      int id2 = crtList[i+1]->TrackID(); 
 
-          // Get the time of hit on the second SiPM
-          int crtT2 = crtList[i+1]->T0();
-          double t2 = (double)crtT2;
-          t2 = t2/8.;
+      // Get the time of hit on the second SiPM
+      double t2 = (double)(int)crtList[i+1]->T0()/8.;
+      // Calculate the number of photoelectrons at each SiPM
+      double npe1 = ((double)crtList[i]->ADC() - 63.6)/131.9;
+      double npe2 = ((double)crtList[i+1]->ADC() - 63.6)/131.9;
+      // Calculate the distance between the SiPMs
+      double x = (width/2.)*atan(log(1.*npe2/npe1)) + (width/2.);
 
-          // Calculate the number of photoelectrons at each SiPM
-          double npe1 = ((double)crtList[i]->ADC() - fQPed)/fQSlope;
-          double npe2 = ((double)crtList[i+1]->ADC() - fQPed)/fQSlope;
+      // Calculate the error
+      double normx = x + 0.344677*x - 1.92045;
+      double ex = 1.92380e+00+1.47186e-02*normx-5.29446e-03*normx*normx;
+      double time = (t1 + t2)/2.;
 
-          // Calculate the distance between the SiPMs
-          double x = (width/2.)*atan(log(1.*npe2/npe1)) + (width/2.);
-          if(widthCoord[plane_i]==1) x = (width/2.)*atan(log(1.*npe1/npe2)) + (width/2.);
+      CRTStrip stripHit = {time, channel, x, ex, id1, id2, npe1+npe2, tagger};
+      taggerStrips[tagger].push_back(stripHit);
 
-          // Calculate the error
-          double normx = x + 0.344677*x - 1.92045;
-          double ex = 1.92380e+00+1.47186e-02*normx-5.29446e-03*normx*normx;
-          double time = (t1 + t2)/2.;
-
-          CRTStrip strip = {time, channel, x, ex, crtList[i]->TrackID(), crtList[i+1]->TrackID(), npe1+npe2};
-          crtStrips[plane_i].push_back(strip);
-        }
-      }
     }
 
-    // Remove duplicate strip hits
-    for(size_t plane_i = 0; plane_i < crtPlanes.size(); plane_i++){
-
-      // Sort by t0 and channel in ascending order
-      std::sort(crtStrips[plane_i].begin(), crtStrips[plane_i].end(),
+    // Remove any duplicate (same channel and time) hit strips
+    for(auto &tagStrip : taggerStrips){
+      std::sort(tagStrip.second.begin(), tagStrip.second.end(),
                 [](const CRTStrip & a, const CRTStrip & b) -> bool{
                   return (a.t0 < b.t0) || 
                          ((a.t0 == b.t0) && (a.channel < b.channel));
                 });
-
       // Remove hits with the same time and channel
-      crtStrips[plane_i].erase(std::unique(crtStrips[plane_i].begin(), crtStrips[plane_i].end(),
+      tagStrip.second.erase(std::unique(tagStrip.second.begin(), tagStrip.second.end(),
                                            [](const CRTStrip & a, const CRTStrip & b) -> bool{
                                              return a.t0 == b.t0 && a.channel == b.channel;
-                                            }), crtStrips[plane_i].end());
-
-      if(fVerbose) std::cout<<"Number of hits on plane "<<plane_i<<" = "<<crtStrips[plane_i].size()<<"\n"; 
+                                            }), tagStrip.second.end());
     }
-      
 
-    //Loop over number of tagger planes
-    for (size_t tag_i = 0; tag_i < crtPlanes.size()/2; tag_i++){
+    std::vector<std::string> usedTaggers;
 
-      // Loop over the number of hit strips on even planes
-      for (size_t hit_i = 0; hit_i < crtStrips[tag_i*2].size(); hit_i++){
+    for (auto &tagStrip : taggerStrips){
+      if (std::find(usedTaggers.begin(),usedTaggers.end(),tagStrip.first.first)!=usedTaggers.end()) continue;
+      usedTaggers.push_back(tagStrip.first.first);
+      unsigned planeID = 0;
+      if(tagStrip.first.second==0) planeID = 1;
+      std::pair<std::string,unsigned> otherPlane = std::make_pair(tagStrip.first.first, planeID);
+      for (size_t hit_i = 0; hit_i < tagStrip.second.size(); hit_i++){
         // Get the position (in real space) of the 4 corners of the hit, taking charge sharing into account
-        std::vector<double> limits1 = ChannelToLimits(crtStrips[tag_i*2][hit_i].channel, 
-                                                      tag_i*2, 
-                                                      crtStrips[tag_i*2][hit_i].x, 
-                                                      crtStrips[tag_i*2][hit_i].ex);
-
-        // Loop over all the hits on the parallel (odd) plane
-        for (size_t hit_j = 0; hit_j < crtStrips[tag_i*2+1].size(); hit_j++){
-          // Get the limits in the two variable directions
-          std::vector<double> limits2 = ChannelToLimits(crtStrips[tag_i*2+1][hit_j].channel, 
-                                                        tag_i*2+1, 
-                                                        crtStrips[tag_i*2+1][hit_j].x, 
-                                                        crtStrips[tag_i*2+1][hit_j].ex);
-
-          // If the time and position match then record the pair of hits
-          std::vector<double> overlap = CrtOverlap(limits1, limits2, fixCoord[tag_i*2]);
-          if (overlap[0] != -99999 && std::abs(crtStrips[tag_i*2][hit_i].t0 - crtStrips[tag_i*2+1][hit_j].t0)<fTimeCoincidenceLimit){
-            // Calculate the mean and error in x, y, z
-            double meanX = (overlap[0] + overlap[1])/2.;
-            double meanY = (overlap[2] + overlap[3])/2.;
-            double meanZ = (overlap[4] + overlap[5])/2.;
-            double errX = std::abs((overlap[1] - overlap[0])/2.);
-            double errY = std::abs((overlap[3] - overlap[2])/2.);
-            double errZ = std::abs((overlap[5] - overlap[4])/2.);
-            // Average the time
-            double time = (crtStrips[tag_i*2][hit_i].t0 + crtStrips[tag_i*2+1][hit_j].t0)/2;
-            
-            // Create a CRT hit
-            crt::CRTHit crtHit;
-            crtHit.feb_id = tfeb_id;
-            crtHit.pesmap = tpesmap;
-            crtHit.peshit = crtStrips[tag_i*2][hit_i].pes + crtStrips[tag_i*2+1][hit_j].pes;
-            crtHit.ts0_s_corr = 0;
-            crtHit.ts0_ns = time * 0.5 * 10e3;;
-            crtHit.ts0_ns_corr = 0;
-            crtHit.ts1_ns = time * 0.5 * 10e3;
-            crtHit.ts0_s = time * 0.5 * 10e-6; 
-            crtHit.plane = tag_i;
-            crtHit.x_pos = meanX;
-            crtHit.x_err = errX;
-            crtHit.y_pos = meanY; 
-            crtHit.y_err = errY;
-            crtHit.z_pos = meanZ;
-            crtHit.z_err = errZ;
-            CRTHitcol->push_back(crtHit);
-            nHits++;
+        std::vector<double> limits1 =  ChannelToLimits(tagStrip.second[hit_i]);
+        // Check for overlaps on the first plane
+        if(CheckModuleOverlap(tagStrip.second[hit_i].channel)){
+          // Loop over all the hits on the parallel (odd) plane
+          for (size_t hit_j = 0; hit_j < taggerStrips[otherPlane].size(); hit_j++){
+            // Get the limits in the two variable directions
+            std::vector<double> limits2 = ChannelToLimits(taggerStrips[otherPlane][hit_j]);
+            // If the time and position match then record the pair of hits
+            std::vector<double> overlap = CrtOverlap(limits1, limits2);
+            double t0_1 = tagStrip.second[hit_i].t0;
+            double t0_2 = taggerStrips[otherPlane][hit_j].t0;
+            if (overlap[0] != -99999 && std::abs(t0_1 - t0_2)<fTimeCoincidenceLimit){
+              // Calculate the mean and error in x, y, z
+              TVector3 mean((overlap[0] + overlap[1])/2., 
+                            (overlap[2] + overlap[3])/2., 
+                            (overlap[4] + overlap[5])/2.);
+              TVector3 error(std::abs((overlap[1] - overlap[0])/2.), 
+                             std::abs((overlap[3] - overlap[2])/2.), 
+                             std::abs((overlap[5] - overlap[4])/2.));
+              // Average the time
+              double time = (t0_1 + t0_2)/2;
+              // Create a CRT hit
+              crt::CRTHit crtHit = FillCrtHit(tfeb_id, tpesmap, 0, time, mean.X(), error.X(), mean.Y(), error.Y(), mean.Z(), error.Z(), tagStrip.first.first);
+              CRTHitcol->push_back(crtHit);
+              nHits++;
+            }
           }
         }
-
-        // If we're looking at the bottom plane need to consider non perpendicular planes
-        if (tag_i == 2){
-          double meanX = (limits1[0] + limits1[1])/2.;
-          double meanY = (limits1[2] + limits1[3])/2.;
-          double meanZ = (limits1[4] + limits1[5])/2.;
-          double errX = std::abs((limits1[1] - limits1[0])/2.);
-          double errY = std::abs((limits1[3] - limits1[2])/2.);
-          double errZ = std::abs((limits1[5] - limits1[4])/2.);
-          
-          // If we're in the positions where there is only an X or Y plane
-          if( !((meanZ>400 && meanX<-125) || (meanZ>400 && meanX>125) || (meanZ<0 && meanX<-125) || (meanZ<0 && meanX>124)) ){
-
-            // If it's an X plane
-            if(meanZ>400||meanZ<0){
-              // Just use the single plane limits as the crt hit
-              crt::CRTHit crtHit;
-              crtHit.feb_id = tfeb_id;
-              crtHit.pesmap = tpesmap;
-              crtHit.peshit = crtStrips[tag_i*2][hit_i].pes;
-              crtHit.ts0_s_corr = 0;
-              crtHit.ts0_ns = crtStrips[tag_i*2][hit_i].t0 * 0.5 * 10e3;
-              crtHit.ts0_ns_corr = 0;
-              crtHit.ts1_ns = crtStrips[tag_i*2][hit_i].t0 * 0.5 * 10e3;
-              crtHit.ts0_s = crtStrips[tag_i*2][hit_i].t0 * 0.5 * 10e-6; 
-              crtHit.plane = tag_i;
-              crtHit.x_pos = meanX;
-              crtHit.x_err = errX;
-              crtHit.y_pos = meanY; 
-              crtHit.y_err = errY;
-              crtHit.z_pos = meanZ;
-              crtHit.z_err = errZ;
-              CRTHitcol->push_back(crtHit);
-              nHits++;
-            }
-
-            // If it's a Y plane
-            else{
-              // Recalculate the limits with different orientation
-              // CRT strip plane number stays the same because they are the at the same level as the X strips
-              limits1 =  ChannelToLimits(crtStrips[tag_i*2][hit_i].channel, tag_i*2+1, crtStrips[tag_i*2][hit_i].x, crtStrips[tag_i*2][hit_i].ex);
-              meanX = (limits1[0] + limits1[1])/2.;
-              meanY = (limits1[2] + limits1[3])/2.;
-              meanZ = (limits1[4] + limits1[5])/2.;
-              errX = std::abs((limits1[1] - limits1[0])/2.);
-              errY = std::abs((limits1[3] - limits1[2])/2.);
-              errZ = std::abs((limits1[5] - limits1[4])/2.);
-              // Use the single plane limits as the crt hit
-              crt::CRTHit crtHit;
-              crtHit.feb_id = tfeb_id;
-              crtHit.pesmap = tpesmap;
-              crtHit.peshit = crtStrips[tag_i*2][hit_i].pes;
-              crtHit.ts0_s_corr = 0;
-              crtHit.ts0_ns = crtStrips[tag_i*2][hit_i].t0 * 0.5 * 10e3;
-              crtHit.ts0_ns_corr = 0;
-              crtHit.ts1_ns = crtStrips[tag_i*2][hit_i].t0 * 0.5 * 10e3;
-              crtHit.ts0_s = crtStrips[tag_i*2][hit_i].t0 * 0.5 * 10e-6; 
-              crtHit.plane = tag_i;
-              crtHit.x_pos = meanX;
-              crtHit.x_err = errX;
-              crtHit.y_pos = meanY; 
-              crtHit.y_err = errY;
-              crtHit.z_pos = meanZ;
-              crtHit.z_err = errZ;
-              CRTHitcol->push_back(crtHit);
-              nHits++;
-            }
-          }
+        else{
+          TVector3 mean((limits1[0] + limits1[1])/2., 
+                        (limits1[2] + limits1[3])/2., 
+                        (limits1[4] + limits1[5])/2.);
+          TVector3 error(std::abs((limits1[1] - limits1[0])/2.), 
+                         std::abs((limits1[3] - limits1[2])/2.), 
+                         std::abs((limits1[5] - limits1[4])/2.));
+          double time = tagStrip.second[hit_i].t0;
+          // Just use the single plane limits as the crt hit
+          crt::CRTHit crtHit = FillCrtHit(tfeb_id, tpesmap, 0, time, mean.X(), error.X(), mean.Y(), error.Y(), mean.Z(), error.Z(), tagStrip.first.first);
+          CRTHitcol->push_back(crtHit);
+          nHits++;
+        }
+      }
+      for (size_t hit_j = 0; hit_j < taggerStrips[otherPlane].size(); hit_j++){
+        // Get the limits in the two variable directions
+        std::vector<double> limits1 = ChannelToLimits(taggerStrips[otherPlane][hit_j]);
+        if(!CheckModuleOverlap(taggerStrips[otherPlane][hit_j].channel)){
+          TVector3 mean((limits1[0] + limits1[1])/2., 
+                        (limits1[2] + limits1[3])/2., 
+                        (limits1[4] + limits1[5])/2.);
+          TVector3 error(std::abs((limits1[1] - limits1[0])/2.), 
+                         std::abs((limits1[3] - limits1[2])/2.), 
+                         std::abs((limits1[5] - limits1[4])/2.));
+          double time = taggerStrips[otherPlane][hit_j].t0;
+          // Just use the single plane limits as the crt hit
+          crt::CRTHit crtHit = FillCrtHit(tfeb_id, tpesmap, 0, time, mean.X(), error.X(), mean.Y(), error.Y(), mean.Z(), error.Z(), otherPlane.first);
+          CRTHitcol->push_back(crtHit);
+          nHits++;
         }
       }
     }
@@ -393,36 +338,30 @@ namespace sbnd {
   }
 
   // Function to calculate the strip position limits in real space from channel
-  std::vector<double> CRTSimHitProducer::ChannelToLimits(uint32_t channel, size_t crt_i, double x, double ex){
-    // Retrieve the strip geometry
-    int strip = (channel >> 1) & 15;
-    int module = (channel >> 5);
+  std::vector<double> CRTSimHitProducer::ChannelToLimits(CRTStrip stripHit){
+    int strip = (stripHit.channel >> 1) & 15;
+    int module = (stripHit.channel >> 5);
     std::string name = fGeometryService->AuxDet(module).TotalVolume()->GetName();
     const geo::AuxDetSensitiveGeo stripGeo = fAuxDetGeoCore->ChannelToAuxDetSensitive(name, 2*strip);
-    geo::Point_t cent = stripGeo.GetCenter();
-    TVector3 center = {cent.X(), cent.Y(), cent.Z()};
     double halfWidth = stripGeo.HalfWidth1();
     double halfHeight = stripGeo.HalfHeight();
-
-    // Use the geometry to get the limits in the two variable directions
-    double varMin = center[widthCoord[crt_i]] - halfWidth + x - ex; 
-    double varMax = center[widthCoord[crt_i]] - halfWidth + x + ex;
-    double lenMin = center[lenCoord[crt_i]] - halfHeight;
-    double lenMax = center[lenCoord[crt_i]] + halfHeight;
-
-    // Fill the correct x,y,z limits
-    std::vector<double> limits = {-99999, -99999, -99999, -99999, -99999, -99999};
-    limits[2*fixCoord[crt_i]] = center[fixCoord[crt_i]];
-    limits[2*fixCoord[crt_i]+1] = center[fixCoord[crt_i]];
-    limits[2*widthCoord[crt_i]] = varMin;
-    limits[2*widthCoord[crt_i]+1] = varMax;
-    limits[2*lenCoord[crt_i]] = lenMin;
-    limits[2*lenCoord[crt_i]+1] = lenMax;
+    double halfLength = stripGeo.HalfLength();
+    double l1[3] = {-halfWidth+stripHit.x+stripHit.ex, halfHeight, halfLength};
+    double w1[3] = {0,0,0};
+    stripGeo.LocalToWorld(l1, w1);
+    double l2[3] = {-halfWidth+stripHit.x-stripHit.ex, -halfHeight, -halfLength};
+    double w2[3] = {0,0,0};
+    stripGeo.LocalToWorld(l2, w2);
+    // Use this to get the limits in the two variable directions
+    std::vector<double> limits = {std::min(w1[0],w2[0]), std::max(w1[0],w2[0]), 
+                                  std::min(w1[1],w2[1]), std::max(w1[1],w2[1]), 
+                                  std::min(w1[2],w2[2]), std::max(w1[2],w2[2])};
     return limits;
-  } // CRTSimHitProducer::ChannelToLimits
+  } // ChannelToLimits
+
 
   // Function to calculate the overlap between two crt strips
-  std::vector<double> CRTSimHitProducer::CrtOverlap(std::vector<double> strip1, std::vector<double> strip2, int plane){
+  std::vector<double> CRTSimHitProducer::CrtOverlap(std::vector<double> strip1, std::vector<double> strip2){
     double minX = std::max(strip1[0], strip2[0]);
     double maxX = std::min(strip1[1], strip2[1]);
     double minY = std::max(strip1[2], strip2[2]);
@@ -430,14 +369,138 @@ namespace sbnd {
     double minZ = std::max(strip1[4], strip2[4]);
     double maxZ = std::min(strip1[5], strip2[5]);
     std::vector<double> null = {-99999, -99999, -99999, -99999, -99999, -99999};
-
-    // Check that the strips actually overlap
-    if (plane == 0 && (minY>maxY || minZ>maxZ)) return null;
-    if (plane == 1 && (minX>maxX || minZ>maxZ)) return null;
-    if (plane == 2 && (minX>maxX || minY>maxY)) return null;
     std::vector<double> overlap = {minX, maxX, minY, maxY, minZ, maxZ};
-    return overlap;
-  } // CRTSimHitProducer::CRTOverlap()
+    if ((minX<maxX && minY<maxY) || (minX<maxX && minZ<maxZ) || (minY<maxY && minZ<maxZ)) return overlap;
+    return null;
+  } // CRTRecoAna::CRTOverlap()
+
+    std::pair<std::string,unsigned> CRTSimHitProducer::ChannelToTagger(uint32_t channel){
+    int strip = (channel >> 1) & 15;
+    int module = (channel >> 5);
+    std::string name = fGeometryService->AuxDet(module).TotalVolume()->GetName();
+    TVector3 center = fAuxDetGeoCore->AuxDetChannelToPosition(2*strip, name);
+    const geo::AuxDetSensitiveGeo stripGeo = fAuxDetGeoCore->ChannelToAuxDetSensitive(name, 2*strip);
+
+    std::set<std::string> volNames = {stripGeo.TotalVolume()->GetName()};
+    std::vector<std::vector<TGeoNode const*> > paths = fGeometryService->FindAllVolumePaths(volNames);
+    std::string path = "";
+    for (size_t inode=0; inode<paths.at(0).size(); inode++) {
+      path += paths.at(0).at(inode)->GetName();
+      if (inode < paths.at(0).size() - 1) {
+        path += "/";
+      }
+    }
+    TGeoManager* manager = fGeometryService->ROOTGeoManager();
+    manager->cd(path.c_str());
+    TGeoNode* nodeModule = manager->GetMother(2);
+    TGeoNode* nodeTagger = manager->GetMother(3);
+    // Module position in parent (tagger) frame
+    double origin[3] = {0, 0, 0};
+    double modulePosMother[3];
+    nodeModule->LocalToMaster(origin, modulePosMother);
+    unsigned planeID = (modulePosMother[2] > 0);
+    std::string tagName = nodeTagger->GetName();
+    std::pair<std::string, unsigned> output = std::make_pair(tagName, planeID);
+    return output;
+  }
+
+  // WARNING: Relies on all modules in a tagger having the same dimensions
+  bool CRTSimHitProducer::CheckModuleOverlap(uint32_t channel){
+    bool hasOverlap = false;
+    // Get the module ID
+    int strip = (channel >> 1) & 15;
+    int module = (channel >> 5);
+    // Get the name of the module
+    std::string name = fGeometryService->AuxDet(module).TotalVolume()->GetName();
+    // Get the tagger TGeoNode
+    const geo::AuxDetSensitiveGeo stripGeo = fAuxDetGeoCore->ChannelToAuxDetSensitive(name, 2*strip);
+    std::set<std::string> volNames = {stripGeo.TotalVolume()->GetName()};
+    std::vector<std::vector<TGeoNode const*> > paths = fGeometryService->FindAllVolumePaths(volNames);
+    std::string path = "";
+    for (size_t inode=0; inode<paths.at(0).size(); inode++) {
+      path += paths.at(0).at(inode)->GetName();
+      if (inode < paths.at(0).size() - 1) {
+        path += "/";
+      }
+    }
+    TGeoManager* manager = fGeometryService->ROOTGeoManager();
+    manager->cd(path.c_str());
+    TGeoNode* nodeModule = manager->GetMother(2);
+    TGeoNode* nodeTagger = manager->GetMother(3);
+    std::string modName = nodeModule->GetName();
+    // Get the limits of the module in the tagger frame
+    double height = fGeometryService->AuxDet(module).HalfHeight();
+    double width = fGeometryService->AuxDet(module).HalfWidth1();
+    double length = fGeometryService->AuxDet(module).Length()/2.;
+    double pos1[3] = {width, height, length};
+    double tagp1[3];
+    nodeModule->LocalToMaster(pos1, tagp1);
+    double pos2[3] = {-width, -height, -length};
+    double tagp2[3];
+    nodeModule->LocalToMaster(pos2, tagp2);
+    std::vector<double> limits = {std::min(tagp1[0],tagp2[0]),
+                                  std::max(tagp1[0],tagp2[0]),
+                                  std::min(tagp1[1],tagp2[1]),
+                                  std::max(tagp1[1],tagp2[1]),
+                                  std::min(tagp1[2],tagp2[2]),
+                                  std::max(tagp1[2],tagp2[2])};
+    double origin[3] = {0, 0, 0};
+    double modulePosMother[3];
+    nodeModule->LocalToMaster(origin, modulePosMother);
+    unsigned planeID = (modulePosMother[2] > 0);
+
+    // Get the number of daughters from the tagger
+    int nDaughters = nodeTagger->GetNdaughters();
+    // Loop over the daughters
+    for(int mod_i = 0; mod_i < nDaughters; mod_i++){
+      // Check the name not the same as the current module
+      TGeoNode* nodeDaughter = nodeTagger->GetDaughter(mod_i);
+      std::string d_name = nodeDaughter->GetName();
+      // Remove last two characters from name to match the AuxDet name
+      if(d_name == modName) continue;
+      // Get the limits of the module in the tagger frame
+      double d_tagp1[3];
+      nodeDaughter->LocalToMaster(pos1, d_tagp1);
+      double d_tagp2[3];
+      nodeDaughter->LocalToMaster(pos2, d_tagp2);
+      std::vector<double> d_limits = {std::min(d_tagp1[0],d_tagp2[0]),
+                                      std::max(d_tagp1[0],d_tagp2[0]),
+                                      std::min(d_tagp1[1],d_tagp2[1]),
+                                      std::max(d_tagp1[1],d_tagp2[1]),
+                                      std::min(d_tagp1[2],d_tagp2[2]),
+                                      std::max(d_tagp1[2],d_tagp2[2])};
+      double d_modulePosMother[3];
+      nodeDaughter->LocalToMaster(origin, d_modulePosMother);
+      unsigned d_planeID = (d_modulePosMother[2] > 0);
+
+      // Check the overlap of the two modules
+      std::vector<double> overlap = CrtOverlap(limits, d_limits);
+      // If there is an overlap set to true
+      if(overlap[0]!=-99999 && d_planeID!=planeID) hasOverlap = true;
+    }
+    return hasOverlap;
+  }
+
+  crt::CRTHit CRTSimHitProducer::FillCrtHit(std::vector<uint8_t> tfeb_id, std::map<uint8_t, std::vector<std::pair<int,float>>> tpesmap, float peshit, double time, double x, double ex, double y, double ey, double z, double ez, std::string tagger){
+    crt::CRTHit crtHit;
+    crtHit.feb_id = tfeb_id;
+    crtHit.pesmap = tpesmap;
+    crtHit.peshit = peshit;
+    crtHit.ts0_s_corr = 0;
+    crtHit.ts0_ns = time * 0.5 * 10e3;
+    crtHit.ts0_ns_corr = 0;
+    crtHit.ts1_ns = time * 0.5 * 10e3;
+    crtHit.ts0_s = time * 0.5 * 10e-6; 
+    crtHit.x_pos = x;
+    crtHit.x_err = ex;
+    crtHit.y_pos = y; 
+    crtHit.y_err = ey;
+    crtHit.z_pos = z;
+    crtHit.z_err = ez;
+    crtHit.tagger = tagger;
+    return crtHit;
+  }
+
 
   DEFINE_ART_MODULE(CRTSimHitProducer)
 

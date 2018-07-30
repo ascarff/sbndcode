@@ -32,14 +32,17 @@ namespace crt {
       uint32_t ts0_ns;
       int32_t ts0_ns_corr;
       int32_t ts1_ns;
-      
+     
       int plane;
+
       float x_pos;
       float x_err;
       float y_pos;
       float y_err;
       float z_pos;
       float z_err;
+
+      std::string tagger;
 
       CRTHit() {}
 

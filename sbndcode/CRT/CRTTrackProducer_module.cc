@@ -117,9 +117,10 @@ struct CRTavehit{
   float z_err;
   float pe;
   int plane;
+  std::string tagger;
 } tempah;
 
-CRTavehit fillme(uint32_t i,uint16_t j,int32_t k,uint16_t l,float a,float b, float c,float d, float e, float f, float g, int p);
+CRTavehit fillme(uint32_t i,uint16_t j,int32_t k,uint16_t l,float a,float b, float c,float d, float e, float f, float g, int p, std::string t);
 
 CRTavehit copyme(crt::CRTHit myhit);
 
@@ -144,6 +145,9 @@ CRTTrackProducer::CRTTrackProducer(fhicl::ParameterSet const & p)
 void CRTTrackProducer::produce(art::Event & evt)
 {
 int nTrack = 0;
+  //CRTTrack collection on this event                                                                         
+  std::unique_ptr<std::vector<crt::CRTTrack> > CRTTrackCol(new std::vector<crt::CRTTrack>);
+
   // Implementation of required member function here.
   art::Handle< std::vector<crt::CRTHit> > rawHandle;
   evt.getByLabel(data_label_hits_, rawHandle); //what is the product instance name? no BernZMQ
@@ -156,177 +160,274 @@ int nTrack = 0;
     std::cout << std::endl;
     return;
   }
-  
-  //get better access to the data               
-  //  std::vector<crt::CRTHit> const& CRTHitCollection(*rawHandle);
-  art::Handle< std::vector<crt::CRTTzero> > rawHandletzero;
-  evt.getByLabel(data_label_tzeros_, rawHandletzero); //what is the product instance name? no BernZMQ
-  
-  //check to make sure the data we asked for is valid                                                                            
-  if(!rawHandletzero.isValid()){
-    std::cout << "Run " << evt.run() << ", subrun " << evt.subRun()
-              << ", event " << evt.event() << " has zero"
-              << " CRTTzeros " << " in module " << data_label_tzeros_ << std::endl;
-    std::cout << std::endl;
-    return;
-  }
-  
-  //get better access to the data               
-  //  std::vector<crt::CRTTzero> const& CRTTCollection(*rawHandletzero);
-  //CRTTzero collection on this event                                                                         
-  std::unique_ptr<std::vector<crt::CRTTzero> > CRTTzeroCol(new std::vector<crt::CRTTzero>);
-  //CRTTrack collection on this event                                                                         
-  std::unique_ptr<std::vector<crt::CRTTrack> > CRTTrackCol(new std::vector<crt::CRTTrack>);
-  
-  std::vector<art::Ptr<crt::CRTTzero> > tzerolist;
-  if (evt.getByLabel(data_label_tzeros_,rawHandletzero))
-    art::fill_ptr_vector(tzerolist, rawHandletzero);
 
-  art::FindManyP<crt::CRTHit> fmht(rawHandletzero, evt, data_label_tzeros_);
 
-  std::vector<std::vector<float>> crtTracks;
-  std::vector<std::vector<float>> crtHits;
-  //loop over tzeros
-  
-  for(size_t tzIter = 0; tzIter < tzerolist.size(); ++tzIter){   
-    
-    //count planes with hits for this tzero
-    int np =0 ; //int ipflag[7] = {}; // CHANGED FROM 4 TO 7
-    int tothits =0;
-    for (int ip=0;ip<7;++ip) { // CHANGED FROM 4 TO 7
-      if (tzerolist[tzIter]->nhits[ip]>0)  { np++; /*ipflag[ip]=1;*/ tothits+=tzerolist[tzIter]->nhits[ip];}  
+  if(track_method_type_ == 4){
+    std::vector<art::Ptr<crt::CRTHit> > hitlist;
+    if (evt.getByLabel(data_label_hits_,rawHandle))
+      art::fill_ptr_vector(hitlist, rawHandle);
+
+    std::vector<std::vector<art::Ptr<crt::CRTHit>>> CRTTzeroVect;
+    std::vector<int> npvec;
+    int iflag[1000] = {};
+    // Loop over crt hits
+    for(size_t i = 0; i<hitlist.size(); i++){
+      if (iflag[i]==0){
+        std::vector<art::Ptr<crt::CRTHit>> CRTTzero;
+        std::map<std::string,int> nPlanes;
+        double time_ns_A = hitlist[i]->ts1_ns;
+        iflag[i]=1;
+        CRTTzero.push_back(hitlist[i]);
+        nPlanes[hitlist[i]->tagger]++;
+        // Get the t0
+        // Loop over all the other CRT hits
+        for(size_t j = i+1; j<hitlist.size(); j++){
+          if(iflag[j]==0){
+            // If ts1_ns - ts1_ns < diff then put them in a vector
+            double time_ns_B = hitlist[j]->ts1_ns;
+            double diff = std::abs(time_ns_B - time_ns_A)/(0.5*10e3);
+            //if(crtHits[i].ids[0]==391&&crtHits[j].ids[0]==391) std::cout<<crtHits[i].tagger<<" "<<crtHits[j].tagger<<" diff = "<<diff<<"\n";
+            if(diff<0.2){
+              iflag[j]=1;
+              CRTTzero.push_back(hitlist[j]);
+              nPlanes[hitlist[j]->tagger]++;
+            }
+          }
+        }
+        int np = 0;
+        for(auto &nPlane : nPlanes){
+          if(nPlane.second>0) np++;
+        }
+        CRTTzeroVect.push_back(CRTTzero);
+        npvec.push_back(np);
+      }
     }
 
-    if (np>1) {
-    std::vector<art::Ptr<crt::CRTHit> > hitlist=fmht.at(tzIter);
-    //for(size_t hit_i = 0; hit_i < hitlist.size(); hit
-      if (track_method_type_==1) {
-        double time_s_A = hitlist[0]->ts0_s;
+    // Loop over tzeros
+    for(size_t i = 0; i<CRTTzeroVect.size(); i++){
 
-        // find pairs of hits in different planes
-        for (size_t ah = 0; ah< hitlist.size()-1; ++ah){        
-          crt::CRTHit temphit=*hitlist[ah];
-          CRTavehit Ahit = copyme(temphit);
-          int planeA = hitlist[ah]->plane;
-
-          for (size_t bh = ah+1; bh< hitlist.size(); ++bh){        
-            int planeB = hitlist[bh]->plane;
-
-            if (planeB!=planeA && !((planeA==3&&planeB==4)||(planeA==4&&planeB==3))) {  // make a track               
-              temphit=*hitlist[bh];
-              CRTavehit Bhit = copyme(temphit);
-              crt::CRTTrack CRTcanTrack=shcut(Ahit,Bhit,time_s_A,0);
-              CRTTrackCol->emplace_back(CRTcanTrack);
-              std::vector<float> crtTrack = {Ahit.x_pos, Ahit.y_pos, Ahit.z_pos, Bhit.x_pos, Bhit.y_pos, Bhit.z_pos};
-              crtTracks.push_back(crtTrack);
-            }
-
-          }
+      //loop over hits and get average x,y,z,pe for each plane CHANGED FROM 4 TO 7
+      std::map<std::string, std::vector<float>> thittime0;
+      std::map<std::string, std::vector<float>> thittime1;
+      std::map<std::string, std::vector<float>> tx;
+      std::map<std::string, std::vector<float>> ty;
+      std::map<std::string, std::vector<float>> tz;
+      std::map<std::string, std::vector<float>> pe;
+      std::map<std::string, std::vector<int>> ids;
+     
+      double time_s_A = CRTTzeroVect[i][0]->ts0_s;
+      double time1_ns_A = CRTTzeroVect[i][0]->ts1_ns;
+      double time0_ns_A = CRTTzeroVect[i][0]->ts0_ns;
+      
+      //loop over hits for this tzero, sort by plane
+      for (size_t ah = 0; ah< CRTTzeroVect[i].size(); ++ah){        
+        std::string ip = CRTTzeroVect[i][ah]->tagger;       
+        thittime0[ip].push_back(CRTTzeroVect[i][ah]->ts0_ns-time0_ns_A);
+        thittime1[ip].push_back(CRTTzeroVect[i][ah]->ts1_ns-time1_ns_A);
+        tx[ip].push_back(CRTTzeroVect[i][ah]->x_pos);
+        ty[ip].push_back(CRTTzeroVect[i][ah]->y_pos);
+        tz[ip].push_back(CRTTzeroVect[i][ah]->z_pos);
+      } // loop over hits
+      
+      std::map<std::string, CRTavehit> aveHits;
+      //loop over planes and calculate average hits
+      for (auto &keyVal : tx){
+        std::string ip = keyVal.first;
+        if (tx[ip].size()>0){
+          uint32_t at0; int32_t at1; uint16_t rt0,rt1;
+          float totpe=0.0;
+          float avet1=0.0; float rmst1 =0.0; 
+          float avet0=0.0; float rmst0 =0.0; 
+          float avex=0.0; float rmsx =0.0; 
+          float avey=0.0; float rmsy =0.0; 
+          float avez=0.0; float rmsz =0.0;
+          vmanip(thittime0[ip],&avet0,&rmst0);
+          vmanip(thittime1[ip],&avet1,&rmst1);
+          at0 = (uint32_t)(avet0+time0_ns_A); rt0 = (uint16_t)rmst0;   
+          at1 = (int32_t)(avet1+time1_ns_A); rt1 = (uint16_t)rmst1;
+          vmanip(tx[ip],&avex,&rmsx);
+          vmanip(ty[ip],&avey,&rmsy);
+          vmanip(tz[ip],&avez,&rmsz);
+          totpe=std::accumulate(pe[ip].begin(), pe[ip].end(), 0.0);
+          CRTavehit aveHit = fillme(at0,rt0,at1,rt1,avex,rmsx,avey,rmsy,avez,rmsz,totpe,0,ip);
+          aveHits[ip] = aveHit;
 
         }
-
+        else {
+          CRTavehit aveHit = fillme(0,0,0,0,-99999,-99999,-99999,-99999,-99999,-99999,-99999,-99999,ip);
+          aveHits[ip] = aveHit;
+        }
       }
 
-      else if ((track_method_type_==2) || (track_method_type_==3 && np==2 && tothits==2)) {        
-
-        //loop over hits and get average x,y,z,pe for each plane CHANGED FROM 4 TO 7
-        std::vector<float> thittime0[7];
-        std::vector<float> thittime1[7];
-        std::vector<float> tx[7];
-        std::vector<float> ty[7];
-        std::vector<float> tz[7];
-        std::vector<float> pe[7];
-        
-        double time_s_A = hitlist[0]->ts0_s;
-        //      double time_s_err = hitlist[0]->ts0_s_err;
-        double time_s_err = 0.;
-        double time1_ns_A = hitlist[0]->ts1_ns;
-        double time0_ns_A = hitlist[0]->ts0_ns;
-       
-        //loop over hits for this tzero, sort by plane
-        for (size_t ah = 0; ah< hitlist.size(); ++ah){        
-          int ip = hitlist[ah]->plane;       
-          thittime0[ip].push_back(hitlist[ah]->ts0_ns-time0_ns_A);
-          thittime1[ip].push_back(hitlist[ah]->ts1_ns-time1_ns_A);
-          tx[ip].push_back(hitlist[ah]->x_pos);
-          ty[ip].push_back(hitlist[ah]->y_pos);
-          tz[ip].push_back(hitlist[ah]->z_pos);
-          pe[ip].push_back(hitlist[ah]->peshit);        
-        } // loop over hits
-
-        CRTavehit aveHits[7];
-        //loop over planes and calculate average hits
-        for (int ip = 0; ip < 7; ip++){
-          if (tx[ip].size()>0){
-            uint32_t at0; int32_t at1; uint16_t rt0,rt1;
-            float totpe=0.0;
-            float avet1=0.0; float rmst1 =0.0; 
-            float avet0=0.0; float rmst0 =0.0; 
-            float avex=0.0; float rmsx =0.0; 
-            float avey=0.0; float rmsy =0.0; 
-            float avez=0.0; float rmsz =0.0;
-            vmanip(thittime0[ip],&avet0,&rmst0);
-            vmanip(thittime1[ip],&avet1,&rmst1);
-            at0 = (uint32_t)(avet0+time0_ns_A); rt0 = (uint16_t)rmst0;   
-            at1 = (int32_t)(avet1+time1_ns_A); rt1 = (uint16_t)rmst1;
-            vmanip(tx[ip],&avex,&rmsx);
-            vmanip(ty[ip],&avey,&rmsy);
-            vmanip(tz[ip],&avez,&rmsz);
-            totpe=std::accumulate(pe[ip].begin(), pe[ip].end(), 0.0);
-            CRTavehit aveHit = fillme(at0,rt0,at1,rt1,avex,rmsx,avey,rmsy,avez,rmsz,totpe,ip);
-            aveHits[ip] = aveHit;
-          }
-          else {
-            CRTavehit aveHit = fillme(0,0,0,0,-99999,-99999,-99999,-99999,-99999,-99999,-99999,ip);
-            aveHits[ip] = aveHit;
-          }
-        }  
-
+      if(npvec[i]>1){
         // find pairs of hits in different planes
-        for (size_t ah = 0; ah< 6; ++ah){        
-          CRTavehit Ahit = aveHits[ah];
+        std::vector<std::string> usedTaggers;
+        for (auto &AtagHit : aveHits){        
+          CRTavehit Ahit = AtagHit.second;
+          usedTaggers.push_back(AtagHit.first);
           if( Ahit.x_pos==-99999 ) continue;
+          for (auto &BtagHit : aveHits){
+            if (std::find(usedTaggers.begin(),usedTaggers.end(),BtagHit.first)!=usedTaggers.end()) continue; 
+            CRTavehit Bhit = BtagHit.second;
+            if ( Bhit.x_pos==-99999 ) continue;
+      
+            // Don't make tracks between the top two taggers FIXME
+            if (BtagHit.first=="volTaggerTopHigh_0" || AtagHit.first=="volTaggerTopHigh_0") continue;  
 
-          for (size_t bh = ah+1; bh< 7; ++bh){        
-            if ( aveHits[bh].x_pos==-99999 ) continue;
-
-            if (ah!=bh && !(ah==3&&bh==4)) {  // make a track               
-              CRTavehit Bhit = aveHits[bh];
-              crt::CRTTrack CRTcanTrack=shcut(Ahit,Bhit,time_s_A,time_s_err);
-              CRTTrackCol->emplace_back(CRTcanTrack);
-              std::vector<float> crtTrack = {Ahit.x_pos, Ahit.y_pos, Ahit.z_pos, Bhit.x_pos, Bhit.y_pos, Bhit.z_pos};
-              crtTracks.push_back(crtTrack);
-              nTrack++;
-            }
-
+            crt::CRTTrack CRTcanTrack=shcut(Ahit,Bhit,time_s_A,0);
+            CRTTrackCol->emplace_back(CRTcanTrack);
+            nTrack++;
           }
-
         }
-
       }
-        
-    }// if at least two planes with hits
+    }
+
+  }else{
+  
+    //get better access to the data               
+    //  std::vector<crt::CRTHit> const& CRTHitCollection(*rawHandle);
+    art::Handle< std::vector<crt::CRTTzero> > rawHandletzero;
+    evt.getByLabel(data_label_tzeros_, rawHandletzero); //what is the product instance name? no BernZMQ
     
-  }// loop over tzeros
+    //check to make sure the data we asked for is valid                                                                            
+    if(!rawHandletzero.isValid()){
+      std::cout << "Run " << evt.run() << ", subrun " << evt.subRun()
+                << ", event " << evt.event() << " has zero"
+                << " CRTTzeros " << " in module " << data_label_tzeros_ << std::endl;
+      std::cout << std::endl;
+      return;
+    }
+    
+    std::vector<art::Ptr<crt::CRTTzero> > tzerolist;
+    if (evt.getByLabel(data_label_tzeros_,rawHandletzero))
+      art::fill_ptr_vector(tzerolist, rawHandletzero);
+ 
+    art::FindManyP<crt::CRTHit> fmht(rawHandletzero, evt, data_label_tzeros_);
+ 
+    //loop over tzeros
+    for(size_t tzIter = 0; tzIter < tzerolist.size(); ++tzIter){   
+      
+      //count planes with hits for this tzero
+      int np =0 ; //int ipflag[7] = {}; // CHANGED FROM 4 TO 7
+      int tothits =0;
+      for (int ip=0;ip<7;++ip) { // CHANGED FROM 4 TO 7
+        if (tzerolist[tzIter]->nhits[ip]>0)  { np++; /*ipflag[ip]=1;*/ tothits+=tzerolist[tzIter]->nhits[ip];}  
+      }
+ 
+      if (np>1) {
+      std::vector<art::Ptr<crt::CRTHit> > hitlist=fmht.at(tzIter);
+      //for(size_t hit_i = 0; hit_i < hitlist.size(); hit
+        if (track_method_type_==1) {
+          double time_s_A = hitlist[0]->ts0_s;
+ 
+          // find pairs of hits in different planes
+          for (size_t ah = 0; ah< hitlist.size()-1; ++ah){        
+            crt::CRTHit temphit=*hitlist[ah];
+            CRTavehit Ahit = copyme(temphit);
+            int planeA = hitlist[ah]->plane;
+ 
+            for (size_t bh = ah+1; bh< hitlist.size(); ++bh){        
+              int planeB = hitlist[bh]->plane;
+ 
+              if (planeB!=planeA && !((planeA==3&&planeB==4)||(planeA==4&&planeB==3))) {  // make a track               
+                temphit=*hitlist[bh];
+                CRTavehit Bhit = copyme(temphit);
+                crt::CRTTrack CRTcanTrack=shcut(Ahit,Bhit,time_s_A,0);
+                CRTTrackCol->emplace_back(CRTcanTrack);
+              }
+ 
+            }
+ 
+          }
+ 
+        }
+ 
+        else if ((track_method_type_==2) || (track_method_type_==3 && np==2 && tothits==2)) {        
+ 
+          //loop over hits and get average x,y,z,pe for each plane CHANGED FROM 4 TO 7
+          std::vector<float> thittime0[7];
+          std::vector<float> thittime1[7];
+          std::vector<float> tx[7];
+          std::vector<float> ty[7];
+          std::vector<float> tz[7];
+          std::vector<float> pe[7];
+          
+          double time_s_A = hitlist[0]->ts0_s;
+          //      double time_s_err = hitlist[0]->ts0_s_err;
+          double time_s_err = 0.;
+          double time1_ns_A = hitlist[0]->ts1_ns;
+          double time0_ns_A = hitlist[0]->ts0_ns;
+         
+          //loop over hits for this tzero, sort by plane
+          for (size_t ah = 0; ah< hitlist.size(); ++ah){        
+            int ip = hitlist[ah]->plane;       
+            thittime0[ip].push_back(hitlist[ah]->ts0_ns-time0_ns_A);
+            thittime1[ip].push_back(hitlist[ah]->ts1_ns-time1_ns_A);
+            tx[ip].push_back(hitlist[ah]->x_pos);
+            ty[ip].push_back(hitlist[ah]->y_pos);
+            tz[ip].push_back(hitlist[ah]->z_pos);
+            pe[ip].push_back(hitlist[ah]->peshit);        
+          } // loop over hits
+ 
+          CRTavehit aveHits[7];
+          //loop over planes and calculate average hits
+          for (int ip = 0; ip < 7; ip++){
+            if (tx[ip].size()>0){
+              uint32_t at0; int32_t at1; uint16_t rt0,rt1;
+              float totpe=0.0;
+              float avet1=0.0; float rmst1 =0.0; 
+              float avet0=0.0; float rmst0 =0.0; 
+              float avex=0.0; float rmsx =0.0; 
+              float avey=0.0; float rmsy =0.0; 
+              float avez=0.0; float rmsz =0.0;
+              vmanip(thittime0[ip],&avet0,&rmst0);
+              vmanip(thittime1[ip],&avet1,&rmst1);
+              at0 = (uint32_t)(avet0+time0_ns_A); rt0 = (uint16_t)rmst0;   
+              at1 = (int32_t)(avet1+time1_ns_A); rt1 = (uint16_t)rmst1;
+              vmanip(tx[ip],&avex,&rmsx);
+              vmanip(ty[ip],&avey,&rmsy);
+              vmanip(tz[ip],&avez,&rmsz);
+              totpe=std::accumulate(pe[ip].begin(), pe[ip].end(), 0.0);
+              CRTavehit aveHit = fillme(at0,rt0,at1,rt1,avex,rmsx,avey,rmsy,avez,rmsz,totpe,ip,"");
+              aveHits[ip] = aveHit;
+            }
+            else {
+              CRTavehit aveHit = fillme(0,0,0,0,-99999,-99999,-99999,-99999,-99999,-99999,-99999,ip,"");
+              aveHits[ip] = aveHit;
+            }
+          }  
+ 
+          // find pairs of hits in different planes
+          for (size_t ah = 0; ah< 6; ++ah){        
+            CRTavehit Ahit = aveHits[ah];
+            if( Ahit.x_pos==-99999 ) continue;
+ 
+            for (size_t bh = ah+1; bh< 7; ++bh){        
+              if ( aveHits[bh].x_pos==-99999 ) continue;
+ 
+              if (ah!=bh && !(ah==3&&bh==4)) {  // make a track               
+                CRTavehit Bhit = aveHits[bh];
+                crt::CRTTrack CRTcanTrack=shcut(Ahit,Bhit,time_s_A,time_s_err);
+                CRTTrackCol->emplace_back(CRTcanTrack);
+                nTrack++;
+              }
+ 
+            }
+ 
+          }
+ 
+        }
+          
+      }// if at least two planes with hits
+      
+    }// loop over tzeros
+  }
   
   //store track collection into event
   if(store_track_ == 1)
     evt.put(std::move(CRTTrackCol));
-/*
-  TCanvas *c1 = new TCanvas("c1","",700,500);
-  int nTracks = crtTracks.size();
-  std::cout<<"Number of tracks = "<<nTracks<<std::endl;
-  TPolyLine3D *tracks[1000];
-  for(int i = 0; i < nTracks; i++){
-    tracks[i] = new TPolyLine3D(2);
-    tracks[i]->SetPoint(0, crtTracks[i][0], crtTracks[i][1], crtTracks[i][2]);
-    tracks[i]->SetPoint(1, crtTracks[i][3], crtTracks[i][4], crtTracks[i][5]);
-    tracks[i]->SetLineColor(i+1);
-    tracks[i]->Draw();
-  }
-  c1->SaveAs("crtTracks.root");
-*/
-  std::cout<<"Number of tracks = "<<nTrack<<std::endl;
+
+  if(verbose_) std::cout<<"Number of tracks = "<<nTrack<<std::endl;
   
 }
 
@@ -369,7 +470,7 @@ void vmanip(std::vector<float> v, float* ave, float* rms)
 }
 
 CRTavehit fillme(uint32_t i,uint16_t j,int32_t k,uint16_t l,float a,float b, 
-                 float c, float d, float e,float f,float g,int p)
+                 float c, float d, float e,float f,float g,int p, std::string t)
 {
   CRTavehit h;
   h.ts0_ns=i;
@@ -385,6 +486,7 @@ CRTavehit fillme(uint32_t i,uint16_t j,int32_t k,uint16_t l,float a,float b,
   h.z_err=f;
   h.pe=g;
   h.plane=p;
+  h.tagger=t;
 
   return(h);
 } 
@@ -404,6 +506,7 @@ CRTavehit copyme(crt::CRTHit myhit)
   h.z_err=myhit.z_err;
   h.pe=myhit.peshit;
   h.plane=myhit.plane;
+  h.tagger=myhit.tagger;
   return(h);
 } 
 
