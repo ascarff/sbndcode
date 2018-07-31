@@ -525,7 +525,7 @@ template<class Stream, char const *REDIS_NAME>
 class daqAnalysis::EventInfoMetric {
 public:
   // how to calculate the metric given a channel data reference
-  virtual unsigned Calculate(daqAnalysis::EventInfo &event_info) = 0;
+  virtual float Calculate(daqAnalysis::EventInfo &event_info) = 0;
 
   // base class destructors should be virtual
   virtual ~EventInfoMetric() {}
@@ -536,13 +536,13 @@ public:
 
   void Fill(daqAnalysis::EventInfo &event_info) {
     // calculate and add to each container
-    unsigned val = Calculate(event_info);
+    float  val = Calculate(event_info);
 
     // each container is aware of how often it is filled per time instance Only one data stream hence first value is set to 0. 
     _event.Fill(0,0, val);
   }
 
-  unsigned Data() {
+  float Data() {
     //This stream has only one Data set per event. The purity does not change per FEM! (Well at least in lariat) 
     return _event.Data(0);
   }
@@ -559,7 +559,8 @@ public:
 
   // send stuff to Redis
   unsigned Send(redisContext *context, unsigned index, const char *stream_name, unsigned stream_expire) {
-      redisAppendCommand(context, "SET stream/%s:%lu:%s: %u",
+    std::cout << "Data(): " << Data() << std::endl;
+    redisAppendCommand(context, "SET stream/%s:%lu:%s: %f",
         stream_name, index, REDIS_NAME, Data()); 
       if (stream_expire != 0) {
         redisAppendCommand(context, "EXPIRE stream/%s:%lu:%s: %u",
@@ -580,8 +581,10 @@ class daqAnalysis::RedisPurity: public daqAnalysis::EventInfoMetric<StreamDataMe
   using daqAnalysis::EventInfoMetric<StreamDataMean, REDIS_NAME_PURITY>::EventInfoMetric;
 
   // implement calculate
-  inline  unsigned Calculate(daqAnalysis::EventInfo &eventinfo) override
-  {return eventinfo.purity; }
+  inline  float Calculate(daqAnalysis::EventInfo &eventinfo) override
+  {
+    return eventinfo.purity;
+  }
 };
 
 

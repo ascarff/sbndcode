@@ -173,10 +173,10 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
     {art::fill_ptr_vector(rawhits, hitListHandle);}
   std::cout << "Number of Hits: " << rawhits.size() << std::endl;           
 
-  double lifetime = 1;
   //Purity Trigger - Gray you will probably want to change this for syntax
   if(_config.fCosmicRun == true && _config.fDoPurityAna){
     lifetime = CalculateLifetime(rawhits, true);
+    lifetime = lifetime/2; //for microsecond
     std::cout<<"Lifetime = "<<lifetime<<" ticks\n";
   } 
 
