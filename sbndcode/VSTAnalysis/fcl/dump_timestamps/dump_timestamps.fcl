@@ -1,0 +1,29 @@
+#include "vst_channel_map.fcl"
+
+physics:
+{
+  producers: {}
+
+  analyzers:
+  {
+    DumpTimestamp: {
+      module_type: DumpTimestamp
+    }
+  }
+
+
+  analyze: [DumpTimestamp]
+  end_paths: [analyze]
+}
+
+outputs:{}
+
+services: {} 
+
+source:
+{
+  module_type: RootInput
+}
+
+process_name: DUMPTIMESTAMP
+

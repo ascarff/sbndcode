@@ -78,8 +78,6 @@ Analysis::Analysis(fhicl::ParameterSet const & p) :
 Analysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &param) {
   // set up config
 
-  // conversion of frame number to time (currently unused)
-  frame_to_dt = param.get<float>("frame_to_dt", 1.6e-3 /* units of seconds */);
   // whether to print stuff
   verbose = param.get<bool>("verbose", false);
   // number of events to take in before exiting

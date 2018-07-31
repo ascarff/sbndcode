@@ -60,6 +60,11 @@ private:
     unsigned n_mode_skip;
     bool calc_checksum;
     bool subtract_pedestal;
+
+    // for converting nevis frame time into timestamp
+    unsigned timesize;
+    unsigned frame_to_dt;
+
     bool v_checksum;
     bool v_event_no;
     bool v_slot_no;

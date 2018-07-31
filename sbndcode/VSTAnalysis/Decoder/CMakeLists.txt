@@ -16,6 +16,18 @@ simple_plugin( DaqDecoder module
   ${ROOT_BASIC_LIB_LIST}
 )
 
+simple_plugin( DumpTimestamp module 
+  ${LARDATAOBJ}
+  lardataobj_RawData
+  ${ART_UTILITIES}
+  ${FHICLCPP}
+  ${MF_MESSAGELOGGER}
+  ${MF_UTILITIES}
+  ${ART_FRAMEWORK_CORE}
+  ${ROOT_BASIC_LIB_LIST}
+
+)
+
 install_headers()
 install_fhicl()
 install_source()
