@@ -122,6 +122,11 @@ public:
 
     std::string fHitsModuleLabel;
 
+    //Purity config
+    int mincount;
+    int minuniqcount;
+    float chi2cut;
+
     AnalysisConfig(const fhicl::ParameterSet &param);
     AnalysisConfig() {}
   };

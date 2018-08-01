@@ -1,4 +1,5 @@
 #include "Purity.hh"
+#include "Analysis.hh"
 
 /*Adrian Orea: 2018
 using Dominic's code and 
@@ -51,7 +52,8 @@ double likely(const double *par){
 	   return lik;
 	}
 
-double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits, bool fVerbose){	
+double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits, bool fVerbose, float mincount, float minuniqcount,
+float chi2cut){	
 	FILE *values_file;							//File where the minimization points are stored
 	FILE *taulengthangle;							//File with the Tau values, track length, and angle
 	ROOT::Math::Functor f(&likely,3);					//Creates the function based on the Likelihood in likely function
@@ -63,8 +65,6 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 	double hisigmalimit;    						// upper limit on sigma minimization
 	double lowdqdxolimit;   						// lower limit on dqdxo minimization
 	double hidqdxolimit;    						// upper limit on dqdxo minimization
-	int mincount=100;
-	int minuniqcount=50;
 	int rhsize=rawhits.size();
 	if (rhsize < mincount){
 		if(fVerbose) cout << "Minimum Hits of " << mincount << " not met. Skipping event..." << endl;
@@ -206,7 +206,7 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 	    }
 
   // Cut on minimum chi2 -- SET WHEN WE HAVE A FEW MUONS. 
-    if(fFunc->GetChisquare()/fFunc->GetNDF() == 0){
+    if(fFunc->GetChisquare()/fFunc->GetNDF() > chi2cut){
     std::cout << "chi2: " << fFunc->GetChisquare() << " NDF: " << fFunc->GetNDF() << " if:  " << fFunc->GetChisquare()/fFunc->GetNDF() << std::endl;
     if(fVerbose) cout << "Bad chi square. Skipping event...\n";
     return -1;

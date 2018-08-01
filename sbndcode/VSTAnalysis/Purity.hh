@@ -45,10 +45,12 @@
 #include "Math/Minimizer.h"
 #include "Math/Factory.h"
 
+//Online Mointering Includes 
+
 namespace daqAnalysis{ 
   
 
-  double CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits, bool fVerbose); //Calculate electron lifetime from collection of hits
+  double CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits, bool fVerbose, float mincount, float minuniqcount, float chi2cut); //Calculate electron lifetime from collection of hits
 }
 
 #endif

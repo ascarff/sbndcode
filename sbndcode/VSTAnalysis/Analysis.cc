@@ -158,6 +158,12 @@ Analysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &param) {
   fUseNevisClock = param.get<bool>("UseNevisClock", false);
   fDoPurityAna = param.get<bool>("DoPurityAna", true);
   fCosmicRun = param.get<bool>("CosmicRun", false);
+
+  //Purity Config 
+  mincount = param.get<float>("MinCount", 100);
+  minuniqcount = param.get<float>("MinUniqueCount", 50);
+  chi2cut = param.get<float>("chi2cut", 10);
+
 }
 
 void Analysis::AnalyzeEvent(art::Event const & event) {
@@ -174,7 +180,7 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
   //Purity Trigger - Gray you will probably want to change this for syntax
   double lifetime = -1;
   if(_config.fCosmicRun == true && _config.fDoPurityAna){
-    lifetime = CalculateLifetime(rawhits, true);
+    lifetime = CalculateLifetime(rawhits, _config.verbose,_config.mincount,_config.minuniqcount,_config.chi2cut);
     lifetime = lifetime/2; //for microsecond
   } 
 
