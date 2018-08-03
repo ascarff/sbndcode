@@ -33,6 +33,26 @@ physics:
       fft_per_channel: false
       timing: false
       sum_waveforms: false 
+
+      mincount       :100
+      minuniqcount   :50
+      chi2cut        :10
+      pcacut         :-2
+      lowtaulimit    :10
+      hitaulimit     :50000
+      lowsigmalimit  :0
+      hisigmalimit   :6000
+      lowdqdxolimit  :100
+      hidqdxolimit   :40000
+      FirstSig       :4.5
+      SecondSig      :4.5
+      shapingtime    :2 
+      anglecut       :60
+      fforceanglecut :false
+      Anglecut       :true
+      LifetimePlots  :false
+
+
     }
   }
 
@@ -72,9 +92,9 @@ source:
 
 physics.producers.rawhit.DigitModuleLabel:    "daq"
 physics.producers.rawhit.MinSigInd:           10
-physics.producers.rawhit.MinSigCol:           7
+physics.producers.rawhit.MinSigCol:           10
 physics.producers.rawhit.UncompressWithPed:         false 
-physics.producers.rawhit.CollectionNeg: true
+physics.producers.rawhit.CollectionNeg: false
 physics.producers.rawhit.PedestalSubtracted: true
 
 process_name: PIPELINE

@@ -160,9 +160,24 @@ Analysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &param) {
   fCosmicRun = param.get<bool>("CosmicRun", false);
 
   //Purity Config 
-  mincount = param.get<float>("MinCount", 100);
-  minuniqcount = param.get<float>("MinUniqueCount", 50);
-  chi2cut = param.get<float>("chi2cut", 10);
+  mincount         = param.get<float>("MinCount", 100);
+  minuniqcount     = param.get<float>("MinUniqueCount", 50);
+  chi2cut          = param.get<float>("chi2cut", 10);
+  pcacut           = param.get<float>("pcacut", 1.7);
+  shapingtime      = param.get<float>("shapingtime", 2);
+  anglecut         = param.get<float>("anglecut", 60);
+  lowtaulimit      = param.get<double>("lowtaulimit", 10);
+  hitaulimit       = param.get<double>("hitaulimit", 50000);
+  lowsigmalimit    = param.get<double>("lowsigmalimit", 0);
+  hisigmalimit     = param.get<double>("hisigmalimit", 6000);
+  lowdqdxolimit    = param.get<double>("lowdqdxolimit", 100);
+  hidqdxolimit     = param.get<double>("highdqdxolimit", 40000);
+  FirstSig         = param.get<double>("FirstSig", 4.5);
+  SecondSig        = param.get<double>("FirstSig", 4.5);
+  Anglecut         = param.get<bool>("Anglecut", true);
+  LifetimePlots    = param.get<bool>("LifetimePlots", false);
+  fforceanglecut   = param.get<bool>("fforcedanglecut", false);
+
 
 }
 
@@ -180,7 +195,7 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
   //Purity Trigger - Gray you will probably want to change this for syntax
   double lifetime = -1;
   if(_config.fCosmicRun == true && _config.fDoPurityAna){
-    lifetime = CalculateLifetime(rawhits, _config.verbose,_config.mincount,_config.minuniqcount,_config.chi2cut);
+    lifetime = CalculateLifetime(rawhits, _config);
     lifetime = lifetime/2; //for microsecond
   } 
 

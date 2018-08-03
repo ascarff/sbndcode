@@ -122,10 +122,24 @@ public:
 
     std::string fHitsModuleLabel;
 
-    //Purity config
+    //Purity config... Sorry for loads I don't know if they will ned changing.  
     int mincount;
     int minuniqcount;
     float chi2cut;
+    float pcacut;
+    float shapingtime;
+    float anglecut; 
+    double lowtaulimit;                                              // lower limit on tau minimization                                                                   
+    double hitaulimit;                                               // upper limit on tau minimization                                                                   
+    double lowsigmalimit;                                            // lower limit on sigma minimization                                                                 
+    double hisigmalimit;                                             // upper limit on sigma minimization                                                                 
+    double lowdqdxolimit;                                            // lower limit on dqdxo minimization                                                                 
+    double hidqdxolimit;                                             // upper limit on dqdxo minimization                                                                 
+    double FirstSig;                                                                                                                                                
+    double SecondSig; 
+    bool LifetimePlots;
+    bool Anglecut; 
+    bool fforceanglecut;
 
     AnalysisConfig(const fhicl::ParameterSet &param);
     AnalysisConfig() {}
