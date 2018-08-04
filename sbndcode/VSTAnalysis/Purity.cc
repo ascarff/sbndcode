@@ -593,5 +593,7 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 
 	if(fVerbose) cout << "Lifetime (exp) is: " << (lifetime/2000)  << "ms" << endl << endl << endl << endl;
 
+	if(tauvec < 0 || (tauvec/2000) > 24){return -1;}
+
   return tauvec;
 }
