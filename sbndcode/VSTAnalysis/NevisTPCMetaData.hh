@@ -41,7 +41,7 @@ class NevisTPCMetaData {
 
   explicit NevisTPCMetaData(daqAnalysis::HeaderData const& header) {
     slot = header.slot;
-    time = header.frame_time_stamp;
+    time = header.frag_time_stamp;
   }
 };
 }
