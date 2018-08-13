@@ -34,8 +34,7 @@ physics:
       timing: false
       sum_waveforms: false 
 
-      mincount       :100
-      minuniqcount   :50
+      mincount       :50
       chi2cut        :10
       pcacut         :-2
       lowtaulimit    :10

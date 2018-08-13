@@ -30,6 +30,9 @@ vst_detpedestalservice: {
 sbnd_detpedestalservice.DetPedestalRetrievalAlg.DefaultCollMean: 625
 sbnd_detpedestalservice.DetPedestalRetrievalAlg.DefaultIndMean: 1847
 
+vst_detpedestalservice.DetPedestalRetrievalAlg.DefaultCollMean: 625
+vst_detpedestalservice.DetPedestalRetrievalAlg.DefaultIndMean: 1847
+
 # ##############################################################################
 
 END_PROLOG

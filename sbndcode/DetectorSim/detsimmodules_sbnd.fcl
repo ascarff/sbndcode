@@ -50,10 +50,10 @@ vst_simwire:
  # here we read the settings from the pedestal service configuration,
  # so that we have only one maintenance point
 # CollectionPed:       @local::sbnd_detpedestalservice.DetPedestalRetrievalAlg.DefaultCollMean # used to be 400
- CollectionPed:        625
+ CollectionPed:        0 #625
  CollectionPedErr:     0 #17 #Error on the collection baseline DONT VARY FOR USEABLE EVENT DISPLAY
 # InductionPed:        @local::sbnd_detpedestalservice.DetPedestalRetrievalAlg.DefaultIndMean  # used to be 2048
- InductionPed:         1847
+ InductionPed:         0 #1847
  InductionPedErr:      0 #48 #Error on the induction baseline DONT VARY FOR USEABLE EVENT DISPLAY
 # BaselineRMS:         0.3         #ADC baseline fluctuation within channel No longer in use and removed from the code DomBarker 09/05/2018 (May 2018)         
  NoiseFileFname:      "uboone_noise_v0.1.root"

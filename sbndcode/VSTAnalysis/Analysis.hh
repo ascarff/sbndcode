@@ -124,7 +124,6 @@ public:
 
     //Purity config... Sorry for loads I don't know if they will ned changing.  
     int mincount;
-    int minuniqcount;
     float chi2cut;
     float pcacut;
     float shapingtime;

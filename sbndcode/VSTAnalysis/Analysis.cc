@@ -161,7 +161,6 @@ Analysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &param) {
 
   //Purity Config 
   mincount         = param.get<float>("MinCount", 100);
-  minuniqcount     = param.get<float>("MinUniqueCount", 50);
   chi2cut          = param.get<float>("chi2cut", 10);
   pcacut           = param.get<float>("pcacut", 1.7);
   shapingtime      = param.get<float>("shapingtime", 2);
@@ -196,6 +195,7 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
   double lifetime = -1;
   if(_config.fCosmicRun == true && _config.fDoPurityAna){
     lifetime = CalculateLifetime(rawhits, _config);
+    std::cout<<"And exits the calculator\n";
     lifetime = lifetime/2; //for microsecond
   } 
 
