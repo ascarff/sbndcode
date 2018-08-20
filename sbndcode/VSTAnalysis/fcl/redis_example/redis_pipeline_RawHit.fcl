@@ -43,6 +43,24 @@ physics:
       fill_waveforms: false
       fft_per_channel: false
       timing: false
+
+      # Purity configuration
+      min_col_hits    :40       # Minimum number of collection plane hits
+      min_ind_hits    :20       # Minimum number of induction plane hits
+      chi2_cut        :40       # Minimum chi2/ndof after 2 linear fits 
+      pca_cut         :-1       # Maximum value of principal component analysis
+      min_wires       :50       # Minimum extent of track in wire number
+      min_ticks       :100      # Minimum extent of track in time [ticks]
+      min_overlap     :0.8      # Minimum percentage overlap of col/ind tracks in time
+      charge_width    :6.5      # Sigma multiplier for landau tail cut
+      shaping_time    :2        # Shaping time [us]
+      drift_vel       :1.50638  # Drift velocity[mm/us]
+      wire_spacing    :4.       # Wire spacing [mm]
+      angle_cut       :60       # Maximum value of angle to wire planes? [degrees]
+      force_angle_cut :false    # Use the angle cut rather than atan(st*dv/ws)
+      do_angle_cut    :false    # Apply the angle cut
+      lifetime_plots  :false    # Make plots
+      purity_verbose  :false    # Print stuff
     }
   }
 

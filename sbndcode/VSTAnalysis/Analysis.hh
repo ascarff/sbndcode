@@ -123,22 +123,22 @@ public:
     std::string fHitsModuleLabel;
 
     //Purity config... Sorry for loads I don't know if they will ned changing.  
-    int mincount;
-    float chi2cut;
-    float pcacut;
-    float shapingtime;
-    float anglecut; 
-    double lowtaulimit;                                              // lower limit on tau minimization                                                                   
-    double hitaulimit;                                               // upper limit on tau minimization                                                                   
-    double lowsigmalimit;                                            // lower limit on sigma minimization                                                                 
-    double hisigmalimit;                                             // upper limit on sigma minimization                                                                 
-    double lowdqdxolimit;                                            // lower limit on dqdxo minimization                                                                 
-    double hidqdxolimit;                                             // upper limit on dqdxo minimization                                                                 
-    double FirstSig;                                                                                                                                                
-    double SecondSig; 
-    bool LifetimePlots;
-    bool Anglecut; 
-    bool fforceanglecut;
+    int min_col_hits;       // Minimum number of collection plane hits          
+    int min_ind_hits;       // Minimum number of induction plane hits
+    int min_wires;          // Minimum extent of track in wire number
+    int min_ticks;          // Minimum extent of track in time [ticks]
+    float chi2_cut;         // Minimum chi2/ndof after 2 linear fits
+    float pca_cut;          // Maximum value of principal component analysis
+    float min_overlap;      // Minimim percentage overlap pf col/ind tracks in time
+    float charge_width;     // Sigma multiplier for landau tail cut
+    float shaping_time;     // Shaping time [us]
+    float drift_vel;        // Drift velocity[mm/us]
+    float wire_spacing;     // Wire spacing [mm]
+    float angle_cut;        // Maximum value of angle to wire planes? [degrees]
+    bool force_angle_cut;   // Use the angle cut rather than atan(st*dv/ws)
+    bool do_angle_cut;      // Apply the angle cut
+    bool lifetime_plots;    // Make plots
+    bool purity_verbose;    // Print Stuff
 
     AnalysisConfig(const fhicl::ParameterSet &param);
     AnalysisConfig() {}

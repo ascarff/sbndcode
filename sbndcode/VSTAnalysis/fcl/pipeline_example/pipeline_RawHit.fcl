@@ -4,6 +4,7 @@
 #include "resourcemonitorservices_sbnd.fcl"
 #include "vst_channel_map.fcl"
 
+
 physics:
 {
   producers:
@@ -32,25 +33,25 @@ physics:
 
       fft_per_channel: false
       timing: false
-      sum_waveforms: false 
+      sum_waveforms: false
 
-      mincount       :50
-      chi2cut        :10
-      pcacut         :-2
-      lowtaulimit    :10
-      hitaulimit     :50000
-      lowsigmalimit  :0
-      hisigmalimit   :6000
-      lowdqdxolimit  :100
-      hidqdxolimit   :40000
-      FirstSig       :4.5
-      SecondSig      :4.5
-      shapingtime    :2 
-      anglecut       :60
-      fforceanglecut :false
-      Anglecut       :true
-      LifetimePlots  :false
-
+      # Purity configuration
+      min_col_hits    :40       # Minimum number of collection plane hits
+      min_ind_hits    :20       # Minimum number of induction plane hits
+      chi2_cut        :40       # Minimum chi2/ndof after 2 linear fits 
+      pca_cut         :-1       # Maximum value of principal component analysis
+      min_wires       :50       # Minimum extent of track in wire number
+      min_ticks       :100      # Minimum extent of track in time [ticks]
+      min_overlap     :0.8      # Minimum percentage overlap of col/ind tracks in time
+      charge_width    :6.5      # Sigma multiplier for landau tail cut
+      shaping_time    :2        # Shaping time [us]
+      drift_vel       :1.50638  # Drift velocity[mm/us]
+      wire_spacing    :4.       # Wire spacing [mm]
+      angle_cut       :60       # Maximum value of angle to wire planes? [degrees]
+      force_angle_cut :false    # Use the angle cut rather than atan(st*dv/ws)
+      do_angle_cut    :false    # Apply the angle cut
+      lifetime_plots  :false    # Make plots
+      purity_verbose  :false    # Print stuff
 
     }
   }
@@ -81,6 +82,7 @@ services:
   ChannelStatusService:   @local::vst_channelstatus
   VSTChannelMap: @local::nevis_integration_channel_map_VST
   @table::sbnd_resourcemonitorservices
+  
 } 
 
 source:
@@ -94,7 +96,7 @@ physics.producers.rawhit.MinSigInd:           10
 physics.producers.rawhit.MinSigCol:           10
 physics.producers.rawhit.UncompressWithPed:         false 
 physics.producers.rawhit.CollectionNeg: false
-physics.producers.rawhit.PedestalSubtracted: true
+physics.producers.rawhit.PedestalSubtracted: false
 
 process_name: PIPELINE
 

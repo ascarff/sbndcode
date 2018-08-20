@@ -33,6 +33,9 @@
 
 // ROOT
 #include "TTree.h"
+#include "TRandom2.h"
+#include "TError.h"
+#include "TMinuit.h"
 #include "TGraph.h"
 #include "TCanvas.h"
 #include "TF1.h"
@@ -45,6 +48,7 @@
 #include "Math/Minimizer.h"
 #include "Math/Factory.h"
 #include "TPrincipal.h"
+#include "TFile.h"
 
 //Online Mointering Includes 
 #include "Analysis.hh"

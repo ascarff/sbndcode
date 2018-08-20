@@ -86,11 +86,11 @@ sbnd_disp:
 
 vst_rawdrawingopt:                         @local::standard_rawdrawingopt
 vst_rawdrawingopt.RawDataLabel:            "daq"
-vst_rawdrawingopt.DetPedestalRetrievalAlg.DefaultCollMean:  0 #625
-vst_rawdrawingopt.DetPedestalRetrievalAlg.DefaultIndMean:   0 #1847
-vst_disp.DetPedestalService.DetPedestalRetrievalAlg.DefaultCollMean:  0 #625
-vst_disp.DetPedestalService.DetPedestalRetrievalAlg.DefaultIndMean:  0 #1847
-vst_rawdrawingopt.TotalTicks: 787
+vst_rawdrawingopt.DetPedestalRetrievalAlg.DefaultCollMean:  0
+vst_rawdrawingopt.DetPedestalRetrievalAlg.DefaultIndMean:   0
+vst_disp.DetPedestalService.DetPedestalRetrievalAlg.DefaultCollMean:  0
+vst_disp.DetPedestalService.DetPedestalRetrievalAlg.DefaultIndMean:  0
+vst_rawdrawingopt.TotalTicks: 4000
 vst_simdrawingopt:                         @local::standard_simdrawingopt
 vst_simdrawingopt.ShowMCTruthVectors:      false
 vst_disp:

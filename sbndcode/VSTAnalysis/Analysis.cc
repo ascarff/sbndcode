@@ -160,23 +160,22 @@ Analysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &param) {
   fCosmicRun = param.get<bool>("CosmicRun", false);
 
   //Purity Config 
-  mincount         = param.get<float>("MinCount", 100);
-  chi2cut          = param.get<float>("chi2cut", 10);
-  pcacut           = param.get<float>("pcacut", 1.7);
-  shapingtime      = param.get<float>("shapingtime", 2);
-  anglecut         = param.get<float>("anglecut", 60);
-  lowtaulimit      = param.get<double>("lowtaulimit", 10);
-  hitaulimit       = param.get<double>("hitaulimit", 50000);
-  lowsigmalimit    = param.get<double>("lowsigmalimit", 0);
-  hisigmalimit     = param.get<double>("hisigmalimit", 6000);
-  lowdqdxolimit    = param.get<double>("lowdqdxolimit", 100);
-  hidqdxolimit     = param.get<double>("highdqdxolimit", 40000);
-  FirstSig         = param.get<double>("FirstSig", 4.5);
-  SecondSig        = param.get<double>("FirstSig", 4.5);
-  Anglecut         = param.get<bool>("Anglecut", true);
-  LifetimePlots    = param.get<bool>("LifetimePlots", false);
-  fforceanglecut   = param.get<bool>("fforcedanglecut", false);
-
+  min_col_hits      = param.get<int>("min_col_hits", 100);       // Minimum number of collection plane hits       
+  min_ind_hits      = param.get<int>("min_ind_hits", 100);       // Minimum number of induction plane hits
+  min_wires         = param.get<int>("min_wires", 100);          // Minimum extent of track in wire number
+  min_ticks         = param.get<int>("min_ticks", 100);          // Minimum extent of track in time [ticks]
+  chi2_cut          = param.get<float>("chi2_cut", 10);          // Minimum chi2/ndof after 2 linear fits
+  pca_cut           = param.get<float>("pca_cut", 1.7);          // Maximum value of principal component analysis
+  min_overlap       = param.get<float>("min_overlap", 1.7);      // Min % overlap of col/ind tracks in time
+  charge_width      = param.get<float>("charge_width", 4);       // Sigma multiplier for landau tail cut
+  shaping_time      = param.get<float>("shaping_time", 2);       // Shaping time [us]
+  drift_vel         = param.get<float>("drift_vel", 1.50638);    // Drift velocity[mm/us]
+  wire_spacing      = param.get<float>("wire_spacing", 4);       // Wire spacing [mm]
+  angle_cut         = param.get<float>("angle_cut", 60);         // Maximum value of angle to wire planes? [deg]
+  force_angle_cut   = param.get<bool>("force_angle_cut", false); // Use the angle cut rather than atan(st*dv/ws)
+  do_angle_cut      = param.get<bool>("do_angle_cut", true);     // Apply the angle cut
+  lifetime_plots    = param.get<bool>("lifetime_plots", false);  // Make plots
+  purity_verbose    = param.get<bool>("purity_verbose", false);  // Print stuff
 
 }
 
@@ -194,9 +193,8 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
   //Purity Trigger - Gray you will probably want to change this for syntax
   double lifetime = -1;
   if(_config.fCosmicRun == true && _config.fDoPurityAna){
-    lifetime = CalculateLifetime(rawhits, _config);
-    std::cout<<"And exits the calculator\n";
-    lifetime = lifetime/2; //for microsecond
+    lifetime = CalculateLifetime(rawhits, _config); // In ticks
+    lifetime = lifetime/2.; //for microsecond
   } 
 
  
@@ -375,7 +373,7 @@ void Analysis::AnalyzeEvent(art::Event const & event) {
   for (unsigned i = 0; i < _channel_map->NChannels() - 1; i++) {
     unsigned next_channel = i + 1; 
 
-    if (!_per_channel_data[i].empty && !_per_channel_data[next_channel].empty) {
+    if (!_per_channel_data[i].empty && !_per_channel_data[next_channel].empty && !raw_digits_handle->empty()) {
       unsigned raw_digits_i = _channel_index_map[i];
       unsigned raw_digits_next_channel = _channel_index_map[next_channel];
       float unscaled_dnoise = _noise_samples[i].DNoise(
