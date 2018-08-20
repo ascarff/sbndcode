@@ -10,6 +10,7 @@ physics:
       produce_header: false
       produce_metadata: true
       baseline_calc: true
+      subtract_pedestal: true
       n_mode_skip: 3
     }
   }
@@ -26,7 +27,7 @@ outputs:
   {
     module_type: RootOutput
     #fileName: "digits.root"
-    fileName: "/daqdata/digits_sbnd_r%06r_%06s.root"
+    fileName: "/daqdata/digits_sbnd_r%06r_%06s_%#.root"
     #fileName: "/tmp/digits_sbnd_r%06r_%06s.root"
     dataTier:    "digits"
     streamName:  "all"
@@ -35,6 +36,9 @@ outputs:
       "drop artdaq::Fragments_daq_*_DAQ",
       "drop art::TriggerResults_TriggerResults_*_DIGITS"
     ]
+    fileProperties: {
+      maxSubRuns: 1
+    }
   }
 }
 
