@@ -198,7 +198,7 @@ void Redis::FinishSend() {
 
 void Redis::EventInfo(daqAnalysis::EventInfo *event_info) {
   //If -1 there has been a failure in the purity analysis and so we don't want to process that event. 
-  if(event_info->purity != -1){
+  if(event_info->purity > 0){
   SendEventInfo();
   FillEventInfo(event_info);
   }

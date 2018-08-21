@@ -1,44 +1,31 @@
 #include "geometry_lariat.fcl"
+#include "resourcemonitorservices_sbnd.fcl"
 #include "hitfindermodulesVST.fcl"
 #include "channelstatus_sbnd.fcl"
 #include "vst_channel_map.fcl"
 
 physics:
 {
-  producers:
-  {
-    daq:
-    {
-      module_type: DaqDecoder
-      produce_header: true
-      validate_header: false
-      v_inc_trig_frame_no: false # these are wonky, don't worry about them
-    }
-    rawhit:  @local::standard_fasthitfinderVST
 
-  }
+producers:
+{
+  rawhit:             @local::standard_fasthitfinderVST
+}
 
   analyzers:
   {
     OnlineAnalysis:
     {
       module_type: OnlineAnalysis
-      monitor_name: "ONLINE"
       producer_name: daq
+      redis: true
       snapshot_time: -1
-
       stream_take: [15, 30, 60]
-      stream_expire: [10000, 60000]
-      sub_run_stream: true
-      sub_run_expire: 0
-      use_event_time: true # run offline
-      check_good_header: true
-
-      hostname: "131.225.150.201"
-      n_headers: 10
+      stream_expire: [1000, 10000]
+      n_headers: 0
 
       threshold_calc: 3
-      threshold_sigma: 8
+      threshold_sigma: 5
       noise_range_sampling: 1
       n_smoothing_samples: 1
       n_above_threshold: 2
@@ -55,10 +42,11 @@ physics:
       CosmicRun: true
 
       sum_waveforms: false
+      fill_waveforms: false
       fft_per_channel: false
-      timing: false
+      timing: true
 
-      # Purity configuration	
+      # Purity configuration
       min_col_hits    :40       # Minimum number of collection plane hits
       min_ind_hits    :20       # Minimum number of induction plane hits
       chi2_cut        :40       # Minimum chi2/ndof after 2 linear fits
@@ -79,40 +67,32 @@ physics:
     }
   }
 
-  my_producer_modules: [daq, rawhit]
+  my_producer_modules: [rawhit]
 
   analyze: [OnlineAnalysis]
   end_paths: [analyze]
 }
+
 source:
 {
   module_type: RootInput
+  fileNames: ["/home/nfs/gputnam/lariat_data.root"]
 }
 
-services: {
-
-  VSTChannelMap: @local::channel_map_VST 
+services:{
+  VSTChannelMap: @local::channel_map_VST
   Geometry: @local::lariat_geo
   ExptGeoHelperInterface: @local::lariat_geometry_helper
-  ChannelStatusService:   @local::vst_channelstatus
-
-  message: {
-    destinations : {
-      log1 : { 
-        type : cout 
-        threshold : "DEBUG" 
-      } 
-    }
-  }
+  ChannelStatusService:   @local::vst_channelstatus  
+  @table::sbnd_resourcemonitorservices
 }
 
-physics.producers.rawhit.DigitModuleLabel:          "daq"
-physics.producers.rawhit.MinSigInd:                 10
-physics.producers.rawhit.MinSigCol:	            10
+physics.producers.rawhit.DigitModuleLabel:        "daq"
+physics.producers.rawhit.MinSigInd:                 13  #Change to 5 sigma of the RMS of the Noise.  
+physics.producers.rawhit.MinSigCol:                 13
 physics.producers.rawhit.UncompressWithPed:         false
-physics.producers.rawhit.CollectionNeg:		    false
-physics.producers.rawhit.PedestalSubtracted:        false
+physics.producers.rawhit.CollectionNeg: false
+physics.producers.rawhit.PedestalSubtracted: true
 
-
-process_name: OnlineMonitoring
+process_name: REDISPIPELINE
 

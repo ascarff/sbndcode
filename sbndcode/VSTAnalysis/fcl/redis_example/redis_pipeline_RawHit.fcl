@@ -25,7 +25,7 @@ physics:
       module_type: OnlineAnalysis
       producer_name: daq
       snapshot_time: -1
-      stream_take: [1, 10]
+      stream_take: [15, 30, 60]
       stream_expire: [1000, 10000]
       n_headers: 1
       threshold_calc: 3
@@ -38,6 +38,9 @@ physics:
 
       HitsModuleLabel: "rawhit"
       ProcessRawHits: true
+      
+      DoPurityAna: true	
+      CosmicRun: true
 
       sum_waveforms: false
       fill_waveforms: false
@@ -99,6 +102,8 @@ physics.producers.rawhit.DigitModuleLabel:        "daq"
 physics.producers.rawhit.MinSigInd:                 13	#Change to 5 sigma of the RMS of the Noise.
 physics.producers.rawhit.MinSigCol:                 13
 physics.producers.rawhit.UncompressWithPed:         false
+physics.producers.rawhit.CollectionNeg: false
+physics.producers.rawhit.PedestalSubtracted: true
 
 process_name: REDISPIPELINE
 
