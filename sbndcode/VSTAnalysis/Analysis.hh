@@ -127,6 +127,7 @@ public:
     int min_ind_hits;       // Minimum number of induction plane hits
     int min_wires;          // Minimum extent of track in wire number
     int min_ticks;          // Minimum extent of track in time [ticks]
+    float trigger_time;     // Time between cosmic trigger and readout [ticks]
     float chi2_cut;         // Minimum chi2/ndof after 2 linear fits
     float pca_cut;          // Maximum value of principal component analysis
     float min_overlap;      // Minimim percentage overlap pf col/ind tracks in time

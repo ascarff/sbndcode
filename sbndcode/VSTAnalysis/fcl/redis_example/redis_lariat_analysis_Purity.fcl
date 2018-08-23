@@ -50,6 +50,7 @@ producers:
       min_col_hits    :40       # Minimum number of collection plane hits
       min_ind_hits    :20       # Minimum number of induction plane hits
       chi2_cut        :40       # Minimum chi2/ndof after 2 linear fits
+      trigger_time    :2560     # Time between cosmic trigger and readout [ticks]
       pca_cut         :-1       # Maximum value of principal component analysis
       min_wires       :50       # Minimum extent of track in wire number
       min_ticks       :100      # Minimum extent of track in time [ticks]

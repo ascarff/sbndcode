@@ -164,6 +164,7 @@ Analysis::AnalysisConfig::AnalysisConfig(const fhicl::ParameterSet &param) {
   min_ind_hits      = param.get<int>("min_ind_hits", 100);       // Minimum number of induction plane hits
   min_wires         = param.get<int>("min_wires", 100);          // Minimum extent of track in wire number
   min_ticks         = param.get<int>("min_ticks", 100);          // Minimum extent of track in time [ticks]
+  trigger_time      = param.get<float>("trigger_time", 2560);    // Time between cosmic trigger and readout [ticks]
   chi2_cut          = param.get<float>("chi2_cut", 10);          // Minimum chi2/ndof after 2 linear fits
   pca_cut           = param.get<float>("pca_cut", 1.7);          // Maximum value of principal component analysis
   min_overlap       = param.get<float>("min_overlap", 1.7);      // Min % overlap of col/ind tracks in time

@@ -84,6 +84,7 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 	int fMinIndHits     = _config.min_ind_hits;     // Minimum number of induction plane hits
   int fMinWires       = _config.min_wires;        // Minimum extent of track in wire number
   int fMinTicks       = _config.min_ticks;        // Minimum extent of track in time [ticks]
+  float fTriggerTime  = _config.trigger_time;     // Time delay between the trigger and the readout
   float fChi2Cut      = _config.chi2_cut;         // Minimum chi2/ndof after 2 linear fits
   float fPcaCut       = _config.pca_cut;          // Maximum value of principal component analysis
   float fMinOverlap   = _config.min_overlap;      // Minimum percentage overlap of col/ind tracks in time
@@ -99,6 +100,8 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 
   float clockSpeed = 2.; //7.8125; // 2. for VST data, 7.8125 for testing with lariat data
   float convertClocks = clockSpeed/2.;
+  float driftLength = 47.; // LArIAT drift length [cm]
+  float driftTime = driftLength*10.*clockSpeed/fDriftVel; 
 
   ///////////////////////////////////////////////////////////////////////////
   //////////////////////////     INITIALIZE THINGS       ////////////////////
@@ -145,16 +148,20 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 	for (size_t i = 0; i < rawhits.size(); i++){
 		int channel = rawhits[i]->Channel();
 		geo::SigType_t sigType = geom->SignalType(channel);
+    float wire = (*rawhits[i]).WireID().Wire;
+    float time = (*rawhits[i]).PeakTime();
+    float charge = (*rawhits[i]).Integral();
 
-		if(sigType == geo::kCollection){				//Checks for Collection plane
-			v_wireC.push_back((*rawhits[i]).WireID().Wire);				//Wire ID
-			v_timeC.push_back((*rawhits[i]).PeakTime());				//Time (ticks)
-			v_chargeC.push_back((*rawhits[i]).Integral());		//Charge (ADCs)
+    //Checks for Collection plane
+		if(sigType == geo::kCollection && time > fTriggerTime && time < (fTriggerTime+driftTime+50.)){	
+			v_wireC.push_back(wire);				//Wire ID
+			v_timeC.push_back(time - fTriggerTime);				//Time (ticks)
+			v_chargeC.push_back(charge);		//Charge (ADCs)
 		}
-
-		if(sigType == geo::kInduction){					//Checks for Induction plane
-			v_wireI.push_back((*rawhits[i]).WireID().Wire);				//WireID for Induction Plane
-			v_timeI.push_back((*rawhits[i]).PeakTime());				//Time for Induction Plane
+    //Checks for Induction plane
+		if(sigType == geo::kInduction && time > fTriggerTime && time < (fTriggerTime+driftTime+50.)){					
+			v_wireI.push_back(wire);				//WireID for Induction Plane
+			v_timeI.push_back(time - fTriggerTime);				//Time for Induction Plane
 		}
 	}
 	
