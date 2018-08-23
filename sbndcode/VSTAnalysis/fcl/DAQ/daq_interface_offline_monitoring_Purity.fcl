@@ -10,6 +10,7 @@ physics:
     daq:
     {
       module_type: DaqDecoder
+      baseline_calc: true
       produce_header: true
       validate_header: false
       v_inc_trig_frame_no: false # these are wonky, don't worry about them
