@@ -112,6 +112,7 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 
 	FILE *values_file;							//File where the minimization points are stored
 	//FILE *taulengthangle;							//File with the Tau values, track length, and angle
+	FILE *signal_file;							//File where the peak amplitudes are stored
 
   // Define minimizer
 	ROOT::Math::Minimizer* min = ROOT::Math::Factory::CreateMinimizer("Minuit2", "Migrad");	
@@ -120,10 +121,9 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 	geo::GeometryCore const* geom = lar::providerFrom<geo::Geometry>();	//Looks at geometry of the hit
 
 	//Sets vectors for hits/information we need.
-	vector<float> v_timeC, v_wireC, v_chargeC, v_timeI, v_wireI,
-                v_chargeCCut, v_timeCCut, v_wireCCut, v_wireICut, v_timeICut, 
-                v_chargeCNorm, v_timeCChargeCut, v_chargeCChargeCut, 
-                v_chargeCFinal, v_timeCFinal;
+	vector<float> v_timeC, v_wireC, v_chargeC, v_timeI, v_wireI, v_ampC,
+                v_chargeCCut, v_timeCCut, v_wireCCut, v_wireICut, v_timeICut, v_ampCCut,
+                v_chargeCNorm, v_chargeCFinal, v_timeCFinal, v_ampCFinal;
   
   //Check the PCA Value.                                                                         
 	TPrincipal *pca = new TPrincipal(2,"");
@@ -151,12 +151,14 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
     float wire = (*rawhits[i]).WireID().Wire;
     float time = (*rawhits[i]).PeakTime();
     float charge = (*rawhits[i]).Integral();
+    float amp = (*rawhits[i]).Integral();
 
     //Checks for Collection plane
 		if(sigType == geo::kCollection && time > fTriggerTime && time < (fTriggerTime+driftTime+50.)){	
 			v_wireC.push_back(wire);				//Wire ID
 			v_timeC.push_back(time - fTriggerTime);				//Time (ticks)
 			v_chargeC.push_back(charge);		//Charge (ADCs)
+      v_ampC.push_back(amp);
 		}
     //Checks for Induction plane
 		if(sigType == geo::kInduction && time > fTriggerTime && time < (fTriggerTime+driftTime+50.)){					
@@ -238,6 +240,7 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 	    	v_timeCCut.push_back(v_timeC[i]);
 	    	v_chargeCCut.push_back(v_chargeC[i]);
 	   		v_wireCCut.push_back(v_wireC[i]);
+        v_ampCCut.push_back(v_ampC[i]);
         if(z == 2){
 			    // Add PCA elements 
 			    hits[0] = v_wireC[i];
@@ -502,6 +505,7 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 		if(v_chargeCNorm[i] > lowcut && v_chargeCNorm[i] < hicut){
 			v_chargeCFinal.push_back(v_chargeCNorm[i]);
 			v_timeCFinal.push_back(v_timeCCut[i]);
+      if(v_timeCCut[i] < 100) v_ampCFinal.push_back(v_ampCCut[i]);
 			fprintf(values_file, "%6.2f %6.0f\n", v_timeCCut[i], v_chargeCNorm[i]);
 		}
 
@@ -628,6 +632,12 @@ double daqAnalysis::CalculateLifetime(std::vector<art::Ptr<recob::Hit>> rawhits,
 	fclose(taulengthangle);
 */
 	min->Clear();
+
+  signal_file = fopen("signal_file.txt", "a");
+  for(size_t i = 0; i < v_ampCFinal.size(); i++){
+    fprintf(signal_file, "%6.2f,", v_ampCFinal[i]);
+  }
+  fclose(signal_file);
 
 	if(fPlot) PlotAll(v_allTH1, v_allTGraph);
   return tauvec;
