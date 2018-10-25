@@ -8,7 +8,7 @@
 
 // sbndcode includes
 #include "sbndcode/RecoUtils/RecoUtils.h"
-#include "sbndcode/CRT/CRTData.hh"
+#include "sbndcode/CRT/CRTProducts/CRTData.hh"
 
 // LArSoft includes
 #include "lardataobj/Simulation/SimChannel.h"
@@ -418,7 +418,7 @@ namespace sbnd {
     double driftVelocity = fDetectorProperties->DriftVelocity();
     double driftTimeTicks = 4.0*fGeometryService->DetHalfWidth()/driftVelocity;
     double dt = readoutWindow - driftTimeTicks;
-    double dx = (dt*0.5)*driftVelocity-2.6;
+    double dx = (dt*0.5)*driftVelocity-2.6; //FIXME
 
     // Match candidates in each TPC
     std::vector<std::pair<const recob::Track*, TVector3>> track1Candidates;

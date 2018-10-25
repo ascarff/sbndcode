@@ -32,6 +32,7 @@ art_make(
                            ${ROOT_ROOFITCORE} 
                            sbndcode_RecoUtils
                            sbndcode_CRT
+                           sbndcode_CRTProducts
         )
 
 install_headers()
