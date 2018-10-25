@@ -13,11 +13,6 @@
 #include <vector>
 #include <stdint.h>
 
-extern "C" {
-#include <sys/types.h>
-#include <sys/stat.h>
-}
-
 #include "art/Framework/Core/ModuleMacros.h" 
 #include "art/Framework/Core/EDProducer.h"
 #include "art/Framework/Principal/Event.h" 
@@ -29,7 +24,7 @@ extern "C" {
 #include "art/Framework/Services/Optional/TFileDirectory.h" 
 #include "fhiclcpp/ParameterSet.h" 
 #include "messagefacility/MessageLogger/MessageLogger.h" 
-#include "cetlib/exception.h"
+#include "cetlib_except/exception.h"
 #include "cetlib/search_path.h"
 
 #include "sbndcode/Utilities/SignalShapingServiceSBND.h"
@@ -69,7 +64,7 @@ namespace caldata {
  
   private:
     
-    int          fDataSize;          ///< size of raw data on one wire
+  //  int          fDataSize;          ///< size of raw data on one wire
     int          fPostsample;        ///< number of postsample bins
     int          fBaseSampleBins;        ///< number of postsample bins
     bool         fDoBaselineSub;     ///< baseline subtraction

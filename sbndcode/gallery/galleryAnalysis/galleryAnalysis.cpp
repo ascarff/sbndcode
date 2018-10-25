@@ -26,14 +26,14 @@
 // - data products
 #include "lardataobj/RecoBase/Track.h"
 // - DetectorProperties
-#include "lardata/DetectorInfo/DetectorPropertiesStandardTestHelpers.h"
-#include "lardata/DetectorInfo/DetectorPropertiesStandard.h"
+#include "lardataalg/DetectorInfo/DetectorPropertiesStandardTestHelpers.h"
+#include "lardataalg/DetectorInfo/DetectorPropertiesStandard.h"
 // - DetectorClocks
-#include "lardata/DetectorInfo/DetectorClocksStandardTestHelpers.h"
-#include "lardata/DetectorInfo/DetectorClocksStandard.h"
+#include "lardataalg/DetectorInfo/DetectorClocksStandardTestHelpers.h"
+#include "lardataalg/DetectorInfo/DetectorClocksStandard.h"
 // - LArProperties
-#include "lardata/DetectorInfo/LArPropertiesStandardTestHelpers.h"
-#include "lardata/DetectorInfo/LArPropertiesStandard.h"
+#include "lardataalg/DetectorInfo/LArPropertiesStandardTestHelpers.h"
+#include "lardataalg/DetectorInfo/LArPropertiesStandard.h"
 // - Geometry
 #include "larcorealg/Geometry/StandaloneGeometrySetup.h"
 #include "larcorealg/Geometry/GeometryCore.h"
@@ -112,8 +112,8 @@ int galleryAnalysis
     config.get<fhicl::ParameterSet>("services.DetectorPropertiesService"),
     detinfo::DetectorPropertiesStandard::providers_type{
       geom.get(),
-      static_cast<detinfo::LArProperties const*>(larp.get()), // TODO type cast is required until issue #18001 is solved
-      static_cast<detinfo::DetectorClocks const*>(detclk.get())
+      larp.get(),
+      detclk.get()
     }
     );
   

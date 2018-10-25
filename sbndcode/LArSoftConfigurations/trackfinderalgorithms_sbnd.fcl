@@ -18,8 +18,8 @@ sbnd_pmalgtracker: {
 
   RunVertexing:  true
   FlipToBeam:    true
-  StitchDistToWall: 500.0
-  MatchT0inCPACrossing: true
+
+  MatchT0inAPACrossing: true
 } # sbnd_pmalgtracker
 
 # this bundle an be added as a @table to override all algoritms configurations at once
@@ -34,8 +34,5 @@ sbnd_seedfinderalgorithm:                          @local::standard_seedfinderal
 sbnd_seedfinderalgorithm.SpacePointAlg :           @local::sbnd_spacepointalg
 sbnd_seedfinderalgorithm.SpacePointAlg.PreferColl: true
 sbnd_seedfinderalgorithm.SpacePointAlg.Filter:     false
-
-sbnd_beziertrackeralgorithm:                       @local::standard_beziertrackeralgorithm
-sbnd_beziertrackeralgorithm.SeedFinder:            @local::sbnd_seedfinderalgorithm
 
 END_PROLOG

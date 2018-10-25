@@ -12,7 +12,7 @@
 #include "art/Framework/Principal/Event.h"
 #include "fhiclcpp/ParameterSet.h"
 
-#include "lardata/DetectorInfo/ElecClock.h"
+#include "lardataalg/DetectorInfo/ElecClock.h"
 
 #include <string>
 
@@ -27,7 +27,7 @@ public:
   CRTDetSim(CRTDetSim &&) = delete;
   CRTDetSim& operator = (CRTDetSim const &) = delete;
   CRTDetSim& operator = (CRTDetSim &&) = delete;
-  void reconfigure(fhicl::ParameterSet const & p) override;
+  void reconfigure(fhicl::ParameterSet const & p) ;
 
   void produce(art::Event & e) override;
   std::string fG4ModuleLabel;
@@ -69,8 +69,10 @@ private:
   double fPropDelay;  //!< Delay in pulse arrival time [ns/m]
   double fPropDelayError;  //!< Delay in pulse arrival time, uncertainty [ns/m]
   double fStripCoincidenceWindow;  //!< Time window for two-fiber coincidence [ns]
+  double fTaggerPlaneCoincidenceWindow;  //!< Time window for two-plane coincidence [ticks]
   double fAbsLenEff;  //!< Effective abs. length for transverse Npe scaling [cm]
   bool fUseEdep;  //!< Use the true G4 energy deposited, assume mip if false.
+  double fSipmTimeResponse; //!< Minimum time to resolve separate energy deposits [ns]
 };
 
 }  // namespace crt
