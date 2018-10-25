@@ -16,7 +16,7 @@ set( sbnd_util_lib_list lardata_Utilities_LArFFT_service
                           art_Utilities
                           canvas
                           ${MF_MESSAGELOGGER}
-                          ${MF_UTILITIES}
+                          
                           cetlib cetlib_except
                           ${ROOT_BASIC_LIB_LIST}
                           ${ROOT_GEOM}
@@ -33,6 +33,12 @@ simple_plugin( SignalShapingServiceSBND  "service"
              
 simple_plugin( FileCatalogMetadataSBND  "service"
                ${sbnd_util_lib_list}
+        )
+
+simple_plugin( TFileMetadataSBND "service"
+               ${sbnd_util_lib_list}
+               art_Framework_IO
+               art_Framework_IO_detail
         )
 install_headers()
 install_fhicl()
