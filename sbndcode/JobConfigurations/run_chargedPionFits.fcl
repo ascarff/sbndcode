@@ -1,9 +1,9 @@
-#include "analysisNTuple.fcl"
+#include "chargedPionFits.fcl"
 #include "simulationservices_sbnd.fcl"
 #include "backtrackerservice.fcl"
 #include "particleinventoryservice.fcl"
 
-process_name: AnalysisNTuple      #The process name must NOT contain any underscores
+process_name: ChargedPionFits      #The process name must NOT contain any underscores
 
 source: 
 {
@@ -32,14 +32,14 @@ physics: {
   }
   analyzers: {
      # ParameterSets for zero or more analyzer modules
-    analysisNTuple: @local::analysisNTuple
+    chargedPionFits: @local::chargedPionFits
   }
 
   filters: {
      # ParameterSets for zero or more filter modules
   }
 
-  path0:  [ analysisNTuple ]
+  path0:  [ chargedPionFits ]
 
   end_paths:    [ path0 ]
 

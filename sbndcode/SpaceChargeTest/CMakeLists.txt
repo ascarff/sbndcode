@@ -1,15 +1,9 @@
-
-art_make(
-          MODULE_LIBRARIES larcorealg_Geometry
+simple_plugin(SpaceChargeTest "module"
                            larcore_Geometry_Geometry_service
-                           larsim_Simulation lardataobj_Simulation
-                           larsim_MCCheater_BackTrackerService_service
-                           larsim_MCCheater_ParticleInventoryService_service
                            lardata_Utilities
                            larevt_Filters
                            lardataobj_RawData
                            lardataobj_RecoBase
-                           larreco_RecoAlg
                            lardata_RecoObjects  
                            larpandora_LArPandoraInterface
                            nusimdata_SimulationBase
@@ -29,9 +23,9 @@ art_make(
                            ${ROOT_GDML}
                            ${ROOT_BASIC_LIB_LIST}
                            sbndcode_RecoUtils
+			   sbndcode_SpaceCharge
         )
 
-# install_headers()
+install_headers()
 install_fhicl()
 install_source()
-

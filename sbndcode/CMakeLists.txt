@@ -12,9 +12,17 @@ add_subdirectory(MCTruthExtractor)
 add_subdirectory(SBNDPandora)
 add_subdirectory(SimulationFilters)
 add_subdirectory(AnalysisTree)
+<<<<<<< HEAD
 add_subdirectory(SlimAnalysisTree)
 add_subdirectory(ChargedPionFits)
+=======
+>>>>>>> b31524f081cfff965a3597916496980b7627786d
 add_subdirectory(RecoUtils)
 
 # subdirectory for gallery stuff
 add_subdirectory(gallery)
+
+# for Space Charge
+add_subdirectory(SpaceChargeServices)
+add_subdirectory(SpaceCharge)
+add_subdirectory(SpaceChargeTest)
