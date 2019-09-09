@@ -12,6 +12,11 @@ add_subdirectory(MCTruthExtractor)
 add_subdirectory(SBNDPandora)
 add_subdirectory(SimulationFilters)
 add_subdirectory(AnalysisTree)
+<<<<<<< HEAD
+add_subdirectory(SlimAnalysisTree)
+add_subdirectory(ChargedPionFits)
+=======
+>>>>>>> b31524f081cfff965a3597916496980b7627786d
 add_subdirectory(RecoUtils)
 add_subdirectory(OpDetSim)
 add_subdirectory(CosmicId)
