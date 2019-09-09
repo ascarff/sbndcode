@@ -233,6 +233,7 @@ private:
   double t_inv_mass, t_nu_lepton_angle, t_vertex_energy, t_bjorkenx, t_inelasticity, t_qsqr, t_transverse_momentum;
   double t_vertex[3], t_momentum[3];
   bool t_iscc;
+  bool t_isnu;
 
   // Reco
   int r_particles, r_tracks, r_showers;
@@ -310,22 +311,16 @@ void sbnd::AnalysisNTuple::analyze(art::Event const & e)
   // Get the MCTruth handle
   art::Handle< std::vector< simb::MCTruth > > mct_handle;
   e.getByLabel(m_generator_label, mct_handle);
-  /*std::vector< art::Ptr<simb::MCTruth> > mct_vector;
-  if (e.getByLabel(m_generator_label, mct_handle)) art::fill_ptr_vector(mct_vector, mct_handle);*/
   int mct_size = mct_handle->size();
  
   // Get the Track handle
   art::Handle< std::vector< recob::Track > > trk_handle;
   e.getByLabel(m_reco_track_label, trk_handle);
-/*  std::vector< art::Ptr< recob::Track > > trk_vector;
-  if (e.getByLabel(m_reco_track_label, trk_handle)) art::fill_ptr_vector(trk_vector, trk_handle);*/
   //int trk_size = trk_handle->size();
   
   // Get the Shower handle
   art::Handle< std::vector< recob::Shower > > shw_handle;
   e.getByLabel(m_reco_shower_label, shw_handle);
-/*  std::vector< art::Ptr< recob::Shower > > shw_vector;
-  if (e.getByLabel(m_reco_shower_label, shw_handle)) art::fill_ptr_vector(shw_vector, shw_handle);*/
   int shw_size = shw_handle->size();
 
   // Get the PFParticle handle
@@ -343,7 +338,8 @@ void sbnd::AnalysisNTuple::analyze(art::Event const & e)
 // ------------------------------------------------------------------------------
 //                           EVENT-TREE INFORMATION
 // ------------------------------------------------------------------------------
-  // Loop over the truth handle and get everything we can
+  // Only looking at art::Events with 1 MCTruth object
+  // This is ignoring the potential for pileup
   if(mct_size != 1) return;
   
   if(mct_handle.isValid() &&
@@ -360,380 +356,390 @@ void sbnd::AnalysisNTuple::analyze(art::Event const & e)
     unsigned int n_primary_tracks     = 0;
     unsigned int n_primary_showers    = 0;
     unsigned int neutrino_id          = 0;
-   
+    std::vector<unsigned int> neutrinos;
+    std::vector<unsigned int>::iterator it;
     bool neutrino_found = false;
 
-    // Loop over PFParticles and find how many are primary and whether 
-    // only 1 neutrino was found
+    // Loop over PFParticles and find how many are primary 
     for(int i = 0; i < pfp_size; ++i) {
   
       art::Ptr< recob::PFParticle > pfp( pfp_handle, i );
 
       // Only look for a single muon neutrino event
-      if(!neutrino_found && pfp->IsPrimary()){
+      if(pfp->IsPrimary() && pfp->PdgCode() == 14){
         neutrino_found = true;
         neutrino_id = pfp->Self();
+        it = std::find(neutrinos.begin(), neutrinos.end(), neutrino_id);
+        // Fill a vector of each of the neutrino ids in the event
+        if(it == neutrinos.end())
+          neutrinos.push_back(neutrino_id);
       }
-      else if(neutrino_found && pfp->IsPrimary()) return;
-    
     }
 
+    // If we haven't found a neutrino at all, exit
     if(!neutrino_found) return;
 
-    // Get the GEANT information of the particles 
-    art::FindManyP< simb::MCParticle > fmcp( mct_handle, e, m_geant_label );
-    art::FindManyP< simb::GTruth > fmgt( mct_handle, e, m_generator_label );
-    art::Ptr< simb::MCTruth > mct(mct_handle, 0);
-    std::vector< art::Ptr<simb::MCParticle> > mcp_assn = fmcp.at(0);
-    std::vector< art::Ptr<simb::GTruth> > mcgt_assn = fmgt.at(0);
-    simb::MCNeutrino nu = mct->GetNeutrino();
+    std::cout << " Number of neutrino candidates : " << neutrinos.size() << std::endl;
 
-    // Get vertex association
-    art::FindManyP< recob::Vertex  > fvtx( pfp_handle, e, m_pandora_label );
-    std::vector< art::Ptr<recob::Vertex> > vtx_assn = fvtx.at(neutrino_id);
+    // Loop over each of the neutrinos
+    for(const unsigned int &id : neutrinos){
 
-    if(vtx_assn.size()  > 1) return;
-    if(vtx_assn.size() == 0) return;
+      // Get the GEANT information of the particles 
+      art::FindManyP< simb::MCParticle > fmcp( mct_handle, e, m_geant_label );
+      art::FindManyP< simb::GTruth > fmgt( mct_handle, e, m_generator_label );
+      art::Ptr< simb::MCTruth > mct(mct_handle, 0);
+      std::vector< art::Ptr<simb::MCParticle> > mcp_assn = fmcp.at(0);
+      std::vector< art::Ptr<simb::GTruth> > mcgt_assn = fmgt.at(0);
+      simb::MCNeutrino nu = mct->GetNeutrino();
 
-    // Set array to be current vertex position
-    vtx_assn[0]->XYZ(r_vertex);
-    float reco_vertex_x = r_vertex[0];
-    float reco_vertex_y = r_vertex[1];
-    float reco_vertex_z = r_vertex[2];
-    
-    // Make sure reconstructed vertex is within the TPC fiducial volume
-    if (    (reco_vertex_x > (m_detectorLengthX - m_coordinateOffsetX - m_selectedBorderX)) 
-         || (reco_vertex_x < (-m_coordinateOffsetX + m_selectedBorderX)) 
-         || (reco_vertex_y > (m_detectorLengthY - m_coordinateOffsetY - m_selectedBorderY)) 
-         || (reco_vertex_y < (-m_coordinateOffsetY + m_selectedBorderY)) 
-         || (reco_vertex_z > (m_detectorLengthZ - m_coordinateOffsetZ - m_selectedBorderZ)) 
-         || (reco_vertex_z < (-m_coordinateOffsetZ + m_selectedBorderZ))) return;
-    
-    // Get track associations with PFParticles from Pandora
-    art::FindManyP< recob::Track   > fmtrk( pfp_handle, e, m_reco_track_label );
-    art::FindManyP< recob::Cluster > fmclu( pfp_handle, e, m_pandora_label );
+      // Get vertex association
+      art::FindManyP< recob::Vertex  > fvtx( pfp_handle, e, m_pandora_label );
+      std::vector< art::Ptr<recob::Vertex> > vtx_assn = fvtx.at(id);
 
-    // Find the number of reconstructed primary final state particles 
-    for(int k = 0; k < pfp_size; ++k) {
-  
-      art::Ptr< recob::PFParticle > pfp( pfp_handle, k );
+      if(vtx_assn.size()  > 1) return;
+      if(vtx_assn.size() == 0) return;
 
-      pfparticle++;
+      // Set array to be current vertex position
+      vtx_assn[0]->XYZ(r_vertex);
+      float reco_vertex_x = r_vertex[0];
+      float reco_vertex_y = r_vertex[1];
+      float reco_vertex_z = r_vertex[2];
 
-      // If the PFParticle is no a primary, continue
-      if(neutrino_id != pfp->Parent()) continue;
-     
-      // Counter for all jobs
-      primary_pfparticle++;
+      // Make sure reconstructed vertex is within the TPC fiducial volume
+      if (    (reco_vertex_x > (m_detectorLengthX - m_coordinateOffsetX - m_selectedBorderX)) 
+          || (reco_vertex_x < (-m_coordinateOffsetX + m_selectedBorderX)) 
+          || (reco_vertex_y > (m_detectorLengthY - m_coordinateOffsetY - m_selectedBorderY)) 
+          || (reco_vertex_y < (-m_coordinateOffsetY + m_selectedBorderY)) 
+          || (reco_vertex_z > (m_detectorLengthZ - m_coordinateOffsetZ - m_selectedBorderZ)) 
+          || (reco_vertex_z < (-m_coordinateOffsetZ + m_selectedBorderZ))) return;
 
-      // For primary PFParticles get associated tracks and their calorimetry
-      n_primaries++;
-    
-      std::vector< art::Ptr<recob::Track>   > trk_assn = fmtrk.at(pfp->Self());
-      std::vector< art::Ptr<recob::Cluster> > clu_assn = fmclu.at(pfp->Self());
+      // Get track associations with PFParticles from Pandora
+      art::FindManyP< recob::Track   > fmtrk( pfp_handle, e, m_reco_track_label );
+      art::FindManyP< recob::Cluster > fmclu( pfp_handle, e, m_pandora_label );
 
-      if(trk_assn.size()) {
-      
-        art::FindManyP< anab::Calorimetry  > fmcal( trk_handle, e, m_reco_track_calorimetry_label );
-        art::FindManyP< anab::ParticleID   > fmpid( trk_handle, e, m_reco_track_particleid_label );
-        art::FindManyP< recob::Hit         > fmhit( trk_handle, e, m_reco_track_label );
-        
-        // Loop over tracks associated with primary PFParticles
-        for(size_t i = 0; i < trk_assn.size(); ++i) {
-        
-          float track_vtx_x = trk_assn[i]->Vertex()[0];
-          float track_vtx_y = trk_assn[i]->Vertex()[1];
-          float track_vtx_z = trk_assn[i]->Vertex()[2];
-          float track_end_x = trk_assn[i]->End()[0];
-          float track_end_y = trk_assn[i]->End()[1];
-          float track_end_z = trk_assn[i]->End()[2];
+      // Find the number of reconstructed primary final state particles 
+      for(int k = 0; k < pfp_size; ++k) {
 
-          // The border for contained tracks should be the edge of the active volume,
-          // since this is where we can measure energy up to
-          // Find out if one end of a track escapes (if so, MCS)
-          bool does_vtx_escape =                                                                   
-            (     (track_vtx_x > (m_detectorLengthX - m_coordinateOffsetX))                                     
-               || (track_vtx_x < (-m_coordinateOffsetX))                                                    
-               || (track_vtx_y > (m_detectorLengthY - m_coordinateOffsetY))                                     
-               || (track_vtx_y < (-m_coordinateOffsetY))     
-               || (track_vtx_z > (m_detectorLengthZ - m_coordinateOffsetZ))                                     
-               || (track_vtx_z < (-m_coordinateOffsetZ)));                                                  
-                                                                                                   
-          bool does_end_escape =                                                                   
-            (     (track_end_x > (m_detectorLengthX - m_coordinateOffsetX))                                     
-               || (track_end_x < (-m_coordinateOffsetX))                                                    
-               || (track_end_y > (m_detectorLengthY - m_coordinateOffsetY))                                     
-               || (track_end_y < (-m_coordinateOffsetY))                                                    
-               || (track_end_z > (m_detectorLengthZ - m_coordinateOffsetZ))                                     
-               || (track_end_z < (-m_coordinateOffsetZ)));                                                  
-                                                                                                   
-          bool one_end_escapes = true;                                                             
-          if(does_vtx_escape && does_end_escape)   one_end_escapes = false;                        
-          if(!does_vtx_escape && !does_end_escape) one_end_escapes = false;      
-          
-          // Get the track-based variables
-          std::vector< art::Ptr<anab::Calorimetry> > cal_assn = fmcal.at(trk_assn[i]->ID());
-          std::vector< art::Ptr<anab::ParticleID> >  pid_assn = fmpid.at(trk_assn[i]->ID());
-          std::vector< art::Ptr<recob::Hit> >        hit_assn = fmhit.at(trk_assn[i]->ID());
-   
-          // Loop over PID association
-          for ( size_t j = 0; j < pid_assn.size(); ++j ){
+        art::Ptr< recob::PFParticle > pfp( pfp_handle, k );
 
-            if (!pid_assn[j]) continue;
-            if (!pid_assn[j]->PlaneID().isValid) continue;
-              
-            // Get the plane number
-            int planenum = pid_assn[j]->PlaneID().Plane;
+        pfparticle++;
 
-            // Only look at the collection plane, since this is where the dEdx
-            // is acquired and we need this for the PIDA values
-            if (planenum!=2) continue;
-              
-            // Loop over cal association
-            for ( size_t k = 0; k < cal_assn.size(); ++k ){
+        // If the PFParticle is no a primary, continue
+        if(id != pfp->Parent()) continue;
 
-              if (!cal_assn[k]) continue;
-              if (!cal_assn[k]->PlaneID().isValid) continue;
-                
+        // Counter for all jobs
+        primary_pfparticle++;
+
+        // For primary PFParticles get associated tracks and their calorimetry
+        n_primaries++;
+
+        std::vector< art::Ptr<recob::Track>   > trk_assn = fmtrk.at(pfp->Self());
+        std::vector< art::Ptr<recob::Cluster> > clu_assn = fmclu.at(pfp->Self());
+
+        if(trk_assn.size()) {
+
+          art::FindManyP< anab::Calorimetry  > fmcal( trk_handle, e, m_reco_track_calorimetry_label );
+          art::FindManyP< anab::ParticleID   > fmpid( trk_handle, e, m_reco_track_particleid_label );
+          art::FindManyP< recob::Hit         > fmhit( trk_handle, e, m_reco_track_label );
+
+          // Loop over tracks associated with primary PFParticles
+          for(size_t i = 0; i < trk_assn.size(); ++i) {
+
+            float track_vtx_x = trk_assn[i]->Vertex()[0];
+            float track_vtx_y = trk_assn[i]->Vertex()[1];
+            float track_vtx_z = trk_assn[i]->Vertex()[2];
+            float track_end_x = trk_assn[i]->End()[0];
+            float track_end_y = trk_assn[i]->End()[1];
+            float track_end_z = trk_assn[i]->End()[2];
+
+            // The border for contained tracks should be the edge of the active volume,
+            // since this is where we can measure energy up to
+            // Find out if one end of a track escapes (if so, MCS)
+            bool does_vtx_escape =                                                                   
+              (     (track_vtx_x > (m_detectorLengthX - m_coordinateOffsetX))                                     
+                    || (track_vtx_x < (-m_coordinateOffsetX))                                                    
+                    || (track_vtx_y > (m_detectorLengthY - m_coordinateOffsetY))                                     
+                    || (track_vtx_y < (-m_coordinateOffsetY))     
+                    || (track_vtx_z > (m_detectorLengthZ - m_coordinateOffsetZ))                                     
+                    || (track_vtx_z < (-m_coordinateOffsetZ)));                                                  
+
+            bool does_end_escape =                                                                   
+              (     (track_end_x > (m_detectorLengthX - m_coordinateOffsetX))                                     
+                    || (track_end_x < (-m_coordinateOffsetX))                                                    
+                    || (track_end_y > (m_detectorLengthY - m_coordinateOffsetY))                                     
+                    || (track_end_y < (-m_coordinateOffsetY))                                                    
+                    || (track_end_z > (m_detectorLengthZ - m_coordinateOffsetZ))                                     
+                    || (track_end_z < (-m_coordinateOffsetZ)));                                                  
+
+            bool one_end_escapes = true;                                                             
+            if(does_vtx_escape && does_end_escape)   one_end_escapes = false;                        
+            if(!does_vtx_escape && !does_end_escape) one_end_escapes = false;      
+
+            // Get the track-based variables
+            std::vector< art::Ptr<anab::Calorimetry> > cal_assn = fmcal.at(trk_assn[i]->ID());
+            std::vector< art::Ptr<anab::ParticleID> >  pid_assn = fmpid.at(trk_assn[i]->ID());
+            std::vector< art::Ptr<recob::Hit> >        hit_assn = fmhit.at(trk_assn[i]->ID());
+
+            // Loop over PID association
+            for ( size_t j = 0; j < pid_assn.size(); ++j ){
+
+              if (!pid_assn[j]) continue;
+              if (!pid_assn[j]->PlaneID().isValid) continue;
+
               // Get the plane number
-              int planenumcal = cal_assn[k]->PlaneID().Plane;
+              int planenum = pid_assn[j]->PlaneID().Plane;
 
               // Only look at the collection plane, since this is where the dEdx
               // is acquired and we need this for the PIDA values
-              if (planenumcal!=2) continue;
+              if (planenum!=2) continue;
 
-              // Add one to the counter for the event tree
-              n_primary_tracks++;
+              // Loop over cal association
+              for ( size_t k = 0; k < cal_assn.size(); ++k ){
 
-              // Get associated MCParticle ID using 3 different methods:
-              //    Which particle contributes the most energy to all the hits
-              //    Which particle contributes the reco charge to all the hits
-              //    Which particle is the biggest contributor to all the hits
-              
-              tr_id_energy      = RecoUtils::TrueParticleIDFromTotalTrueEnergy(hit_assn);
-              tr_id_charge      = RecoUtils::TrueParticleIDFromTotalRecoCharge(hit_assn);
-              tr_id_hits        = RecoUtils::TrueParticleIDFromTotalRecoHits(hit_assn);
+                if (!cal_assn[k]) continue;
+                if (!cal_assn[k]->PlaneID().isValid) continue;
 
-              tr_n_hits         = hit_assn.size(); 
-              tr_chi2_pr        = pid_assn[j]->Chi2Proton();
-              tr_chi2_mu        = pid_assn[j]->Chi2Muon();
-              tr_chi2_pi        = pid_assn[j]->Chi2Pion();
-              tr_chi2_ka        = pid_assn[j]->Chi2Kaon();
-              tr_pida           = pid_assn[j]->PIDA();
-              tr_missing_energy = pid_assn[j]->MissingE();
+                // Get the plane number
+                int planenumcal = cal_assn[k]->PlaneID().Plane;
 
-              tr_kinetic_energy      = cal_assn[k]->KineticEnergy();
-              tr_range               = cal_assn[k]->Range();
-              tr_dedx_size           = cal_assn[k]->dEdx().size();
-              tr_residual_range_size = cal_assn[k]->ResidualRange().size();
-              for(unsigned int l = 0; l < tr_dedx_size; ++l) tr_dedx[l]                     = cal_assn[k]->dEdx()[l];
-              for(unsigned int l = 0; l < tr_residual_range_size; ++l) tr_residual_range[l] = cal_assn[k]->ResidualRange()[l];
+                // Only look at the collection plane, since this is where the dEdx
+                // is acquired and we need this for the PIDA values
+                if (planenumcal!=2) continue;
 
-              tr_vertex[0] = track_vtx_x;
-              tr_vertex[1] = track_vtx_y;
-              tr_vertex[2] = track_vtx_z;
-              
-              tr_end[0] = track_end_x;
-              tr_end[1] = track_end_y;
-              tr_end[2] = track_end_z;
+                // Add one to the counter for the event tree
+                n_primary_tracks++;
 
-              tr_length = trk_assn[i]->Length();
+                // Get associated MCParticle ID using 3 different methods:
+                //    Which particle contributes the most energy to all the hits
+                //    Which particle contributes the reco charge to all the hits
+                //    Which particle is the biggest contributor to all the hits
 
-              // Momentum
-              //    Assign a momentum of 0 to every parameter and then 
-              //    fill with the relevant value based on:
-              //    Whether the track escapes
-              //      - can have an MCS momentum
-              //    If it is contained
-              //      - proton range-based
-              //      - muon range-based
-              //
-              // Further down the line, once PID has been performed properly, 
-              // this should be strictly selected.
-              tr_range_mom_proton = 0.;
-              tr_range_mom_muon   = 0.;
-              tr_mcs_mom_muon     = 0.;
-              double reco_momentum_muon, reco_momentum_proton;
-              if(one_end_escapes){
-                recob::MCSFitResult mcs_result = m_mcs_fitter.fitMcs(*trk_assn[i]);
-                reco_momentum_muon = mcs_result.bestMomentum();
-                if(reco_momentum_muon < 0) tr_mcs_mom_muon = 0.;
-                tr_mcs_mom_muon = reco_momentum_muon;
-              }
-              else if(!does_vtx_escape && !does_end_escape){
-                reco_momentum_muon   = m_range_fitter.GetTrackMomentum(tr_length, 13); 
-                reco_momentum_proton = m_range_fitter.GetTrackMomentum(tr_length, 2212); 
-                if(reco_momentum_muon   == 0) tr_range_mom_muon   = 0.;
-                if(reco_momentum_proton == 0) tr_range_mom_proton = 0.;
-                tr_range_mom_muon   = reco_momentum_muon;
-                tr_range_mom_proton = reco_momentum_proton;
-              }
-              
-              // MCS Muon-Pion study
-              //    Find a known muon
-              //      Get the width of the cluster associated to the PFParticle
-              //    Repeat for known charged pions
-              //    Plot widths for both muons and pions
-              if(clu_assn.size() == 0) continue;
-              for(art::Ptr<simb::MCParticle> part : mcp_assn) {
+                tr_id_energy      = RecoUtils::TrueParticleIDFromTotalTrueEnergy(hit_assn);
+                tr_id_charge      = RecoUtils::TrueParticleIDFromTotalRecoCharge(hit_assn);
+                tr_id_hits        = RecoUtils::TrueParticleIDFromTotalRecoHits(hit_assn);
 
-                // Define a temporary histogram to fit
-                // ATTENTION: Cut on PGD codes which refer to elements (Argon39 and above) 
-                // Only interested in the final state PARTICLES
-                if(part->Process() != "primary" || part->PdgCode() >= 1000018039) continue;
-                if(part->TrackId() != tr_id_hits) continue;
-                if(part->PdgCode() == 13 || part->PdgCode() == 211 || part->PdgCode() == -211){
-                  mcs_cluster_width = clu_assn[i]->Width();
-                  mcs_pdgcode       = part->PdgCode();
+                // Check if the associations lead back to the neutrino or a cosmic
+
+                tr_n_hits         = hit_assn.size(); 
+                tr_chi2_pr        = pid_assn[j]->Chi2Proton();
+                tr_chi2_mu        = pid_assn[j]->Chi2Muon();
+                tr_chi2_pi        = pid_assn[j]->Chi2Pion();
+                tr_chi2_ka        = pid_assn[j]->Chi2Kaon();
+                tr_pida           = pid_assn[j]->PIDA();
+                tr_missing_energy = pid_assn[j]->MissingE();
+
+                tr_kinetic_energy      = cal_assn[k]->KineticEnergy();
+                tr_range               = cal_assn[k]->Range();
+                tr_dedx_size           = cal_assn[k]->dEdx().size();
+                tr_residual_range_size = cal_assn[k]->ResidualRange().size();
+                for(unsigned int l = 0; l < tr_dedx_size; ++l) tr_dedx[l]                     = cal_assn[k]->dEdx()[l];
+                for(unsigned int l = 0; l < tr_residual_range_size; ++l) tr_residual_range[l] = cal_assn[k]->ResidualRange()[l];
+
+                tr_vertex[0] = track_vtx_x;
+                tr_vertex[1] = track_vtx_y;
+                tr_vertex[2] = track_vtx_z;
+
+                tr_end[0] = track_end_x;
+                tr_end[1] = track_end_y;
+                tr_end[2] = track_end_z;
+
+                tr_length = trk_assn[i]->Length();
+
+                // Momentum
+                //    Assign a momentum of 0 to every parameter and then 
+                //    fill with the relevant value based on:
+                //    Whether the track escapes
+                //      - can have an MCS momentum
+                //    If it is contained
+                //      - proton range-based
+                //      - muon range-based
+                //
+                // Further down the line, once PID has been performed properly, 
+                // this should be strictly selected.
+                tr_range_mom_proton = 0.;
+                tr_range_mom_muon   = 0.;
+                tr_mcs_mom_muon     = 0.;
+                double reco_momentum_muon, reco_momentum_proton;
+                if(one_end_escapes){
+                  recob::MCSFitResult mcs_result = m_mcs_fitter.fitMcs(*trk_assn[i]);
+                  reco_momentum_muon = mcs_result.bestMomentum();
+                  if(reco_momentum_muon < 0) tr_mcs_mom_muon = 0.;
+                  tr_mcs_mom_muon = reco_momentum_muon;
                 }
+                else if(!does_vtx_escape && !does_end_escape){
+                  reco_momentum_muon   = m_range_fitter.GetTrackMomentum(tr_length, 13); 
+                  reco_momentum_proton = m_range_fitter.GetTrackMomentum(tr_length, 2212); 
+                  if(reco_momentum_muon   == 0) tr_range_mom_muon   = 0.;
+                  if(reco_momentum_proton == 0) tr_range_mom_proton = 0.;
+                  tr_range_mom_muon   = reco_momentum_muon;
+                  tr_range_mom_proton = reco_momentum_proton;
+                }
+
+                // MCS Muon-Pion study
+                //    Find a known muon
+                //      Get the width of the cluster associated to the PFParticle
+                //    Repeat for known charged pions
+                //    Plot widths for both muons and pions
+                if(clu_assn.size() == 0) continue;
+                for(art::Ptr<simb::MCParticle> part : mcp_assn) {
+
+                  // Define a temporary histogram to fit
+                  // ATTENTION: Cut on PGD codes which refer to elements (Argon39 and above) 
+                  // Only interested in the final state PARTICLES
+                  if(part->Process() != "primary" || part->PdgCode() >= 1000018039) continue;
+                  if(part->TrackId() != tr_id_hits) continue;
+                  if(part->PdgCode() == 13 || part->PdgCode() == 211 || part->PdgCode() == -211){
+                    mcs_cluster_width = clu_assn[i]->Width();
+                    mcs_pdgcode       = part->PdgCode();
+                  }
+                }
+                mcsstudy_tree->Fill();
+                recotrack_tree->Fill();
               }
-              mcsstudy_tree->Fill();
-              recotrack_tree->Fill();
             }
           }
         }
       }
-    }
-    if(shw_handle.isValid() && shw_size) {
+      if(shw_handle.isValid() && shw_size) {
 
-      art::FindManyP< recob::Hit > fmhit( shw_handle, e, m_reco_shower_label );
-      
-      // Loop over PMA tracks and find any within 2 cm of the primary vertex
-      // count them
-      for(int i = 0; i < shw_size; ++i) {
-      
-        art::Ptr< recob::Shower > shw( shw_handle, i );
-       
-        // Distance s of the shower start from the reconstructed 
-        // neutrino vertex
-        double s_vtx = sqrt(pow(shw->ShowerStart()[0] - r_vertex[0],2) + pow(shw->ShowerStart()[1] - r_vertex[1],2) + pow(shw->ShowerStart()[2] - r_vertex[2],2));
-       
-        int bp = shw->best_plane();
+        art::FindManyP< recob::Hit > fmhit( shw_handle, e, m_reco_shower_label );
 
-        // Cut of 40 cm for showers to accommodate photon conversion after
-        // neutral pion decay
-        if(s_vtx < 40) {
+        // Loop over PMA tracks and find any within 2 cm of the primary vertex
+        // count them
+        for(int i = 0; i < shw_size; ++i) {
 
-          std::vector< art::Ptr<recob::Hit> > hit_assn = fmhit.at(i);
-          
-          // Add one to the counter for the event tree
-          n_primary_showers++;
+          art::Ptr< recob::Shower > shw( shw_handle, i );
 
-          // Get associated MCParticle ID using 3 different methods:
-          //    Which particle contributes the most energy to all the hits
-          //    Which particle contributes the reco charge to all the hits
-          //    Which particle is the biggest contributor to all the hits
-          sh_id_energy    = RecoUtils::TrueParticleIDFromTotalTrueEnergy(hit_assn);
-          sh_id_charge    = RecoUtils::TrueParticleIDFromTotalRecoCharge(hit_assn);
-          sh_id_hits      = RecoUtils::TrueParticleIDFromTotalRecoHits(hit_assn);
-          
-          sh_n_hits       = hit_assn.size();
-          sh_dedx_size    = shw->dEdx().size();
-          sh_start[0]     = shw->ShowerStart()[0];
-          sh_start[1]     = shw->ShowerStart()[1];
-          sh_start[2]     = shw->ShowerStart()[2];
-          sh_direction[0] = shw->Direction()[0];
-          sh_direction[1] = shw->Direction()[1];
-          sh_direction[2] = shw->Direction()[2];
-          sh_length       = shw->Length();
-          sh_open_angle   = shw->OpenAngle();
-          sh_energy       = shw->Energy()[bp];
-          sh_dedx         = shw->dEdx()[bp];  
+          // Distance s of the shower start from the reconstructed 
+          // neutrino vertex
+          double s_vtx = sqrt(pow(shw->ShowerStart()[0] - r_vertex[0],2) + pow(shw->ShowerStart()[1] - r_vertex[1],2) + pow(shw->ShowerStart()[2] - r_vertex[2],2));
 
-          recoshower_tree->Fill();
+          int bp = shw->best_plane();
+
+          // Cut of 40 cm for showers to accommodate photon conversion after
+          // neutral pion decay
+          if(s_vtx < 40) {
+
+            std::vector< art::Ptr<recob::Hit> > hit_assn = fmhit.at(i);
+
+            // Add one to the counter for the event tree
+            n_primary_showers++;
+
+            // Get associated MCParticle ID using 3 different methods:
+            //    Which particle contributes the most energy to all the hits
+            //    Which particle contributes the reco charge to all the hits
+            //    Which particle is the biggest contributor to all the hits
+            sh_id_energy    = RecoUtils::TrueParticleIDFromTotalTrueEnergy(hit_assn);
+            sh_id_charge    = RecoUtils::TrueParticleIDFromTotalRecoCharge(hit_assn);
+            sh_id_hits      = RecoUtils::TrueParticleIDFromTotalRecoHits(hit_assn);
+
+            sh_n_hits       = hit_assn.size();
+            sh_dedx_size    = shw->dEdx().size();
+            sh_start[0]     = shw->ShowerStart()[0];
+            sh_start[1]     = shw->ShowerStart()[1];
+            sh_start[2]     = shw->ShowerStart()[2];
+            sh_direction[0] = shw->Direction()[0];
+            sh_direction[1] = shw->Direction()[1];
+            sh_direction[2] = shw->Direction()[2];
+            sh_length       = shw->Length();
+            sh_open_angle   = shw->OpenAngle();
+            sh_energy       = shw->Energy()[bp];
+            sh_dedx         = shw->dEdx()[bp];  
+
+            recoshower_tree->Fill();
+          }
         }
       }
-    }
 
-    // Number of reconstructed primary particles, primary tracks and 
-    // all reconstructed showers
-    // Location of the primary reconstructed vertex
-    r_tracks    = n_primary_tracks;
-    r_showers   = n_primary_showers; 
-    r_particles = n_primaries;
-// ------------------------------------------------------------------------------
-//                     EVENT-TREE TRUTH INFORMATION
-// ------------------------------------------------------------------------------
+      // Number of reconstructed primary particles, primary tracks and 
+      // all reconstructed showers
+      // Location of the primary reconstructed vertex
+      r_tracks    = n_primary_tracks;
+      r_showers   = n_primary_showers; 
+      r_particles = n_primaries;
+      // ------------------------------------------------------------------------------
+      //                     EVENT-TREE TRUTH INFORMATION
+      // ------------------------------------------------------------------------------
 
-    // Start defining truth variables
-    t_nu_pdgcode          = nu.Nu().PdgCode();
-    t_iscc                = nu.CCNC() == simb::curr_type_::kCC;
-    t_interaction         = mcgt_assn[0]->fGint;
-    t_scatter             = mcgt_assn[0]->fGscatter;
-    t_vertex[0]           = nu.Nu().Vx();
-    t_vertex[1]           = nu.Nu().Vy();
-    t_vertex[2]           = nu.Nu().Vz();
-    t_momentum[0]         = nu.Nu().Px();
-    t_momentum[1]         = nu.Nu().Py();
-    t_momentum[2]         = nu.Nu().Pz();
-    t_vertex_energy       = nu.Nu().E();
-    t_inv_mass            = nu.W();
-    t_nu_lepton_angle     = nu.Theta();
-    t_qsqr                = nu.QSqr();
-    t_transverse_momentum = nu.Pt();
-    t_bjorkenx            = nu.X();
-    t_inelasticity        = nu.Y();
+      // Start defining truth variables
+      t_nu_pdgcode          = nu.Nu().PdgCode();
+      t_iscc                = nu.CCNC() == simb::curr_type_::kCC;
+      t_interaction         = mcgt_assn[0]->fGint;
+      t_scatter             = mcgt_assn[0]->fGscatter;
+      t_vertex[0]           = nu.Nu().Vx();
+      t_vertex[1]           = nu.Nu().Vy();
+      t_vertex[2]           = nu.Nu().Vz();
+      t_momentum[0]         = nu.Nu().Px();
+      t_momentum[1]         = nu.Nu().Py();
+      t_momentum[2]         = nu.Nu().Pz();
+      t_vertex_energy       = nu.Nu().E();
+      t_inv_mass            = nu.W();
+      t_nu_lepton_angle     = nu.Theta();
+      t_qsqr                = nu.QSqr();
+      t_transverse_momentum = nu.Pt();
+      t_bjorkenx            = nu.X();
+      t_inelasticity        = nu.Y();
 
-    t_particles       = 0;
-    t_photons         = 0;
-    t_electrons       = 0;
-    t_neutral_pions   = 0;
-    t_charged_pions   = 0;
-    t_protons         = 0;
-    t_neutrons        = 0;
-    t_kaons           = 0;
-    t_muons           = 0;
+      t_particles       = 0;
+      t_photons         = 0;
+      t_electrons       = 0;
+      t_neutral_pions   = 0;
+      t_charged_pions   = 0;
+      t_protons         = 0;
+      t_neutrons        = 0;
+      t_kaons           = 0;
+      t_muons           = 0;
 
-    // Counters and filling the mcparticle_tree
-    for(art::Ptr<simb::MCParticle> part : mcp_assn) {
+      // Counters and filling the mcparticle_tree
+      for(art::Ptr<simb::MCParticle> part : mcp_assn) {
 
-      //art::FindManyP< recob::Hit > fmhit( trk_handle, e, m_reco_track_label );
-      
-      // ATTENTION: Cut on PGD codes which refer to elements (Argon39 and above) 
-      // Only interested in the final state PARTICLES
-      if(part->Process() != "primary" || part->PdgCode() >= 1000018039) continue;
-  
-      std::vector< art::Ptr< recob::Hit > > hits = bt_serv->TrackIdToHits_Ps(part->TrackId(), hit_vector); 
+        //art::FindManyP< recob::Hit > fmhit( trk_handle, e, m_reco_track_label );
 
-      t_particles++;
+        // ATTENTION: Cut on PGD codes which refer to elements (Argon39 and above) 
+        // Only interested in the final state PARTICLES
+        if(part->Process() != "primary" || part->PdgCode() >= 1000018039) continue;
 
-      // Find the number of individual particle types
-      if( part->PdgCode() == 22 )   t_photons++;
-      if( part->PdgCode() == 111 )  t_neutral_pions++;
-      if( part->PdgCode() == 2212 ) t_protons++;
-      if( part->PdgCode() == 2112 ) t_neutrons++;
-      if( part->PdgCode() == 11   || part->PdgCode() == -11 )  t_electrons++;
-      if( part->PdgCode() == 13   || part->PdgCode() == -13 )  t_muons++;
-      if( part->PdgCode() == 211  || part->PdgCode() == -211 ) t_charged_pions++;
-      if( part->PdgCode() == 321  || part->PdgCode() == -321 || part->PdgCode() == 311 ) t_kaons++;
+        std::vector< art::Ptr< recob::Hit > > hits = bt_serv->TrackIdToHits_Ps(part->TrackId(), hit_vector); 
 
-      p_id                  = part->TrackId();
-      p_pdgcode             = part->PdgCode();
-      p_status              = part->StatusCode();
-      p_n_hits              = hits.size();
-      p_vertex[0]           = part->Vx();
-      p_vertex[1]           = part->Vy();
-      p_vertex[2]           = part->Vz();
-      p_end[0]              = part->EndX();
-      p_end[1]              = part->EndY();
-      p_end[2]              = part->EndZ();
-      p_momentum[0]         = part->Px();
-      p_momentum[1]         = part->Py();
-      p_momentum[2]         = part->Pz();
-      p_energy              = part->E();
-      p_mass                = part->Mass();
-      p_transverse_momentum = part->Pt();
-      p_momentum_magnitude  = part->P();
+        t_particles++;
 
-      mcparticle_tree->Fill();
+        // Find the number of individual particle types
+        if( part->PdgCode() == 22 )   t_photons++;
+        if( part->PdgCode() == 111 )  t_neutral_pions++;
+        if( part->PdgCode() == 2212 ) t_protons++;
+        if( part->PdgCode() == 2112 ) t_neutrons++;
+        if( part->PdgCode() == 11   || part->PdgCode() == -11 )  t_electrons++;
+        if( part->PdgCode() == 13   || part->PdgCode() == -13 )  t_muons++;
+        if( part->PdgCode() == 211  || part->PdgCode() == -211 ) t_charged_pions++;
+        if( part->PdgCode() == 321  || part->PdgCode() == -321 || part->PdgCode() == 311 ) t_kaons++;
 
-    }
-    
-    // Fill the event tree once everything has been set
-    event_tree->Fill();
+        p_id                  = part->TrackId();
+        p_pdgcode             = part->PdgCode();
+        p_status              = part->StatusCode();
+        p_n_hits              = hits.size();
+        p_vertex[0]           = part->Vx();
+        p_vertex[1]           = part->Vy();
+        p_vertex[2]           = part->Vz();
+        p_end[0]              = part->EndX();
+        p_end[1]              = part->EndY();
+        p_end[2]              = part->EndZ();
+        p_momentum[0]         = part->Px();
+        p_momentum[1]         = part->Py();
+        p_momentum[2]         = part->Pz();
+        p_energy              = part->E();
+        p_mass                = part->Mass();
+        p_transverse_momentum = part->Pt();
+        p_momentum_magnitude  = part->P();
 
-  }
-}
+        mcparticle_tree->Fill();
+
+      }
+
+      // Fill the event tree once everything has been set
+      event_tree->Fill();
+    } // neutrinos
+  } // MCTruth
+} // Analyser
 
 void sbnd::AnalysisNTuple::beginJob()
 {
@@ -758,6 +764,7 @@ void sbnd::AnalysisNTuple::beginJob()
   event_tree->Branch("time_now",                   &time_now,              "time_now/I");
   event_tree->Branch("t_nu_pdgcode",               &t_nu_pdgcode,          "t_nu_pdgcode/I");
   event_tree->Branch("t_iscc",                     &t_iscc,                "t_iscc/O");
+  //event_tree->Branch("t_isnu",                     &t_isnu,                "t_isnu/O");
   event_tree->Branch("t_interaction",              &t_interaction,         "t_interaction/I");
   event_tree->Branch("t_scatter",                  &t_scatter,             "t_scatter/I");
   event_tree->Branch("t_vertex",                   &t_vertex,              "t_vertex[3]/D");
