@@ -17,6 +17,12 @@
 #include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
+
+#include "larcore/Geometry/Geometry.h"
+#include "lardataobj/RawData/OpDetWaveform.h"
+#include "lardataobj/RecoBase/OpHit.h"
+#include "lardata/DetectorInfoServices/DetectorClocksService.h"
+
 class MichelElectron;
 
 
@@ -46,8 +52,9 @@ private:
   /******************************************
    *  LABELS                                *
    ******************************************/
-  std::string TruthLabel, G4Label, ParticleLabel, HitFinderLabel, RecoTrackLabel, RecoShowerLabel, RecoPIDLabel, RecoCaloLabel ; 
+  std::string TruthLabel, G4Label, ParticleLabel, HitFinderLabel, RecoTrackLabel, RecoShowerLabel, RecoPIDLabel, RecoCaloLabel, photonLabel ; 
 
+  int event_id;
 };
 
 
@@ -65,17 +72,31 @@ MichelElectron::MichelElectron(fhicl::ParameterSet const& p)
   RecoCaloLabel = p.get<std::string>("RecoCaloLabel","pandoraCalo");
   RecoPIDLabel = p.get<std::string>("RecoPIDLabel","pandoraPid");
 
+  photonLabel = p.get<std::string>("photonLabel","g4Label");
+  
   this->reconfigure(p);
 }
 
 void MichelElectron::analyze(art::Event const& e)
 {
   // Implementation of required member function here.
+
+  event_id = e.id().event();
+
+  if( !e.isRealData()){
+
+    art::Handle<std::vector<raw::OpDetWaveform>> wvFormsHandle;
+
+    e.getByLabel(photonLabel, wvFormsHandle ) ;
+
+  }
 }
 
 void MichelElectron::beginJob()
 {
   // Implementation of optional member function here.
+
+  event_id = -999;
 }
 
 void MichelElectron::endJob()
