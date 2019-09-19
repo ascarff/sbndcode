@@ -16,6 +16,7 @@
 #include "canvas/Utilities/InputTag.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
+#include "art_root_io/TFileService.h"
 
 #include "larcore/Geometry/Geometry.h"
 #include "lardataobj/RawData/OpDetWaveform.h"
@@ -26,7 +27,9 @@
 #include "TFile.h"
 #include "TNtuple.h"
 #include "TROOT.h"
-
+#include "TCanvas.h"
+#include "TH1D.h"
+#include <string>
 
 class MichelElectron;
 
@@ -54,10 +57,6 @@ public:
 private:
 
   // Declare member data here.
-  /******************************************
-   *  LABELS                                *
-   ******************************************/
-  std::string TruthLabel, G4Label, ParticleLabel, HitFinderLabel, RecoTrackLabel, RecoShowerLabel, RecoPIDLabel, RecoCaloLabel, photonLabel ; 
 
   /******************************************
    *  TREES                                 *
@@ -67,8 +66,14 @@ private:
   /******************************************
    *  DATA MEMBERS                          *
    ******************************************/
-
   int event_id;
+  TCanvas *c = new TCanvas();
+  std::stringstream histname ; 
+  raw::Channel_t fChNumber ;
+  raw::TimeStamp_t fStartTime , fEndTime ;
+
+  double fSampling = 0.5 ;
+  TH1D * h_waveform ; 
 };
 
 
@@ -77,15 +82,6 @@ MichelElectron::MichelElectron(fhicl::ParameterSet const& p)
   // More initializers here.
 {
   // Call appropriate consumes<>() for any products to be retrieved by this module.
-  TruthLabel = p.get<std::string>("TruthLabel");
-  ParticleLabel = p.get<std::string>("PFParticleModule","pandora");
-  HitFinderLabel = p.get<std::string>("HitFinderModule","linecluster");
-  RecoTrackLabel = p.get<std::string>("RecoTrackLabel","pandoraTrack");
-  RecoShowerLabel = p.get<std::string>("RecoShowerLabel","emshower");
-  RecoCaloLabel = p.get<std::string>("RecoCaloLabel","pandoraCalo");
-  RecoPIDLabel = p.get<std::string>("RecoPIDLabel","pandoraPid");
-
-  photonLabel = p.get<std::string>("photonLabel","optdaq");
   
   this->reconfigure(p);
 }
@@ -95,19 +91,31 @@ void MichelElectron::analyze(art::Event const& e)
   // Implementation of required member function here.
 
   event_id = e.id().event();
+  //  art::ServiceHandle<art::TFileService> tfs;
 
   if( !e.isRealData()){
     // grab a data productfrom the event
     auto const& wvFormsHandle = *e.getValidHandle<std::vector<raw::OpDetWaveform>>("opdaq");
-    //    art::Handle<std::vector<raw::OpDetWaveform>> wvFormsHandle;
-    //e.getByLabel(photonLabel, wvFormsHandle ) ;
-    std::cout << " is real data after handle " << std::endl;
+ 
+    for(auto const& wvf : wvFormsHandle){
+      fChNumber = wvf.ChannelNumber();
+      histname.str(std::string());
+      histname << "event_" << event_id 
+	       << "_opchannel_" <<fChNumber;
+        
+      fStartTime = wvf.TimeStamp()/1000.0; //in us
+      fEndTime = double(wvf.size())/fSampling + fStartTime;
+      fEndTime = fEndTime/1000; //in us
+      //Create a new histogram
+      h_waveform = new TH1D(histname.str().c_str(), TString::Format(";t - %f (#mus);",fStartTime), wvf.size(), fStartTime, fEndTime);
 
-    for( unsigned int i = 0 ; i < wvFormsHandle.size(); ++i ) {
-      std::cout << " IN LOOP " << std::endl;
-      auto const& wforms = wvFormsHandle.at(i);
-      std::cout << wforms.TimeStamp() << std::endl;
+      //TH1D *wvfHist = tfs->make< TH1D >(histname.str().c_str(), TString::Format(";t - %f (#mus);",fStartTime), wvf.size(), fStartTime, fEndTime);
+      for(unsigned int i=0; i<wvf.size();i++){
+	h_waveform->SetBinContent(i+1,(double)wvf[i]);
+      }        
     }
+    //auto const& wforms = wvFormsHandle.at(i);
+    
   }
 }
 
@@ -134,6 +142,10 @@ void MichelElectron::endJob()
   f.Write();
   f.Close();
 
+  h_waveform->GetXaxis()->SetTitle("t[mus]");
+  h_waveform->Draw("hist");
+  c->SaveAs("wf_event1.root") ; 
+  c->Clear();
   event_id = -999;
 }
 

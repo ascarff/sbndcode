@@ -1,5 +1,17 @@
 ####include "myanalysis.fcl"
 #include "simulationservices_sbnd.fcl"
+#include "messages_sbnd.fcl"
+#include "wvfana.fcl"
+
+#
+# modules and algorithms
+#
+
+#include "opdetdigitizer_sbnd.fcl"
+#include "digi_arapuca_sbnd.fcl"
+#include "digi_pmt_sbnd.fcl"
+#include "rootoutput_sbnd.fcl"
+
 
 process_name: MyAnalysis      #The process name must NOT contain any underscores
 
