@@ -1,0 +1,35 @@
+####include "myanalysis.fcl"
+#include "simulationservices_sbnd.fcl"
+
+process_name: MyAnalysis      #The process name must NOT contain any underscores
+
+source: 
+{
+  module_type: RootInput
+  maxEvents:   -1
+}
+
+services: {
+  @table::sbnd_simulation_services
+  BackTrackerService:  @local::standard_backtrackerservice
+  ParticleInventoryService: @local::standard_particleinventoryservice
+}
+
+physics: {
+
+  producers: {
+  }
+ 
+ analyzers: {
+    myana: { module_type: MichelElectron
+      TruthLabel: "largeant"
+      }  
+  }
+
+  filters: { }
+
+  path0:  [ myana ]
+
+  end_paths:    [ path0 ]
+
+}
