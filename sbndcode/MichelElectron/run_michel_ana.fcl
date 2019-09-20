@@ -22,9 +22,12 @@ source:
 }
 
 services: {
+  TFileService: { fileName: "digitizer_sbnd_%p-%tc_hists.root" }
   @table::sbnd_simulation_services
+  @table::sbnd_detsim_services
   BackTrackerService:  @local::standard_backtrackerservice
   ParticleInventoryService: @local::standard_particleinventoryservice
+  FileCatalogMetadata: @local::sbnd_file_catalog_mc
 }
 
 physics: {

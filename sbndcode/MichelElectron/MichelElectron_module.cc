@@ -31,6 +31,9 @@
 #include "TH1D.h"
 #include <string>
 
+#include "sbndPDMapAlg.h"
+
+
 class MichelElectron;
 
 
@@ -48,7 +51,8 @@ public:
 
   // Required functions.
   void analyze(art::Event const& e) override;
-
+  opdet::sbndPDMapAlg map; //map for photon detector types
+  
   // Selected optional functions.
   void beginJob() override;
   void endJob() override;
@@ -67,13 +71,13 @@ private:
    *  DATA MEMBERS                          *
    ******************************************/
   int event_id;
-  TCanvas *c = new TCanvas();
   std::stringstream histname ; 
   raw::Channel_t fChNumber ;
   raw::TimeStamp_t fStartTime , fEndTime ;
 
   double fSampling = 0.5 ;
-  TH1D * h_waveform ; 
+  TH1D * pmt_wvfHist ;
+  TH1D * arapuca_wvfHist ;
 };
 
 
@@ -91,31 +95,46 @@ void MichelElectron::analyze(art::Event const& e)
   // Implementation of required member function here.
 
   event_id = e.id().event();
-  //  art::ServiceHandle<art::TFileService> tfs;
+  
+  std::cout<<  " Processing event # " << event_id << std::endl;
+  art::ServiceHandle<art::TFileService> tfs;
 
   if( !e.isRealData()){
     // grab a data productfrom the event
     auto const& wvFormsHandle = *e.getValidHandle<std::vector<raw::OpDetWaveform>>("opdaq");
- 
+
+    // Issues defining these two histograms
+    // pmt_wvfHist = new TH1D("pmt_wvfHist", TString::Format(";t - %f (#mus);",fStartTime),  5741, 0.000035, 22.966000);
+    // arapuca_wvfHist = new TH1D("arapuca_wvfHist", TString::Format(";t - %f (#mus);",fStartTime), 5741, 0.000035, 22.966000)
+
     for(auto const& wvf : wvFormsHandle){
       fChNumber = wvf.ChannelNumber();
       histname.str(std::string());
-      histname << "event_" << event_id 
-	       << "_opchannel_" <<fChNumber;
-        
+      histname << "event_" << event_id
+               << "_opchannel_" << fChNumber
+               << "_timestamp_"<< wvf.TimeStamp();
       fStartTime = wvf.TimeStamp()/1000.0; //in us
       fEndTime = double(wvf.size())/fSampling + fStartTime;
       fEndTime = fEndTime/1000; //in us
-      //Create a new histogram
-      h_waveform = new TH1D(histname.str().c_str(), TString::Format(";t - %f (#mus);",fStartTime), wvf.size(), fStartTime, fEndTime);
 
-      //TH1D *wvfHist = tfs->make< TH1D >(histname.str().c_str(), TString::Format(";t - %f (#mus);",fStartTime), wvf.size(), fStartTime, fEndTime);
+      //Create a new histogram
+      TH1D *wvfHist = tfs->make< TH1D >(histname.str().c_str(), TString::Format(";t - %f (#mus);",fStartTime), wvf.size()/2, fStartTime, fEndTime);
+
       for(unsigned int i=0; i<wvf.size();i++){
-	h_waveform->SetBinContent(i+1,(double)wvf[i]);
-      }        
+        wvfHist->SetBinContent(i+1,(double)wvf[i]);
+      }
+
+      // Adding up the pmt and arapuca histograms
+      // if(map.pdType(fChNumber, "pmt") || map.pdType(fChNumber, "barepmt")){
+      //   // pmt_wvfHist->Add(wvfHist);
+      // }
+      // if(map.pdType(fChNumber, "arapucaT1") || map.pdType(fChNumber, "arapucaT2") || map.pdType(fChNumber, "xarapucaprime") || map.pdType(fChNumber, "xarapuca")){
+      //   //arapuca_wvfHist->Add(wvfHist);
+      // }
+
     }
     //auto const& wforms = wvFormsHandle.at(i);
-    
+
   }
 }
 
@@ -141,12 +160,6 @@ void MichelElectron::endJob()
   opt_tree -> Write() ;
   f.Write();
   f.Close();
-
-  h_waveform->GetXaxis()->SetTitle("t[mus]");
-  h_waveform->Draw("hist");
-  c->SaveAs("wf_event1.root") ; 
-  c->Clear();
-  event_id = -999;
 }
 
 void MichelElectron::reconfigure(fhicl::ParameterSet const & p)

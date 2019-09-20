@@ -40,6 +40,7 @@ art_make(
   ${ROOT_ROOFIT}
   ${ROOT_ROOFITCORE}
   sbndcode_RecoUtils
+  sbndcode_OpDetSim
   )
 install_headers()
 install_fhicl()
