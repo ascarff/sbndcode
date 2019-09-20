@@ -104,8 +104,8 @@ void MichelElectron::analyze(art::Event const& e)
     auto const& wvFormsHandle = *e.getValidHandle<std::vector<raw::OpDetWaveform>>("opdaq");
 
     // Issues defining these two histograms
-    // pmt_wvfHist = new TH1D("pmt_wvfHist", TString::Format(";t - %f (#mus);",fStartTime),  5741, 0.000035, 22.966000);
-    // arapuca_wvfHist = new TH1D("arapuca_wvfHist", TString::Format(";t - %f (#mus);",fStartTime), 5741, 0.000035, 22.966000)
+    pmt_wvfHist = new TH1D("pmt_wvfHist", TString::Format(";t - %f (#mus);",fStartTime),  5741, 0.000035, 22.966000);
+    arapuca_wvfHist = new TH1D("arapuca_wvfHist", TString::Format(";t - %f (#mus);",fStartTime), 5741, 0.000035, 22.966000);
 
     for(auto const& wvf : wvFormsHandle){
       fChNumber = wvf.ChannelNumber();
@@ -125,12 +125,12 @@ void MichelElectron::analyze(art::Event const& e)
       }
 
       // Adding up the pmt and arapuca histograms
-      // if(map.pdType(fChNumber, "pmt") || map.pdType(fChNumber, "barepmt")){
-      //   // pmt_wvfHist->Add(wvfHist);
-      // }
-      // if(map.pdType(fChNumber, "arapucaT1") || map.pdType(fChNumber, "arapucaT2") || map.pdType(fChNumber, "xarapucaprime") || map.pdType(fChNumber, "xarapuca")){
-      //   //arapuca_wvfHist->Add(wvfHist);
-      // }
+      if(map.pdType(fChNumber, "pmt") || map.pdType(fChNumber, "barepmt")){
+        // pmt_wvfHist->Add(wvfHist);
+      }
+      if(map.pdType(fChNumber, "arapucaT1") || map.pdType(fChNumber, "arapucaT2") || map.pdType(fChNumber, "xarapucaprime") || map.pdType(fChNumber, "xarapuca")){
+        //arapuca_wvfHist->Add(wvfHist);
+      }
 
     }
     //auto const& wforms = wvFormsHandle.at(i);
