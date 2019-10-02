@@ -16,6 +16,21 @@
 #include "canvas/Utilities/InputTag.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
+#include "art_root_io/TFileService.h"
+#include "canvas/Persistency/Common/FindManyP.h"
+#include "canvas/Persistency/Common/Ptr.h"
+#include "canvas/Persistency/Common/PtrVector.h"
+
+//LArSoft Includes
+#include "nusimdata/SimulationBase/MCTruth.h"
+#include "lardataobj/RecoBase/PFParticle.h"
+#include "lardataobj/RecoBase/Vertex.h"
+
+//Root Includes
+#include "TMath.h"
+#include "TTree.h"
+#include <vector>
+#include <iostream>
 
 namespace ana {
   class PFPValidation;
@@ -24,7 +39,7 @@ namespace ana {
 
 class ana::PFPValidation : public art::EDAnalyzer {
   public:
-    explicit PFPValidation(fhicl::ParameterSet const& p);
+    explicit PFPValidation(fhicl::ParameterSet const& pset);
     // The compiler-generated destructor is fine for non-base
     // classes without bare pointers or other resource use.
 
@@ -40,6 +55,10 @@ class ana::PFPValidation : public art::EDAnalyzer {
 
   private:
 
+    std::string fGenieGenModuleLabel;
+    std::string fPFParticleLabel;
+    art::ServiceHandle<art::TFileService> tfs;
+
     // Declare member data here.
     TTree* Tree;
 
@@ -53,24 +72,25 @@ class ana::PFPValidation : public art::EDAnalyzer {
 };
 
 
-ana::PFPValidation::PFPValidation(fhicl::ParameterSet const& p)
-  : EDAnalyzer{p}
-  // More initializers here.
+ana::PFPValidation::PFPValidation(fhicl::ParameterSet const& pset)
+  : EDAnalyzer{pset}
 {
-  // Call appropriate consumes<>() for any products to be retrieved by this module.
+  fPFParticleLabel     = pset.get<std::string>("PFParticleLabel");
+  fGenieGenModuleLabel = pset.get<std::string>("GenieGenModuleLabel");
 }
 
 void ana::PFPValidation::beginJob() {
-  Tree->Branch("pfpNeutrinos",     "int",   &pfpNeutrinos);
-  Tree->Branch("pfpTracks",        "int",   &pfpTracks);
-  Tree->Branch("pfpShowers",       "int",   &pfpShowers);
-  Tree->Branch("pfpVertexDistX",   "float", &pfpVertexDistX);
-  Tree->Branch("pfpVertexDistY",   "float", &pfpVertexDistY);
-  Tree->Branch("pfpVertexDistZ",   "float", &pfpVertexDistZ);
-  Tree->Branch("pfpVertexDistMag", "float", &pfpVertexDistMag);
+  Tree = tfs->make<TTree>("MetricTree", "Tree Holding all metric information");
+  Tree->Branch("pfpNeutrinos",     &pfpNeutrinos);
+  Tree->Branch("pfpTracks",        &pfpTracks);
+  Tree->Branch("pfpShowers",       &pfpShowers);
+  Tree->Branch("pfpVertexDistX",   &pfpVertexDistX);
+  Tree->Branch("pfpVertexDistY",   &pfpVertexDistY);
+  Tree->Branch("pfpVertexDistZ",   &pfpVertexDistZ);
+  Tree->Branch("pfpVertexDistMag", &pfpVertexDistMag);
 }
 
-void ana::PFPValidation::analyze(art::Event const& e)
+void ana::PFPValidation::analyze(art::Event const& evt)
 {
   //Getting  MC truth information
   art::Handle<std::vector<simb::MCTruth> > truthHandle;
@@ -79,15 +99,21 @@ void ana::PFPValidation::analyze(art::Event const& e)
   {art::fill_ptr_vector(truths, truthHandle);}
 
   // Check there is 1 true neutrino and get it
+  double trueVtx[3] = {-999, -999, -999};
   if (truths.size()==1){
     for (auto truth : truths){
       const simb::MCNeutrino& nuet = truth->GetNeutrino();
       const simb::MCParticle& neutrino = nuet.Nu();
+      const TLorentzVector trueVertexVector = neutrino.Position();
+      trueVtx[0] = trueVertexVector.X();
+      trueVtx[1] = trueVertexVector.Y();
+      trueVtx[2] = trueVertexVector.Z();
     }
-  } else return;
+  } else {
+    std::cout<<"More that 1 thruth neutrino. Returning."<<std::endl;
+    return;
+  }
   // Get the neutrino vertex
-  const TLorentzVector trueVertexVector = neutrino->Position();
-  double trueVtx[3] = {trueVertexVector.X() ,trueVertexVector.Y(), trueVertexVector.Z()};
 
   // Get assns
   art::Handle<std::vector<recob::PFParticle> > pfpListHandle;
@@ -115,7 +141,7 @@ void ana::PFPValidation::analyze(art::Event const& e)
 
   int pfpNeutrino; // ID of the pfp neutrino
 
-  for (auto const pfp: pfpsMap){
+  for (auto const pfp: pfps){
     // Find the pfp Neutrinos
     if ((pfp->PdgCode()==12) ||(pfp->PdgCode()==14)){
       pfpNeutrino = pfp->Self();
@@ -125,8 +151,8 @@ void ana::PFPValidation::analyze(art::Event const& e)
       const std::vector<size_t> daughters = pfp->Daughters();
       for (unsigned int daughter_iter=0; daughter_iter< daughters.size(); daughter_iter++) {
         art::Ptr<recob::PFParticle>& daughter = pfpsMap[daughters.at(daughter_iter)];
-        if (Daughter->PdgCode() == 13) ++pfpTracks;
-        if (Daughter->PdgCode() == 11) ++pfpShowers;
+        if (daughter->PdgCode() == 13) ++pfpTracks;
+        if (daughter->PdgCode() == 11) ++pfpShowers;
       }
     }
   }
@@ -135,33 +161,36 @@ void ana::PFPValidation::analyze(art::Event const& e)
   if (pfpNeutrinos == 1) {
     // Get the neutrino pfp
     art::Ptr<recob::PFParticle>& neutrino = pfpsMap[pfpNeutrino];
-    art::Ptr<recob::Vertex> pfpVertex;
     //Get the vertex
     if (fmpfv.isValid()) {
       art::Handle<std::vector<recob::Vertex > > vertexHandle;
       evt.get(fmpfv.at(0).front().id(),vertexHandle);
       if(vertexHandle.isValid()) {
-        std::vector< art::Ptr<recob::Vertex> > pfpVertexVector = fmpfv.at(Daughter.key());
-        if (pfpVertexVector.size == 1){
-          pfpVertex = pfpVertexVector.front();
-        } else {
-          // Throw exception
+
+        std::vector< art::Ptr<recob::Vertex> > pfpVertexVector = fmpfv.at(neutrino.key());
+
+
+        if (pfpVertexVector.size()==0) {
+          std::cout<<"No pfp verticies. Returning."<<std::endl;
+          return;
         }
+
+        art::Ptr<recob::Vertex> pfpVertex = pfpVertexVector.front();
+
+        // Get the pfp neutrino vertex
+        double pfpVtx[3];
+        pfpVertex->XYZ(pfpVtx);
+
+        pfpVertexDistX   = pfpVtx[0] - trueVtx[0];
+        pfpVertexDistY   = pfpVtx[1] - trueVtx[1];
+        pfpVertexDistZ   = pfpVtx[2] - trueVtx[2];
+        pfpVertexDistMag = TMath::Sqrt(TMath::Power(pfpVertexDistX,2) +
+            TMath::Power(pfpVertexDistY,2) + TMath::Power(pfpVertexDistZ,2));
 
       }
     }
-
-    // Get the pfp neutrino vertex
-    double pfpVtx[3];
-    pfpVertex->XYZ(pfpVtx);
-
-    double pfpVertexDistX   = pfpVtx[0] - trueVtx[0];
-    double pfpVertexDistY   = pfpVtx[1] - trueVtx[1];
-    double pfpVertexDistZ   = pfpVtx[2] - trueVtx[2];
-    double pfpVertexDistMag = TMath::Sqrt(TMath::Power(pfpVertexDistX,2) +
-        TMath::Power(pfpVertexDistY,2) + TMath::Power(pfpVertexDistZ,2));
   }
-
   Tree->Fill();
+}
 
-  DEFINE_ART_MODULE(ana::PFPValidation)
+DEFINE_ART_MODULE(ana::PFPValidation)
