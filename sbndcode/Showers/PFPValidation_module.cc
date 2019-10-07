@@ -92,6 +92,7 @@ void ana::PFPValidation::beginJob() {
 
 void ana::PFPValidation::analyze(art::Event const& evt)
 {
+
   //Getting  MC truth information
   art::Handle<std::vector<simb::MCTruth> > truthHandle;
   std::vector<art::Ptr<simb::MCTruth> > truths;
@@ -140,7 +141,6 @@ void ana::PFPValidation::analyze(art::Event const& evt)
   }
 
   int pfpNeutrino; // ID of the pfp neutrino
-
   for (auto const pfp: pfps){
     // Find the pfp Neutrinos
     if ((pfp->PdgCode()==12) ||(pfp->PdgCode()==14)){
@@ -162,13 +162,12 @@ void ana::PFPValidation::analyze(art::Event const& evt)
     // Get the neutrino pfp
     art::Ptr<recob::PFParticle>& neutrino = pfpsMap[pfpNeutrino];
     //Get the vertex
-    if (fmpfv.isValid()) {
+    if (fmpfv.isValid() && fmpfv.size()!=0 && (fmpfv.at(0)).size()!=0) {
       art::Handle<std::vector<recob::Vertex > > vertexHandle;
       evt.get(fmpfv.at(0).front().id(),vertexHandle);
       if(vertexHandle.isValid()) {
 
         std::vector< art::Ptr<recob::Vertex> > pfpVertexVector = fmpfv.at(neutrino.key());
-
 
         if (pfpVertexVector.size()==0) {
           std::cout<<"No pfp verticies. Returning."<<std::endl;
