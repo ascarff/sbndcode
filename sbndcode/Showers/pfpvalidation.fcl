@@ -29,13 +29,13 @@ analyzers:
 pfpvalidation:
     {
 #module_type: ShowerdEdx
-module_type: nueana
+module_type: PFPValidation
                GenieGenModuleLabel:  "generator"
                PFParticleLabel:      "pandora"
     }
   }
 
-ana: [ nueana ]
+ana: [ pfpvalidation ]
        end_paths: [ ana ]
 
 }
