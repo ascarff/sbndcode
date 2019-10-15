@@ -54,13 +54,6 @@ services:
 
 }
 
-# SBND geometry with PMTs + Bars + ARAPUCAS + Foils
-services.Geometry.GDML: "sbnd_v01_03.gdml"
-services.AuxDetGeometry.GDML: "sbnd_v01_03.gdml"
-# Loading the TPB spectra information
-services.LArPropertiesService.LoadExtraMatProperties: true
-
-
 #source is now a root file
 source:
 {
@@ -107,6 +100,9 @@ outputs:
     dataTier: "simulated"
   }
 }
+
+# Loading the TPB spectra information
+services.LArPropertiesService.LoadExtraMatProperties: true
 
 # enable optical physics in LArG4
 services.LArG4Parameters.EnabledPhysics: [ "Em",
