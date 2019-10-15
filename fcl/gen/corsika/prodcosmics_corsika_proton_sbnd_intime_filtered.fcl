@@ -106,25 +106,14 @@ outputs:
    dataTier:    "gen"
    compressionLevel: 1
    SelectEvents: [ simulate ]
-   # drop the G4 output to be re-generared later
-   outputCommands: [
-     "keep *",
-     "drop *_larg4intime_*_CosmicsCorsikaCMCGenAndG4InTime"
-   ]
  }
 }
-
-# FOR NOW: do not override default SBND geometry
-# SBND geometry with PMTs + Bars + ARAPUCAS + Foils
-# services.Geometry.GDML: "sbnd_v01_03.gdml"
-# services.AuxDetGeometry.GDML: "sbnd_v01_03.gdml"
-
-# Loading the TPB spectra information
-services.LArPropertiesService.LoadExtraMatProperties: true
-
 physics.producers.cosmgen.SampleTime:       5.2e-3   # 0.2 ms (G4 rise time) + 1.25 ms (1 full drift window) + 3.75 ms (readout) @ -70 kv, 114 cm/ms
 physics.producers.cosmgen.TimeOffset:      -2.7e-3   # 3.75 ms readout should start at -1.25 ms to match data
 physics.producers.cosmgen.BufferBox: [ -250.0, +250.0, -250.0, +250.0, -250.0, +250.0 ]
+
+# Loading the TPB spectra information
+services.LArPropertiesService.LoadExtraMatProperties: true
 
 physics.producers.larg4intime.InputLabels: [ "GenInTimeSorter:intime" ]
 
@@ -147,4 +136,3 @@ services.LArG4Parameters.UseLitePhotons: false
 
 # setup services parameters for 3 drift windows
 #include "3drift_services_sbnd.fcl"
-
