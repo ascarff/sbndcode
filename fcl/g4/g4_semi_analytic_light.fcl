@@ -115,6 +115,8 @@ services.LArG4Parameters.EnabledPhysics: [ "Em",
                                                 "Stopping",
                                                 "NeutronTrackingCut" ]
 
+physics.producers.largeant.KeepParticlesInVolumes: ["volCryostat", "volTaggerTopHigh", "volTaggerTopLow", "volTaggerSideLeft", "volTaggerSideRight", "volTaggerFaceFront", "volTaggerFaceBack", "volTaggerBot"]
+
 # enable this custom physics list
 services.LArG4Parameters.UseCustomPhysics: true
 
