@@ -25,6 +25,7 @@
 #include "nusimdata/SimulationBase/MCTruth.h"
 #include "lardataobj/RecoBase/PFParticle.h"
 #include "lardataobj/RecoBase/Vertex.h"
+#include "larsim/MCCheater/ParticleInventoryService.h"
 
 //Root Includes
 #include "TMath.h"
@@ -59,6 +60,7 @@ class ana::PFPValidation : public art::EDAnalyzer {
     std::string fPFParticleLabel;
     art::ServiceHandle<art::TFileService> tfs;
 
+    art::ServiceHandle<cheat::ParticleInventoryService> particleInventory;
     // Declare member data here.
     TTree* Tree;
 
@@ -69,6 +71,24 @@ class ana::PFPValidation : public art::EDAnalyzer {
     float pfpVertexDistY;
     float pfpVertexDistZ;
     float pfpVertexDistMag;
+
+    int intType;
+    int CCNC;
+    double W;
+    double X;
+    double Y;
+    double QSqr;
+    double Pt;
+    double Theta;
+
+    double E;
+    double leptonP;
+
+    int neutPDG;
+    int numProtons;
+    int numNeutrons;
+    int numPi;
+    int numPi0;
 };
 
 
@@ -88,6 +108,24 @@ void ana::PFPValidation::beginJob() {
   Tree->Branch("pfpVertexDistY",   &pfpVertexDistY);
   Tree->Branch("pfpVertexDistZ",   &pfpVertexDistZ);
   Tree->Branch("pfpVertexDistMag", &pfpVertexDistMag);
+
+  Tree->Branch("intType",&intType,"intType/I");
+  Tree->Branch("CCNC",&CCNC,"CCNC/I");
+  Tree->Branch("W",&W,"W/D");
+  Tree->Branch("X",&X,"X/D");
+  Tree->Branch("Y",&Y,"Y/D");
+  Tree->Branch("QSqr",&QSqr,"QSqr/D");
+  Tree->Branch("Pt",&Pt,"Pt/D");
+  Tree->Branch("Theta",&Theta,"Theta/D");
+
+  Tree->Branch("E",&E,"E/D");
+  Tree->Branch("leptonP",&leptonP,"leptonP/D");
+
+  Tree->Branch("neutPDG",&neutPDG,"NeutPDG/I");
+  Tree->Branch("numProtons",&numProtons,"numProtons/I");
+  Tree->Branch("numNeutrons",&numNeutrons,"numNeutrons/I");
+  Tree->Branch("numPi",&numPi,"numPi/I");
+  Tree->Branch("numPi0",&numPi0,"numPi0/I");
 }
 
 void ana::PFPValidation::analyze(art::Event const& evt)
@@ -103,18 +141,55 @@ void ana::PFPValidation::analyze(art::Event const& evt)
   double trueVtx[3] = {-999, -999, -999};
   if (truths.size()==1){
     for (auto truth : truths){
-      const simb::MCNeutrino& nuet = truth->GetNeutrino();
-      const simb::MCParticle& neutrino = nuet.Nu();
+      const simb::MCNeutrino& neut = truth->GetNeutrino();
+      const simb::MCParticle& neutrino = neut.Nu();
       const TLorentzVector trueVertexVector = neutrino.Position();
       trueVtx[0] = trueVertexVector.X();
       trueVtx[1] = trueVertexVector.Y();
       trueVtx[2] = trueVertexVector.Z();
+
+
+      intType = neut.Mode();
+      CCNC    = neut.CCNC();
+      W       = neut.W();
+      X       = neut.X();
+      Y       = neut.Y();
+      QSqr    = neut.QSqr();
+      Pt      = neut.Pt();
+      Theta   = neut.Theta();
+
+      E = neutrino.E();
+      neutPDG = neutrino.PdgCode();
+
+      const simb::MCParticle Lepton  = neut.Lepton();
+      leptonP = Lepton.P();
     }
   } else {
-    std::cout<<"More that 1 thruth neutrino. Returning."<<std::endl;
+    std::cout<<"More that 1 truth neutrino. Returning."<<std::endl;
     return;
   }
-  // Get the neutrino vertex
+
+  //Get the neutrino daughters
+  numProtons  = 0;
+  numNeutrons = 0;
+  numPi       = 0;
+  numPi0      = 0;
+  const sim::ParticleList& particles = particleInventory->ParticleList();
+  for (sim::ParticleList::const_iterator particleIt = particles.begin();
+      particleIt != particles.end(); ++particleIt){
+    const simb::MCParticle *particle = particleIt->second;
+    if (particle->Mother()==0){
+      if (particle->PdgCode() == 2212 && (particle->E()-particle->Mass())>0.021) {
+        ++numProtons;
+      }  else if (TMath::Abs(particle->PdgCode()) == 2112) {
+        ++numNeutrons;
+      }  else if (TMath::Abs(particle->PdgCode()) == 211) {
+        ++numPi;
+      }  else if (TMath::Abs(particle->PdgCode()) == 111) {
+        ++numPi0;
+      }
+    }
+  }
 
   // Get assns
   art::Handle<std::vector<recob::PFParticle> > pfpListHandle;
@@ -188,7 +263,11 @@ void ana::PFPValidation::analyze(art::Event const& evt)
 
       }
     }
+  } else {
+    std::cout<<"More that 1 reco neutrino. Returning."<<std::endl;
+    return;
   }
+
   Tree->Fill();
 }
 

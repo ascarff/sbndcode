@@ -157,11 +157,6 @@ void ana::nueana::analyze(const art::Event& evt){
         particleIt != particles.end(); ++particleIt){
       const simb::MCParticle *particle = particleIt->second;
       if (particle->Mother()==0){
-        //double energy = particle->E()-particle->Mass();
-        //std::cout<<"ID: "<<particle->TrackId()<<" pdg: "<<particle->PdgCode()<<" mother: "
-        //         <<particle->Mother()<<" energy: "<<energy<<std::endl;
-
-        //if (particle->PdgCode() == 2212 && energy>0.021) {
         if (particle->PdgCode() == 2212) {
           std::cout<<"Proton"<<std::endl;
           ++numProtons;
@@ -173,16 +168,16 @@ void ana::nueana::analyze(const art::Event& evt){
           ++numPi0;
         }
       }
-      }
-      Tree->Fill();
-    } else {
-      std::cout<<"Broken: "<<truths.size();
     }
-
+    Tree->Fill();
+  } else {
+    std::cout<<"Broken: "<<truths.size();
   }
 
-  void ana::nueana::endJob(){
-  }
+}
 
-  DEFINE_ART_MODULE(ana::nueana)
+void ana::nueana::endJob(){
+}
+
+DEFINE_ART_MODULE(ana::nueana)
 
