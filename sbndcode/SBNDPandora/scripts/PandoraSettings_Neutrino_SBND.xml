@@ -90,7 +90,7 @@
     <InputClusterListNames>ClustersU ClustersV ClustersW</InputClusterListNames>
     <OutputVertexListName>NeutrinoVertices3D</OutputVertexListName>
     <ReplaceCurrentVertexList>true</ReplaceCurrentVertexList>
-    <MvaFileName>VertexBDTSBND.xml</MvaFileName>
+    <MvaFileName>PandoraMVAs/PandoraBdt_v08_33_00_SBND.xml</MvaFileName>
     <RegionMvaName>VertexBDTRegion</RegionMvaName>
     <VertexMvaName>VertexBDTVertex</VertexMvaName>
     <FeatureTools>
