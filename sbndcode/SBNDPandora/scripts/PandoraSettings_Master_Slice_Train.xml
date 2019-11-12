@@ -19,7 +19,7 @@
 
   <algorithm type = "LArMaster">
     <CRSettingsFile>PandoraSettings_Cosmic_Standard.xml</CRSettingsFile>
-    <NuSettingsFile>PandoraSettings_Neutrino_Vertex_Train.xml</NuSettingsFile>
+    <NuSettingsFile>PandoraSettings_Neutrino_SBND.xml</NuSettingsFile>
     <SlicingSettingsFile>PandoraSettings_Slicing_Standard.xml</SlicingSettingsFile>
     <StitchingTools>
       <tool type = "LArStitchingCosmicRayMerging"><ThreeDStitchingMode>true</ThreeDStitchingMode></tool>
@@ -29,12 +29,15 @@
       <tool type = "LArCosmicRayTagging"/>
     </CosmicRayTaggingTools>
     <SliceIdTools>
-      <tool type = "LArNeutrinoId"/>
-      <m_useTrainingMode>true</m_useTrainingMode>
-      <!-- <SvmFileName>PandoraSvm_test.xml</SvmFileName> -->
-      <!-- <SvmName>NeutrinoSliceId</SvmName> -->
-      <!-- <MaximumNeutrinos>5</MaximumNeutrinos> -->
-      <TrainingOutputFileName>test.txt</TrainingOutputFileName>
+      <tool type = "LArNeutrinoId">
+        <UseTrainingMode>true</UseTrainingMode>
+        <MinimumCompleteness>0.1</MinimumCompleteness>
+        <MinimumPurity>0.1</MinimumPurity>
+        <!-- <SvmFileName>PandoraSvm_test.xml</SvmFileName> -->
+        <!-- <SvmName>NeutrinoSliceId</SvmName> -->
+        <!-- <MaximumNeutrinos>5</MaximumNeutrinos> -->
+        <TrainingOutputFileName>PandoraSliceTraining</TrainingOutputFileName>
+      </tool>
     </SliceIdTools>
     <InputHitListName>Input</InputHitListName>
     <InputMCParticleListName>Input</InputMCParticleListName>
