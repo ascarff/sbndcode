@@ -1,12 +1,11 @@
-# Produces photon and charged pion from a common vertex with
-# isotropic and uncorrilated angles
-# Pion has BNB-like energies and photon uses electron BNB-like 
-# energy distribution (Will be updated in the future)
+# Produces electron and charged pion from a common vertex with
+# uncorrilated and forward going angles
+# Both particles have energy distributions from their histograms
 
 #include "prodsingle_sbnd_proj.fcl"
 
 physics.producers.generator.PadOutVectors: true
-physics.producers.generator.PDG: [22, 211]      # Electron, Pi+
+physics.producers.generator.PDG: [11, 211]      # Electron, Pi+
 physics.producers.generator.PDist: 2                # Histogram momentum dist.
 physics.producers.generator.HistogramFile: "ParticleGunHists/particlegun_bnb_hists.root"
 physics.producers.generator.PHist: [ "hPHist_electrons", "hPHist_pi" ]
@@ -23,5 +22,5 @@ physics.producers.generator.AngleDist: 0
 physics.producers.generator.ThetaXzYzHist: [ "hThetaXzYzHist_electrons" ]
 physics.producers.generator.Theta0XZ: [0, 0]
 physics.producers.generator.Theta0YZ: [0, 0]
-physics.producers.generator.SigmaThetaXZ: [180]
-physics.producers.generator.SigmaThetaYZ: [180]
+physics.producers.generator.SigmaThetaXZ: [45]
+physics.producers.generator.SigmaThetaYZ: [45]
