@@ -24,29 +24,24 @@ sbnd_emshower.EMshowerAlg.showerEnergyAlg: @local::sbnd_showerenergyalg
 
 sbnd_tracs:  @local::standard_tracs_shower
 
-sbnd_showerstartpositionfinder:  @local::showerpfpvertexstartposition
-sbnd_showerdirectionfinder:      @local::showerpcadirection
-sbnd_showerenergyfinder:         @local::showerlinearenergy
-sbnd_shower3dtrackhitfinder:     @local::shower3Dtrackhitfinder
-sbnd_showerpmatrackfinder:       @local::showerpmatrackfinder
-sbnd_showerpandoratrackfinder:   @local::showerpandoraslidingfittrackfinder
-sbnd_showerdedxfinder:           @local::showerstandardcalodedx
-sbnd_showerlmadedxfinder:        @local::showerlmastandardcalodedx
-sbnd_showerslidingdedxfinder:    @local::showerslidingstandardcalodedx
+sbnd_showerstartpositionfinder: @local::showerstartposition
+sbnd_showerdirectionfinder:     @local::showerpcadirection
+sbnd_showerenergyfinder:        @local::showerlinearenergy
+sbnd_shower3dtrackhitfinder:    @local::shower3Dtrackhitfinder
+sbnd_showerpmatrackfinder:      @local::showerpmatrackfinder
+sbnd_showerdedxfinder:          @local::showerstandardcalodedx
+
 sbnd_showerstartpositioncheater: @local::showerstartpositioncheater
 sbnd_showerdirectioncheater:     @local::showerdirectioncheater
 sbnd_showertrackfindercheater:   @local::showertrackfindercheater
 
-sbnd_showerdedxfinder.CalorimetryAlg:    @local::sbnd_calorimetryalgmc
-sbnd_showerlmadedxfinder.CalorimetryAlg: @local::sbnd_calorimetryalgmc
-sbnd_showerslidingdedxfinder.CalorimetryAlg: @local::sbnd_calorimetryalgmc
+sbnd_showerdedxfinder.CalorimetryAlg:  @local::sbnd_calorimetryalgmc
 
-sbnd_tracs.ShowerFinderTools: [
+sbnd_tracs.showerFinderTools: [
   @local::sbnd_showerstartpositionfinder,
   @local::sbnd_showerdirectionfinder,
   @local::sbnd_showerenergyfinder,
   @local::sbnd_shower3dtrackhitfinder,
-  @local::sbnd_showerpandoratrackfinder,
   @local::sbnd_showerdedxfinder
 ]
 
