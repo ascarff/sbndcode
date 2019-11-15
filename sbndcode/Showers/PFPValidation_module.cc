@@ -64,31 +64,12 @@ class ana::PFPValidation : public art::EDAnalyzer {
     // Declare member data here.
     TTree* Tree;
 
-    int pfpNeutrinos;
-    int pfpTracks;
-    int pfpShowers;
-    float pfpVertexDistX;
-    float pfpVertexDistY;
-    float pfpVertexDistZ;
-    float pfpVertexDistMag;
 
-    int intType;
-    int CCNC;
-    double W;
-    double X;
-    double Y;
-    double QSqr;
-    double Pt;
-    double Theta;
+    int pfpNeutrinos, pfpTracks, pfpShowers;
+    float pfpVertexDistX, pfpVertexDistY, pfpVertexDistZ, pfpVertexDistMag;
 
-    double E;
-    double leptonP;
-
-    int neutPDG;
-    int numProtons;
-    int numNeutrons;
-    int numPi;
-    int numPi0;
+    int intType, CCNC, neutPDG, numProtons, numNeutrons, numPi, numPi0;
+    double W, X, Y, QSqr, Pt, Theta, E, leptonP;
 };
 
 

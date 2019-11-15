@@ -20,12 +20,7 @@ physics:
 {
   analyzers:
   {
-     dEdx:
-        {
-           module_type: ShowerRecombination
-           GenieGenModuleLabel:      "generator"
-           LArGeantModuleLabel:      "largeant"
-        }
+    dEdx: sbnd_truthdedx
   }
 
  ana: [ dEdx ]

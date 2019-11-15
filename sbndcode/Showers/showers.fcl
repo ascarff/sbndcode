@@ -1,0 +1,17 @@
+BEGIN_PROLOG
+sbnd_pfpslicevalidation:
+{
+    module_type: PFPSliceValidation
+    GenieGenModuleLabel:  "generator"
+    PFParticleLabel:      "pandora"
+    ClusterLabel:         "pandora"
+    HitLabel:             "linecluster"
+}
+
+sbnd_truthdedx:
+{
+  module_type: ShowerRecombination
+  GenieGenModuleLabel:      "generator"
+  LArGeantModuleLabel:      "largeant"
+}
+END_PROLOG
