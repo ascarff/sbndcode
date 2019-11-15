@@ -96,7 +96,9 @@ message_stdout_warning_sbnd: {
   type:       "cout"
   threshold:  "WARNING"
   categories:{
-    default:  {limit: 0}
+    default:  {}
+    # default:  {limit: 0}
+    BackTracker: {limit: 0}
     GeometryBadInputPoint: { limit: 5 timespan: 1000}
   }
 } # message_stdout_warning_sbnd

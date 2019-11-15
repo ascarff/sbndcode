@@ -100,7 +100,8 @@ class ana::PFPSliceValidation : public art::EDAnalyzer {
     std::vector<int> intType, CCNC, neutrinoPDG, numProtons, numNeutrons, numPi, numPi0;
     std::vector<double> W, X, Y, QSqr, Pt, Theta, neutrinoE, leptonP;
 
-    std::vector<float> trueVtxX, trueVtxY ,trueVtxZ;
+    std::vector<float> trueVertexX, trueVertexY ,trueVertexZ;
+    std::vector<float> pfpVertexX, pfpVertexY, pfpVertexZ, pfpVertexMag;
     std::vector<float> pfpVertexDistX, pfpVertexDistY, pfpVertexDistZ, pfpVertexDistMag;
 };
 
@@ -140,9 +141,13 @@ void ana::PFPSliceValidation::beginJob() {
   eventTree->Branch("neutrinoE",&neutrinoE);
   eventTree->Branch("leptonP",&leptonP);
 
-  eventTree->Branch("trueVtxX",&trueVtxX);
-  eventTree->Branch("trueVtxY",&trueVtxY);
-  eventTree->Branch("trueVtxZ",&trueVtxZ);
+  eventTree->Branch("trueVertexX",&trueVertexX);
+  eventTree->Branch("trueVertexY",&trueVertexY);
+  eventTree->Branch("trueVertexZ",&trueVertexZ);
+
+  eventTree->Branch("pfpVertexX", &pfpVertexX);
+  eventTree->Branch("pfpVertexY", &pfpVertexY);
+  eventTree->Branch("pfpVertexZ", &pfpVertexZ);
 
   eventTree->Branch("pfpVertexDistX", &pfpVertexDistX);
   eventTree->Branch("pfpVertexDistY", &pfpVertexDistY);
@@ -267,14 +272,29 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
   }
 
   for (const auto& pfpNeutrino: pfpNeutrinoVec){
+
+    art::Ptr<recob::Vertex> pfpVertex = fopfv.at(pfpNeutrino.key());
+    double pfpVtx[3];
+    pfpVertex->XYZ(pfpVtx);
+
+    // std::cout<<"Reco vertex: X: "<<pfpVtx[0]<<" Y: "<<pfpVtx[1]<<" z: "<<pfpVtx[2]<<std::endl;
+    // if (TMath::Abs(pfpVtx[0]) > 190.0 ||
+    //     TMath::Abs(pfpVtx[1]) > 190.0 ||
+    //     pfpVtx[2] < 10.0 || pfpVtx[2]> 490.0){
+    //   std::cout<<"Reco vertex failed FV cut."<<std::endl;
+    //   continue;
+    // }
+
+    pfpVertexX.push_back(pfpVtx[0]);
+    pfpVertexY.push_back(pfpVtx[1]);
+    pfpVertexZ.push_back(pfpVtx[2]);
+
     std::vector<art::Ptr<recob::Hit> > pfpNeutrinoHits;
     GetSliceHits(evt, pfpNeutrino, pfpNeutrinoHits, pfpMap, fmpfc, fmch);
     // std::cout<<pfpNeutrinoHits.size()<<std::endl;
     float purity = -999, completeness = -999;
     int trueMatch = GetSliceTruthMatchHits(pfpNeutrinoHits, truePrimaries, truePrimaryHits,
         completeness, purity);
-    // int trueMatch = GetSliceTruthMatchEnergy(pfpNeutrinoHits, truePrimaries, truePrimaryEnergies,
-    //     completeness, purity);
 
     std::cout<<"True Match: "<<trueMatch<<" with completeness: "<<completeness
       <<" and purity: "<<purity<<std::endl;
@@ -289,9 +309,6 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
       TLorentzVector trueNeutrinoStart = trueNeutrino.Nu().Trajectory().Position(0);
 
       // Get the pfp neutrino vertex
-      art::Ptr<recob::Vertex> pfpVertex = fopfv.at(pfpNeutrino.key());
-      double pfpVtx[3];
-      pfpVertex->XYZ(pfpVtx);
 
       double xDiff = pfpVtx[0] - trueNeutrinoStart.X();
       double yDiff = pfpVtx[1] - trueNeutrinoStart.Y();
@@ -351,9 +368,9 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
       neutrinoE.push_back(trueNeutrinoIter->second.Nu().E());
       leptonP.push_back(Lepton.P());
 
-      trueVtxX.push_back(trueNeutrinoStart.X());
-      trueVtxY.push_back(trueNeutrinoStart.Y());
-      trueVtxZ.push_back(trueNeutrinoStart.Z());
+      trueVertexX.push_back(trueNeutrinoStart.X());
+      trueVertexY.push_back(trueNeutrinoStart.Y());
+      trueVertexZ.push_back(trueNeutrinoStart.Z());
 
 
       trueNeutrinoIter++;
@@ -388,9 +405,13 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
   neutrinoE.clear();
   leptonP.clear();
 
-  trueVtxX.clear();
-  trueVtxY.clear();
-  trueVtxZ.clear();
+  trueVertexX.clear();
+  trueVertexY.clear();
+  trueVertexZ.clear();
+
+  pfpVertexX.clear();
+  pfpVertexY.clear();
+  pfpVertexZ.clear();
 
   pfpVertexDistX.clear();
   pfpVertexDistY.clear();
@@ -542,7 +563,7 @@ int ana::PFPSliceValidation::GetSliceTruthMatchHits(std::vector< art::Ptr< recob
   int maxHits     = 0;
   int bestPrimary = -999;
   for (const auto& primaryHit: primaryHits){
-    if (primaryHit.second>maxHits){
+    if (primaryHit.first!=-999 && primaryHit.second > maxHits){
       bestPrimary = primaryHit.first;
       maxHits     = primaryHit.second;
     }
@@ -576,7 +597,7 @@ int ana::PFPSliceValidation::GetSliceTruthMatchEnergy(std::vector< art::Ptr< rec
   int maxEnergy   = 0;
   int bestPrimary = -999;
   for (const auto& primaryEnergy: primaryEnergies){
-    if (primaryEnergy.second > maxEnergy){
+    if (primaryEnergy.first!=-999 && primaryEnergy.second > maxEnergy){
       bestPrimary = primaryEnergy.first;
       maxEnergy   = primaryEnergy.second;
     }
