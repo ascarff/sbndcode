@@ -48,8 +48,8 @@ BEGIN_PROLOG
 sbnd_corsika_p: {
   
                     @table::standard_CORSIKAGen_protons  # from CORSIKAGen.fcl
-  SampleTime:       5.32e-3   # 0.2 ms (G4 rise time) + 1.28 ms (1 full drift window) + 3.84 ms (readout) @ -70 kv, 114 cm/ms
-  TimeOffset:      -2.76e-3   # 3.84 ms readout should start at -1.28 ms to match data
+  SampleTime:       5.2e-3   # 0.2 ms (G4 rise time) + 1.28 ms (1 full drift window) + 3.84 ms (readout) @ -70 kv, 114 cm/ms
+  TimeOffset:      -2.7e-3   # 3.84 ms readout should start at -1.28 ms to match data
   BufferBox:        [ -300.0, +300.0, -300.0, +300.0, -300.0, +300.0 ]  # [cm]
   ProjectToHeight:  1800      # height to which particles are projected [cm] 
   
