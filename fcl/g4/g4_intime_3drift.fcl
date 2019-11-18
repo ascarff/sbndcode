@@ -1,107 +1,31 @@
-#include "simulationservices_sbnd.fcl"
+#include "standard_g4_sbnd.fcl"
 
-#include "largeantmodules_sbnd.fcl"
-#include "mcreco.fcl"
-#include "rootoutput_sbnd.fcl"
-
-#include "opticaldetectormodules.fcl"
-#include "photpropservices_sbnd.fcl"
-#
 process_name: G4
 
-services:
-{
-  # Load the service that manages root files for histograms.
-  TFileService:        { fileName: @local::sbnd_tfileoutput.fileName }
-                       @table::sbnd_g4_services
-  FileCatalogMetadata: @local::sbnd_file_catalog_mc
-  PhotonVisibilityService: @local::sbnd_Nhits_vuv_vis_prop_timing_photonvisibilityservice
+# setup g4 to run on "outtime"
+physics.producers.larg4outtime: @local::sbnd_largeant
+
+# largeant is now the thing that merges stuff
+physics.producers.largeant: {
+  module_type: "MergeSimSources"
+  InputSourcesLabels: [ "larg4intime","larg4outtime"]
+  TrackIDOffsets: [ 10000000,20000000 ]
+  StoreReflected: true
 }
 
-#source is now a root file
-source:
-{
-  module_type: RootInput
-  saveMemoryObjectThreshold: 0
-}
+physics.simulate: [rns, larg4outtime, largeant, mcreco ]
 
-# Define and configure some modules to do work on each event.
-# First modules are defined; they are scheduled later.
-# Modules are grouped by type.
-physics:
-{
-
- producers:
- {
-   larg4outtime:  @local::sbnd_largeant
-   largeant: {
-     module_type: "MergeSimSources"
-     InputSourcesLabels: [ "larg4intime","larg4outtime"]
-     TrackIDOffsets: [ 10000000,20000000 ]
-     StoreReflected: true
-   }
-   mcreco:   @local::standard_mcreco
-   rns:      { module_type: "RandomNumberSaver" }
- }
-
- #define the producer and filter modules for this path, order matters, 
- #filters reject all following items.  see lines starting physics.producers below
- merge: [ rns, larg4outtime, largeant, mcreco ]
- 
- #define the output stream, there could be more than one if using filters 
- stream1:  [ out1 ]
-
- #trigger_paths is a keyword and contains the paths that modify the art::event, 
- #ie filters and producers
- trigger_paths: [ merge] 
-
- #end_paths is a keyword and contains the paths that do not modify the art::Event, 
- #ie analyzers and output streams.  these all run simultaneously
- end_paths:     [stream1]  
-}
-
-#block to define where the output goes.  if you defined a filter in the physics
-#block and put it in the trigger_paths then you need to put a SelectEvents: {SelectEvents: [XXX]}
-#entry in the output stream you want those to go to, where XXX is the label of the filter module(s)
-outputs:
-{
- out1:
- {
-   module_type: RootOutput
-   fileName:    "%ifb_%tc_g4.root"
-   dataTier:    "g4"
-   compressionLevel: 1
-   outputCommands: [ "keep *_*_*_*",
-                     "drop *_larg4intime_*_*",
-                     "drop *_larg4outtime_*_*"]
-   dropMetaDataForDroppedData: true
-   saveMemoryObjectThreshold: 0
- }
-}
+# drop the spare G4 things
+outputs.out1.outputCommands: [ 
+  "keep *_*_*_*",
+  "drop *_larg4intime_*_*",
+  "drop *_larg4outtime_*_*"
+]
 
 physics.producers.larg4outtime.InputLabels: [ "GenInTimeSorter:outtime" ]
 
-# Loading the TPB spectra information
-services.LArPropertiesService.LoadExtraMatProperties: true
-
-# enable optical physics in LArG4
-services.LArG4Parameters.EnabledPhysics: [ "Em",
-                                                "FastOptical",
-                                                "SynchrotronAndGN",
-                                                "Ion",
-                                                "Hadron",
-                                                "Decay",
-                                                "HadronElastic",
-                                                "Stopping",
-                                                "NeutronTrackingCut" ]
-
-# enable this custom physics list
-services.LArG4Parameters.UseCustomPhysics: true
-
-services.LArPropertiesService.ScintByParticleType:false
+# don't use lite photons for this filter
 services.LArG4Parameters.UseLitePhotons: false
-
-physics.producers.larg4outtime.KeepParticlesInVolumes: ["volCryostat", "volTaggerTopHigh", "volTaggerTopLow", "volTaggerSideLeft", "volTaggerSideRight", "volTaggerFaceFront", "volTaggerFaceBack", "volTaggerBot"]
 
 # setup services parameters for 3 drift windows
 #include "3drift_services_sbnd.fcl"

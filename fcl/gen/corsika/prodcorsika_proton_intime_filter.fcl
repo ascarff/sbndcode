@@ -1,11 +1,39 @@
 #include "filtersgenintime_sbnd.fcl"
-#include "prodcorsika_cosmics_proton.fcl"
+#include "filterssimphotontime_sbnd.fcl"
+#include "largeantmodules_sbnd.fcl"
+
+#include "prodcosmics_corsika_sbnd.fcl"
 
 process_name: CosmicsCorsikaCMCGenAndG4InTime
 
 # Ported from uBooNE gen-in-time fhicl for use by SBND
 # by Gray Putnam <grayputnam@uchicago.edu>
+#
+services:
+{
+  # Load the service that manages root files for histograms.
+  TFileService:         { fileName: "prodcosmics_corsika_sbnd_%p-%tc_hists.root" }
+                       @table::sbnd_g4_services
+  FileCatalogMetadata: @local::sbnd_file_catalog_mc
+}
 
-physics.filters.filter: @local::sbnd_filtergenintime
-physics.simulate: [ generator, filter, rns ]
+
+physics.producers.cosmgen: @local::sbnd_corsika_p
+phyiscs.producers.larg4intime: @local::sbnd_largeant
+physics.filters.GenInTimeSorter: @local::sbnd_filtergenintime
+phyiscs.filters.timefilter: @local::sbnd_timefilterssimphotontime
+
+physics.producers.larg4intime.InputLabels: [ "GenInTimeSorter:intime" ]
+phyiscs.filters.timefilter.SimPhotonsCollectionLabel: "larg4intime"
+
+physics.simulate: [rns, cosmgen, GenInTimeSorter, larg4intime, timefilter ]
 outputs.out1.SelectEvents: [ "simulate" ]
+
+# don't use lite photons for this filter
+services.LArG4Parameters.UseLitePhotons: false
+
+# only keep MCParticles that cross the cryostat;
+# this is relevant in extensive cosmic ray generators (like Corsika)
+physics.producers.larg4intime.KeepParticlesInVolumes: ["volCryostat", "volTaggerTopHigh", "volTaggerTopLow", "volTaggerSideLeft", "volTaggerSideRight", "volTaggerFaceFront", "volTaggerFaceBack", "volTaggerBot"] 
+
+#include "3drift_services_sbnd.fcl"
