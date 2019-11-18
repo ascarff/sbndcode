@@ -48,7 +48,7 @@ sbnd_largeantparameters.ElectronClusterSize: 20.0
 sbnd_largeantparameters.UseCustomPhysics: true
 sbnd_largeantparameters.EnabledPhysics: [ "Em", "FastOptical", "SynchrotronAndGN", "Ion", "Hadron", "Decay", "HadronElastic", "Stopping" ] #Removed the neutron killer
 #Brailsford 24/11/09: Permanently keep the shower children
-sbnd_largeantparameters.KeepEMShowerDaughters: true
+sbnd_largeantparameters.KeepEMShowerDaughters: false
 sbnd_largeantparameters.UseLitePhotons: true
 
 #Define a largeantparameters which doesn't use the optical simulation
