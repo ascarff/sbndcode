@@ -23,7 +23,7 @@ sbnd_opticalproperties: {
     
     ScintByParticleType: false
 
-    ScintPreScale:  0.15   # QE x TPB_FW x TPB_Absorption (15% x 50% x 45%)
+    ScintPreScale:  0.03   # QE x TPB_FW x TPB_Absorption (15% x 50% x 45%)
                            # MUST match between g4 and detsim
 
     EnableCerenkovLight: false # Cerenkov light OFF by default
