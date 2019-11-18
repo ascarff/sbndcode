@@ -19,12 +19,12 @@ services:
 
 
 physics.producers.cosmgen: @local::sbnd_corsika_p
-phyiscs.producers.larg4intime: @local::sbnd_largeant
+physics.producers.larg4intime: @local::sbnd_largeant
 physics.filters.GenInTimeSorter: @local::sbnd_filtergenintime
-phyiscs.filters.timefilter: @local::sbnd_timefilterssimphotontime
+physics.filters.timefilter: @local::sbnd_timefilterssimphotontime
 
 physics.producers.larg4intime.InputLabels: [ "GenInTimeSorter:intime" ]
-phyiscs.filters.timefilter.SimPhotonsCollectionLabel: "larg4intime"
+physics.filters.timefilter.SimPhotonsCollectionLabel: "larg4intime"
 
 physics.simulate: [rns, cosmgen, GenInTimeSorter, larg4intime, timefilter ]
 outputs.out1.SelectEvents: [ "simulate" ]
