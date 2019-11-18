@@ -259,6 +259,8 @@ namespace sbnd {
     double vtx_y;
     double vtx_z;
 
+    bool has_pdg_0;
+
     // XSec true tree parameters
     bool true_particles_contained;
     bool true_lep_contained;
@@ -369,6 +371,8 @@ namespace sbnd {
     fXSecTree->Branch("vtx_x", &vtx_x, "vtx_x/D");
     fXSecTree->Branch("vtx_y", &vtx_y, "vtx_y/D");
     fXSecTree->Branch("vtx_z", &vtx_z, "vtx_z/D");
+
+    fXSecTree->Branch("has_pdg_0", &has_pdg_0, "vtx_z/O");
 
     // True selection and kinematic variables
     fXSecTree->Branch("true_particles_contained", &true_particles_contained, "true_particles_contained/O");
@@ -521,6 +525,7 @@ namespace sbnd {
       // Lepton stuff
       for(size_t j = 0; j < particles.size(); j++){
         int pdg = std::abs(particles.at(j)->PdgCode());
+        if(pdg == 0) has_pdg_0 = true;
         // Only consider the primary muon
         if(!(pdg == 13 || pdg == 11)) continue;
         lep_j = j;
@@ -873,6 +878,8 @@ namespace sbnd {
     vtx_x = -99999;
     vtx_y = -99999;
     vtx_z = -99999;
+
+    has_pdg_0 = false;
     
     true_particles_contained = true;
     true_lep_contained       = false;
