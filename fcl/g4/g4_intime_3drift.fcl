@@ -23,6 +23,7 @@ outputs.out1.outputCommands: [
 ]
 
 physics.producers.larg4outtime.InputLabels: [ "GenInTimeSorter:outtime" ]
+physics.producers.larg4outtime.KeepParticlesInVolumes: ["volCryostat", "volTaggerTopHigh", "volTaggerTopLow", "volTaggerSideLeft", "volTaggerSideRight", "volTaggerFaceFront", "volTaggerFaceBack", "volTaggerBot"]
 
 # don't use lite photons for this filter
 services.LArG4Parameters.UseLitePhotons: false
