@@ -12,11 +12,17 @@ sbnd_xsectree:
       G4ModuleLabel:        "largeant"    # Simulation producer module label
       Verbose:              false         # Print extra information about what's going on
 
-      WallCut: 15. # Fiducial cut from all walls but back [cm] 
-      BackCut: 85. # Fiducial cut from back wall [cm]
+      XminCut: 10. # Fiducial cut from minimum X face [cm] 
+      XmaxCut: 10. # Fiducial cut from maximum X face [cm] 
+      YminCut: 10. # Fiducial cut from bottom face [cm] 
+      YmaxCut: 20. # Fiducial cut from top face [cm] 
+      ZminCut: 15. # Fiducial cut from front face [cm] 
+      ZmaxCut: 50. # Fiducial cut from back face [cm] 
+      CpaCut: 5. # Fiducial cut from CPA [cm] 
+      ApaCut: 2.5 # Fiducial cut from APA [cm] 
 
-      MinContainedLength: 50.  # Min length of longest particle if contained [cm]
-      MinExitingLength:   100. # Min length of longest particle if exiting [cm]
+      MinContainedLength: 25. #50.  # Min length of longest particle if contained [cm]
+      MinExitingLength:   50. #100. # Min length of longest particle if exiting [cm]
 
       ElectronThreshold:   0.2 # Momentum threshold for reconstructing muons [GeV]
       MuonThreshold:   0.05 # Momentum threshold for reconstructing muons [GeV]
@@ -34,6 +40,10 @@ sbnd_xsectree:
 
       PionPidEff:   0.99 # PID efficiency for pions [%]
       ProtonPidEff: 0.85 # PID efficiency for protons [%]
+
+      UseHistEfficiency: true # Use SBND histogram parametrization for muon, pion and proton reco efficiencies
+      UseSbndSmearing: true # Use SBND simulation for MCS smearing
+      UseHistPid: true # Use SBND histogram parametrization for muon selection and proton PID
 }
 
 END_PROLOG

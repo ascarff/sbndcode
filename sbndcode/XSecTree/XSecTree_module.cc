@@ -75,14 +75,29 @@ namespace sbnd {
         Comment("Print information about what's going on")
       };
 
-      fhicl::Atom<double> WallCut {
-        Name("WallCut"),
-        Comment("Fiducial cut from all walls but back [cm]")
+      fhicl::Atom<double> XminCut {
+        Name("XminCut"),
       };
-
-      fhicl::Atom<double> BackCut {
-        Name("BackCut"),
-        Comment("Fiducial cut from all back wall [cm]")
+      fhicl::Atom<double> XmaxCut {
+        Name("XmaxCut"),
+      };
+      fhicl::Atom<double> YminCut {
+        Name("YminCut"),
+      };
+      fhicl::Atom<double> YmaxCut {
+        Name("YmaxCut"),
+      };
+      fhicl::Atom<double> ZminCut {
+        Name("ZminCut"),
+      };
+      fhicl::Atom<double> ZmaxCut {
+        Name("ZmaxCut"),
+      };
+      fhicl::Atom<double> CpaCut {
+        Name("ApaCut"),
+      };
+      fhicl::Atom<double> ApaCut {
+        Name("CpaCut"),
       };
 
       fhicl::Atom<double> MinContainedLength {
@@ -165,6 +180,22 @@ namespace sbnd {
         Comment("PID efficiency for protons [%]")
       };
 
+      fhicl::Atom<bool> UseHistEfficiency {
+        Name("UseHistEfficiency"),
+        Comment("Use SBND histogram parametrization for track reconstruction efficiencies")
+      };
+
+      fhicl::Atom<bool> UseSbndSmear {
+        Name("UseSbndSmea"),
+        Comment("Use SBND smearing for MCS momentum")
+      };
+
+      fhicl::Atom<bool> UseHistPid {
+        Name("UseHistPid"),
+        Comment("Use SBND histogram parametrization for muon selection and proton ID")
+      };
+
+
     }; // Config
  
     using Parameters = art::EDAnalyzer::Table<Config>;
@@ -199,6 +230,14 @@ namespace sbnd {
     // Smear momentum for exiting particles using MCS based method
     double SmearMcsMomentum(double momentum);
 
+    // Smear MCS momentum using SBND simulation
+    double SmearMcsMomentumSbnd(double momentum, double length);
+
+    // Use histograms for efficiencies
+    bool MuonHistEff(double momentum);
+    bool PionHistEff(double momentum);
+    bool ProtonHistEff(double momentum);
+
     // Smear momentum for contained particles using range based method
     double SmearRangeMomentum(double momentum);
 
@@ -211,6 +250,10 @@ namespace sbnd {
     // Inclusive charged current selection
     bool IsCCInc(geo::Point_t vertex, std::vector<const simb::MCParticle*> reco_particles);
 
+    // Use histograms for PID
+    bool MuonHistPid(double momentum, int pdg);
+    bool ProtonHistPid(double momentum);
+
   private:
 
     // fcl file parameters
@@ -218,8 +261,14 @@ namespace sbnd {
     art::InputTag fG4ModuleLabel;       ///< name of g4 producer
     bool          fVerbose;             ///< print information about what's going on
 
-    double        fWallCut;
-    double        fBackCut;
+    double fXminCut;
+    double fXmaxCut;
+    double fYminCut;
+    double fYmaxCut;
+    double fZminCut;
+    double fZmaxCut;
+    double fCpaCut;
+    double fApaCut;
 
     double fMinContainedLength;
     double fMinExitingLength;
@@ -240,6 +289,10 @@ namespace sbnd {
 
     double fPionPidEff;
     double fProtonPidEff;
+
+    bool fUseHistEfficiency;
+    bool fUseSbndSmear;
+    bool fUseHistPid;
 
     TPCGeoAlg fTPCGeo;
     trkf::TrackMomentumCalculator fRangeFitter;
@@ -339,8 +392,14 @@ namespace sbnd {
     , fGenModuleLabel       (config().GenModuleLabel())
     , fG4ModuleLabel        (config().G4ModuleLabel())
     , fVerbose              (config().Verbose())
-    , fWallCut              (config().WallCut())
-    , fBackCut              (config().BackCut())
+    , fXminCut              (config().XminCut())
+    , fXmaxCut              (config().XmaxCut())
+    , fYminCut              (config().YminCut())
+    , fYmaxCut              (config().YmaxCut())
+    , fZminCut              (config().ZminCut())
+    , fZmaxCut              (config().ZmaxCut())
+    , fCpaCut               (config().CpaCut())
+    , fApaCut               (config().ApaCut())
     , fMinContainedLength   (config().MinContainedLength())
     , fMinExitingLength     (config().MinExitingLength())
     , fMuonThreshold        (config().MuonThreshold())
@@ -355,6 +414,9 @@ namespace sbnd {
     , fProtonEff            (config().ProtonEff())
     , fPionPidEff           (config().PionPidEff())
     , fProtonPidEff         (config().ProtonPidEff())
+    , fUseHistEfficiency    (config().UseHistEfficiency())
+    , fUseSbndSmear         (config().UseSbndSmear())
+    , fUseHistPid           (config().UseHistPid())
   {
 
   }
@@ -619,7 +681,10 @@ namespace sbnd {
           smeareff_lep_contained = fTPCGeo.IsContained(*reco_particles.at(j));
           if(pdg == 11) smeareff_lep_mom = SmearElectronMomentum(reco_particles.at(j)->P());
           else if(smeareff_lep_contained) smeareff_lep_mom = fRangeFitter.GetTrackMomentum(contained_length, 13);
-          else smeareff_lep_mom = SmearMcsMomentum(reco_particles.at(j)->P());
+          else{ 
+            if(!fUseSbndSmear) smeareff_lep_mom = SmearMcsMomentum(reco_particles.at(j)->P());
+            else smeareff_lep_mom = SmearMcsMomentumSbnd(reco_particles.at(j)->P(), contained_length);
+          }
         }
 
       }
@@ -724,8 +789,10 @@ namespace sbnd {
           if(!fTPCGeo.IsContained(*reco_particles.at(j))) reco_particles_contained = false;
 
           double rand_pid = fRandom->Rndm();
+          bool is_pion = rand_pid < fPionPidEff;
+          if(fUseHistPid) is_pion = 1;
           // ID as pion, calculate leading pion variables
-          if(rand_pid < fPionPidEff){ 
+          if(is_pion){ 
             reco_n_pipm++;
 
             // Leading pion momentum and angle
@@ -771,8 +838,10 @@ namespace sbnd {
           if(!fTPCGeo.IsContained(*reco_particles.at(j))) reco_particles_contained = false;
 
           double rand_pid = fRandom->Rndm();
+          bool is_proton = rand_pid < fProtonPidEff;
+          if(fUseHistPid) is_proton = ProtonHistPid(reco_particles.at(j)->P());
           // ID as proton, calculate leading proton variables
-          if(rand_pid < fProtonPidEff){ 
+          if(is_proton){ 
             reco_n_pr++;
 
             // Leading proton momentum and angle
@@ -987,7 +1056,12 @@ namespace sbnd {
       // Apply efficiency cut (energy thresholds + flat efficiency)
       double rand_eff = fRandom->Rndm();
       if(pdg == 11 && (particles.at(j)->P() < fElectronThreshold || rand_eff > fElectronEff)) continue;
-      if(pdg == 13 && (particles.at(j)->P() < fMuonThreshold || rand_eff > fMuonEff)) continue;
+      if(pdg == 13){ 
+        if(!fUseHistEfficiency){
+          if(particles.at(j)->P() < fMuonThreshold || rand_eff > fMuonEff) continue;
+        }
+        else if(!MuonHistEff(particles.at(j)->P())) continue;
+      }
       // Consider the secondary photons when reconstructing pi0
       if(pdg == 111){
         int n_photons = 0;
@@ -1011,8 +1085,18 @@ namespace sbnd {
         // Need to reconstruct 2 photons to reconstruct pi0
         if(n_photons < 2) continue;
       }
-      if(pdg == 211 && (particles.at(j)->P() < fPionThreshold || rand_eff > fPionEff)) continue;
-      if(pdg == 2212 && (particles.at(j)->P() < fProtonThreshold || rand_eff > fProtonEff)) continue;
+      if(pdg == 211){
+        if(!fUseHistEfficiency){
+          if(particles.at(j)->P() < fPionThreshold || rand_eff > fPionEff) continue;
+        }
+        else if(!PionHistEff(particles.at(j)->P())) continue;
+      }
+      if(pdg == 2212){
+        if(!fUseHistEfficiency){
+          if(particles.at(j)->P() < fProtonThreshold || rand_eff > fProtonEff) continue;
+        }
+        else if(!ProtonHistEff(particles.at(j)->P())) continue;
+      }
 
       reco_particles.push_back(particles.at(j));
     }
@@ -1050,6 +1134,65 @@ namespace sbnd {
     return momentum_smear;
 
   } // XSecTree::SmearMcsMomentum()
+
+  // Smear momentum for exiting particles using MCS based method
+  double XSecTree::SmearMcsMomentumSbnd(double momentum, double length){
+    //For exiting muons use multiple coulomb scattering bias and resolution
+    double bias[] = {0.131486, 0.0170667, 0.0156267, 0.00236041, -0.00208193, -0.00393409, -0.0048733, -0.00505159, -0.00933451, -0.00548155};
+    double resolution[] = { 0.328372, 0.212698, 0.164104, 0.129338, 0.116369, 0.107468, 0.0905116, 0.0873146, 0.0855313, 0.0919797};
+    int pos = 9; 
+    for(int i=0; i<10; i++){
+      if(length<(40*(i+1))) {pos = i; break;}
+    }
+    double momentum_smear = fRandom->Gaus(momentum, resolution[pos]*momentum) + bias[pos]*momentum;
+    if(momentum_smear<0) {momentum_smear = 0;}
+
+    return momentum_smear;
+
+  } // XSecTree::SmearMcsMomentumSbnd()
+
+
+  bool XSecTree::MuonHistEff(double momentum){
+    bool reconstructed = false;
+    double efficiency[] = {0.0590501, 0.506081, 0.82274, 0.868142, 0.888397, 0.899807, 0.902781, 0.910641, 0.916731, 0.94};
+    int pos = 9; 
+    for(int i=0; i<10; i++){
+      if(momentum<(0.1*(i+1))) {pos = i; break;}
+    }
+    double rand_eff = fRandom->Rndm();
+    if(rand_eff < efficiency[pos]) reconstructed = true;
+
+    return reconstructed;
+
+  } // XSecTree::MuonHistEff() 
+
+  bool XSecTree::PionHistEff(double momentum){
+    bool reconstructed = false;
+    double efficiency[] = {0.0364407, 0.137405, 0.374127, 0.49142, 0.568833, 0.588972, 0.616043, 0.626923, 0.632184, 0.65};
+    int pos = 9; 
+    for(int i=0; i<10; i++){
+      if(momentum<(0.05*(i+1))) {pos = i; break;}
+    }
+    double rand_eff = fRandom->Rndm();
+    if(rand_eff < efficiency[pos]) reconstructed = true;
+
+    return reconstructed;
+
+  } // XSecTree:PionHistEff()
+
+  bool XSecTree::ProtonHistEff(double momentum){
+    bool reconstructed = false;
+    double efficiency[] = {0.000135655, 0.000968523, 0.00599737, 0.0423821, 0.106337, 0.198591, 0.345482, 0.504317, 0.632799, 0.75};
+    int pos = 9; 
+    for(int i=0; i<10; i++){
+      if(momentum<(0.06*(i+1))) {pos = i; break;}
+    }
+    double rand_eff = fRandom->Rndm();
+    if(rand_eff < efficiency[pos]) reconstructed = true;
+
+    return reconstructed;
+
+  } // XSecTree:ProtonHistEff()
 
 
   // Smear momentum for contained particles using range based method
@@ -1107,7 +1250,6 @@ namespace sbnd {
 
 
   // Calculate transverse variables (https://link.aps.org/accepted/10.1103/PhysRevC.94.015503)
-  // TODO should this be just proton momentum or all other tracks?
   TVector3 XSecTree::DeltaPT(TVector3 mu_mom, TVector3 pr_mom){
     // Assume neutrino is directly along Z, magnitude unimportant
     TVector3 nu_mom(0, 0, 1);
@@ -1138,7 +1280,8 @@ namespace sbnd {
   bool XSecTree::IsCCInc(geo::Point_t vertex, std::vector<const simb::MCParticle*> reco_particles){
     bool cc_selected = true;
     // Check vertex is inside the fiducial volume
-    if(!fTPCGeo.InFiducial(vertex, fWallCut, fWallCut, fWallCut, fWallCut, fWallCut, fBackCut)){ 
+    //if(!fTPCGeo.InFiducial(vertex, fWallCut, fWallCut, fWallCut, fWallCut, fWallCut, fBackCut)){ 
+    if(!fTPCGeo.InFiducial(vertex, fXminCut, fYminCut, fZminCut, fXmaxCut, fYmaxCut, fZmaxCut, fCpaCut, fApaCut)){ 
       if(fVerbose) std::cout<<"Not in fiducial\n";
       cc_selected = false; 
     }
@@ -1152,7 +1295,12 @@ namespace sbnd {
       if(!(pdg == 13 || pdg == 211 || pdg == 2212)) continue;
 
       double contained_length = fTPCGeo.TpcLength(*reco_particles.at(j));
-      if(contained_length < max_contained_length) continue;
+      if(!fUseHistPid){
+        if(contained_length < max_contained_length) continue;
+      }
+      else{
+        if(!(MuonHistPid(reco_particles.at(j)->P(), pdg) && contained_length > max_contained_length)) continue;
+      }
       max_contained_length = contained_length;
       max_pdg = pdg;
       longest_j = j;
@@ -1167,7 +1315,10 @@ namespace sbnd {
 
       // Smear momentum based on whether particle is contained or not
       if(reco_lep_contained) reco_lep_mom = fRangeFitter.GetTrackMomentum(contained_length, 13);
-      else reco_lep_mom = SmearMcsMomentum(reco_particles.at(j)->P());
+      else{ 
+        if(!fUseSbndSmear) reco_lep_mom = SmearMcsMomentum(reco_particles.at(j)->P());
+        else reco_lep_mom = SmearMcsMomentumSbnd(reco_particles.at(j)->P(), contained_length);
+      }
     }
 
     if(fVerbose) std::cout<<"max contained length = "<<max_contained_length<<" pdg = "<<max_pdg<<"\n";
@@ -1184,6 +1335,36 @@ namespace sbnd {
 
     return cc_selected;
 
+  }
+
+  bool XSecTree::MuonHistPid(double momentum, int pdg){
+    bool muonID = false;
+    double efficiencyMu[] = {0, 0.0157303, 0.618693, 0.716556, 0.822193, 0.965766, 0.988912, 0.991038, 0.992492, 0.994742, 0.998403, 0.993258, 0.996441, 1, 1, 1, 1, 1, 1, 1};
+    double efficiencyPi[] = {0, 0, 0.279539, 0.432954, 0.290393, 0.227886, 0.244541, 0.288079, 0.291304, 0.347518, 0.353535, 0.380282, 0.37931, 0.409091, 0.268293, 0.5, 0.5, 0.473684, 0.466667, 0.294118};
+    double efficiencyP[] = {0,0, 0, 0, 0, 0, 0.000254453, 0.00367816, 0.014854, 0.0454402, 0.0460772, 0.0612366, 0.0734949, 0.0933041, 0.121581, 0.150794, 0.216912, 0.270115, 0.316239, 0.277778};
+    int pos = 19; 
+    for(int i=0; i<20; i++){
+      if(momentum<(0.075*(i+1))) {pos = i; break;}
+    }
+    double rand_eff = fRandom->Rndm();
+    if(std::abs(pdg) == 13 && rand_eff < efficiencyMu[pos]) muonID = true;
+    if(std::abs(pdg) == 211 && rand_eff < efficiencyPi[pos]) muonID = true;
+    if(std::abs(pdg) == 2212 && rand_eff < efficiencyP[pos]) muonID = true;
+
+    return muonID;
+  }
+
+  bool XSecTree::ProtonHistPid(double momentum){
+    bool protonID = false;
+    double efficiency[] = {0, 0.111111, 0.23166, 0.533176, 0.693913, 0.675789, 0.649212, 0.596035, 0.502117, 0.397896, 0.278592, 0.229983, 0.130303, 0.136364, 0.088, 0.0833333, 0.0344828, 0.03125, 0.125, 0.0769231};
+    int pos = 19; 
+    for(int i=0; i<20; i++){
+      if(momentum<(0.1*(i+1))) {pos = i; break;}
+    }
+    double rand_eff = fRandom->Rndm();
+    if(rand_eff < efficiency[pos]) protonID = true;
+
+    return protonID;
   }
 
   DEFINE_ART_MODULE(XSecTree)
