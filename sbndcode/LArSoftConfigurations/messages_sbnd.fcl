@@ -4,37 +4,37 @@
 # Author:  Gianluca Petrillo
 # Date:    June 1st, 2016
 # Version: 1.0
-# 
+#
 # Provided presets:
 # - sbnd_message_services: kind of "standard"
 # - sbnd_message_services_prod: non-interactive jobs (like in production)
 # - sbnd_message_services_prod_debug: non-interactive jobs with debugging
 # - sbnd_message_services_interactive: interactive jobs
 # - sbnd_message_services_interactive_debug: interactive jobs with debugging
-# 
+#
 # Reminder: to limit a number of messages in a specific category,
 # add in a destination a configuration for that category:
-#     
+#
 #     categories: {
-#       
+#
 #       # suppress all the messages in "UselessMessage" category
 #       UselessMessage: { limit: 0 }
-#       
+#
 #       # reduce the messages from "AnnoyingMessage" category;
 #       # they will still appear now and then
 #       AnnoyingMessage: { limit: 5 timespan: 10 }
-#       
+#
 #       # this means no limit
 #       default: {}
-#     
+#
 #     }
-#     
-# 
+#
+#
 # Usage:
-#     
+#
 #     services.message: @local::sbnd_message_services
-#     
-# 
+#
+#
 # Changes:
 # 20160601 (petrillo@fnal.gov) [v1.0]
 #   content moved from old services_sbnd.fcl;
@@ -97,6 +97,8 @@ message_stdout_warning_sbnd: {
   threshold:  "WARNING"
   categories:{
     default:  {}
+    # default:  {limit: 0}
+    BackTracker: {limit: 0}
     GeometryBadInputPoint: { limit: 5 timespan: 1000}
   }
 } # message_stdout_warning_sbnd
@@ -118,7 +120,7 @@ message_stderr_sbnd: {
 #
 # sbnd_message_services
 # ------------------------
-# 
+#
 # Enables debug messages. Errors saved in a file.
 #
 # - standard output with only WARNING and worse
@@ -126,7 +128,7 @@ message_stderr_sbnd: {
 # - "debug.log" with DEBUG (that is, every message) for all modules;
 #   in non-debug qualifier builds, LOG_DEBUG and LOG_TRACE are disabled and
 #   their messages are never produced (that is, won't be in "debug.log" either).
-# 
+#
 # No special stream for errors.
 #
 sbnd_message_services:
@@ -136,14 +138,14 @@ sbnd_message_services:
     LogInfoFile:      @local::message_infofile_sbnd
     LogErrorFile:     @local::message_errorfile_sbnd
   }
-  
+
 } # sbnd_message_services
 
 
 #
 # sbnd_message_services_prod_debug
 # -----------------------------------
-# 
+#
 # Enables debug messages.
 #
 # - standard error with only ERROR and worse
@@ -175,7 +177,7 @@ sbnd_message_services_prod_debug.destinations.LogDebugFile.categories:{
 #
 # sbnd_message_services_prod
 # -----------------------------
-# 
+#
 # - standard error with only ERROR and worse
 # - standard output with only WARNING and worse (will also repeat the error
 #   messages, that will appear in error messages being printed twice if the
@@ -194,11 +196,11 @@ sbnd_message_services_prod:
 #
 # sbnd_message_services_interactive
 # ------------------------------------
-# 
+#
 # - standard output with only INFO and worse
 # - "errors.log" collecting warning and error messages (also included in
 #   standard output)
-# 
+#
 # No special stream for errors.
 #
 #
@@ -216,7 +218,7 @@ sbnd_message_services_interactive.destinations.LogErrorFile.threshold: "WARNING"
 #
 # sbnd_message_services_interactive_debug
 # ------------------------------------------
-# 
+#
 # Enables debug messages.
 #
 # - standard output with only INFO and worse
@@ -225,7 +227,7 @@ sbnd_message_services_interactive.destinations.LogErrorFile.threshold: "WARNING"
 # - "debug.log" with DEBUG (that is, every message) for all modules;
 #   in non-debug qualifier builds, LOG_DEBUG and LOG_TRACE are disabled and
 #   their messages are never produced (that is, won't be in "debug.log" either).
-# 
+#
 # No special stream for errors.
 #
 #
