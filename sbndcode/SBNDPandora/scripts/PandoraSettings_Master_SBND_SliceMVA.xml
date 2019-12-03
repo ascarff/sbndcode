@@ -30,18 +30,13 @@
     </CosmicRayTaggingTools>
     <SliceIdTools>
       <tool type = "LArBdtNeutrinoId">
-        <UseTrainingMode>true</UseTrainingMode>
-        <MinimumCompleteness>0.5</MinimumCompleteness>
-        <MinimumPurity>0.5</MinimumPurity>
-        <!-- <SvmFileName>PandoraSvm_test.xml</SvmFileName> -->
-        <!-- <SvmName>NeutrinoSliceId</SvmName> -->
-        <!-- <MaximumNeutrinos>5</MaximumNeutrinos> -->
-        <TrainingOutputFileName>PandoraSliceTraining5.txt</TrainingOutputFileName>
+        <MvaFileName>PandoraBdt_SBND_Slice_Test.xml</MvaFileName>
+        <MvaName>NeutrinoId</MvaName>
+        <MinimumNeutrinoProbability>0</MinimumNeutrinoProbability>
+        <MaximumNeutrinos>999</MaximumNeutrinos>
       </tool>
     </SliceIdTools>
     <InputHitListName>Input</InputHitListName>
-    <InputMCParticleListName>Input</InputMCParticleListName>
-    <PassMCParticlesToWorkerInstances>true</PassMCParticlesToWorkerInstances>
     <RecreatedPfoListName>RecreatedPfos</RecreatedPfoListName>
     <RecreatedClusterListName>RecreatedClusters</RecreatedClusterListName>
     <RecreatedVertexListName>RecreatedVertices</RecreatedVertexListName>

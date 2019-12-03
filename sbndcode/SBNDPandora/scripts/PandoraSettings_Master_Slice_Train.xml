@@ -29,7 +29,7 @@
       <tool type = "LArCosmicRayTagging"/>
     </CosmicRayTaggingTools>
     <SliceIdTools>
-      <tool type = "LArNeutrinoId">
+      <tool type = "LArBdtNeutrinoId">
         <UseTrainingMode>true</UseTrainingMode>
         <MinimumCompleteness>0.1</MinimumCompleteness>
         <MinimumPurity>0.1</MinimumPurity>

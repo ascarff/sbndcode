@@ -31,6 +31,8 @@
 #include "lardataobj/RecoBase/PFParticle.h"
 #include "lardataobj/RecoBase/Vertex.h"
 #include "lardataobj/Simulation/SimChannel.h"
+#include "lardataobj/RecoBase/PFParticleMetadata.h"
+
 //Root Includes
 #include "TMath.h"
 #include "TTree.h"
@@ -95,7 +97,7 @@ class ana::PFPSliceValidation : public art::EDAnalyzer {
 
     int trueNeutrinos, pfpNeutrinos;
     std::vector<int> trueMatches;
-    std::vector<float> purities, completenesses;
+    std::vector<float> purities, completenesses, nuScore;
 
     std::vector<int> intType, CCNC, neutrinoPDG, numProtons, numNeutrons, numPi, numPi0;
     std::vector<double> W, X, Y, QSqr, Pt, Theta, neutrinoE, leptonP;
@@ -123,6 +125,7 @@ void ana::PFPSliceValidation::beginJob() {
   eventTree->Branch("trueMatches",&trueMatches);
   eventTree->Branch("purities",&purities);
   eventTree->Branch("completenesses",&completenesses);
+  eventTree->Branch("nuScore",&nuScore);
 
   eventTree->Branch("intType",&intType);
   eventTree->Branch("CCNC",&CCNC);
@@ -221,6 +224,8 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
   {art::fill_ptr_vector(pfps,pfpHandle);}
 
 
+
+
   // Get map of true primary particle to number of reco hits / energy in reco hits
   std::map<int, int> truePrimaryHits = GetTruePrimaryHits(trueParticles, truePrimaries, allHits);
   std::map<int, float> truePrimaryEnergies = GetTruePrimaryEnergies(trueParticles, truePrimaries,
@@ -262,12 +267,22 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
   }
 
   // Create a map between PFParticles and their IDs
+  art::FindManyP<larpandoraobj::PFParticleMetadata> fmpfpmd(pfps, evt, fPFParticleLabel);
   std::map<long unsigned int, art::Ptr<recob::PFParticle> > pfpMap;
+  std::map<long unsigned int, float > pfpNuScore;
   std::vector<art::Ptr<recob::PFParticle> > pfpNeutrinoVec;
   for (auto const& pfp: pfps){
-    pfpMap[pfp->Self()] = pfp;
+    long unsigned int pfpID = pfp->Self();
+    pfpMap[pfpID] = pfp;
     if ((pfp->PdgCode()==12) ||(pfp->PdgCode()==14)){
       pfpNeutrinoVec.push_back(pfp);
+
+      const std::vector< art::Ptr<larpandoraobj::PFParticleMetadata> > pfpMetaVec = fmpfpmd.at(pfpID);
+      for (auto const pfpMeta: pfpMetaVec)
+      {
+        larpandoraobj::PFParticleMetadata::PropertiesMap propertiesMap = pfpMeta->GetPropertiesMap();
+        pfpNuScore[pfpID] = propertiesMap.at("NuScore");
+      }
     }
   }
 
@@ -297,10 +312,11 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
         completeness, purity);
 
     std::cout<<"True Match: "<<trueMatch<<" with completeness: "<<completeness
-      <<" and purity: "<<purity<<std::endl;
+      <<" and purity: "<<purity<<" and score: "<<pfpNuScore.at(pfpNeutrino->Self())<<std::endl;
     trueMatches.push_back(trueMatch);
     purities.push_back(purity);
     completenesses.push_back(completeness);
+    nuScore.push_back(pfpNuScore.at(pfpNeutrino->Self()));
 
     if (trueMatch != -999){
 
@@ -335,46 +351,47 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
       trueNeutrinoIter!= trueNeutrinoMap.end();){
     TLorentzVector trueNeutrinoStart = trueNeutrinoIter->second.Nu().Trajectory().Position(0);
 
-    if (TMath::Abs(trueNeutrinoStart.X()) > 190.0 ||
-        TMath::Abs(trueNeutrinoStart.Y()) > 190.0 ||
-        trueNeutrinoStart.Z() < 10.0 || trueNeutrinoStart.Z() > 490.0){
+    // if (TMath::Abs(trueNeutrinoStart.X()) > 190.0 ||
+    //     TMath::Abs(trueNeutrinoStart.Y()) > 190.0 ||
+    //     trueNeutrinoStart.Z() < 10.0 || trueNeutrinoStart.Z() > 490.0){
 
-      std::cout<<"Out of FV. Removing: "<<trueNeutrinoIter->first<<std::endl;
+    //   std::cout<<"Out of FV. Removing: "<<trueNeutrinoIter->first<<std::endl;
 
-      for (unsigned int i=0; i<trueMatches.size();){
-        if (trueMatches.at(i) == trueNeutrinoIter->first){
-          trueMatches.erase(trueMatches.begin()+i);
-          purities.erase(purities.begin()+i);
-          completenesses.erase(completenesses.begin()+i);
-        } else {
-          i++;
-        }
-      }
-      trueNeutrinoMap.erase(trueNeutrinoIter++);
-    } else {
+    //   for (unsigned int i=0; i<trueMatches.size();){
+    //     if (trueMatches.at(i) == trueNeutrinoIter->first){
+    //       trueMatches.erase(trueMatches.begin()+i);
+    //       purities.erase(purities.begin()+i);
+    //       completenesses.erase(completenesses.begin()+i);
+    //       nuScore.erase(nuScore.begin()+i);
+    //     } else {
+    //       i++;
+    //     }
+    //   }
+    //   trueNeutrinoMap.erase(trueNeutrinoIter++);
+    // } else {
 
-      const simb::MCParticle Lepton  = trueNeutrinoIter->second.Lepton();
+    const simb::MCParticle Lepton  = trueNeutrinoIter->second.Lepton();
 
-      intType.push_back(trueNeutrinoIter->second.Mode());
-      CCNC.push_back(trueNeutrinoIter->second.CCNC());
-      neutrinoPDG.push_back(trueNeutrinoIter->second.Nu().PdgCode());
+    intType.push_back(trueNeutrinoIter->second.Mode());
+    CCNC.push_back(trueNeutrinoIter->second.CCNC());
+    neutrinoPDG.push_back(trueNeutrinoIter->second.Nu().PdgCode());
 
-      W.push_back(trueNeutrinoIter->second.W());
-      X.push_back(trueNeutrinoIter->second.X());
-      Y.push_back(trueNeutrinoIter->second.Y());
-      QSqr.push_back(trueNeutrinoIter->second.QSqr());
-      Pt.push_back(trueNeutrinoIter->second.Pt());
-      Theta.push_back(trueNeutrinoIter->second.Theta());
-      neutrinoE.push_back(trueNeutrinoIter->second.Nu().E());
-      leptonP.push_back(Lepton.P());
+    W.push_back(trueNeutrinoIter->second.W());
+    X.push_back(trueNeutrinoIter->second.X());
+    Y.push_back(trueNeutrinoIter->second.Y());
+    QSqr.push_back(trueNeutrinoIter->second.QSqr());
+    Pt.push_back(trueNeutrinoIter->second.Pt());
+    Theta.push_back(trueNeutrinoIter->second.Theta());
+    neutrinoE.push_back(trueNeutrinoIter->second.Nu().E());
+    leptonP.push_back(Lepton.P());
 
-      trueVertexX.push_back(trueNeutrinoStart.X());
-      trueVertexY.push_back(trueNeutrinoStart.Y());
-      trueVertexZ.push_back(trueNeutrinoStart.Z());
+    trueVertexX.push_back(trueNeutrinoStart.X());
+    trueVertexY.push_back(trueNeutrinoStart.Y());
+    trueVertexZ.push_back(trueNeutrinoStart.Z());
 
 
-      trueNeutrinoIter++;
-    }
+    trueNeutrinoIter++;
+    // }
   }
 
   trueNeutrinos = trueNeutrinoMap.size();
@@ -387,6 +404,7 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
   trueMatches.clear();
   purities.clear();
   completenesses.clear();
+  nuScore.clear();
 
   intType.clear();
   CCNC.clear();
