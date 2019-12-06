@@ -185,8 +185,8 @@ namespace sbnd {
         Comment("Use SBND histogram parametrization for track reconstruction efficiencies")
       };
 
-      fhicl::Atom<bool> UseSbndSmear {
-        Name("UseSbndSmea"),
+      fhicl::Atom<bool> UseSbndSmearing {
+        Name("UseSbndSmearing"),
         Comment("Use SBND smearing for MCS momentum")
       };
 
@@ -291,7 +291,7 @@ namespace sbnd {
     double fProtonPidEff;
 
     bool fUseHistEfficiency;
-    bool fUseSbndSmear;
+    bool fUseSbndSmearing;
     bool fUseHistPid;
 
     // List of reco formats
@@ -372,7 +372,7 @@ namespace sbnd {
     , fPionPidEff           (config().PionPidEff())
     , fProtonPidEff         (config().ProtonPidEff())
     , fUseHistEfficiency    (config().UseHistEfficiency())
-    , fUseSbndSmear         (config().UseSbndSmear())
+    , fUseSbndSmearing      (config().UseSbndSmearing())
     , fUseHistPid           (config().UseHistPid())
     , fRecoFormats          ({"true","eff","smeareff","reco"})
   {
@@ -621,7 +621,7 @@ namespace sbnd {
           else if(lep_contained["smeareff"])
             lep_mom["smeareff"] = fRangeFitter.GetTrackMomentum(contained_length, 13);
           else{ 
-            if(!fUseSbndSmear) lep_mom["smeareff"] = SmearMcsMomentum(reco_particles.at(j)->P());
+            if(!fUseSbndSmearing) lep_mom["smeareff"] = SmearMcsMomentum(reco_particles.at(j)->P());
             else lep_mom["smeareff"] = SmearMcsMomentumSbnd(reco_particles.at(j)->P(), contained_length);
           }
           
@@ -1244,7 +1244,7 @@ namespace sbnd {
       if(lep_contained["reco"]) 
         lep_mom["reco"] = fRangeFitter.GetTrackMomentum(contained_length, 13);
       else{ 
-        if(!fUseSbndSmear) lep_mom["reco"] = SmearMcsMomentum(reco_particles.at(j)->P());
+        if(!fUseSbndSmearing) lep_mom["reco"] = SmearMcsMomentum(reco_particles.at(j)->P());
         else lep_mom["reco"] = SmearMcsMomentumSbnd(reco_particles.at(j)->P(), contained_length);
       }
     }
