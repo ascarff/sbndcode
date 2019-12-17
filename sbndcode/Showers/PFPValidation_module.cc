@@ -249,6 +249,11 @@ void ana::PFPValidation::analyze(art::Event const& evt)
     return;
   }
 
+  std::cout<<"Run:"<<evt.run()<<" and SubRun: "<<evt.subRun()<<" and eventNumber: "
+    <<evt.event()<<" with vertex Mag: "<<pfpVertexDistMag<<std::endl;
+
+
+
   Tree->Fill();
 }
 

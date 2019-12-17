@@ -131,7 +131,6 @@ void ana::PFPSliceValidation::beginJob() {
   eventTree->Branch("CCNC",&CCNC);
   eventTree->Branch("neutrinoPDG",&neutrinoPDG);
   eventTree->Branch("numProtons",&numProtons);
-  eventTree->Branch("numNeutrons",&numNeutrons);
   eventTree->Branch("numPi",&numPi);
   eventTree->Branch("numPi0",&numPi0);
 
@@ -224,8 +223,6 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
   {art::fill_ptr_vector(pfps,pfpHandle);}
 
 
-
-
   // Get map of true primary particle to number of reco hits / energy in reco hits
   std::map<int, int> truePrimaryHits = GetTruePrimaryHits(trueParticles, truePrimaries, allHits);
   std::map<int, float> truePrimaryEnergies = GetTruePrimaryEnergies(trueParticles, truePrimaries,
@@ -243,6 +240,10 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
       break;
     }
   }
+  if (!clusterHandle.isValid()) {
+    std::cout<<"Cluster handle not valid"<<std::endl;
+    return;
+  }
 
   art::FindManyP<recob::Hit> fmch(clusterHandle, evt, fClusterLabel);
   if(fmch.isValid() && fmch.size()>0){
@@ -254,6 +255,10 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
         return;
       }
       break;
+    }
+    if (!hitHandle.isValid()) {
+      std::cout<<"Hit handle not valid"<<std::endl;
+      return;
     }
   }
 
@@ -268,6 +273,12 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
 
   // Create a map between PFParticles and their IDs
   art::FindManyP<larpandoraobj::PFParticleMetadata> fmpfpmd(pfps, evt, fPFParticleLabel);
+  if (!fmpfpmd.isValid() || fmpfpmd.size()==0){
+    std::cout<<"PFP MetaData handle not valid"<<std::endl;
+    return;
+  }
+
+
   std::map<long unsigned int, art::Ptr<recob::PFParticle> > pfpMap;
   std::map<long unsigned int, float > pfpNuScore;
   std::vector<art::Ptr<recob::PFParticle> > pfpNeutrinoVec;
@@ -390,6 +401,24 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
     trueVertexZ.push_back(trueNeutrinoStart.Z());
 
 
+    int nProtons(0), nPi(0), nPi0(0);
+
+    std::vector<int> neutrinoPrimaries = truePrimaries.at(trueNeutrinoIter->first);
+    for (auto const& primary: neutrinoPrimaries){
+      const simb::MCParticle* particle = trueParticles.at(primary);
+      if (particle->PdgCode() == 2212 && (particle->E()-particle->Mass())>0.021) {
+        ++nProtons;
+      }  else if (TMath::Abs(particle->PdgCode()) == 211) {
+        ++nPi;
+      }  else if (TMath::Abs(particle->PdgCode()) == 111) {
+        ++nPi0;
+      }
+    }
+
+    numProtons.push_back(nProtons);
+    numPi.push_back(nPi);
+    numPi0.push_back(nPi0);
+
     trueNeutrinoIter++;
     // }
   }
@@ -479,7 +508,7 @@ std::map<int,std::vector<int> >  ana::PFPSliceValidation::GetTruePrimaries(
   std::map<int,std::vector<int> > truePrimaries;
   for (auto const& particleIt: trueParticles){
     const simb::MCParticle* particle = particleIt.second;
-    const simb::MCParticle *mother   = particle;
+    const simb::MCParticle* mother   = particle;
     // if (TMath::Abs(particle->PdgCode()==12) ||TMath::Abs(particle->PdgCode()==14))
     // std::cout<<particle->TrackId()<<" and mother: "<<particle->Mother()<<" and pdg: "<<
     // particle->PdgCode()<<" and process: "<<particle->Process()<<std::endl;
