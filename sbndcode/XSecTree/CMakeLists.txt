@@ -5,6 +5,8 @@ art_make(
                            larsim_Simulation lardataobj_Simulation
                            larsim_MCCheater_BackTrackerService_service
                            larsim_MCCheater_ParticleInventoryService_service
+                           larsim_EventWeight_Base
+                           larsim_EventWeight_Calculators
                            lardata_Utilities
                            larevt_Filters
                            lardataobj_RawData
@@ -14,6 +16,7 @@ art_make(
                            larreco_RecoAlg
                            larpandora_LArPandoraInterface
                            nusimdata_SimulationBase
+                           nurandom_RandomUtils_NuRandomService_service
                            ${ART_FRAMEWORK_CORE}
                            ${ART_FRAMEWORK_PRINCIPAL}
                            ${ART_FRAMEWORK_SERVICES_REGISTRY}
@@ -33,6 +36,7 @@ art_make(
                            ${ROOT_ROOFIT}
                            ${ROOT_ROOFITCORE} 
                            sbndcode_GeoWrappers
+                           sbndcode_EventWeight_Calculators
         )
 
 install_headers()

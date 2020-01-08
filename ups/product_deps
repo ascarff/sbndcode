@@ -38,6 +38,7 @@ product          version
 larsoft          v08_36_02
 genie_xsec       v3_00_04a
 sbnd_data        v01_02_00 - optional
+uboone_data        v01_17_00 - optional
 sbndutil         v08_36_02 - optional
 
 # list products required ONLY for the build
@@ -46,15 +47,15 @@ cetbuildtools    v7_14_00  -   only_for_build
 
 # We now define allowed qualifiers and the corresponding qualifiers for the dependencies.
 # Make the table by adding columns before "notes". 
-qualifier     genie_xsec               larsoft       sbndutil        sbnd_data  notes
-e17:py3:debug G1810a0211a:k250:e1000   e17:py3:debug e17:py3:debug   -nq-
-e17:py3:prof  G1810a0211a:k250:e1000   e17:py3:prof  e17:py3:prof    -nq-
-c2:py3:debug  G1810a0211a:k250:e1000   c2:py3:debug  c2:py3:debug    -nq-
-c2:py3:prof   G1810a0211a:k250:e1000   c2:py3:prof   c2:py3:prof     -nq-
-e17:debug     G1810a0211a:k250:e1000   e17:debug     e17:debug       -nq-
-e17:prof      G1810a0211a:k250:e1000   e17:prof      e17:prof        -nq-
-c2:debug      G1810a0211a:k250:e1000   c2:debug      c2:debug        -nq-
-c2:prof       G1810a0211a:k250:e1000   c2:prof       c2:prof         -nq-
+qualifier     genie_xsec               larsoft       sbndutil        sbnd_data  uboone_data notes
+e17:py3:debug G1810a0211a:k250:e1000   e17:py3:debug e17:py3:debug   -nq-       -nq-
+e17:py3:prof  G1810a0211a:k250:e1000   e17:py3:prof  e17:py3:prof    -nq-       -nq-
+c2:py3:debug  G1810a0211a:k250:e1000   c2:py3:debug  c2:py3:debug    -nq-       -nq-
+c2:py3:prof   G1810a0211a:k250:e1000   c2:py3:prof   c2:py3:prof     -nq-       -nq-
+e17:debug     G1810a0211a:k250:e1000   e17:debug     e17:debug       -nq-       -nq-
+e17:prof      G1810a0211a:k250:e1000   e17:prof      e17:prof        -nq-       -nq-
+c2:debug      G1810a0211a:k250:e1000   c2:debug      c2:debug        -nq-       -nq-
+c2:prof       G1810a0211a:k250:e1000   c2:prof       c2:prof         -nq-       -nq-
 end_qualifier_list
 
 # table fragment to set FW_SEARCH_PATH needed to find XML files:

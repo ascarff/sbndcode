@@ -29,6 +29,9 @@
 #include "larsim/MCCheater/ParticleInventoryService.h"
 #include "larcoreobj/SummaryData/POTSummary.h"
 #include "larreco/RecoAlg/TrackMomentumCalculator.h"
+#include "larsim/EventWeight/Base/Weight_t.h"
+#include "larsim/EventWeight/Base/MCEventWeight.h"
+#include "larsim/EventWeight/Base/WeightManager.h"
 
 // Utility libraries
 #include "messagefacility/MessageLogger/MessageLogger.h"
@@ -54,155 +57,8 @@ namespace sbnd {
   class XSecTree : public art::EDAnalyzer {
   public:
 
-    // Describes configuration parameters of the module
-    struct Config {
-      using Name = fhicl::Name;
-      using Comment = fhicl::Comment;
- 
-      // One Atom for each parameter
-      fhicl::Atom<art::InputTag> GenModuleLabel {
-        Name("GenModuleLabel"),
-        Comment("tag of generator level data product")
-      };
+    explicit XSecTree(fhicl::ParameterSet const & p);
 
-      fhicl::Atom<art::InputTag> G4ModuleLabel {
-        Name("G4ModuleLabel"),
-        Comment("tag of geant4 level data product")
-      };
-
-      fhicl::Atom<bool> Verbose {
-        Name("Verbose"),
-        Comment("Print information about what's going on")
-      };
-
-      fhicl::Atom<double> XminCut {
-        Name("XminCut"),
-      };
-      fhicl::Atom<double> XmaxCut {
-        Name("XmaxCut"),
-      };
-      fhicl::Atom<double> YminCut {
-        Name("YminCut"),
-      };
-      fhicl::Atom<double> YmaxCut {
-        Name("YmaxCut"),
-      };
-      fhicl::Atom<double> ZminCut {
-        Name("ZminCut"),
-      };
-      fhicl::Atom<double> ZmaxCut {
-        Name("ZmaxCut"),
-      };
-      fhicl::Atom<double> CpaCut {
-        Name("ApaCut"),
-      };
-      fhicl::Atom<double> ApaCut {
-        Name("CpaCut"),
-      };
-
-      fhicl::Atom<double> MinContainedLength {
-        Name("MinContainedLength"),
-        Comment("Minimum length of longest particle if contained [cm]")
-      };
-
-      fhicl::Atom<double> MinExitingLength {
-        Name("MinExitingLength"),
-        Comment("Minimum length of longest particle if exiting [cm]")
-      };
-
-      fhicl::Atom<double> ElectronThreshold {
-        Name("ElectronThreshold"),
-        Comment("Momentum threshold for reconstructing electronss [GeV]")
-      };
-
-      fhicl::Atom<double> MuonThreshold {
-        Name("MuonThreshold"),
-        Comment("Momentum threshold for reconstructing muons [GeV]")
-      };
-
-      fhicl::Atom<double> Pi0Threshold {
-        Name("Pi0Threshold"),
-        Comment("Momentum threshold for reconstructing pi0s [GeV]")
-      };
-
-      fhicl::Atom<double> PhotonThreshold {
-        Name("PhotonThreshold"),
-        Comment("Momentum threshold for reconstructing photons [GeV]")
-      };
-
-      fhicl::Atom<double> PionThreshold {
-        Name("PionThreshold"),
-        Comment("Momentum threshold for reconstructing charged pions [GeV]")
-      };
-
-      fhicl::Atom<double> ProtonThreshold {
-        Name("ProtonThreshold"),
-        Comment("Momentum threshold for reconstructing protons [GeV]")
-      };
-
-      fhicl::Atom<double> ElectronEff {
-        Name("ElectronEff"),
-        Comment("Efficiency for reconstructing electrons [%]")
-      };
-
-      fhicl::Atom<double> MuonEff {
-        Name("MuonEff"),
-        Comment("Efficiency for reconstructing muons [%]")
-      };
-
-      fhicl::Atom<double> Pi0Eff {
-        Name("Pi0Eff"),
-        Comment("Efficiency for reconstructing pi0s [%]")
-      };
-
-      fhicl::Atom<double> PhotonEff {
-        Name("PhotonEff"),
-        Comment("Efficiency for reconstructing photons [%]")
-      };
-
-      fhicl::Atom<double> PionEff {
-        Name("PionEff"),
-        Comment("Efficiency for reconstructing pions [%]")
-      };
-
-      fhicl::Atom<double> ProtonEff {
-        Name("ProtonEff"),
-        Comment("Efficiency for reconstructing protons [%]")
-      };
-      
-      fhicl::Atom<double> PionPidEff {
-        Name("PionPidEff"),
-        Comment("PID efficiency for pions [%]")
-      };
-
-      fhicl::Atom<double> ProtonPidEff {
-        Name("ProtonPidEff"),
-        Comment("PID efficiency for protons [%]")
-      };
-
-      fhicl::Atom<bool> UseHistEfficiency {
-        Name("UseHistEfficiency"),
-        Comment("Use SBND histogram parametrization for track reconstruction efficiencies")
-      };
-
-      fhicl::Atom<bool> UseSbndSmearing {
-        Name("UseSbndSmearing"),
-        Comment("Use SBND smearing for MCS momentum")
-      };
-
-      fhicl::Atom<bool> UseHistPid {
-        Name("UseHistPid"),
-        Comment("Use SBND histogram parametrization for muon selection and proton ID")
-      };
-
-
-    }; // Config
- 
-    using Parameters = art::EDAnalyzer::Table<Config>;
- 
-    // Constructor: configures module
-    explicit XSecTree(Parameters const& config);
- 
     // Called once, at start of the job
     virtual void beginJob() override;
  
@@ -217,6 +73,7 @@ namespace sbnd {
 
     // Reset all counters/variables to their null values
     void ResetVars();
+    void ResetWeights();
 
     // Give us a list of the stable, primary particles that we're interested in
     std::vector<const simb::MCParticle*> InterestingParticles(std::vector<const simb::MCParticle*> particles);
@@ -259,6 +116,8 @@ namespace sbnd {
     // fcl file parameters
     art::InputTag fGenModuleLabel;      ///< name of gen producer
     art::InputTag fG4ModuleLabel;       ///< name of g4 producer
+    art::InputTag fFluxWeightLabel;
+    art::InputTag fGenieWeightLabel;
     bool          fVerbose;             ///< print information about what's going on
 
     double fXminCut;
@@ -296,9 +155,73 @@ namespace sbnd {
 
     // List of reco formats
     const std::vector<std::string> fRecoFormats;
+    /*
+    std::vector<std::string> fWeightCalcs {
+    "genie_all_Genie",
+    "genie_AGKYpT_Genie",
+    "genie_AGKYxF_Genie",
+    "genie_DISAth_Genie",
+    "genie_DISBth_Genie",
+    "genie_DISCv1u_Genie",
+    "genie_DISCv2u_Genie",
+    "genie_FermiGasModelKf_Genie",
+    "genie_FermiGasModelSf_Genie",
+    "genie_FormZone_Genie",
+    "genie_IntraNukeNabs_Genie",
+    "genie_IntraNukeNcex_Genie",
+    "genie_IntraNukeNel_Genie",
+    "genie_IntraNukeNinel_Genie",
+    "genie_IntraNukeNmfp_Genie",
+    "genie_IntraNukeNpi_Genie",
+    "genie_IntraNukePIabs_Genie",
+    "genie_IntraNukePIcex_Genie",
+    "genie_IntraNukePIel_Genie",
+    "genie_IntraNukePIinel_Genie",
+    "genie_IntraNukePImfp_Genie",
+    "genie_IntraNukePIpi_Genie",
+    "genie_NC_Genie",
+    "genie_NonResRvbarp1piAlt_Genie",
+    "genie_NonResRvbarp1pi_Genie",
+    "genie_NonResRvbarp2piAlt_Genie",
+    "genie_NonResRvbarp2pi_Genie",
+    "genie_NonResRvp1piAlt_Genie",
+    "genie_NonResRvp1pi_Genie",
+    "genie_NonResRvp2piAlt_Genie",
+    "genie_NonResRvp2pi_Genie",
+    "genie_ResDecayEta_Genie",
+    "genie_ResDecayGamma_Genie",
+    "genie_ResDecayTheta_Genie",
+    "genie_ccresAxial_Genie",
+    "genie_ccresVector_Genie",
+    "genie_cohMA_Genie",
+    "genie_cohR0_Genie",
+    "genie_ncelAxial_Genie",
+    "genie_ncelEta_Genie",
+    "genie_ncresAxial_Genie",
+    "genie_ncresVector_Genie",
+    "genie_qema_Genie",
+    "genie_qevec_Genie",
+    "bnbcorrection_FluxHist",
+    "expskin_FluxUnisim",
+    "horncurrent_FluxUnisim",
+    "kminus_PrimaryHadronNormalization",
+    "kplus_PrimaryHadronFeynmanScaling",
+    "kzero_PrimaryHadronSanfordWang",
+    "nucleoninexsec_FluxUnisim",
+    "nucleonqexsec_FluxUnisim",
+    "nucleontotxsec_FluxUnisim",
+    "piminus_PrimaryHadronSWCentralSplineVariation",
+    "pioninexsec_FluxUnisim",
+    "pionqexsec_FluxUnisim",
+    "piontotxsec_FluxUnisim",
+    "piplus_PrimaryHadronSWCentralSplineVariation"
+    };
+    */
 
     TPCGeoAlg fTPCGeo;
     trkf::TrackMomentumCalculator fRangeFitter;
+
+    evwgh::WeightManager _wgt_manager;
 
     TRandom2 *fRandom;
 
@@ -309,6 +232,7 @@ namespace sbnd {
     // Tree
     TTree *fXSecTree;
     TTree *fMetaDataTree;
+    TTree *fWeightTree;
 
     // XSec tree true neutrino vertex
     double vtx_x, vtx_y, vtx_z;
@@ -340,45 +264,50 @@ namespace sbnd {
     // MetaData tree parameters
     double pot;
 
+    // Weight tree parameters
+    //std::map<std::string, std::vector<double>> weights;
+    double weights[500];
+
   }; // class XSecTree
 
-
-  // Constructor
-  XSecTree::XSecTree(Parameters const& config)
-    : EDAnalyzer(config)
-    , fGenModuleLabel       (config().GenModuleLabel())
-    , fG4ModuleLabel        (config().G4ModuleLabel())
-    , fVerbose              (config().Verbose())
-    , fXminCut              (config().XminCut())
-    , fXmaxCut              (config().XmaxCut())
-    , fYminCut              (config().YminCut())
-    , fYmaxCut              (config().YmaxCut())
-    , fZminCut              (config().ZminCut())
-    , fZmaxCut              (config().ZmaxCut())
-    , fCpaCut               (config().CpaCut())
-    , fApaCut               (config().ApaCut())
-    , fMinContainedLength   (config().MinContainedLength())
-    , fMinExitingLength     (config().MinExitingLength())
-    , fMuonThreshold        (config().MuonThreshold())
-    , fPi0Threshold         (config().Pi0Threshold())
-    , fPhotonThreshold      (config().PhotonThreshold())
-    , fPionThreshold        (config().PionThreshold())
-    , fProtonThreshold      (config().ProtonThreshold())
-    , fMuonEff              (config().MuonEff())
-    , fPi0Eff               (config().Pi0Eff())
-    , fPhotonEff            (config().PhotonEff())
-    , fPionEff              (config().PionEff())
-    , fProtonEff            (config().ProtonEff())
-    , fPionPidEff           (config().PionPidEff())
-    , fProtonPidEff         (config().ProtonPidEff())
-    , fUseHistEfficiency    (config().UseHistEfficiency())
-    , fUseSbndSmearing      (config().UseSbndSmearing())
-    , fUseHistPid           (config().UseHistPid())
+  XSecTree::XSecTree(fhicl::ParameterSet const & p)
+    : EDAnalyzer{p}
+    , fGenModuleLabel       {p.get<art::InputTag>("GenModuleLabel")}
+    , fG4ModuleLabel        {p.get<art::InputTag>("G4ModuleLabel")}
+    , fFluxWeightLabel      {p.get<art::InputTag>("FluxWeightLabel")}
+    , fGenieWeightLabel     {p.get<art::InputTag>("GenieWeightLabel")}
+    , fVerbose              {p.get<bool>("Verbose")}
+    , fXminCut              {p.get<double>("XminCut")}
+    , fXmaxCut              {p.get<double>("XmaxCut")}
+    , fYminCut              {p.get<double>("YminCut")}
+    , fYmaxCut              {p.get<double>("YmaxCut")}
+    , fZminCut              {p.get<double>("ZminCut")}
+    , fZmaxCut              {p.get<double>("ZmaxCut")}
+    , fCpaCut               {p.get<double>("CpaCut")}
+    , fApaCut               {p.get<double>("ApaCut")}
+    , fMinContainedLength   {p.get<double>("MinContainedLength")}
+    , fMinExitingLength     {p.get<double>("MinExitingLength")}
+    , fMuonThreshold        {p.get<double>("MuonThreshold")}
+    , fPi0Threshold         {p.get<double>("Pi0Threshold")}
+    , fPhotonThreshold      {p.get<double>("PhotonThreshold")}
+    , fPionThreshold        {p.get<double>("PionThreshold")}
+    , fProtonThreshold      {p.get<double>("ProtonThreshold")}
+    , fMuonEff              {p.get<double>("MuonEff")}
+    , fPi0Eff               {p.get<double>("Pi0Eff")}
+    , fPhotonEff            {p.get<double>("PhotonEff")}
+    , fPionEff              {p.get<double>("PionEff")}
+    , fProtonEff            {p.get<double>("ProtonEff")}
+    , fPionPidEff           {p.get<double>("PionPidEff")}
+    , fProtonPidEff         {p.get<double>("ProtonPidEff")}
+    , fUseHistEfficiency    {p.get<bool>("UseHistEfficiency")}
+    , fUseSbndSmearing      {p.get<bool>("UseSbndSmearing")}
+    , fUseHistPid           {p.get<bool>("UseHistPid")}
     , fRecoFormats          ({"true","eff","smeareff","reco"})
   {
 
-  }
+    //_wgt_manager.Configure(p, *this);
 
+  }
 
   void XSecTree::beginJob()
   {
@@ -416,7 +345,16 @@ namespace sbnd {
     }
 
     fMetaDataTree = tfs->make<TTree>("metadata", "xsec tree");
-    fMetaDataTree->Branch("pot", &pot, "pot/D");
+    fMetaDataTree->Branch("pot", &pot);
+
+    /*for(unsigned int i = 0; i < fWeightCalcs.size(); ++i){
+      weights[fWeightCalcs[i]].push_back(0.);
+    }*/
+    fWeightTree = tfs->make<TTree>("weight", "xsec tree");
+    fWeightTree->Branch("weights", &weights, "weights[500]/D");
+    /*for(unsigned int i = 0; i < fWeightCalcs.size(); ++i){
+      fWeightTree->Branch(fWeightCalcs[i].c_str(), &weights[fWeightCalcs[i]]);
+    }*/
 
     // Initial output
     std::cout<<"----------------- XSec Tree Module -------------------"<<std::endl;
@@ -457,6 +395,71 @@ namespace sbnd {
     art::Handle<std::vector<simb::MCTruth>> genHandle;
     std::vector<art::Ptr<simb::MCTruth>> mctruthList;
     if(event.getByLabel(fGenModuleLabel, genHandle)) art::fill_ptr_vector(mctruthList, genHandle);
+
+    // Weights
+    art::Handle<std::vector<evwgh::MCEventWeight>> fluxWeightHandle;
+    std::vector<art::Ptr<evwgh::MCEventWeight>> fluxWeightList;
+    if(event.getByLabel(fFluxWeightLabel, fluxWeightHandle)) art::fill_ptr_vector(fluxWeightList, fluxWeightHandle);
+
+    art::Handle<std::vector<evwgh::MCEventWeight>> genieWeightHandle;
+    std::vector<art::Ptr<evwgh::MCEventWeight>> genieWeightList;
+    if(event.getByLabel(fGenieWeightLabel, genieWeightHandle)) art::fill_ptr_vector(genieWeightList, genieWeightHandle);
+
+    //----------------------------------------------------------------------------------------------------------
+    //                                           REWEIGHTING MCTRUTH
+    //----------------------------------------------------------------------------------------------------------
+    if(fluxWeightList.size() == mctruthList.size() && genieWeightList.size() == mctruthList.size()){
+      for(unsigned int inu = 0; inu < mctruthList.size(); ++inu) {
+        ResetWeights();
+
+        // Get the pointer to the MCTruth object
+        art::Ptr<simb::MCTruth> mctruth = mctruthList.at(inu);
+        // Check the interaction is within the TPC
+        geo::Point_t vertex {mctruth->GetNeutrino().Nu().Vx(), 
+                             mctruth->GetNeutrino().Nu().Vy(), 
+                             mctruth->GetNeutrino().Nu().Vz()};
+        if(!fTPCGeo.InFiducial(vertex, 0.)) continue;
+
+        for(auto const &kv : fluxWeightList[inu]->fWeight){
+          std::cout<<"Name = "<<kv.first<<" vector size = "<<kv.second.size()<<"\n";
+          /*if(weights.find(kv.first) != weights.end()){ 
+            std::cout<<"->Name = "<<kv.first<<" vector size = "<<kv.second.size()<<"\n";
+            weights[kv.first] = kv.second;
+          }*/
+          if(kv.second.size()!=500) continue;
+          for(size_t i = 0; i < 500; i++){
+            weights[i] *= kv.second[i];
+          }
+        }
+        for(auto const &kv : genieWeightList[inu]->fWeight){
+          std::cout<<"Name = "<<kv.first<<" vector size = "<<kv.second.size()<<"\n";
+          //if(weights.find(kv.first) != weights.end()) weights[kv.first] = kv.second;
+          if(kv.second.size()!=500) continue;
+          for(size_t i = 0; i < 500; i++){
+            weights[i] *= kv.second[i];
+          }
+        }
+        fWeightTree->Fill();
+      }
+    }
+    else{
+      std::cout<<"Weights not found in file, calculating...\n";
+      /*
+      // Implementation of required member function here.
+      for (unsigned int inu = 0; inu < mctruthList.size(); ++inu) {
+        ResetWeights();
+        // Copy event to non const type FIXME very naughty
+        art::Event& e = const_cast<art::Event&>(event);
+        evwgh::MCEventWeight mcwgh = _wgt_manager.Run(e, inu);
+        std::cout<<"Number of weights = "<<mcwgh.fWeight.size()<<"\n";
+        for(auto const &kv : mcwgh.fWeight){
+          std::cout<<"Name = "<<kv.first<<" vector size = "<<kv.second.size()<<"\n";
+          if(weights.find(kv.first) != weights.end()) weights[kv.first] = kv.second;
+        }
+        fWeightTree->Fill();
+      }
+      */
+    }
 
     //----------------------------------------------------------------------------------------------------------
     //                                           FILLING THE TREE
@@ -942,6 +945,15 @@ namespace sbnd {
     }
   } // XSecTree::ResetVars
 
+  void XSecTree::ResetWeights(){
+    /*for(size_t i = 0; i < fWeightCalcs.size(); i++){
+      weights[fWeightCalcs[i]].clear();
+    }
+    */
+    for(size_t i = 0; i < 500; i++){
+      weights[i] = 1.;
+    }
+  }
   
   // Give us a list of the stable, primary particles that we're interested in
   std::vector<const simb::MCParticle*> XSecTree::InterestingParticles(std::vector<const simb::MCParticle*> particles){

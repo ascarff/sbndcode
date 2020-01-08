@@ -1,3 +1,5 @@
+#include "eventweight_genie_sbnd.fcl"
+#include "eventweight_flux_sbnd.fcl"
 
 BEGIN_PROLOG
 
@@ -10,6 +12,8 @@ sbnd_xsectree:
       # The input parameters
       GenModuleLabel:       "generator"
       G4ModuleLabel:        "largeant"    # Simulation producer module label
+      FluxWeightLabel:      "fluxeventweightB"
+      GenieWeightLabel:     "genieeventweightB"
       Verbose:              false         # Print extra information about what's going on
 
       XminCut: 10. # Fiducial cut from minimum X face [cm] 
@@ -44,6 +48,20 @@ sbnd_xsectree:
       UseHistEfficiency: true # Use SBND histogram parametrization for muon, pion and proton reco efficiencies
       UseSbndSmearing: true # Use SBND simulation for MCS smearing
       UseHistPid: true # Use SBND histogram parametrization for muon selection and proton PID
+
+      # Stuff for event reweighting
+      genie_module_label:    "generator"
+      min_weight: 0
+      max_weight: 100
+
+      @table::sbnd_eventweight_flux
+      @table::sbnd_eventweight_genie
+
 }
+
+sbnd_xsectree.weight_functions: [
+  @sequence::sbnd_xsectree.weight_functions_flux,
+  @sequence::sbnd_xsectree.weight_functions_genie
+]
 
 END_PROLOG
