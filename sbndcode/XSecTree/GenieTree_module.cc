@@ -97,6 +97,7 @@ namespace sbnd {
     double vtx_z;
 
     bool has_pdg_0;
+    int event_number;
 
     // XSec true tree parameters
     int true_cc;
@@ -129,22 +130,23 @@ namespace sbnd {
     fGenieTree = tfs->make<TTree>("interaction", "genie tree");
 
     // True neutrino vertex
-    fGenieTree->Branch("vtx_x", &vtx_x, "vtx_x/D");
-    fGenieTree->Branch("vtx_y", &vtx_y, "vtx_y/D");
-    fGenieTree->Branch("vtx_z", &vtx_z, "vtx_z/D");
+    fGenieTree->Branch("vtx_x", &vtx_x);
+    fGenieTree->Branch("vtx_y", &vtx_y);
+    fGenieTree->Branch("vtx_z", &vtx_z);
 
-    fGenieTree->Branch("has_pdg_0", &has_pdg_0, "vtx_z/O");
+    fGenieTree->Branch("has_pdg_0", &has_pdg_0);
+    fGenieTree->Branch("event_number", &event_number);
 
     // True selection and kinematic variables
-    fGenieTree->Branch("true_cc", &true_cc, "true_cc/I");
-    fGenieTree->Branch("true_nu_pdg", &true_nu_pdg, "true_nu_pdg/I");
-    fGenieTree->Branch("true_int_type", &true_int_type, "true_int_type/I");
-    fGenieTree->Branch("true_n_pipm", &true_n_pipm, "true_n_pipm/i");
-    fGenieTree->Branch("true_n_pi0", &true_n_pi0, "true_n_pi0/i");
-    fGenieTree->Branch("true_n_pr", &true_n_pr, "true_n_pr/i");
-    fGenieTree->Branch("true_nu_energy", &true_nu_energy, "true_nu_energy/D");
-    fGenieTree->Branch("true_lep_mom", &true_lep_mom, "true_lep_mom/D");
-    fGenieTree->Branch("true_lep_theta", &true_lep_theta, "true_lep_theta/D");
+    fGenieTree->Branch("true_cc", &true_cc);
+    fGenieTree->Branch("true_nu_pdg", &true_nu_pdg);
+    fGenieTree->Branch("true_int_type", &true_int_type);
+    fGenieTree->Branch("true_n_pipm", &true_n_pipm);
+    fGenieTree->Branch("true_n_pi0", &true_n_pi0);
+    fGenieTree->Branch("true_n_pr", &true_n_pr);
+    fGenieTree->Branch("true_nu_energy", &true_nu_energy);
+    fGenieTree->Branch("true_lep_mom", &true_lep_mom);
+    fGenieTree->Branch("true_lep_theta", &true_lep_theta);
 
 
   } // GenieTree::beginJob()
@@ -168,6 +170,8 @@ namespace sbnd {
     for (size_t i = 0; i < mctruthList.size(); i++){
       // Reset all the tree variables
       ResetVars();
+
+      event_number = event.id().event();
 
       // Get the pointer to the MCTruth object
       art::Ptr<simb::MCTruth> mctruth = mctruthList.at(i);
