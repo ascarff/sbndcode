@@ -74,6 +74,9 @@ namespace sbnd {
     // Called once, at start of the job
     virtual void beginJob() override;
  
+    // Called for every sub run
+    virtual void beginSubRun(const art::SubRun& subrun) override;
+
     // Called once per event
     virtual void analyze(const art::Event& event) override;
 
@@ -100,7 +103,7 @@ namespace sbnd {
     int event_number;
 
     // XSec true tree parameters
-    int true_cc;
+    bool true_cc;
     int true_nu_pdg;
     int true_int_type;
     unsigned int true_n_pipm;
@@ -110,6 +113,8 @@ namespace sbnd {
     double true_lep_mom;
     double true_lep_theta;
 
+    TTree *fMetaDataTree;
+    double pot;
   }; // class GenieTree
 
 
@@ -148,8 +153,22 @@ namespace sbnd {
     fGenieTree->Branch("true_lep_mom", &true_lep_mom);
     fGenieTree->Branch("true_lep_theta", &true_lep_theta);
 
+    fMetaDataTree = tfs->make<TTree>("metadata", "xsec tree");
+    fMetaDataTree->Branch("pot", &pot);
 
   } // GenieTree::beginJob()
+
+  // Called for every sub run
+  void GenieTree::beginSubRun(const art::SubRun& subrun){
+
+    art::Handle< sumdata::POTSummary > potHandle;
+    subrun.getByLabel(fGenModuleLabel, potHandle);
+    const sumdata::POTSummary& potSum = (*potHandle);
+    pot = potSum.totpot;
+
+    fMetaDataTree->Fill();
+    return;
+  } // XSecTree::beginSubRun()
 
   void GenieTree::analyze(const art::Event& event)
   {
@@ -190,8 +209,8 @@ namespace sbnd {
       //---------------------- FILLING ALL THE TRUE INTERACTION PARAMETERS ------------------------------------
 
       // Fill all the neutrino parameters
-      if(mctruth->GetNeutrino().CCNC() == simb::kCC) true_cc = 1;
-      else true_cc = 0;
+      if(mctruth->GetNeutrino().CCNC() == simb::kCC) true_cc = true;
+      else true_cc = false;
       true_nu_pdg = mctruth->GetNeutrino().Nu().PdgCode();
       if(!true_cc || true_nu_pdg!=14) continue;
       true_int_type = mctruth->GetNeutrino().Mode();
@@ -231,7 +250,7 @@ namespace sbnd {
 
     has_pdg_0 = false;
     
-    true_cc                  = -1;
+    true_cc                  = false;
     true_nu_pdg              = -99999;
     true_int_type            = -99999;
     true_n_pipm              = 0;

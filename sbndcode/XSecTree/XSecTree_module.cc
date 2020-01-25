@@ -73,7 +73,7 @@ namespace sbnd {
 
     // Reset all counters/variables to their null values
     void ResetVars();
-    void ResetWeights();
+    //void ResetWeights();
 
     // Give us a list of the stable, primary particles that we're interested in
     std::vector<const simb::MCParticle*> InterestingParticles(std::vector<const simb::MCParticle*> particles);
@@ -232,7 +232,7 @@ namespace sbnd {
     // Tree
     TTree *fXSecTree;
     TTree *fMetaDataTree;
-    TTree *fWeightTree;
+    //TTree *fWeightTree;
 
     // XSec tree true neutrino vertex
     double vtx_x, vtx_y, vtx_z;
@@ -266,7 +266,7 @@ namespace sbnd {
 
     // Weight tree parameters
     //std::map<std::string, std::vector<double>> weights;
-    double weights[500];
+    //double weights[500];
 
   }; // class XSecTree
 
@@ -350,8 +350,8 @@ namespace sbnd {
     /*for(unsigned int i = 0; i < fWeightCalcs.size(); ++i){
       weights[fWeightCalcs[i]].push_back(0.);
     }*/
-    fWeightTree = tfs->make<TTree>("weight", "xsec tree");
-    fWeightTree->Branch("weights", &weights, "weights[500]/D");
+    //fWeightTree = tfs->make<TTree>("weight", "xsec tree");
+    //fWeightTree->Branch("weights", &weights, "weights[500]/D");
     /*for(unsigned int i = 0; i < fWeightCalcs.size(); ++i){
       fWeightTree->Branch(fWeightCalcs[i].c_str(), &weights[fWeightCalcs[i]]);
     }*/
@@ -395,7 +395,7 @@ namespace sbnd {
     art::Handle<std::vector<simb::MCTruth>> genHandle;
     std::vector<art::Ptr<simb::MCTruth>> mctruthList;
     if(event.getByLabel(fGenModuleLabel, genHandle)) art::fill_ptr_vector(mctruthList, genHandle);
-
+/*
     // Weights
     art::Handle<std::vector<evwgh::MCEventWeight>> fluxWeightHandle;
     std::vector<art::Ptr<evwgh::MCEventWeight>> fluxWeightList;
@@ -422,10 +422,10 @@ namespace sbnd {
 
         for(auto const &kv : fluxWeightList[inu]->fWeight){
           std::cout<<"Name = "<<kv.first<<" vector size = "<<kv.second.size()<<"\n";
-          /*if(weights.find(kv.first) != weights.end()){ 
-            std::cout<<"->Name = "<<kv.first<<" vector size = "<<kv.second.size()<<"\n";
-            weights[kv.first] = kv.second;
-          }*/
+          //if(weights.find(kv.first) != weights.end()){ 
+          //  std::cout<<"->Name = "<<kv.first<<" vector size = "<<kv.second.size()<<"\n";
+          //  weights[kv.first] = kv.second;
+          //}
           if(kv.second.size()!=500) continue;
           for(size_t i = 0; i < 500; i++){
             weights[i] *= kv.second[i];
@@ -444,7 +444,7 @@ namespace sbnd {
     }
     else{
       std::cout<<"Weights not found in file, calculating...\n";
-      /*
+      
       // Implementation of required member function here.
       for (unsigned int inu = 0; inu < mctruthList.size(); ++inu) {
         ResetWeights();
@@ -458,9 +458,9 @@ namespace sbnd {
         }
         fWeightTree->Fill();
       }
-      */
+      
     }
-
+*/
     //----------------------------------------------------------------------------------------------------------
     //                                           FILLING THE TREE
     //----------------------------------------------------------------------------------------------------------
@@ -944,16 +944,16 @@ namespace sbnd {
       delta_phit[fRecoFormats[i]]          = -99999;
     }
   } // XSecTree::ResetVars
-
+/*
   void XSecTree::ResetWeights(){
-    /*for(size_t i = 0; i < fWeightCalcs.size(); i++){
-      weights[fWeightCalcs[i]].clear();
-    }
-    */
+    //for(size_t i = 0; i < fWeightCalcs.size(); i++){
+    //  weights[fWeightCalcs[i]].clear();
+    //}
     for(size_t i = 0; i < 500; i++){
       weights[i] = 1.;
     }
   }
+*/
   
   // Give us a list of the stable, primary particles that we're interested in
   std::vector<const simb::MCParticle*> XSecTree::InterestingParticles(std::vector<const simb::MCParticle*> particles){
