@@ -17,6 +17,7 @@ add_subdirectory(OpDetSim)
 add_subdirectory(XSecTree)
 add_subdirectory(CosmicId)
 add_subdirectory(EventWeight)
+add_subdirectory(Selection)
 
 # subdirectory for gallery stuff
 add_subdirectory(gallery)

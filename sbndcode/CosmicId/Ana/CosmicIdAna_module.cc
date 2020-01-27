@@ -201,9 +201,9 @@ namespace sbnd {
         TString hLength_name  = Form("hTrueLength%s_%s", trueCategories[i].c_str(), cuts[j].c_str());
         hTrueLength[i][j]     = tfs->make<TH1D>(hLength_name, "", 20, 0,    500);
         TString hTheta_name   = Form("hTrueTheta%s_%s", trueCategories[i].c_str(), cuts[j].c_str());
-        hTrueTheta[i][j]      = tfs->make<TH1D>(hTheta_name,  "", 20, 0,    3.2);
+        hTrueTheta[i][j]      = tfs->make<TH1D>(hTheta_name,  "", 20, 0,    180);
         TString hPhi_name     = Form("hTruePhi%s_%s", trueCategories[i].c_str(), cuts[j].c_str());
-        hTruePhi[i][j]        = tfs->make<TH1D>(hPhi_name,    "", 20, -3.2, 3.2);
+        hTruePhi[i][j]        = tfs->make<TH1D>(hPhi_name,    "", 20, -180, 180);
       }
     }
 
@@ -214,9 +214,9 @@ namespace sbnd {
         TString hLength_name  = Form("hRecoLength%s_%s", recoCategories[i].c_str(), cuts[j].c_str());
         hRecoLength[i][j]     = tfs->make<TH1D>(hLength_name, "", 20, 0,    500);
         TString hTheta_name   = Form("hRecoTheta%s_%s", recoCategories[i].c_str(), cuts[j].c_str());
-        hRecoTheta[i][j]      = tfs->make<TH1D>(hTheta_name,  "", 20, 0,    3.2);
+        hRecoTheta[i][j]      = tfs->make<TH1D>(hTheta_name,  "", 20, 0,    180);
         TString hPhi_name     = Form("hRecoPhi%s_%s", recoCategories[i].c_str(), cuts[j].c_str());
-        hRecoPhi[i][j]        = tfs->make<TH1D>(hPhi_name,    "", 20, -3.2, 3.2);
+        hRecoPhi[i][j]        = tfs->make<TH1D>(hPhi_name,    "", 20, -180, 180);
       }
     }
 
@@ -311,7 +311,7 @@ namespace sbnd {
     //----------------------------------------------------------------------------------------------------------
     //                                      FAKE PDS RECONSTRUCTION
     //----------------------------------------------------------------------------------------------------------
-
+/*
     // Create fake flashes in each tpc
     std::pair<std::vector<double>, std::vector<double>> fakeFlashes = CosmicIdUtils::FakeTpcFlashes(parts);
     std::vector<double> fakeTpc0Flashes = fakeFlashes.first;
@@ -321,7 +321,7 @@ namespace sbnd {
 
     // If there are no flashes in time with the beam then ignore the event
     if(!tpc0BeamFlash && !tpc1BeamFlash) return;
-
+*/
     //----------------------------------------------------------------------------------------------------------
     //                                          COSMIC ID - CALCULATING CUTS
     //----------------------------------------------------------------------------------------------------------
@@ -381,50 +381,60 @@ namespace sbnd {
             std::pair<TVector3, TVector3> se = fTpcGeo.CrossingPoints(particles[trueId]);
             double momentum = particles[trueId].P();
             double length = fTpcGeo.TpcLength(particles[trueId]);
-            double theta = (se.second-se.first).Theta();
-            double phi = (se.second-se.first).Phi();
+            double theta = (se.second-se.first).Theta()*180/TMath::Pi();
+            double phi = (se.second-se.first).Phi()*180/TMath::Pi();
             // Switch on each cut individually
             for(size_t j = 0; j < nCuts; j++){
               bool plot = false;
               if(j == 0) plot = true;
               if(j == 1){
-                cosIdAlg.SetCuts(true, false, false, false, false, false, false, false);
-                if(cosIdAlg.CosmicId(tpcTrack, event, fakeTpc0Flashes, fakeTpc1Flashes)) plot = true;
+                cosIdAlg.SetCuts(true, false, false, false, false, false, false, false, false);
+                //if(cosIdAlg.CosmicId(tpcTrack, event, fakeTpc0Flashes, fakeTpc1Flashes)) plot = true;
+                if(cosIdAlg.CosmicId(tpcTrack, event)) plot = true;
               }
               if(j == 2){
-                cosIdAlg.SetCuts(false, true, false, false, false, false, false, false);
-                if(cosIdAlg.CosmicId(tpcTrack, event, fakeTpc0Flashes, fakeTpc1Flashes)) plot = true;
+                cosIdAlg.SetCuts(false, true, false, false, false, false, false, false, false);
+                //if(cosIdAlg.CosmicId(tpcTrack, event, fakeTpc0Flashes, fakeTpc1Flashes)) plot = true;
+                if(cosIdAlg.CosmicId(tpcTrack, event)) plot = true;
               }
               if(j == 3){
-                cosIdAlg.SetCuts(false, false, true, false, false, false, false, false);
-                if(cosIdAlg.CosmicId(tpcTrack, event, fakeTpc0Flashes, fakeTpc1Flashes)) plot = true;
+                cosIdAlg.SetCuts(false, false, true, false, false, false, false, false, false);
+                //if(cosIdAlg.CosmicId(tpcTrack, event, fakeTpc0Flashes, fakeTpc1Flashes)) plot = true;
+                if(cosIdAlg.CosmicId(tpcTrack, event)) plot = true;
               }
               if(j == 4){
-                cosIdAlg.SetCuts(false, false, false, true, false, false, false, false);
-                if(cosIdAlg.CosmicId(tpcTrack, event, fakeTpc0Flashes, fakeTpc1Flashes)) plot = true;
+                cosIdAlg.SetCuts(false, false, false, true, false, false, false, false, false);
+                //if(cosIdAlg.CosmicId(tpcTrack, event, fakeTpc0Flashes, fakeTpc1Flashes)) plot = true;
+                if(cosIdAlg.CosmicId(tpcTrack, event)) plot = true;
               }
               if(j == 5){
-                cosIdAlg.SetCuts(false, false, false, false, true, false, false, false);
-                if(cosIdAlg.CosmicId(tpcTrack, event, fakeTpc0Flashes, fakeTpc1Flashes)) plot = true;
+                cosIdAlg.SetCuts(false, false, false, false, true, false, false, false, false);
+                //if(cosIdAlg.CosmicId(tpcTrack, event, fakeTpc0Flashes, fakeTpc1Flashes)) plot = true;
+                if(cosIdAlg.CosmicId(tpcTrack, event)) plot = true;
               }
               if(j == 6){
-                cosIdAlg.SetCuts(false, false, false, false, false, true, false, false);
-                if(cosIdAlg.CosmicId(tpcTrack, event, fakeTpc0Flashes, fakeTpc1Flashes)) plot = true;
+                cosIdAlg.SetCuts(false, false, false, false, false, true, false, false, false);
+                //if(cosIdAlg.CosmicId(tpcTrack, event, fakeTpc0Flashes, fakeTpc1Flashes)) plot = true;
+                if(cosIdAlg.CosmicId(tpcTrack, event)) plot = true;
               }
               if(j == 7){
-                cosIdAlg.SetCuts(false, false, false, false, false, false, true, false);
-                if(cosIdAlg.CosmicId(tpcTrack, event, fakeTpc0Flashes, fakeTpc1Flashes)) plot = true;
+                cosIdAlg.SetCuts(false, false, false, false, false, false, true, false, false);
+                //if(cosIdAlg.CosmicId(tpcTrack, event, fakeTpc0Flashes, fakeTpc1Flashes)) plot = true;
+                if(cosIdAlg.CosmicId(tpcTrack, event)) plot = true;
               }
               if(j == 8){
-                cosIdAlg.SetCuts(false, false, false, false, false, false, false, true);
-                if(cosIdAlg.CosmicId(tpcTrack, event, fakeTpc0Flashes, fakeTpc1Flashes)) plot = true;
+                cosIdAlg.SetCuts(false, false, false, false, false, false, false, false, true);
+                //if(cosIdAlg.CosmicId(tpcTrack, event, fakeTpc0Flashes, fakeTpc1Flashes)) plot = true;
+                if(cosIdAlg.CosmicId(tpcTrack, event)) plot = true;
               }
               // Return to the cuts specified in the fhicl file
               if(j == 9){
                 cosIdAlg.ResetCuts();
-                if(cosIdAlg.CosmicId(tpcTrack, event, fakeTpc0Flashes, fakeTpc1Flashes)) plot = true;
+                //if(cosIdAlg.CosmicId(tpcTrack, event, fakeTpc0Flashes, fakeTpc1Flashes)) plot = true;
+                if(cosIdAlg.CosmicId(tpcTrack, event)) plot = true;
               }
-              if(j == 10 && !cosIdAlg.CosmicId(tpcTrack, event, fakeTpc0Flashes, fakeTpc1Flashes)) plot = true;
+              //if(j == 10 && !cosIdAlg.CosmicId(tpcTrack, event, fakeTpc0Flashes, fakeTpc1Flashes)) plot = true;
+              if(j == 10 && !cosIdAlg.CosmicId(tpcTrack, event)) plot = true;
               if(!plot) continue;
               // Fill histograms if track ID'd as cosmic
               hTrueMom[trackType][j]->Fill(momentum);
@@ -447,10 +457,10 @@ namespace sbnd {
       recob::Track nuTrack = nuTracks[0];
       // Calculate the reconstructed variables
       double recoMuMomentum = 0.;
-      bool exits = fTpcGeo.InFiducial(nuTrack.End(), 5., 5.);
+      bool exits = !fTpcGeo.InFiducial(nuTrack.End(), 5., 5.);
       double length = nuTrack.Length();
-      double theta = nuTrack.Theta();
-      double phi = nuTrack.Phi();
+      double theta = nuTrack.Theta()*180/TMath::Pi();
+      double phi = nuTrack.Phi()*180/TMath::Pi();
       if(exits){
         recob::MCSFitResult mcsResult = fMcsFitter.fitMcs(nuTrack);
         recoMuMomentum = mcsResult.bestMomentum();
@@ -463,59 +473,69 @@ namespace sbnd {
         bool plot = false;
         if(j == 0) plot = true;
         if(j == 1){
-          cosIdAlg.SetCuts(true, false, false, false, false, false, false, false);
-          if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event, fakeTpc0Flashes, fakeTpc1Flashes)){
+          cosIdAlg.SetCuts(true, false, false, false, false, false, false, false, false);
+          //if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event, fakeTpc0Flashes, fakeTpc1Flashes)){
+          if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event)){
             plot = true;
           }
         }
         if(j == 2){
-          cosIdAlg.SetCuts(false, true, false, false, false, false, false, false);
-          if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event, fakeTpc0Flashes, fakeTpc1Flashes)){ 
+          cosIdAlg.SetCuts(false, true, false, false, false, false, false, false, false);
+          //if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event, fakeTpc0Flashes, fakeTpc1Flashes)){ 
+          if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event)){ 
             plot = true;
           }
         }
         if(j == 3){
-          cosIdAlg.SetCuts(false, false, true, false, false, false, false, false);
-          if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event, fakeTpc0Flashes, fakeTpc1Flashes)){ 
+          cosIdAlg.SetCuts(false, false, true, false, false, false, false, false, false);
+          //if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event, fakeTpc0Flashes, fakeTpc1Flashes)){ 
+          if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event)){ 
             plot = true;
           }
         }
         if(j == 4){
-          cosIdAlg.SetCuts(false, false, false, true, false, false, false, false);
-          if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event, fakeTpc0Flashes, fakeTpc1Flashes)){ 
+          cosIdAlg.SetCuts(false, false, false, true, false, false, false, false, false);
+          //if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event, fakeTpc0Flashes, fakeTpc1Flashes)){ 
+          if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event)){ 
             plot = true;
           }
         }
         if(j == 5){
-          cosIdAlg.SetCuts(false, false, false, false, true, false, false, false);
-          if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event, fakeTpc0Flashes, fakeTpc1Flashes)){ 
+          cosIdAlg.SetCuts(false, false, false, false, true, false, false, false, false);
+          //if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event, fakeTpc0Flashes, fakeTpc1Flashes)){ 
+          if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event)){ 
             plot = true;
           }
         }
         if(j == 6){
-          cosIdAlg.SetCuts(false, false, false, false, false, true, false, false);
-          if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event, fakeTpc0Flashes, fakeTpc1Flashes)){ 
+          cosIdAlg.SetCuts(false, false, false, false, false, true, false, false, false);
+          //if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event, fakeTpc0Flashes, fakeTpc1Flashes)){ 
+          if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event)){ 
             plot = true;
           }
         }
         if(j == 7){
-          cosIdAlg.SetCuts(false, false, false, false, false, false, true, false);
-          if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event, fakeTpc0Flashes, fakeTpc1Flashes)){ 
+          cosIdAlg.SetCuts(false, false, false, false, false, false, true, false, false);
+          //if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event, fakeTpc0Flashes, fakeTpc1Flashes)){ 
+          if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event)){ 
             plot = true;
           }
         }
         if(j == 8){
-          cosIdAlg.SetCuts(false, false, false, false, false, false, false, true);
-          if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event, fakeTpc0Flashes, fakeTpc1Flashes)){ 
+          cosIdAlg.SetCuts(false, false, false, false, false, false, false, false, true);
+          //if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event, fakeTpc0Flashes, fakeTpc1Flashes)){ 
+          if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event)){ 
             plot = true;
           }
         }
         // Return to the cuts specified in the fhicl file
         if(j == 9){
           cosIdAlg.ResetCuts();
-          if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event, fakeTpc0Flashes, fakeTpc1Flashes)) plot = true;
+          //if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event, fakeTpc0Flashes, fakeTpc1Flashes)) plot = true;
+          if(cosIdAlg.CosmicId(*pParticle, pfParticleMap, event)) plot = true;
         }
-        if(j == 10 && !cosIdAlg.CosmicId(*pParticle, pfParticleMap, event, fakeTpc0Flashes, fakeTpc1Flashes)){ 
+        //if(j == 10 && !cosIdAlg.CosmicId(*pParticle, pfParticleMap, event, fakeTpc0Flashes, fakeTpc1Flashes)){ 
+        if(j == 10 && !cosIdAlg.CosmicId(*pParticle, pfParticleMap, event)){ 
           plot = true;
         }
         if(!plot) continue;

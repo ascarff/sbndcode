@@ -17,6 +17,7 @@
 #include "sbndcode/CosmicId/Algs/CrtHitCosmicIdAlg.h"
 #include "sbndcode/CosmicId/Algs/CrtTrackCosmicIdAlg.h"
 #include "sbndcode/CosmicId/Algs/PandoraT0CosmicIdAlg.h"
+#include "sbndcode/CosmicId/Algs/FlashMatchAlg.h"
 #include "sbndcode/CosmicId/Utils/CosmicIdUtils.h"
 
 // framework
@@ -33,6 +34,7 @@
 #include "lardataobj/RecoBase/PFParticle.h"
 #include "lardataobj/AnalysisBase/T0.h"
 #include "lardataobj/AnalysisBase/Calorimetry.h"
+#include "lardataobj/RecoBase/OpHit.h"
 
 // c++
 #include <vector>
@@ -89,6 +91,11 @@ namespace sbnd{
         Comment("tag of pandora data product")
       };
 
+      fhicl::Atom<art::InputTag> PdsModuleLabel {
+        Name("PdsModuleLabel"),
+        Comment("tag of PDS data product")
+      };
+
       fhicl::Atom<bool> ApplyFiducialCut {
         Name("ApplyFiducialCut"),
         Comment("")
@@ -126,6 +133,11 @@ namespace sbnd{
 
       fhicl::Atom<bool> ApplyPandoraT0Cut {
         Name("ApplyPandoraT0Cut"),
+        Comment("")
+      };
+
+      fhicl::Atom<bool> ApplyFlashCut {
+        Name("ApplyFlashCut"),
         Comment("")
       };
 
@@ -177,6 +189,14 @@ namespace sbnd{
         Name("PTTagAlg"),
       };
 
+      fhicl::Table<GeometryCosmicIdAlg::Config> GeoTagAlg {
+        Name("GeoTagAlg"),
+      };
+
+      fhicl::Table<FlashMatchAlg::Config> FlashAlg {
+        Name("FlashAlg"),
+      };
+
       fhicl::Table<BeamTime> BeamTimeLimits {
         Name("BeamTimeLimits"),
         Comment("")
@@ -196,22 +216,27 @@ namespace sbnd{
     void reconfigure(const Config& config);
 
     // Change which cuts are run
-    void SetCuts(bool FV, bool SP, bool Geo, bool CC, bool AC, bool CT, bool CH, bool PT);
+    void SetCuts(bool FV, bool SP, bool Geo, bool CC, bool AC, bool CT, bool CH, bool PT, bool FM);
 
     // Reset which cuts are run from fhicl parameters
     void ResetCuts();
 
     // Run cuts to decide if track looks like a cosmic
+    bool CosmicId(recob::Track track, const art::Event& event, std::pair<std::vector<double>, std::vector<double>> opflashes, std::pair<bool, bool> tpcFlash);
     bool CosmicId(recob::Track track, const art::Event& event, std::vector<double> t0Tpc0, std::vector<double> t0Tpc1);
+    bool CosmicId(recob::Track track, const art::Event& event);
 
     // Run cuts to decide if PFParticle looks like a cosmic
+    bool CosmicId(recob::PFParticle pfparticle, std::map< size_t, art::Ptr<recob::PFParticle> > pfParticleMap, const art::Event& event, std::pair<std::vector<double>, std::vector<double>> opflashes, std::pair<bool, bool> tpcFlash);
     bool CosmicId(recob::PFParticle pfparticle, std::map< size_t, art::Ptr<recob::PFParticle> > pfParticleMap, const art::Event& event, std::vector<double> t0Tpc0, std::vector<double> t0Tpc1);
+    bool CosmicId(recob::PFParticle pfparticle, std::map< size_t, art::Ptr<recob::PFParticle> > pfParticleMap, const art::Event& event);
 
     // Getters for the underlying algorithms
     StoppingParticleCosmicIdAlg StoppingAlg() const {return spTag;}
     CrtHitCosmicIdAlg CrtHitAlg() const {return chTag;}
     CrtTrackCosmicIdAlg CrtTrackAlg() const {return ctTag;}
     ApaCrossCosmicIdAlg ApaAlg() const {return acTag;}
+    FlashMatchAlg FlashAlg() const {return fFlashAlg;}
 
   private:
 
@@ -223,6 +248,7 @@ namespace sbnd{
     art::InputTag fCrtHitModuleLabel;
     art::InputTag fCrtTrackModuleLabel;
     art::InputTag fCaloModuleLabel;
+    art::InputTag fPdsModuleLabel;
 
     bool fApplyFiducialCut;
     bool fApplyStoppingCut;
@@ -232,6 +258,7 @@ namespace sbnd{
     bool fApplyCrtTrackCut;
     bool fApplyCrtHitCut;
     bool fApplyPandoraT0Cut;
+    bool fApplyFlashCut;
 
     std::vector<bool> fOriginalSettings;
 
@@ -248,6 +275,7 @@ namespace sbnd{
     CrtHitCosmicIdAlg            chTag;
     CrtTrackCosmicIdAlg          ctTag;
     PandoraT0CosmicIdAlg         ptTag;
+    FlashMatchAlg                fFlashAlg;
 
   };
 

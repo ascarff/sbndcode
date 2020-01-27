@@ -13,10 +13,23 @@ TPCGeoAlg::TPCGeoAlg(){
   fMaxZ = -99999;
   fCpaWidth = 0;
 
+  fCryoMinX = 99999;
+  fCryoMinY = 99999;
+  fCryoMinZ = 99999;
+  fCryoMaxX = -99999;
+  fCryoMaxY = -99999;
+  fCryoMaxZ = -99999;
+
   fGeometryService = lar::providerFrom<geo::Geometry>();
 
   for(size_t cryo_i = 0; cryo_i < fGeometryService->Ncryostats(); cryo_i++){
     const geo::CryostatGeo& cryostat = fGeometryService->Cryostat(cryo_i);
+    if (cryostat.MinX() < fCryoMinX) fCryoMinX = cryostat.MinX();
+    if (cryostat.MaxX() > fCryoMaxX) fCryoMaxX = cryostat.MaxX();
+    if (cryostat.MinY() < fCryoMinY) fCryoMinY = cryostat.MinY();
+    if (cryostat.MaxY() > fCryoMaxY) fCryoMaxY = cryostat.MaxY();
+    if (cryostat.MinZ() < fCryoMinZ) fCryoMinZ = cryostat.MinZ();
+    if (cryostat.MaxZ() > fCryoMaxZ) fCryoMaxZ = cryostat.MaxZ();
 
     for (size_t tpc_i = 0; tpc_i < cryostat.NTPC(); tpc_i++)
     {
@@ -162,6 +175,14 @@ bool TPCGeoAlg::InsideTPC(geo::Point_t point, const geo::TPCGeo& tpc, double buf
   return true;
 }
 
+// Is point inside given TPC
+bool TPCGeoAlg::InCryo(geo::Point_t point){
+  if(point.X() < fCryoMinX || point.X() > fCryoMaxX
+      || point.Y() < fCryoMinY || point.Y() > fCryoMaxY
+      || point.Z() < fCryoMinZ || point.Z() > fCryoMaxZ) return false;
+  return true;
+}
+
 // Minimum distance to a TPC wall
 double TPCGeoAlg::MinDistToWall(geo::Point_t point){
 
@@ -300,6 +321,25 @@ bool TPCGeoAlg::CrossesApa(const simb::MCParticle& particle){
   return false;
 }
 
+// ----------------------------------------------------------------------------------
+// Determine if a true particle crosses CPA
+bool TPCGeoAlg::CrossesCpa(const simb::MCParticle& particle){
+  for(size_t i = 0; i < particle.NumberTrajectoryPoints()-1; i++){
+    double x = particle.Vx(i); 
+    double y = particle.Vy(i);
+    double z = particle.Vz(i);
+    double x1 = particle.Vx(i+1); 
+    double y1 = particle.Vy(i+1);
+    double z1 = particle.Vz(i+1);
+    if(y >= fMinY && z >= fMinZ && y <= fMaxY && z <= fMaxZ
+       && y1 >= fMinY && z1 >= fMinZ && y1 <= fMaxY && z1 <= fMaxZ){
+      if(x <= 0 && x1 >= 0) return true;
+      if(x >= 0 && x1 <= 0) return true;
+    }
+  }
+  return false;
+}
+
 std::pair<TVector3, TVector3> TPCGeoAlg::CrossingPoints(const simb::MCParticle& particle){
   bool first = true;
   TVector3 start (-99999, -99999, -99999);
@@ -338,6 +378,20 @@ double TPCGeoAlg::TpcLength(const simb::MCParticle& particle){
     }
   }
   return length;
+}
+
+
+double TPCGeoAlg::EDep(const simb::MCParticle& particle){
+  double edep = 0;
+  for(size_t i = 0; i < particle.NumberTrajectoryPoints(); i++){
+    double x = particle.Vx(i); 
+    double y = particle.Vy(i);
+    double z = particle.Vz(i);
+    if(i > 0 && x > fMinX && y > fMinY && z > fMinZ && x < fMaxX && y < fMaxY && z < fMaxZ){
+      edep += particle.E(i-1) - particle.E(i);
+    }
+  }
+  return edep;
 }
 
 

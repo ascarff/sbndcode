@@ -60,6 +60,7 @@ namespace sbnd{
     
     // Is point inside given TPC
     bool InsideTPC(geo::Point_t point, const geo::TPCGeo& tpc, double buffer=0.);
+    bool InCryo(geo::Point_t point);
 
     // Determine which TPC a collection of hits is detected in (-1 if multiple)
     int DetectedInTPC(std::vector<art::Ptr<recob::Hit>> hits);
@@ -83,9 +84,12 @@ namespace sbnd{
     bool CrossesVolume(const simb::MCParticle& particle);
     // Determine if a true particle crosses either APA
     bool CrossesApa(const simb::MCParticle& particle);
+    // Determine if a true particle crosses CPA
+    bool CrossesCpa(const simb::MCParticle& particle);
 
     std::pair<TVector3, TVector3> CrossingPoints(const simb::MCParticle& particle);
     double TpcLength(const simb::MCParticle& particle);
+    double EDep(const simb::MCParticle& particle);
 
   private:
 
@@ -96,6 +100,13 @@ namespace sbnd{
     double fMaxY;
     double fMaxZ;
     double fCpaWidth;
+
+    double fCryoMinX;
+    double fCryoMinY;
+    double fCryoMinZ;
+    double fCryoMaxX;
+    double fCryoMaxY;
+    double fCryoMaxZ;
 
     geo::GeometryCore const* fGeometryService;
 

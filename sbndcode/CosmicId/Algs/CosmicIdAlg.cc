@@ -26,6 +26,7 @@ void CosmicIdAlg::reconfigure(const Config& config){
   fCrtHitModuleLabel   = config.CrtHitModuleLabel();
   fCrtTrackModuleLabel = config.CrtTrackModuleLabel();
   fCaloModuleLabel     = config.CaloModuleLabel();
+  fPdsModuleLabel      = config.PdsModuleLabel();
 
   fApplyFiducialCut  = config.ApplyFiducialCut();
   fApplyStoppingCut  = config.ApplyStoppingCut();
@@ -35,6 +36,7 @@ void CosmicIdAlg::reconfigure(const Config& config){
   fApplyCrtTrackCut  = config.ApplyCrtTrackCut();
   fApplyCrtHitCut    = config.ApplyCrtHitCut();
   fApplyPandoraT0Cut = config.ApplyPandoraT0Cut();
+  fApplyFlashCut     = config.ApplyFlashCut();
 
   fOriginalSettings.push_back(fApplyFiducialCut);
   fOriginalSettings.push_back(fApplyStoppingCut);
@@ -44,6 +46,7 @@ void CosmicIdAlg::reconfigure(const Config& config){
   fOriginalSettings.push_back(fApplyCrtTrackCut);
   fOriginalSettings.push_back(fApplyCrtHitCut);
   fOriginalSettings.push_back(fApplyPandoraT0Cut);
+  fOriginalSettings.push_back(fApplyFlashCut);
 
   fUseTrackAngleVeto    = config.UseTrackAngleVeto();
   fMinSecondTrackLength = config.MinSecondTrackLength();
@@ -57,6 +60,8 @@ void CosmicIdAlg::reconfigure(const Config& config){
   chTag = config.CHTagAlg();
   ctTag = config.CTTagAlg();
   ptTag = config.PTTagAlg();
+  geoTag = config.GeoTagAlg();
+  fFlashAlg = config.FlashAlg();
 
   fBeamTimeMin = config.BeamTimeLimits().BeamTimeMin();
   fBeamTimeMax = config.BeamTimeLimits().BeamTimeMax();
@@ -65,7 +70,7 @@ void CosmicIdAlg::reconfigure(const Config& config){
 }
 
 // Change which cuts are run
-void CosmicIdAlg::SetCuts(bool FV, bool SP, bool Geo, bool CC, bool AC, bool CT, bool CH, bool PT){
+void CosmicIdAlg::SetCuts(bool FV, bool SP, bool Geo, bool CC, bool AC, bool CT, bool CH, bool PT, bool FM){
 
   fApplyFiducialCut = FV;
   fApplyStoppingCut = SP;
@@ -75,6 +80,7 @@ void CosmicIdAlg::SetCuts(bool FV, bool SP, bool Geo, bool CC, bool AC, bool CT,
   fApplyCrtTrackCut = CT;
   fApplyCrtHitCut = CH;
   fApplyPandoraT0Cut = PT;
+  fApplyFlashCut = FM;
 
 }
 
@@ -89,11 +95,33 @@ void CosmicIdAlg::ResetCuts(){
   fApplyCrtTrackCut = fOriginalSettings[5];
   fApplyCrtHitCut = fOriginalSettings[6];
   fApplyPandoraT0Cut = fOriginalSettings[7];
+  fApplyFlashCut = fOriginalSettings[8];
+
+}
+
+// Run cuts to decide if track looks like a cosmic
+bool CosmicIdAlg::CosmicId(recob::Track track, const art::Event& event){
+
+  auto pdsHandle = event.getValidHandle<std::vector<recob::OpHit>>(fPdsModuleLabel);
+  //std::pair<std::vector<double>, std::vector<double>> opflashes = CosmicIdUtils::OpFlashes(pdsHandle);
+  std::pair<std::vector<double>, std::vector<double>> opflashes = fFlashAlg.OpFlashes(pdsHandle);
+  //std::pair<bool, bool> tpcFlash = CosmicIdUtils::BeamFlash(pdsHandle, fBeamTimeMin, fBeamTimeMax);
+  std::pair<bool, bool> tpcFlash = fFlashAlg.BeamFlash(pdsHandle);
+  return CosmicId(track, event, opflashes, tpcFlash);
 
 }
 
 // Run cuts to decide if track looks like a cosmic
 bool CosmicIdAlg::CosmicId(recob::Track track, const art::Event& event, std::vector<double> t0Tpc0, std::vector<double> t0Tpc1){
+
+  bool tpc0Flash = CosmicIdUtils::BeamFlash(t0Tpc0, fBeamTimeMin, fBeamTimeMax);
+  bool tpc1Flash = CosmicIdUtils::BeamFlash(t0Tpc1, fBeamTimeMin, fBeamTimeMax);
+  return CosmicId(track, event, std::make_pair(t0Tpc0, t0Tpc1), std::make_pair(tpc0Flash, tpc1Flash));
+
+}
+
+// Run cuts to decide if track looks like a cosmic
+bool CosmicIdAlg::CosmicId(recob::Track track, const art::Event& event, std::pair<std::vector<double>, std::vector<double>> opflashes, std::pair<bool,bool> tpcFlash){
 
   // Get associations between tracks and hit collections
   auto tpcTrackHandle = event.getValidHandle<std::vector<recob::Track>>(fTpcTrackModuleLabel);
@@ -120,9 +148,7 @@ bool CosmicIdAlg::CosmicId(recob::Track track, const art::Event& event, std::vec
 
   // Tag cosmics in other TPC to beam activity
   if(fApplyGeometryCut){
-    bool tpc0Flash = CosmicIdUtils::BeamFlash(t0Tpc0, fBeamTimeMin, fBeamTimeMax);
-    bool tpc1Flash = CosmicIdUtils::BeamFlash(t0Tpc1, fBeamTimeMin, fBeamTimeMax);
-    if(geoTag.GeometryCosmicId(track, hits, tpc0Flash, tpc1Flash)) return true;
+    if(geoTag.GeometryCosmicId(track, hits, tpcFlash.first, tpcFlash.second)) return true;
   }
 
   // Tag cosmics which cross the CPA
@@ -137,7 +163,7 @@ bool CosmicIdAlg::CosmicId(recob::Track track, const art::Event& event, std::vec
 
   // Tag cosmics which cross the APA
   if(fApplyApaCrossCut){
-    if(acTag.ApaCrossCosmicId(track, hits, t0Tpc0, t0Tpc1)) return true;
+    if(acTag.ApaCrossCosmicId(track, hits, opflashes.first, opflashes.second)) return true;
   }
 
   // Tag cosmics which match CRT tracks
@@ -161,7 +187,29 @@ bool CosmicIdAlg::CosmicId(recob::Track track, const art::Event& event, std::vec
 }
 
 // Run cuts to decide if PFParticle looks like a cosmic
+bool CosmicIdAlg::CosmicId(recob::PFParticle pfparticle, std::map< size_t, art::Ptr<recob::PFParticle> > pfParticleMap, const art::Event& event){
+
+  auto pdsHandle = event.getValidHandle<std::vector<recob::OpHit>>(fPdsModuleLabel);
+  //std::pair<std::vector<double>, std::vector<double>> opflashes = CosmicIdUtils::OpFlashes(pdsHandle);
+  std::pair<std::vector<double>, std::vector<double>> opflashes = fFlashAlg.OpFlashes(pdsHandle);
+  //std::pair<bool, bool> tpcFlash = CosmicIdUtils::BeamFlash(pdsHandle, fBeamTimeMin, fBeamTimeMax);
+  std::pair<bool, bool> tpcFlash = fFlashAlg.BeamFlash(pdsHandle);
+  return CosmicId(pfparticle, pfParticleMap, event, opflashes, tpcFlash);
+
+}
+
+// Run cuts to decide if PFParticle looks like a cosmic
 bool CosmicIdAlg::CosmicId(recob::PFParticle pfparticle, std::map< size_t, art::Ptr<recob::PFParticle> > pfParticleMap, const art::Event& event, std::vector<double> t0Tpc0, std::vector<double> t0Tpc1){
+
+  bool tpc0Flash = CosmicIdUtils::BeamFlash(t0Tpc0, fBeamTimeMin, fBeamTimeMax);
+  bool tpc1Flash = CosmicIdUtils::BeamFlash(t0Tpc1, fBeamTimeMin, fBeamTimeMax);
+  return CosmicId(pfparticle, pfParticleMap, event, std::make_pair(t0Tpc0, t0Tpc1), std::make_pair(tpc0Flash, tpc1Flash));
+
+}
+
+/*
+// Run cuts to decide if PFParticle looks like a cosmic
+bool CosmicIdAlg::CosmicId(recob::PFParticle pfparticle, std::map< size_t, art::Ptr<recob::PFParticle> > pfParticleMap, const art::Event& event, std::pair<std::vector<double>, std::vector<double>> opflashes, std::pair<bool, bool> tpcFlash){
 
   // Get associations between pfparticles and tracks
   art::Handle< std::vector<recob::PFParticle> > pfParticleHandle;
@@ -184,8 +232,13 @@ bool CosmicIdAlg::CosmicId(recob::PFParticle pfparticle, std::map< size_t, art::
 
     recob::Track track = *associatedTracks.front();
     nuTracks.push_back(track);
-    
-    
+      
+  }
+
+  // Apply the flash matching cut
+  if(fApplyFlashCut){
+    auto pdsHandle = event.getValidHandle<std::vector<recob::OpHit>>(fPdsModuleLabel);
+    if(!fFlashAlg.FlashMatch(pfparticle, pfParticleMap, event, pdsHandle)) return true;
   }
 
   // Tag cosmics from pandora T0 associations
@@ -211,9 +264,167 @@ bool CosmicIdAlg::CosmicId(recob::PFParticle pfparticle, std::map< size_t, art::
 
   // Tag cosmics in other TPC to beam activity
   if(fApplyGeometryCut){
-    bool tpc0Flash = CosmicIdUtils::BeamFlash(t0Tpc0, fBeamTimeMin, fBeamTimeMax);
-    bool tpc1Flash = CosmicIdUtils::BeamFlash(t0Tpc1, fBeamTimeMin, fBeamTimeMax);
-    if(geoTag.GeometryCosmicId(track, hits, tpc0Flash, tpc1Flash)) return true;
+    if(geoTag.GeometryCosmicId(track, hits, tpcFlash.first, tpcFlash.second)) return true;
+  }
+
+  // Tag cosmics which match CRT tracks
+  if(fApplyCrtTrackCut){
+    auto crtTrackHandle = event.getValidHandle<std::vector<crt::CRTTrack>>(fCrtTrackModuleLabel);
+    std::vector<crt::CRTTrack> crtTracks = (*crtTrackHandle);
+
+    if(ctTag.CrtTrackCosmicId(track, crtTracks, event)) return true;
+  }
+
+  // Tag cosmics which cross the CPA
+  if(fApplyCpaCrossCut){
+    std::vector<recob::Track> tracks;
+    for(auto const& tpcTrack : (*tpcTrackHandle)){
+      tracks.push_back(tpcTrack);
+    }
+
+    if(ccTag.CpaCrossCosmicId(track, tracks, findManyHits)) return true;
+  }
+
+  // Check if either track matches CRT hit
+  if(fApplyCrtHitCut){
+    // Apply crt hit match cut to both tracks
+    auto crtHitHandle = event.getValidHandle<std::vector<crt::CRTHit>>(fCrtHitModuleLabel);
+    std::vector<crt::CRTHit> crtHits = (*crtHitHandle);
+    if(chTag.CrtHitCosmicId(track, crtHits, event)) return true;
+  }
+
+  // Check if stopping applies to merged track
+  if(fApplyStoppingCut){
+    // Apply stopping cut to the longest track
+    std::vector<art::Ptr<anab::Calorimetry>> calos = findManyCalo.at(track.ID());
+    if(spTag.StoppingParticleCosmicId(track, calos)) return true;
+  }
+
+  if(!fUseTrackAngleVeto || nuTracks.size() < 2) return false;
+
+  // Find second longest particle if trying to merge tracks
+  std::vector<std::pair<recob::Track, double>> secondaryTracks;
+
+  TVector3 start = track.Vertex<TVector3>();
+  TVector3 end = track.End<TVector3>();
+
+  // Loop over the secondary tracks
+  // Find smallest angle between primary track and any secondary tracks above a certain length
+  for(size_t i = 1; i < nuTracks.size(); i++){
+    recob::Track track2 = nuTracks[i];
+    // Only consider secondary tracks longer than some limit (try to exclude michel electrons)
+    if(track2.Length() < fMinSecondTrackLength) continue;
+    TVector3 start2 = track2.Vertex<TVector3>();
+    TVector3 end2 = track2.End<TVector3>();
+    // Do they share the same vertex? (no delta rays)
+    if((start-start2).Mag() < fMinVertexDistance){ 
+      double angle = (end - start).Angle(end2 - start2);
+      secondaryTracks.push_back(std::make_pair(track2, angle));
+    }
+  }
+
+  std::sort(secondaryTracks.begin(), secondaryTracks.end(), [](auto& left, auto& right){
+            return left.second < right.second;});
+
+  // If there isn't a valid secondary track
+  if(secondaryTracks.size() == 0) return false;
+  // If tracks not consistent with split track
+  if(secondaryTracks[0].second < fMinMergeAngle) return false;
+
+  recob::Track track2 = secondaryTracks[0].first;
+
+  // Check fiducial volume containment assuming merged track
+  if(fApplyFiducialCut){
+    if(!fvTag.InFiducial(track.End()) && !fvTag.InFiducial(track2.End())) return true;
+  }
+
+  // Check if stopping applies to merged track
+  if(fApplyStoppingCut){
+    // Apply stopping cut assuming the tracks are split
+    std::vector<art::Ptr<anab::Calorimetry>> calos = findManyCalo.at(track.ID());
+    std::vector<art::Ptr<anab::Calorimetry>> calos2 = findManyCalo.at(track2.ID());
+    if(spTag.StoppingParticleCosmicId(track, track2, calos, calos2)) return true;
+  }
+
+  // Check if either track crosses APA
+  if(fApplyApaCrossCut){
+    // Also apply to secondary track FIXME need to check primary track doesn't go out of bounds
+    std::vector<art::Ptr<recob::Hit>> hits2 = findManyHits.at(track2.ID());
+    if(acTag.ApaCrossCosmicId(track2, hits2, opflashes.first, opflashes.second)) return true;
+  }
+
+  // Check if either track matches CRT hit
+  if(fApplyCrtHitCut){
+    // Apply crt hit match cut to both tracks
+    auto crtHitHandle = event.getValidHandle<std::vector<crt::CRTHit>>(fCrtHitModuleLabel);
+    std::vector<crt::CRTHit> crtHits = (*crtHitHandle);
+    if(chTag.CrtHitCosmicId(track2, crtHits, event)) return true;
+  }
+  
+  return false;
+
+}
+*/
+// Run cuts to decide if PFParticle looks like a cosmic
+bool CosmicIdAlg::CosmicId(recob::PFParticle pfparticle, std::map< size_t, art::Ptr<recob::PFParticle> > pfParticleMap, const art::Event& event, std::pair<std::vector<double>, std::vector<double>> opflashes, std::pair<bool, bool> tpcFlash){
+
+  // Get associations between pfparticles and tracks
+  art::Handle< std::vector<recob::PFParticle> > pfParticleHandle;
+  event.getByLabel(fPandoraLabel, pfParticleHandle);
+  art::FindManyP< recob::Track > pfPartToTrackAssoc(pfParticleHandle, event, fTpcTrackModuleLabel);
+
+  // Get associations between tracks and hits/calorimetry collections
+  auto tpcTrackHandle = event.getValidHandle<std::vector<recob::Track>>(fTpcTrackModuleLabel);
+  art::FindManyP<recob::Hit> findManyHits(tpcTrackHandle, event, fTpcTrackModuleLabel);
+  art::FindManyP<anab::Calorimetry> findManyCalo(tpcTrackHandle, event, fCaloModuleLabel);
+
+  // Loop over all the daughters of the PFParticles and get associated tracks
+  std::vector<recob::Track> nuTracks;
+  for (const size_t daughterId : pfparticle.Daughters()){
+  
+    // Get tracks associated with daughter
+    art::Ptr<recob::PFParticle> pParticle = pfParticleMap.at(daughterId);
+    const std::vector< art::Ptr<recob::Track> > associatedTracks(pfPartToTrackAssoc.at(pParticle.key()));
+    if(associatedTracks.size() != 1) continue;
+
+    recob::Track track = *associatedTracks.front();
+    nuTracks.push_back(track);
+      
+  }
+
+  // Apply the flash matching cut
+  if(fApplyFlashCut){
+    auto pdsHandle = event.getValidHandle<std::vector<recob::OpHit>>(fPdsModuleLabel);
+    if(!fFlashAlg.FlashMatch(pfparticle, pfParticleMap, event, pdsHandle)) return true;
+  }
+
+  // Tag cosmics from pandora T0 associations
+  if(fApplyPandoraT0Cut){
+    if(ptTag.PandoraT0CosmicId(pfparticle, pfParticleMap, event)) return true;
+  }
+
+  // Not a cosmic if there are only showers assiciated with PFParticle
+  if(nuTracks.size() == 0) return false;
+
+  // Sort all daughter tracks by length
+  std::sort(nuTracks.begin(), nuTracks.end(), [](auto& left, auto& right){
+              return left.Length() > right.Length();});
+
+  // Select longest track as the cosmic candidate
+  recob::Track track = nuTracks[0];
+  std::vector<art::Ptr<recob::Hit>> hits = findManyHits.at(track.ID());
+
+  // Tag cosmics which enter and exit the TPC
+  if(fApplyFiducialCut){
+    if(fvTag.FiducialVolumeCosmicId(track)) return true;
+  }
+
+  // Tag cosmics in other TPC to beam activity
+  if(fApplyGeometryCut){
+    auto pdsHandle = event.getValidHandle<std::vector<recob::OpHit>>(fPdsModuleLabel);
+    std::pair<double, double> pe = fFlashAlg.BeamPE(pdsHandle);
+    //if(geoTag.GeometryCosmicId(track, hits, tpcFlash.first, tpcFlash.second)) return true;
+    if(geoTag.GeometryCosmicId(track, hits, pe.first, pe.second)) return true;
   }
 
   // Tag cosmics which match CRT tracks
@@ -283,10 +494,10 @@ bool CosmicIdAlg::CosmicId(recob::PFParticle pfparticle, std::map< size_t, art::
       // Check if either track crosses APA
       if(fApplyApaCrossCut){
         // Apply apa crossing cut to the longest track
-        if(acTag.ApaCrossCosmicId(track, hits, t0Tpc0, t0Tpc1)) return true;
+        if(acTag.ApaCrossCosmicId(track, hits, opflashes.first, opflashes.second)) return true;
         // Also apply to secondary track FIXME need to check primary track doesn't go out of bounds
         std::vector<art::Ptr<recob::Hit>> hits2 = findManyHits.at(track2.ID());
-        if(acTag.ApaCrossCosmicId(track2, hits2, t0Tpc0, t0Tpc1)) return true;
+        if(acTag.ApaCrossCosmicId(track2, hits2, opflashes.first, opflashes.second)) return true;
       }
 
       // Check if either track matches CRT hit
@@ -312,7 +523,7 @@ bool CosmicIdAlg::CosmicId(recob::PFParticle pfparticle, std::map< size_t, art::
 
     // Tag cosmics which cross the APA
     if(fApplyApaCrossCut){
-      if(acTag.ApaCrossCosmicId(track, hits, t0Tpc0, t0Tpc1)) return true;
+      if(acTag.ApaCrossCosmicId(track, hits, opflashes.first, opflashes.second)) return true;
     }
 
     // Tag cosmics which match CRT hits
