@@ -393,7 +393,8 @@ sbnd_eventweight_genie: {
       "NCResAxial", "NCResVector", "CohMA", "CohR0",
       "NonResRvp1pi", "NonResRvbarp1pi", "NonResRvp2pi", "NonResRvbarp2pi",
       "ResDecayGamma", "ResDecayTheta", "NC",
-      "DISAth", "DISBth", "DISCv1u", "DISCv2u", "AGKYxF", "AGKYpT",
+      #"DISAth", "DISBth", "DISCv1u", "DISCv2u", 
+      "AGKYxF", "AGKYpT",
       "FormZone", "FermiGasModelKf",
       "IntraNukeNmfp", "IntraNukeNcex", "IntraNukeNinel",
       "IntraNukeNabs", "IntraNukeNpi", "IntraNukePImfp", "IntraNukePIcex",
@@ -401,7 +402,7 @@ sbnd_eventweight_genie: {
     ]
     parameter_sigma: [
       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
     ]
     mode: multisim
     number_of_multisims: 100
