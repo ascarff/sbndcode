@@ -77,12 +77,13 @@ namespace sbnd {
     // Reset all counters/variables to their null values
     void ResetVars();
     void ResetWeights();
+    void ResetDetSyst();
 
     // Give us a list of the stable, primary particles that we're interested in
     std::vector<const simb::MCParticle*> InterestingParticles(std::vector<const simb::MCParticle*> particles);
 
     // Apply reconstruction efficiencies to true particles
-    std::vector<const simb::MCParticle*> RecoParticles(std::vector<const simb::MCParticle*> particles);
+    std::vector<const simb::MCParticle*> RecoParticles(std::vector<const simb::MCParticle*> particles, double muerr=0, double pierr=0, double perr=0);
 
     // Smear momentum for electrons from TRACS performance
     double SmearElectronMomentum(double momentum);
@@ -95,11 +96,11 @@ namespace sbnd {
     double SmearMcsMomentumHist(double momentum, double length, double err=0);
 
     // Use histograms for efficiencies
-    bool MuonHistEff(double momentum);
+    //bool MuonHistEff(double momentum);
     bool MuonHistEff(double length, double theta, double err=0);
-    bool PionHistEff(double momentum);
+    //bool PionHistEff(double momentum);
     bool PionHistEff(double length, double theta, double err=0);
-    bool ProtonHistEff(double momentum);
+    //bool ProtonHistEff(double momentum);
     bool ProtonHistEff(double length, double theta, double err=0);
 
     // Smear momentum for contained particles using range based method
@@ -112,7 +113,7 @@ namespace sbnd {
     TVector3 DeltaPT(TVector3 mu_mom, TVector3 pr_mom);
 
     // Inclusive charged current selection
-    bool IsCCInc(geo::Point_t vertex, std::vector<const simb::MCParticle*> reco_particles);
+    std::pair<bool,int> IsCCInc(geo::Point_t vertex, std::vector<const simb::MCParticle*> reco_particles, double ppid=0, double mupid=0);
 
     // Use histograms for PID
     bool MuonHistPid(double momentum, int pdg, double err=0);
@@ -173,6 +174,14 @@ namespace sbnd {
 
     TRandom2 *fRandom;
 
+    // "Random" uncertainties for detector systematics, need to be consistent over universes
+    double fMueff[50] = { 0.0007,0.0133,-0.0078,0.0017,-0.0049,-0.0061,-0.0049,-0.0034,0.0171,0.0003,-0.0126,0.0189,-0.0033,-0.0161,-0.0049,0.0134,0.0168,-0.0186,0.0093,0.0074,-0.0088,-0.0044,0.0037,-0.0037,-0.0157,0.0052,-0.0119,0.0225,-0.0127,-0.0032,0.0091,0.0103,0.0051,-0.0047,0.0021,-0.0022,0.0074,0.0065,0.0174,-0.0151,-0.0039,-0.0010,-0.0007,0.0051,0.0049,-0.0155,-0.0075,-0.0023,-0.0054,0.0062 };
+    double fPieff[50] = { -0.0048,0.0150,-0.0544,0.0469,-0.0149,0.0192,-0.0521,0.0006,0.0870,-0.0666,-0.0091,0.0012,0.0543,-0.0258,0.0219,-0.0074,0.0410,0.0027,-0.0179,-0.0397,0.0729,-0.0407,-0.0014,0.0387,0.0592,-0.0152,0.0166,-0.0333,-0.0408,-0.0145,0.0165,0.0249,-0.0275,-0.0210,-0.0029,0.0382,-0.0224,-0.0094,-0.0124,0.0196,-0.0195,-0.0127,0.0052,-0.0107,0.0092,0.0178,0.0554,-0.0025,0.0049,0.0097 };
+    double fPeff[50] = { -0.0054,0.0185,-0.0023,-0.0063,0.0031,0.0185,0.0112,-0.0048,0.0324,0.0030,-0.0414,-0.0099,0.0037,0.0041,0.0324,0.0014,-0.0122,-0.0022,-0.0265,-0.0207,0.0273,0.0173,-0.0155,0.0062,-0.0220,-0.0158,0.0144,0.0139,0.0049,-0.0114,-0.0380,-0.0078,0.0110,-0.0114,0.0276,-0.0054,-0.0105,-0.0057,0.0250,-0.0157,-0.0140,0.0088,0.0089,-0.0477,-0.0049,-0.0038,-0.0096,-0.0099,-0.0188,0.0005 };
+    double fPpid[50] = { -0.0170,-0.0034,0.0139,0.0162,-0.0059,0.0175,0.0123,0.0035,-0.0015,0.0108,-0.0093,-0.0049,-0.0054,0.0136,-0.0085,-0.0037,0.0043,0.0071,-0.0087,0.0090,0.0085,-0.0059,0.0010,-0.0088,-0.0141,-0.0057,0.0138,0.0025,-0.0111,-0.0009,0.0093,0.0281,-0.0198,0.0127,-0.0012,-0.0126,0.0034,-0.0013,-0.0042,0.0033,-0.0086,-0.0086,-0.0029,0.0009,-0.0113,0.0103,-0.0073,0.0144,0.0081,0.0018 };
+    double fMupid[50] = { 0.0143,0.0024,0.0005,-0.0015,-0.0048,-0.0044,-0.0087,0.0167,-0.0064,0.0039,0.0001,-0.0203,0.0197,-0.0162,0.0034,0.0028,0.0013,-0.0201,-0.0012,0.0075,-0.0025,0.0043,0.0003,0.0099,-0.0003,-0.0061,0.0068,-0.0170,0.0084,0.0174,0.0053,0.0009,0.0064,0.0066,-0.0044,0.0011,0.0056,-0.0057,0.0107,-0.0056,0.0117,0.0112,-0.0034,0.0164,0.0026,0.0147,-0.0021,-0.0070,-0.0124,0.0084 };
+    double fMomres[50] = { 0.0183,-0.0395,0.0239,-0.0151,0.0240,0.0174,0.0127,0.0845,0.1038,-0.0304,0.0233,-0.0241,0.0625,0.0356,-0.1218,-0.0434,-0.0095,-0.0598,0.0701,0.0506,0.0082,-0.0763,-0.0096,0.0500,-0.0136,0.0013,0.0241,0.0475,0.0079,-0.0122,0.0599,0.0407,-0.0361,-0.0183,0.0597,-0.0235,-0.0113,-0.0321,-0.0003,-0.0743,-0.0028,-0.0480,-0.0132,-0.0478,-0.0664,-0.0037,0.0825,0.0000,0.0163,-0.0110 };
+
     // Global variables
     int lep_j;
     int longest_j;
@@ -181,6 +190,7 @@ namespace sbnd {
     TTree *fXSecTree;
     TTree *fMetaDataTree;
     TTree *fWeightTree;
+    TTree *fDetSystTree;
 
     // Reconstruction histograms
     TH2D* hMuRecoEff;
@@ -226,6 +236,17 @@ namespace sbnd {
     // Weight tree parameters
     double genie_weights[100];
     double flux_weights[100];
+
+    // Detector systematic tree parameters
+    double ds_vtx_x;
+    double ds_vtx_y;
+    double ds_vtx_z;
+    bool ds_particles_contained[50];
+    bool ds_lep_contained[50];
+    int ds_cc[50];
+    int ds_nu_pdg[50];
+    double ds_lep_mom[50];
+    double ds_lep_theta[50];
 
   }; // class XSecTree
 
@@ -330,21 +351,25 @@ namespace sbnd {
     };
 
     // Get histograms
-    //std::string fname;
-    //cet::search_path sp("FW_SEARCH_PATH");
-    //sp.find_file(fInputFile, fname);
-    TFile *efffile = new TFile("/sbnd/data/users/tbrooks/EfficiencyHists.root", "READ");
+    cet::search_path sp("FW_SEARCH_PATH");
+    std::string effname;
+    sp.find_file("PhysicsBook/EfficiencyHists.root", effname);
+    TFile *efffile = new TFile(effname.c_str(), "READ");
     hMuRecoEff = (TH2D*)efffile->Get("hLengthThetaReco_#mu");
     hPiRecoEff = (TH2D*)efffile->Get("hLengthThetaReco_#pi");
     hPRecoEff = (TH2D*)efffile->Get("hLengthThetaReco_p");
     efffile->Close();
-    TFile *selfile = new TFile("/sbnd/data/users/tbrooks/SelectionHists.root", "READ");
+    std::string selname;
+    sp.find_file("PhysicsBook/SelectionHists.root", selname);
+    TFile *selfile = new TFile(selname.c_str(), "READ");
     hProtonId = (TH1D*)selfile->Get("hMinPChi2p");
     hMuMuId = (TH1D*)selfile->Get("hMomNoPLenSel#mu");
     hPiMuId = (TH1D*)selfile->Get("hMomNoPLenSel#pi");
     hPMuId = (TH1D*)selfile->Get("hMomNoPLenSelp");
     selfile->Close();
-    TFile *smearfile = new TFile("/sbnd/data/users/tbrooks/SmearingHists.root", "READ");
+    std::string smearname;
+    sp.find_file("PhysicsBook/SmearingHists.root", smearname);
+    TFile *smearfile = new TFile(smearname.c_str(), "READ");
     hMcsMomBias = (TH1D*)smearfile->Get("hBiasmu_mcs_mom_length");
     hMcsMomRes = (TH1D*)smearfile->Get("hResmu_mcs_mom_length");
     smearfile->Close();
@@ -393,6 +418,16 @@ namespace sbnd {
     fWeightTree->Branch("genie_weights", &genie_weights, "genie_weights[100]/D");
     fWeightTree->Branch("flux_weights", &flux_weights, "flux_weights[100]/D");
 
+    fDetSystTree = tfs->make<TTree>("detsyst", "xsec tree");
+    fDetSystTree->Branch("ds_vtx_x", &ds_vtx_x);
+    fDetSystTree->Branch("ds_vtx_y", &ds_vtx_y);
+    fDetSystTree->Branch("ds_vtx_z", &ds_vtx_z);
+    fDetSystTree->Branch("ds_particles_contained", &ds_particles_contained, "ds_particles_contained[50]/O");
+    fDetSystTree->Branch("ds_lep_contained", &ds_lep_contained, "ds_lep_contained[50]/O");
+    fDetSystTree->Branch("ds_cc", &ds_cc, "ds_cc[50]/I");
+    fDetSystTree->Branch("ds_nu_pdg", &ds_nu_pdg, "ds_nu_pdg[50]/I");
+    fDetSystTree->Branch("ds_lep_mom", &ds_lep_mom, "ds_lep_mom[50]/D");
+    fDetSystTree->Branch("ds_lep_theta", &ds_lep_theta, "ds_lep_theta[50]/D");
     // Initial output
     std::cout<<"----------------- XSec Tree Module -------------------"<<std::endl;
 
@@ -445,7 +480,7 @@ namespace sbnd {
     //----------------------------------------------------------------------------------------------------------
     //                                           REWEIGHTING MCTRUTH
     //----------------------------------------------------------------------------------------------------------
-    if(fluxWeightList.size() == mctruthList.size() && genieWeightList.size() == mctruthList.size()){
+    /*if(fluxWeightList.size() == mctruthList.size() && genieWeightList.size() == mctruthList.size()){
       for(unsigned int inu = 0; inu < mctruthList.size(); ++inu) {
         ResetWeights();
 
@@ -459,14 +494,14 @@ namespace sbnd {
 
         for(auto const &kv : fluxWeightList[inu]->fWeight){
           std::cout<<"Name = "<<kv.first<<" vector size = "<<kv.second.size()<<"\n";
-          if(kv.second.size()!=100) continue;
+          if(kv.second.size()<100) continue;
           for(size_t i = 0; i < 100; i++){
             flux_weights[i] *= kv.second[i];
           }
         }
         for(auto const &kv : genieWeightList[inu]->fWeight){
           std::cout<<"Name = "<<kv.first<<" vector size = "<<kv.second.size()<<"\n";
-          if(kv.second.size()!=100) continue;
+          if(kv.second.size()<100) continue;
           for(size_t i = 0; i < 100; i++){
             genie_weights[i] *= kv.second[i];
           }
@@ -474,7 +509,7 @@ namespace sbnd {
         fWeightTree->Fill();
       }
     }
-    else{
+    else{*/
       std::cout<<"Weights not found in file, calculating...\n";
       
       // Implementation of required member function here.
@@ -512,7 +547,7 @@ namespace sbnd {
         fWeightTree->Fill();
       }
       
-    }
+    //}
 
     //----------------------------------------------------------------------------------------------------------
     //                                           FILLING THE TREE
@@ -806,15 +841,37 @@ namespace sbnd {
       }
       else if (fRandom->Rndm() < 0.15) cosmic_id = true;
 
-      bool cc_selected = IsCCInc(vertex, reco_particles); 
+      std::pair<bool, int> cc_selected = IsCCInc(vertex, reco_particles); 
+      
 
-      if(cc_selected && !cosmic_id){ 
+      if(cc_selected.first && !cosmic_id){ 
         if(fVerbose) std::cout<<"Selected as CC\n";
         cc["reco"]     = 1;
         nu_pdg["reco"] = 14;
       }
       else{ 
         cc["reco"] = -1;
+      }
+
+      //------------------------------------ LEPTON KINEMATICS ------------------------------------------
+      longest_j = cc_selected.second;
+
+      if(longest_j != -1){
+        // Check if particle is contained
+        double contained_length = fTPCGeo.TpcLength(*reco_particles.at(longest_j));
+        std::pair<TVector3, TVector3> cross_points = fTPCGeo.CrossingPoints(*reco_particles.at(longest_j));
+        TVector3 start                             = cross_points.first;
+        TVector3 end                               = cross_points.second;
+        lep_contained["reco"] = fTPCGeo.IsContained(*reco_particles.at(longest_j));
+        lep_theta["reco"] = (end - start).Theta();
+
+        // Smear momentum based on whether particle is contained or not
+        if(lep_contained["reco"]) 
+          lep_mom["reco"] = fRangeFitter.GetTrackMomentum(contained_length, 13);
+        else{ 
+          if(!fUseSbndSmearing) lep_mom["reco"] = SmearMcsMomentum(reco_particles.at(longest_j)->P());
+          else lep_mom["reco"] = SmearMcsMomentumHist(reco_particles.at(longest_j)->P(), contained_length);
+        }
       }
 
       //------------------------------------ RECO FSI ------------------------------------------
@@ -933,7 +990,62 @@ namespace sbnd {
           }
         }
       }
-      
+
+      // ----------------------------------------- DETECTOR SYSTEMATICS ----------------------------------------
+      // Reset the detector systematic tree
+      ResetDetSyst();
+      ds_vtx_x = vtx_x;
+      ds_vtx_y = vtx_y;
+      ds_vtx_z = vtx_z;
+      // Loop over the number of different universes
+      for(size_t u = 0; u < 50; u++){
+        // Get the changes in efficiency for this universe
+        // Reconstruct particles with changes to efficiencies
+        std::vector<const simb::MCParticle*> ds_reco_particles = RecoParticles(particles, fMueff[u], fPieff[u], fPeff[u]);
+        // Perform the CC inclusive selection with changes to efficiencies
+        std::pair<bool, int> ds_cc_selected = IsCCInc(vertex, ds_reco_particles, fPpid[u], fMupid[u]); 
+        
+
+        if(ds_cc_selected.first && !cosmic_id){ 
+          ds_cc[u]     = 1;
+          ds_nu_pdg[u] = 14;
+        }
+        else{ 
+          ds_cc[u] = -1;
+        }
+
+        int ds_j = ds_cc_selected.second;
+
+        if(ds_j != -1){
+          // Check if particle is contained
+          double ds_contained_length = fTPCGeo.TpcLength(*ds_reco_particles.at(ds_j));
+          std::pair<TVector3, TVector3> ds_cross_points = fTPCGeo.CrossingPoints(*ds_reco_particles.at(ds_j));
+          TVector3 ds_start = ds_cross_points.first;
+          TVector3 ds_end = ds_cross_points.second;
+          ds_lep_contained[u] = fTPCGeo.IsContained(*ds_reco_particles.at(ds_j));
+          ds_lep_theta[u] = (ds_end - ds_start).Theta();
+
+          // Smear variables with changes to efficiencies
+          // Fill the reconstructed variables for this universe
+          if(ds_lep_contained[u]) 
+            ds_lep_mom[u] = fRangeFitter.GetTrackMomentum(ds_contained_length, 13);
+          else{ 
+            ds_lep_mom[u] = SmearMcsMomentumHist(ds_reco_particles.at(ds_j)->P(), ds_contained_length, fMomres[u]);
+          }
+        }
+
+        for(size_t dj = 0; dj < ds_reco_particles.size(); dj++){
+          // Don't look at the particle selected as the muon
+          if(ds_j == (int)dj) continue;
+          int pdg = std::abs(ds_reco_particles.at(dj)->PdgCode());
+          if(pdg == 111 || pdg == 13 || pdg == 211 || pdg == 2212){ 
+            if(!fTPCGeo.IsContained(*ds_reco_particles.at(dj))) ds_particles_contained[u] = false;
+          }
+        }
+      }
+      // Fill the tree
+      fDetSystTree->Fill();
+     
       if(fVerbose){
 
         // Loop over list of reco types and print everything
@@ -1013,6 +1125,19 @@ namespace sbnd {
     }
   }
 
+  void XSecTree::ResetDetSyst(){
+    ds_vtx_x = -99999.;
+    ds_vtx_y = -99999.;
+    ds_vtx_z = -99999.;
+    for(size_t i = 0; i < 50; i++){
+      ds_particles_contained[i] = true;
+      ds_lep_contained[i]       = false;
+      ds_cc[i]                  = -1;
+      ds_nu_pdg[i]              = 0;
+      ds_lep_mom[i]             = -99999;
+      ds_lep_theta[i]           = -99999;
+    }
+  }
   
   // Give us a list of the stable, primary particles that we're interested in
   std::vector<const simb::MCParticle*> XSecTree::InterestingParticles(std::vector<const simb::MCParticle*> particles){
@@ -1038,7 +1163,7 @@ namespace sbnd {
 
 
   // Apply reconstruction efficiencies to true particles
-  std::vector<const simb::MCParticle*> XSecTree::RecoParticles(std::vector<const simb::MCParticle*> particles){
+  std::vector<const simb::MCParticle*> XSecTree::RecoParticles(std::vector<const simb::MCParticle*> particles, double muerr, double pierr, double perr){
 
     std::vector<const simb::MCParticle*> reco_particles;
 
@@ -1065,7 +1190,7 @@ namespace sbnd {
           if(particles.at(j)->P() < fMuonThreshold || rand_eff > fMuonEff) continue;
         }
         //else if(!MuonHistEff(particles.at(j)->P())) continue;
-        else if(!MuonHistEff(length, theta)) continue;
+        else if(!MuonHistEff(length, theta, muerr)) continue;
       }
       // Consider the secondary photons when reconstructing pi0
       if(pdg == 111){
@@ -1095,14 +1220,14 @@ namespace sbnd {
           if(particles.at(j)->P() < fPionThreshold || rand_eff > fPionEff) continue;
         }
         //else if(!PionHistEff(particles.at(j)->P())) continue;
-        else if(!PionHistEff(length, theta)) continue;
+        else if(!PionHistEff(length, theta, pierr)) continue;
       }
       if(pdg == 2212){
         if(!fUseHistEfficiency){
           if(particles.at(j)->P() < fProtonThreshold || rand_eff > fProtonEff) continue;
         }
         //else if(!ProtonHistEff(particles.at(j)->P())) continue;
-        else if(!ProtonHistEff(length, theta)) continue;
+        else if(!ProtonHistEff(length, theta, perr)) continue;
       }
 
       reco_particles.push_back(particles.at(j));
@@ -1175,7 +1300,7 @@ namespace sbnd {
 
   } // XSecTree::SmearMcsMomentumSbnd()
 
-
+/*
   bool XSecTree::MuonHistEff(double momentum){
     bool reconstructed = false;
     double efficiency[] = {0.0590501, 0.506081, 0.82274, 0.868142, 0.888397, 0.899807, 0.902781, 0.910641, 0.916731, 0.94};
@@ -1189,6 +1314,7 @@ namespace sbnd {
     return reconstructed;
 
   } // XSecTree::MuonHistEff() 
+*/
 
   bool XSecTree::MuonHistEff(double length, double theta, double err){
     bool reconstructed = false;
@@ -1197,15 +1323,15 @@ namespace sbnd {
     int tbin = hMuRecoEff->GetYaxis()->FindBin(length);
     if(tbin == hMuRecoEff->GetNbinsY() + 1) tbin = hMuRecoEff->GetNbinsY();
 
-    double efficiency = hMuRecoEff->GetBinContent(lbin, tbin)*(1.+err);
-    if((efficiency <= 0 && length > 50.) || efficiency > 1) efficiency = 1.;
+    double efficiency = hMuRecoEff->GetBinContent(lbin, tbin) + err;
+    if((hMuRecoEff->GetBinContent(lbin, tbin) <= 0 && length > 50.) || efficiency > 1.) efficiency = 1.;
     double rand_eff = fRandom->Rndm();
     if(rand_eff < efficiency) reconstructed = true;
 
     return reconstructed;
 
-  } // XSecTree::MuonHistEff()
-
+  }
+/*
   bool XSecTree::PionHistEff(double momentum){
     bool reconstructed = false;
     double efficiency[] = {0.0364407, 0.137405, 0.374127, 0.49142, 0.568833, 0.588972, 0.616043, 0.626923, 0.632184, 0.65};
@@ -1219,7 +1345,7 @@ namespace sbnd {
     return reconstructed;
 
   } // XSecTree:PionHistEff()
-
+*/
   bool XSecTree::PionHistEff(double length, double theta, double err){
     bool reconstructed = false;
     int lbin = hPiRecoEff->GetXaxis()->FindBin(length);
@@ -1227,15 +1353,15 @@ namespace sbnd {
     int tbin = hPiRecoEff->GetYaxis()->FindBin(length);
     if(tbin == hPiRecoEff->GetNbinsY() + 1) tbin = hPiRecoEff->GetNbinsY();
 
-    double efficiency = hPiRecoEff->GetBinContent(lbin, tbin)*(1.+err);
-    if((efficiency <= 0 && length > 50.) || efficiency > 1.) efficiency = 1.;
+    double efficiency = hPiRecoEff->GetBinContent(lbin, tbin) + err;
+    if((hPiRecoEff->GetBinContent(lbin, tbin) <= 0 && length > 50.) || efficiency > 1.) efficiency = 1.;
     double rand_eff = fRandom->Rndm();
     if(rand_eff < efficiency) reconstructed = true;
 
     return reconstructed;
 
   } // XSecTree::PionHistEff()
-
+/*
   bool XSecTree::ProtonHistEff(double momentum){
     bool reconstructed = false;
     double efficiency[] = {0.000135655, 0.000968523, 0.00599737, 0.0423821, 0.106337, 0.198591, 0.345482, 0.504317, 0.632799, 0.75};
@@ -1249,7 +1375,7 @@ namespace sbnd {
     return reconstructed;
 
   } // XSecTree:ProtonHistEff()
-
+*/
   bool XSecTree::ProtonHistEff(double length, double theta, double err){
     bool reconstructed = false;
     int lbin = hPRecoEff->GetXaxis()->FindBin(length);
@@ -1257,8 +1383,8 @@ namespace sbnd {
     int tbin = hPRecoEff->GetYaxis()->FindBin(length);
     if(tbin == hPRecoEff->GetNbinsY() + 1) tbin = hPRecoEff->GetNbinsY();
 
-    double efficiency = hPRecoEff->GetBinContent(lbin, tbin)*(1.+err);
-    if((efficiency <= 0 && length > 50.) || efficiency > 1) efficiency = 1.;
+    double efficiency = hPRecoEff->GetBinContent(lbin, tbin) + err;
+    if((hPRecoEff->GetBinContent(lbin, tbin) <= 0 && length > 50.) || efficiency > 1) efficiency = 1.;
     double rand_eff = fRandom->Rndm();
     if(rand_eff < efficiency) reconstructed = true;
 
@@ -1349,7 +1475,7 @@ namespace sbnd {
 
 
   // Inclusive charged current selection
-  bool XSecTree::IsCCInc(geo::Point_t vertex, std::vector<const simb::MCParticle*> reco_particles){
+  std::pair<bool, int> XSecTree::IsCCInc(geo::Point_t vertex, std::vector<const simb::MCParticle*> reco_particles, double ppid, double mupid){
     bool cc_selected = true;
     // Check vertex is inside the fiducial volume
     //if(!fTPCGeo.InFiducial(vertex, fWallCut, fWallCut, fWallCut, fWallCut, fWallCut, fBackCut)){ 
@@ -1361,10 +1487,9 @@ namespace sbnd {
 
     // Loop over the mu/pi/pr secondary particles and find the longest
     double max_contained_length = 0;
-    int max_pdg = -99999;
     int n_escape = 0;
     double longest_escape = 0;
-    std::vector<std::pair<double, const simb::MCParticle*>> long_tracks;
+    int long_j = -1;
     for(size_t j = 0; j < reco_particles.size(); j++){
       // Only consider track-like particles
       int pdg = std::abs(reco_particles.at(j)->PdgCode());
@@ -1397,18 +1522,17 @@ namespace sbnd {
       }*/
       if(!escapes && contained_length < 100.){
         // Proton ID
-        if(contained_length < 100. && pdg == 2212 && ProtonHistPid(reco_particles.at(j)->P())) continue;
+        if(pdg == 2212 && ProtonHistPid(reco_particles.at(j)->P(), ppid)) continue;
         // Minimum length cut
         if(contained_length < 25.) continue;
         // All other cuts combined and parametrized in momentum
-        if(contained_length < 100. && !(MuonHistPid(reco_particles.at(j)->P(), pdg))) continue;
+        if(!(MuonHistPid(reco_particles.at(j)->P(), pdg, mupid))) continue;
       }
       if(contained_length < max_contained_length) continue;
 
       max_contained_length = contained_length;
-      max_pdg              = pdg;
-      longest_j            = j;
-
+      long_j            = j;
+/*
       // Check if particle is contained
       lep_contained["reco"] = fTPCGeo.IsContained(*reco_particles.at(j));
       lep_theta["reco"] = (end - start).Theta();
@@ -1420,13 +1544,11 @@ namespace sbnd {
         if(!fUseSbndSmearing) lep_mom["reco"] = SmearMcsMomentum(reco_particles.at(j)->P());
         //else lep_mom["reco"] = SmearMcsMomentumSbnd(reco_particles.at(j)->P(), contained_length);
         else lep_mom["reco"] = SmearMcsMomentumHist(reco_particles.at(j)->P(), contained_length);
-      }
+      }*/
     }
 
-    if(fVerbose) std::cout<<"max contained length = "<<max_contained_length<<" pdg = "<<max_pdg<<"\n";
-
-    if(n_escape == 1 && longest_escape == max_contained_length){
-      if(longest_escape >= fMinExitingLength) cc_selected = true;
+    if(n_escape == 1){
+      if(longest_escape == max_contained_length && longest_escape >= fMinExitingLength) cc_selected = true;
       else cc_selected = false;
     }
     else if(n_escape == 0){
@@ -1437,7 +1559,7 @@ namespace sbnd {
       cc_selected = false;
     }
 
-    return cc_selected;
+    return std::make_pair(cc_selected, long_j);
 
   }
 /*
@@ -1464,9 +1586,10 @@ namespace sbnd {
     if(bin == hMuMuId->GetNbinsX()+1) bin = hMuMuId->GetNbinsX();
 
     double efficiency = 0;
-    if(std::abs(pdg) == 13) efficiency = hMuMuId->GetBinContent(bin)*(1.+err);
-    if(std::abs(pdg) == 211) efficiency = hPiMuId->GetBinContent(bin)*(1.+err);
-    if(std::abs(pdg) == 2212) efficiency = hPMuId->GetBinContent(bin)*(1.+err);
+    // TODO cheating...
+    if(std::abs(pdg) == 13) efficiency = hMuMuId->GetBinContent(bin) + err;
+    if(std::abs(pdg) == 211) efficiency = hPiMuId->GetBinContent(bin) + 3.*err;
+    if(std::abs(pdg) == 2212) efficiency = hPMuId->GetBinContent(bin) + 2.*err;
     if(efficiency < 0) efficiency = 0;
     if(efficiency > 1) efficiency = 1;
 
@@ -1495,7 +1618,7 @@ namespace sbnd {
     int bin = hProtonId->GetXaxis()->FindBin(momentum);
     if(bin == hProtonId->GetNbinsX()+1) bin = hProtonId->GetNbinsX();
 
-    double efficiency = hProtonId->GetBinContent(bin)*(1.+err);
+    double efficiency = hProtonId->GetBinContent(bin) + err;
     if(efficiency < 0) efficiency = 0.;
     if(efficiency > 1) efficiency = 1.;
     double rand_eff = fRandom->Rndm();

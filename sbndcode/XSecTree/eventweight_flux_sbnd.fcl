@@ -92,7 +92,7 @@ sbnd_eventweight_flux: {
     scale_factor: 1
     number_of_multisims: 100
     PrimaryHadronGeantCode: -321 # geant code for particle production on Be
-    weight_calculator: "MicroBooNE" # "MicroBooNE" OR "MiniBooNE"
+    weight_calculator: "MiniBooNE" # "MicroBooNE" OR "MiniBooNE"
     use_MiniBooNE_random_numbers: false
   }
 
