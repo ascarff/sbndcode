@@ -1,0 +1,27 @@
+#include "eventweight_flux_sbnd.fcl"
+
+BEGIN_PROLOG
+
+sbnd_fluxreweight:
+{
+      # The "module_type" tells us which module to run. The name here
+      # must match the name supplied to DEFINE_ART_MODULE
+      module_type:     "sbndcode/FluxReader/Reweight/FluxReweight"
+
+      # The input parameters
+      GenModuleLabel:       "flux"
+
+      # Stuff for event reweighting
+      genie_module_label:    "flux"
+      min_weight: 0
+      max_weight: 100
+
+      @table::sbnd_eventweight_flux
+
+}
+
+sbnd_fluxreweight.weight_functions: [
+  @sequence::sbnd_fluxreweight.weight_functions_flux
+]
+
+END_PROLOG
