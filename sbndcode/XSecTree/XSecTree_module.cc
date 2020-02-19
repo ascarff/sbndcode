@@ -96,24 +96,21 @@ namespace sbnd {
     double SmearMcsMomentumHist(double momentum, double length, double err=0);
 
     // Use histograms for efficiencies
-    //bool MuonHistEff(double momentum);
     bool MuonHistEff(double length, double theta, double err=0);
-    //bool PionHistEff(double momentum);
     bool PionHistEff(double length, double theta, double err=0);
-    //bool ProtonHistEff(double momentum);
     bool ProtonHistEff(double length, double theta, double err=0);
 
     // Smear momentum for contained particles using range based method
     double SmearRangeMomentum(double momentum);
 
     // Calculate the visible energy as neutrino energy estimator
-    double VisibleEnergy(std::vector<const simb::MCParticle*> particles);
+    double VisibleEnergy(std::vector<const simb::MCParticle*> particles, int lep_j);
 
     // Calculate transverse variables (https://link.aps.org/accepted/10.1103/PhysRevC.94.015503)
     TVector3 DeltaPT(TVector3 mu_mom, TVector3 pr_mom);
 
     // Inclusive charged current selection
-    std::pair<bool,int> IsCCInc(geo::Point_t vertex, std::vector<const simb::MCParticle*> reco_particles, double ppid=0, double mupid=0);
+    std::pair<bool,int> IsCCInc(std::vector<const simb::MCParticle*> reco_particles, double ppid=0, double mupid=0);
 
     // Use histograms for PID
     bool MuonHistPid(double momentum, int pdg, double err=0);
@@ -175,12 +172,12 @@ namespace sbnd {
     TRandom2 *fRandom;
 
     // "Random" uncertainties for detector systematics, need to be consistent over universes
-    double fMueff[50] = { 0.0007,0.0133,-0.0078,0.0017,-0.0049,-0.0061,-0.0049,-0.0034,0.0171,0.0003,-0.0126,0.0189,-0.0033,-0.0161,-0.0049,0.0134,0.0168,-0.0186,0.0093,0.0074,-0.0088,-0.0044,0.0037,-0.0037,-0.0157,0.0052,-0.0119,0.0225,-0.0127,-0.0032,0.0091,0.0103,0.0051,-0.0047,0.0021,-0.0022,0.0074,0.0065,0.0174,-0.0151,-0.0039,-0.0010,-0.0007,0.0051,0.0049,-0.0155,-0.0075,-0.0023,-0.0054,0.0062 };
-    double fPieff[50] = { -0.0048,0.0150,-0.0544,0.0469,-0.0149,0.0192,-0.0521,0.0006,0.0870,-0.0666,-0.0091,0.0012,0.0543,-0.0258,0.0219,-0.0074,0.0410,0.0027,-0.0179,-0.0397,0.0729,-0.0407,-0.0014,0.0387,0.0592,-0.0152,0.0166,-0.0333,-0.0408,-0.0145,0.0165,0.0249,-0.0275,-0.0210,-0.0029,0.0382,-0.0224,-0.0094,-0.0124,0.0196,-0.0195,-0.0127,0.0052,-0.0107,0.0092,0.0178,0.0554,-0.0025,0.0049,0.0097 };
-    double fPeff[50] = { -0.0054,0.0185,-0.0023,-0.0063,0.0031,0.0185,0.0112,-0.0048,0.0324,0.0030,-0.0414,-0.0099,0.0037,0.0041,0.0324,0.0014,-0.0122,-0.0022,-0.0265,-0.0207,0.0273,0.0173,-0.0155,0.0062,-0.0220,-0.0158,0.0144,0.0139,0.0049,-0.0114,-0.0380,-0.0078,0.0110,-0.0114,0.0276,-0.0054,-0.0105,-0.0057,0.0250,-0.0157,-0.0140,0.0088,0.0089,-0.0477,-0.0049,-0.0038,-0.0096,-0.0099,-0.0188,0.0005 };
-    double fPpid[50] = { -0.0170,-0.0034,0.0139,0.0162,-0.0059,0.0175,0.0123,0.0035,-0.0015,0.0108,-0.0093,-0.0049,-0.0054,0.0136,-0.0085,-0.0037,0.0043,0.0071,-0.0087,0.0090,0.0085,-0.0059,0.0010,-0.0088,-0.0141,-0.0057,0.0138,0.0025,-0.0111,-0.0009,0.0093,0.0281,-0.0198,0.0127,-0.0012,-0.0126,0.0034,-0.0013,-0.0042,0.0033,-0.0086,-0.0086,-0.0029,0.0009,-0.0113,0.0103,-0.0073,0.0144,0.0081,0.0018 };
-    double fMupid[50] = { 0.0143,0.0024,0.0005,-0.0015,-0.0048,-0.0044,-0.0087,0.0167,-0.0064,0.0039,0.0001,-0.0203,0.0197,-0.0162,0.0034,0.0028,0.0013,-0.0201,-0.0012,0.0075,-0.0025,0.0043,0.0003,0.0099,-0.0003,-0.0061,0.0068,-0.0170,0.0084,0.0174,0.0053,0.0009,0.0064,0.0066,-0.0044,0.0011,0.0056,-0.0057,0.0107,-0.0056,0.0117,0.0112,-0.0034,0.0164,0.0026,0.0147,-0.0021,-0.0070,-0.0124,0.0084 };
-    double fMomres[50] = { 0.0183,-0.0395,0.0239,-0.0151,0.0240,0.0174,0.0127,0.0845,0.1038,-0.0304,0.0233,-0.0241,0.0625,0.0356,-0.1218,-0.0434,-0.0095,-0.0598,0.0701,0.0506,0.0082,-0.0763,-0.0096,0.0500,-0.0136,0.0013,0.0241,0.0475,0.0079,-0.0122,0.0599,0.0407,-0.0361,-0.0183,0.0597,-0.0235,-0.0113,-0.0321,-0.0003,-0.0743,-0.0028,-0.0480,-0.0132,-0.0478,-0.0664,-0.0037,0.0825,0.0000,0.0163,-0.0110 };
+    double fMueff[50] = { 0.0024,-0.0285,-0.0168,0.0108,-0.0432,0.0285,0.0012,-0.0440,0.0052,-0.0121,-0.0498,0.0126,0.0092,0.0487,-0.0078,0.0377,-0.0178,0.0070,0.0488,-0.0057,0.0606,-0.0190,0.0262,-0.0063,-0.0550,0.0177,-0.0325,-0.0200,-0.0567,0.0673,-0.0378,0.0197,-0.0147,-0.0037,-0.0420,-0.0210,0.0733,0.0442,-0.0226,0.1051,-0.0227,0.0398,-0.0568,-0.0285,0.0003,-0.0145,-0.0746,0.0168,-0.0195,-0.0967 };
+    double fPieff[50] = { 0.1248,-0.0160,0.0138,-0.0712,0.0118,0.0594,-0.0681,0.0236,0.0378,-0.0487,-0.0094,-0.1085,0.0927,0.0832,-0.0209,-0.0224,-0.0478,-0.0360,-0.0612,0.0687,0.0294,-0.0034,0.0271,-0.0613,0.0943,-0.0160,-0.0351,0.0103,0.0456,0.0487,0.0293,-0.0165,0.0675,-0.0926,-0.0080,-0.0135,-0.0009,-0.0434,-0.0272,0.0455,0.0918,-0.0451,0.0581,0.0881,-0.0736,0.0294,-0.1525,0.0599,0.0052,0.0587 };
+    double fPeff[50] = { -0.0268,-0.0096,0.0281,-0.0131,-0.0513,-0.0149,0.0085,-0.0743,0.0829,-0.0621,0.0078,0.0272,0.0160,-0.0047,0.1336,0.0099,0.0517,-0.0004,0.0642,-0.0710,-0.0234,-0.0058,0.0126,-0.0519,-0.0320,-0.0260,-0.0072,-0.0729,0.0467,-0.0855,-0.0268,-0.0282,0.0922,0.0082,-0.0330,-0.0832,-0.0181,-0.0393,0.0205,0.0511,-0.0232,-0.0110,0.0173,-0.0278,-0.0079,-0.0509,0.0101,-0.0714,-0.0247,-0.0786 };
+    double fPpid[50] = { 0.0468,0.0209,0.0660,-0.0251,-0.0154,-0.0965,0.1025,0.0610,0.0150,-0.0071,0.0606,-0.0001,0.0310,0.0640,-0.0186,0.0297,-0.0415,0.0596,0.0723,-0.0288,-0.0141,0.0857,-0.0558,0.0459,0.0659,-0.0107,0.0644,0.0261,-0.0003,-0.0516,-0.0609,-0.0603,0.0119,0.0697,-0.0024,0.0095,-0.0004,0.0125,0.0407,0.0186,-0.0264,0.0136,0.0242,-0.0812,0.0535,-0.0374,-0.0652,-0.0608,0.0148,-0.1042 };
+    double fMupid[50] = { 0.0691,0.0280,-0.0278,-0.0014,-0.0674,-0.0137,-0.0017,-0.0071,0.0168,0.0075,-0.1026,0.0064,0.0437,-0.0646,0.0406,-0.0117,-0.0190,-0.0211,0.0045,-0.0100,-0.0346,0.0465,0.0473,0.0190,0.0187,0.0634,-0.0490,-0.0249,0.0203,0.0430,-0.0179,-0.0260,-0.0461,-0.0155,-0.0274,0.0822,0.0375,-0.0127,-0.0385,0.0162,0.0296,0.0049,0.0046,0.0182,-0.0341,-0.0099,-0.0786,-0.0062,0.0834,-0.0196 };
+    double fMomres[50] = { 0.0261,0.0202,0.0001,0.1030,0.0353,0.0307,0.0639,-0.0309,-0.0447,0.0363,-0.0377,0.0514,-0.0162,-0.0482,0.0588,0.0450,-0.0785,-0.1456,-0.0394,-0.0409,-0.0283,-0.0274,-0.0291,0.0145,0.0510,0.0332,0.0257,-0.0703,-0.0129,0.0088,0.0614,-0.0226,0.0233,-0.0132,0.0229,0.0233,-0.0372,0.0469,-0.0063,-0.0161,0.0239,-0.0442,-0.0013,-0.0287,0.0436,-0.0057,0.0532,0.0037,0.0578,-0.0484 }; 
 
     // Global variables
     int lep_j;
@@ -220,6 +217,7 @@ namespace sbnd {
     std::map<std::string, double> nu_energy;
     std::map<std::string, double> lep_mom;
     std::map<std::string, double> lep_theta;
+    std::map<std::string, double> lep_phi;
     std::map<std::string, double> pr1_mom;
     std::map<std::string, double> pr1_theta;
     std::map<std::string, double> lep_pr1_angle;
@@ -247,6 +245,9 @@ namespace sbnd {
     int ds_nu_pdg[50];
     double ds_lep_mom[50];
     double ds_lep_theta[50];
+    double ds_lep_phi[50];
+    double ds_vise[50];
+    unsigned int ds_ntracks[50];
 
   }; // class XSecTree
 
@@ -290,51 +291,9 @@ namespace sbnd {
     
     fGenieWeightCalcs = {
     "genie_all_Genie"};
-    /*"genie_AGKYpT_Genie",
-    "genie_AGKYxF_Genie",
-    "genie_DISAth_Genie",
-    "genie_DISBth_Genie",
-    "genie_DISCv1u_Genie",
-    "genie_DISCv2u_Genie",
-    "genie_FermiGasModelKf_Genie",
-    "genie_FermiGasModelSf_Genie",
-    "genie_FormZone_Genie",
-    "genie_IntraNukeNabs_Genie",
-    "genie_IntraNukeNcex_Genie",
-    "genie_IntraNukeNel_Genie",
-    "genie_IntraNukeNinel_Genie",
-    "genie_IntraNukeNmfp_Genie",
-    "genie_IntraNukeNpi_Genie",
-    "genie_IntraNukePIabs_Genie",
-    "genie_IntraNukePIcex_Genie",
-    "genie_IntraNukePIel_Genie",
-    "genie_IntraNukePIinel_Genie",
-    "genie_IntraNukePImfp_Genie",
-    "genie_IntraNukePIpi_Genie",
-    "genie_NC_Genie",
-    "genie_NonResRvbarp1piAlt_Genie",
-    "genie_NonResRvbarp1pi_Genie",
-    "genie_NonResRvbarp2piAlt_Genie",
-    "genie_NonResRvbarp2pi_Genie",
-    "genie_NonResRvp1piAlt_Genie",
-    "genie_NonResRvp1pi_Genie",
-    "genie_NonResRvp2piAlt_Genie",
-    "genie_NonResRvp2pi_Genie",
-    "genie_ResDecayEta_Genie",
-    "genie_ResDecayGamma_Genie",
-    "genie_ResDecayTheta_Genie",
-    "genie_ccresAxial_Genie",
-    "genie_ccresVector_Genie",
-    "genie_cohMA_Genie",
-    "genie_cohR0_Genie",
-    "genie_ncelAxial_Genie",
-    "genie_ncelEta_Genie",
-    "genie_ncresAxial_Genie",
-    "genie_ncresVector_Genie",
-    "genie_qema_Genie",
-    "genie_qevec_Genie"};*/
+
     fFluxWeightCalcs = {
-    "bnbcorrection_FluxHist",
+    /*"bnbcorrection_FluxHist",
     "expskin_FluxUnisim",
     "horncurrent_FluxUnisim",
     "kminus_PrimaryHadronNormalization",
@@ -346,7 +305,7 @@ namespace sbnd {
     "piminus_PrimaryHadronSWCentralSplineVariation",
     "pioninexsec_FluxUnisim",
     "pionqexsec_FluxUnisim",
-    "piontotxsec_FluxUnisim",
+    "piontotxsec_FluxUnisim",*/
     "piplus_PrimaryHadronSWCentralSplineVariation"
     };
 
@@ -400,6 +359,7 @@ namespace sbnd {
       fXSecTree->Branch((fRecoFormats[i]+"_nu_energy").c_str(), &nu_energy[fRecoFormats[i]]);
       fXSecTree->Branch((fRecoFormats[i]+"_lep_mom").c_str(), &lep_mom[fRecoFormats[i]]);
       fXSecTree->Branch((fRecoFormats[i]+"_lep_theta").c_str(), &lep_theta[fRecoFormats[i]]);
+      fXSecTree->Branch((fRecoFormats[i]+"_lep_phi").c_str(), &lep_phi[fRecoFormats[i]]);
       fXSecTree->Branch((fRecoFormats[i]+"_pr1_mom").c_str(), &pr1_mom[fRecoFormats[i]]);
       fXSecTree->Branch((fRecoFormats[i]+"_pr1_theta").c_str(), &pr1_theta[fRecoFormats[i]]);
       fXSecTree->Branch((fRecoFormats[i]+"_lep_pr1_angle").c_str(), &lep_pr1_angle[fRecoFormats[i]]);
@@ -428,6 +388,9 @@ namespace sbnd {
     fDetSystTree->Branch("ds_nu_pdg", &ds_nu_pdg, "ds_nu_pdg[50]/I");
     fDetSystTree->Branch("ds_lep_mom", &ds_lep_mom, "ds_lep_mom[50]/D");
     fDetSystTree->Branch("ds_lep_theta", &ds_lep_theta, "ds_lep_theta[50]/D");
+    fDetSystTree->Branch("ds_lep_phi", &ds_lep_phi, "ds_lep_phi[50]/D");
+    fDetSystTree->Branch("ds_vise", &ds_vise, "ds_vise[50]/D");
+    fDetSystTree->Branch("ds_ntracks", &ds_ntracks, "ds_ntracks[50]/i");
     // Initial output
     std::cout<<"----------------- XSec Tree Module -------------------"<<std::endl;
 
@@ -530,7 +493,7 @@ namespace sbnd {
         evwgh::MCEventWeight mcwgh = _wgt_manager.Run(e, inu);
         std::cout<<"Number of weights = "<<mcwgh.fWeight.size()<<"\n";
         for(auto const &kv : mcwgh.fWeight){
-          std::cout<<"Name = "<<kv.first<<" vector size = "<<kv.second.size()<<"\n";
+          //std::cout<<"Name = "<<kv.first<<" vector size = "<<kv.second.size()<<"\n";
           if(std::find(fGenieWeightCalcs.begin(), fGenieWeightCalcs.end(), kv.first) != fGenieWeightCalcs.end()){
             for(size_t i = 0; i < kv.second.size(); i++){
               if(i >= 100) continue;
@@ -538,6 +501,7 @@ namespace sbnd {
             }
           }
           if(std::find(fFluxWeightCalcs.begin(), fFluxWeightCalcs.end(), kv.first) != fFluxWeightCalcs.end()){
+            std::cout<<"Name = "<<kv.first<<" vector size = "<<kv.second.size()<<"\n";
             for(size_t i = 0; i < kv.second.size(); i++){
               if(i >= 100) continue;
               flux_weights[i] *= kv.second[i];
@@ -546,7 +510,6 @@ namespace sbnd {
         }
         fWeightTree->Fill();
       }
-      
     //}
 
     //----------------------------------------------------------------------------------------------------------
@@ -599,6 +562,7 @@ namespace sbnd {
         TVector3 end          = particles.at(j)->EndPosition().Vect();
         lep_mom["true"]       = particles.at(j)->P();
         lep_theta["true"]     = (end - start).Theta();
+        lep_phi["true"]       = (end - start).Phi();
         lep_contained["true"] = fTPCGeo.IsContained(*particles.at(j));
       }
 
@@ -677,7 +641,7 @@ namespace sbnd {
       int_type["smeareff"]  = mctruth->GetNeutrino().Mode();
 
       // TODO Make a better neutrino energy calculator
-      nu_energy["smeareff"] = VisibleEnergy(reco_particles);
+      nu_energy["smeareff"] = VisibleEnergy(reco_particles, lep_j);
       if(fVerbose){
         std::cout<<"True energy    = "<< nu_energy["eff"] <<"\n";
         std::cout<<"Smeared energy = "<< nu_energy["smeareff"] <<"\n";
@@ -699,9 +663,11 @@ namespace sbnd {
 
           lep_j                             = j;
           lep_theta["eff"]                  = (end - start).Theta();
+          lep_phi["eff"]                    = (end - start).Phi();
           lep_contained["eff"]              = fTPCGeo.IsContained(*reco_particles.at(j));
-          lep_theta["smeareff"]             = (end - start).Theta();
-          lep_contained["smeareff"]         = fTPCGeo.IsContained(*reco_particles.at(j));
+          lep_theta["smeareff"]             = lep_theta["eff"];
+          lep_phi["smeareff"]               = lep_phi["eff"];
+          lep_contained["smeareff"]         = lep_contained["eff"];
 
 
           if(pdg == 11){
@@ -710,7 +676,8 @@ namespace sbnd {
             lep_mom["smeareff"] = SmearElectronMomentum(reco_particles.at(j)->P());
           }
           else if(lep_contained["smeareff"])
-            lep_mom["smeareff"] = fRangeFitter.GetTrackMomentum(contained_length, 13);
+            //lep_mom["smeareff"] = fRangeFitter.GetTrackMomentum(contained_length, 13);
+            lep_mom["smeareff"] = SmearRangeMomentum(reco_particles.at(j)->P());
           else{ 
             if(!fUseSbndSmearing) lep_mom["smeareff"] = SmearMcsMomentum(reco_particles.at(j)->P());
             //else lep_mom["smeareff"] = SmearMcsMomentumSbnd(reco_particles.at(j)->P(), contained_length);
@@ -831,8 +798,6 @@ namespace sbnd {
 
       //---------------------------- CC INCLUSIVE SELECTION --------------------------------------
 
-      // Same as smeared neutrino energy
-      nu_energy["reco"] = VisibleEnergy(reco_particles);
 
       // Random probability of being rejected by cosmic ID cuts
       bool cosmic_id = false;
@@ -841,20 +806,22 @@ namespace sbnd {
       }
       else if (fRandom->Rndm() < 0.15) cosmic_id = true;
 
-      std::pair<bool, int> cc_selected = IsCCInc(vertex, reco_particles); 
+      std::pair<bool, int> cc_selected = IsCCInc(reco_particles); 
       
-
       if(cc_selected.first && !cosmic_id){ 
         if(fVerbose) std::cout<<"Selected as CC\n";
         cc["reco"]     = 1;
         nu_pdg["reco"] = 14;
       }
-      else{ 
+      else{
         cc["reco"] = -1;
       }
 
       //------------------------------------ LEPTON KINEMATICS ------------------------------------------
       longest_j = cc_selected.second;
+
+      // Same as smeared neutrino energy
+      nu_energy["reco"] = VisibleEnergy(reco_particles, longest_j);
 
       if(longest_j != -1){
         // Check if particle is contained
@@ -864,10 +831,12 @@ namespace sbnd {
         TVector3 end                               = cross_points.second;
         lep_contained["reco"] = fTPCGeo.IsContained(*reco_particles.at(longest_j));
         lep_theta["reco"] = (end - start).Theta();
+        lep_phi["reco"] = (end - start).Phi();
 
         // Smear momentum based on whether particle is contained or not
         if(lep_contained["reco"]) 
-          lep_mom["reco"] = fRangeFitter.GetTrackMomentum(contained_length, 13);
+          //lep_mom["reco"] = fRangeFitter.GetTrackMomentum(contained_length, 13);
+          lep_mom["reco"] = SmearRangeMomentum(reco_particles.at(longest_j)->P());
         else{ 
           if(!fUseSbndSmearing) lep_mom["reco"] = SmearMcsMomentum(reco_particles.at(longest_j)->P());
           else lep_mom["reco"] = SmearMcsMomentumHist(reco_particles.at(longest_j)->P(), contained_length);
@@ -1003,9 +972,8 @@ namespace sbnd {
         // Reconstruct particles with changes to efficiencies
         std::vector<const simb::MCParticle*> ds_reco_particles = RecoParticles(particles, fMueff[u], fPieff[u], fPeff[u]);
         // Perform the CC inclusive selection with changes to efficiencies
-        std::pair<bool, int> ds_cc_selected = IsCCInc(vertex, ds_reco_particles, fPpid[u], fMupid[u]); 
+        std::pair<bool, int> ds_cc_selected = IsCCInc(ds_reco_particles, fPpid[u], fMupid[u]); 
         
-
         if(ds_cc_selected.first && !cosmic_id){ 
           ds_cc[u]     = 1;
           ds_nu_pdg[u] = 14;
@@ -1015,6 +983,7 @@ namespace sbnd {
         }
 
         int ds_j = ds_cc_selected.second;
+        ds_vise[u] = VisibleEnergy(ds_reco_particles, ds_j);
 
         if(ds_j != -1){
           // Check if particle is contained
@@ -1024,11 +993,13 @@ namespace sbnd {
           TVector3 ds_end = ds_cross_points.second;
           ds_lep_contained[u] = fTPCGeo.IsContained(*ds_reco_particles.at(ds_j));
           ds_lep_theta[u] = (ds_end - ds_start).Theta();
+          ds_lep_phi[u] = (ds_end - ds_start).Phi();
 
           // Smear variables with changes to efficiencies
           // Fill the reconstructed variables for this universe
           if(ds_lep_contained[u]) 
-            ds_lep_mom[u] = fRangeFitter.GetTrackMomentum(ds_contained_length, 13);
+            //ds_lep_mom[u] = fRangeFitter.GetTrackMomentum(ds_contained_length, 13);
+            ds_lep_mom[u] = SmearRangeMomentum(ds_reco_particles.at(ds_j)->P());
           else{ 
             ds_lep_mom[u] = SmearMcsMomentumHist(ds_reco_particles.at(ds_j)->P(), ds_contained_length, fMomres[u]);
           }
@@ -1040,6 +1011,9 @@ namespace sbnd {
           int pdg = std::abs(ds_reco_particles.at(dj)->PdgCode());
           if(pdg == 111 || pdg == 13 || pdg == 211 || pdg == 2212){ 
             if(!fTPCGeo.IsContained(*ds_reco_particles.at(dj))) ds_particles_contained[u] = false;
+          }
+          if(pdg == 111 || pdg == 13 || pdg == 211 || pdg == 2212){ 
+            ds_ntracks[u] += 1;
           }
         }
       }
@@ -1106,6 +1080,7 @@ namespace sbnd {
       nu_energy[fRecoFormats[i]]           = -99999;
       lep_mom[fRecoFormats[i]]             = -99999;
       lep_theta[fRecoFormats[i]]           = -99999;
+      lep_phi[fRecoFormats[i]]             = -99999;
       pr1_mom[fRecoFormats[i]]             = -99999;
       pr1_theta[fRecoFormats[i]]           = -99999;
       lep_pr1_angle[fRecoFormats[i]]       = -99999;
@@ -1136,6 +1111,9 @@ namespace sbnd {
       ds_nu_pdg[i]              = 0;
       ds_lep_mom[i]             = -99999;
       ds_lep_theta[i]           = -99999;
+      ds_lep_phi[i]             = -99999;
+      ds_vise[i]                = -99999;
+      ds_ntracks[i]             = 0;
     }
   }
   
@@ -1189,7 +1167,6 @@ namespace sbnd {
         if(!fUseHistEfficiency){
           if(particles.at(j)->P() < fMuonThreshold || rand_eff > fMuonEff) continue;
         }
-        //else if(!MuonHistEff(particles.at(j)->P())) continue;
         else if(!MuonHistEff(length, theta, muerr)) continue;
       }
       // Consider the secondary photons when reconstructing pi0
@@ -1219,14 +1196,12 @@ namespace sbnd {
         if(!fUseHistEfficiency){
           if(particles.at(j)->P() < fPionThreshold || rand_eff > fPionEff) continue;
         }
-        //else if(!PionHistEff(particles.at(j)->P())) continue;
         else if(!PionHistEff(length, theta, pierr)) continue;
       }
       if(pdg == 2212){
         if(!fUseHistEfficiency){
           if(particles.at(j)->P() < fProtonThreshold || rand_eff > fProtonEff) continue;
         }
-        //else if(!ProtonHistEff(particles.at(j)->P())) continue;
         else if(!ProtonHistEff(length, theta, perr)) continue;
       }
 
@@ -1300,22 +1275,6 @@ namespace sbnd {
 
   } // XSecTree::SmearMcsMomentumSbnd()
 
-/*
-  bool XSecTree::MuonHistEff(double momentum){
-    bool reconstructed = false;
-    double efficiency[] = {0.0590501, 0.506081, 0.82274, 0.868142, 0.888397, 0.899807, 0.902781, 0.910641, 0.916731, 0.94};
-    int pos = 9; 
-    for(int i=0; i<10; i++){
-      if(momentum<(0.1*(i+1))) {pos = i; break;}
-    }
-    double rand_eff = fRandom->Rndm();
-    if(rand_eff < efficiency[pos]) reconstructed = true;
-
-    return reconstructed;
-
-  } // XSecTree::MuonHistEff() 
-*/
-
   bool XSecTree::MuonHistEff(double length, double theta, double err){
     bool reconstructed = false;
     int lbin = hMuRecoEff->GetXaxis()->FindBin(length);
@@ -1331,21 +1290,7 @@ namespace sbnd {
     return reconstructed;
 
   }
-/*
-  bool XSecTree::PionHistEff(double momentum){
-    bool reconstructed = false;
-    double efficiency[] = {0.0364407, 0.137405, 0.374127, 0.49142, 0.568833, 0.588972, 0.616043, 0.626923, 0.632184, 0.65};
-    int pos = 9; 
-    for(int i=0; i<10; i++){
-      if(momentum<(0.05*(i+1))) {pos = i; break;}
-    }
-    double rand_eff = fRandom->Rndm();
-    if(rand_eff < efficiency[pos]) reconstructed = true;
 
-    return reconstructed;
-
-  } // XSecTree:PionHistEff()
-*/
   bool XSecTree::PionHistEff(double length, double theta, double err){
     bool reconstructed = false;
     int lbin = hPiRecoEff->GetXaxis()->FindBin(length);
@@ -1361,21 +1306,7 @@ namespace sbnd {
     return reconstructed;
 
   } // XSecTree::PionHistEff()
-/*
-  bool XSecTree::ProtonHistEff(double momentum){
-    bool reconstructed = false;
-    double efficiency[] = {0.000135655, 0.000968523, 0.00599737, 0.0423821, 0.106337, 0.198591, 0.345482, 0.504317, 0.632799, 0.75};
-    int pos = 9; 
-    for(int i=0; i<10; i++){
-      if(momentum<(0.06*(i+1))) {pos = i; break;}
-    }
-    double rand_eff = fRandom->Rndm();
-    if(rand_eff < efficiency[pos]) reconstructed = true;
 
-    return reconstructed;
-
-  } // XSecTree:ProtonHistEff()
-*/
   bool XSecTree::ProtonHistEff(double length, double theta, double err){
     bool reconstructed = false;
     int lbin = hPRecoEff->GetXaxis()->FindBin(length);
@@ -1413,11 +1344,12 @@ namespace sbnd {
 
   // Calculate the visible energy as neutrino energy estimator
   // TODO poorly copied from Gray's stuff, will likely change anyway
-  double XSecTree::VisibleEnergy(std::vector<const simb::MCParticle*> particles){
+  double XSecTree::VisibleEnergy(std::vector<const simb::MCParticle*> particles, int lep_j){
     //
     double visible_E = 0;
 
     for(size_t j = 0; j < particles.size(); j++){
+      if((int)j == lep_j);
       // Only consider stable final states particles
       if(particles.at(j)->StatusCode() != 1) continue;
       // Only want primary particles
@@ -1426,6 +1358,9 @@ namespace sbnd {
       int pdg = std::abs(particles.at(j)->PdgCode());
       if(pdg == 111) continue;
 
+      double edep = fTPCGeo.EDep(*particles.at(j));
+      if (edep > 0.021) visible_E += edep;
+/*
       if(pdg == 13){
         double smearing_percentage;
         if(fTPCGeo.IsContained(*particles.at(j))) smearing_percentage = 0.02;
@@ -1440,6 +1375,7 @@ namespace sbnd {
       this_visible_energy = fRandom->Gaus(this_visible_energy, 0.05*this_visible_energy);
       this_visible_energy = std::max(this_visible_energy, 0.);
       if(this_visible_energy > 0.021) visible_E += this_visible_energy;
+      */
     }
 
     return visible_E;
@@ -1475,15 +1411,8 @@ namespace sbnd {
 
 
   // Inclusive charged current selection
-  std::pair<bool, int> XSecTree::IsCCInc(geo::Point_t vertex, std::vector<const simb::MCParticle*> reco_particles, double ppid, double mupid){
+  std::pair<bool, int> XSecTree::IsCCInc(std::vector<const simb::MCParticle*> reco_particles, double ppid, double mupid){
     bool cc_selected = true;
-    // Check vertex is inside the fiducial volume
-    //if(!fTPCGeo.InFiducial(vertex, fWallCut, fWallCut, fWallCut, fWallCut, fWallCut, fBackCut)){ 
-    // Fiducial volume handled in plotting tool
-    /*if(!fTPCGeo.InFiducial(vertex, fXminCut, fYminCut, fZminCut, fXmaxCut, fYmaxCut, fZmaxCut, fCpaCut, fApaCut)){ 
-      if(fVerbose) std::cout<<"Not in fiducial\n";
-      cc_selected = false; 
-    }*/
 
     // Loop over the mu/pi/pr secondary particles and find the longest
     double max_contained_length = 0;
@@ -1510,16 +1439,6 @@ namespace sbnd {
         }
       }
       // Contained particles
-      /*else{
-        if(!fUseHistPid){
-          if(contained_length < max_contained_length) continue;
-        }
-        else if(contained_length < 100.){
-          if(contained_length < 25.) continue;
-          if(pdg == 2212 && ProtonHistPid(reco_particles.at(j)->P())) continue;
-          if(!(MuonHistPid(reco_particles.at(j)->P(), pdg) && contained_length > max_contained_length)) continue;
-        }
-      }*/
       if(!escapes && contained_length < 100.){
         // Proton ID
         if(pdg == 2212 && ProtonHistPid(reco_particles.at(j)->P(), ppid)) continue;
@@ -1532,19 +1451,6 @@ namespace sbnd {
 
       max_contained_length = contained_length;
       long_j            = j;
-/*
-      // Check if particle is contained
-      lep_contained["reco"] = fTPCGeo.IsContained(*reco_particles.at(j));
-      lep_theta["reco"] = (end - start).Theta();
-
-      // Smear momentum based on whether particle is contained or not
-      if(lep_contained["reco"]) 
-        lep_mom["reco"] = fRangeFitter.GetTrackMomentum(contained_length, 13);
-      else{ 
-        if(!fUseSbndSmearing) lep_mom["reco"] = SmearMcsMomentum(reco_particles.at(j)->P());
-        //else lep_mom["reco"] = SmearMcsMomentumSbnd(reco_particles.at(j)->P(), contained_length);
-        else lep_mom["reco"] = SmearMcsMomentumHist(reco_particles.at(j)->P(), contained_length);
-      }*/
     }
 
     if(n_escape == 1){
@@ -1562,24 +1468,7 @@ namespace sbnd {
     return std::make_pair(cc_selected, long_j);
 
   }
-/*
-  bool XSecTree::MuonHistPid(double momentum, int pdg){
-    bool muonID = false;
-    double efficiencyMu[] = {0, 0.0157303, 0.618693, 0.716556, 0.822193, 0.965766, 0.988912, 0.991038, 0.992492, 0.994742, 0.998403, 0.993258, 0.996441, 1, 1, 1, 1, 1, 1, 1};
-    double efficiencyPi[] = {0, 0, 0.279539, 0.432954, 0.290393, 0.227886, 0.244541, 0.288079, 0.291304, 0.347518, 0.353535, 0.380282, 0.37931, 0.409091, 0.268293, 0.5, 0.5, 0.473684, 0.466667, 0.294118};
-    double efficiencyP[] = {0,0, 0, 0, 0, 0, 0.000254453, 0.00367816, 0.014854, 0.0454402, 0.0460772, 0.0612366, 0.0734949, 0.0933041, 0.121581, 0.150794, 0.216912, 0.270115, 0.316239, 0.277778};
-    int pos = 19; 
-    for(int i=0; i<20; i++){
-      if(momentum<(0.075*(i+1))) {pos = i; break;}
-    }
-    double rand_eff = fRandom->Rndm();
-    if(std::abs(pdg) == 13 && rand_eff < efficiencyMu[pos]) muonID = true;
-    if(std::abs(pdg) == 211 && rand_eff < efficiencyPi[pos]) muonID = true;
-    if(std::abs(pdg) == 2212 && rand_eff < efficiencyP[pos]) muonID = true;
 
-    return muonID;
-  }
-*/
   bool XSecTree::MuonHistPid(double momentum, int pdg, double err){
     bool muonID = false;
     int bin = hMuMuId->GetXaxis()->FindBin(momentum);
@@ -1599,20 +1488,6 @@ namespace sbnd {
     return muonID;
   }
 
-/*
-  bool XSecTree::ProtonHistPid(double momentum){
-    bool protonID = false;
-    double efficiency[] = {0, 0.111111, 0.23166, 0.533176, 0.693913, 0.675789, 0.649212, 0.596035, 0.502117, 0.397896, 0.278592, 0.229983, 0.130303, 0.136364, 0.088, 0.0833333, 0.0344828, 0.03125, 0.125, 0.0769231};
-    int pos = 19; 
-    for(int i=0; i<20; i++){
-      if(momentum<(0.1*(i+1))) {pos = i; break;}
-    }
-    double rand_eff = fRandom->Rndm();
-    if(rand_eff < efficiency[pos]) protonID = true;
-
-    return protonID;
-  }
-*/
   bool XSecTree::ProtonHistPid(double momentum, double err){
     bool protonID = false;
     int bin = hProtonId->GetXaxis()->FindBin(momentum);

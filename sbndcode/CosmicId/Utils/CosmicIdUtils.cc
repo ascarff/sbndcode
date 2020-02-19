@@ -98,7 +98,7 @@ namespace sbnd{
     for(size_t i = 0; i < fakeTpc0Flashes.size(); i++){
       double time = fakeTpc0Flashes[i];
       // Combine flashes within 0.01 us
-      if(std::abs(time-previousTime) < 0.01){
+      if(std::abs(time-previousTime) < 0.1){
         fakeTpc0Flashes.erase(fakeTpc0Flashes.begin()+i);
       }
       else previousTime = time;
@@ -110,7 +110,7 @@ namespace sbnd{
     for(size_t i = 0; i < fakeTpc1Flashes.size(); i++){
       double time = fakeTpc1Flashes[i];
       // Combine flashes within 0.01 us
-      if(std::abs(time-previousTime) < 0.01){
+      if(std::abs(time-previousTime) < 0.1){
         fakeTpc1Flashes.erase(fakeTpc1Flashes.begin()+i);
       }
       else previousTime = time;

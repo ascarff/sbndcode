@@ -261,7 +261,7 @@ namespace sbnd {
       // Only interested in muons
       if(!(std::abs(particle.PdgCode()) == 13)) continue;
       // Only want primary particles
-      //if(particle.Mother() != 0) continue;
+      if(particle.Mother() != 0) continue;
       // Only want particles that are inside the TPC
       if(!fTpcGeo.InVolume(particle)) continue;
 

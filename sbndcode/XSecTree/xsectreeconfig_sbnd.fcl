@@ -55,13 +55,13 @@ sbnd_xsectree:
       max_weight: 100
 
       @table::sbnd_eventweight_flux
-      @table::sbnd_eventweight_genie
+      #@table::sbnd_eventweight_genie
 
 }
 
 sbnd_xsectree.weight_functions: [
-  @sequence::sbnd_xsectree.weight_functions_flux,
-  @sequence::sbnd_xsectree.weight_functions_genie
+  @sequence::sbnd_xsectree.weight_functions_flux
+  #@sequence::sbnd_xsectree.weight_functions_genie
 ]
 
 END_PROLOG
