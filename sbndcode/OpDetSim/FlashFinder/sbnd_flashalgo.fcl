@@ -2,30 +2,27 @@ BEGIN_PROLOG
 
 SimpleFlashStandard:
 {
-  PEThreshold:    20
-  MinPECoinc:     6
-  MinMultCoinc:   3
-  IntegralTime:   8.
-  PreSample:      0.1
-  VetoSize:       8.
-  TimeResolution: 0.03
+  PEThreshold:       2 #20
+  MinPECoinc:        2 #6
+  MinMultCoinc:      3
+  IntegralTime:      8.
+  PreSample:         0.1
+  VetoSize:          8.
+  TimeResolution:    0.03
   HitVetoRangeStart: []
   HitVetoRangeEnd:   []
   OpChannelRange:    [0,359]
-  DebugMode: false
+  TPC:               0
+  #PD:                ["pmt", "barepmt", "xarapucaT1", "xarapuca", "xarapucaT2"]
+  PD:                ["pmt", "barepmt"]
+  DebugMode:         true
 }
 
 SimpleFlashTPC0: @local::SimpleFlashStandard
-SimpleFlashTPC0.OpChannelRange: [0,89]
+SimpleFlashTPC0.TPC: 0
 
 SimpleFlashTPC1: @local::SimpleFlashStandard
-SimpleFlashTPC1.OpChannelRange: [90,179]
-
-SimpleFlashTPC2: @local::SimpleFlashStandard
-SimpleFlashTPC2.OpChannelRange: [180,269]
-
-SimpleFlashTPC3: @local::SimpleFlashStandard
-SimpleFlashTPC3.OpChannelRange: [270,359]
+SimpleFlashTPC1.TPC: 1
 
 END_PROLOG
 

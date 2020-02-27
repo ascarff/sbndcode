@@ -12,6 +12,7 @@
 // LArSoft libraries
     
 // framework libraries
+#include <vector> 
 #include <string> 
 #include <map> 
 
@@ -33,6 +34,7 @@ namespace opdet {
 
   bool pdType(int ch, std::string pdname) const;
   std::string pdName(int ch) const;
+  std::vector<int> getChannelsOfType(std::string pdname) const;
   int size() const;
         
   private:	 

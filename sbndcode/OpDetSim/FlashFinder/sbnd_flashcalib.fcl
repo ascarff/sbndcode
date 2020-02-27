@@ -1,7 +1,7 @@
 BEGIN_PROLOG
 
 NoCalib: {
-  SPEAreaGain: 62.0
+  SPEAreaGain: 1.0 # Already applied at ophit reco
 }
 
 END_PROLOG
