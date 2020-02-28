@@ -67,11 +67,16 @@ physics:
    rns:      { module_type: "RandomNumberSaver" }
    largeant: @local::sbnd_largeant
    mcreco:   @local::standard_mcreco
+   ionization: {
+                 module_type: "larsim/ElectronDrift/ShiftEdepSCE"
+                 EDepTag: "largeant:TPCActive"
+                 MakeAnaTree: false
+               }
  }
 
  #define the producer and filter modules for this path, order matters, 
  #filters reject all following items.  see lines starting physics.producers below
- simulate: [ rns, largeant, mcreco ]
+ simulate: [ rns, largeant, mcreco, ionization ]
  
  #define the output stream, there could be more than one if using filters 
  stream1:  [ out1 ]
@@ -100,3 +105,6 @@ outputs:
 # only keep MCParticles that cross the cryostat;
 # this is relevant in extensive cosmic ray generators (like Corsika)
 physics.producers.largeant.KeepParticlesInVolumes: ["volCryostat", "volTaggerTopHigh", "volTaggerTopLow", "volTaggerSideLeft", "volTaggerSideRight", "volTaggerFaceFront", "volTaggerFaceBack", "volTaggerBot"] 
+
+#turn on the SimEnergyDeposit output
+services.LArG4Parameters.FillSimEnergyDeposits:    true
