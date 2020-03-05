@@ -4,40 +4,30 @@
 #include "simulationservices_sbnd.fcl"
 #include "services_sbnd.fcl"
 #include "sam_sbnd.fcl"
+#include "showers.fcl"
 
 services:
 {
-TFileService: { fileName: "nueanaHists.root" }
-              @table::sbnd_services
-                FileCatalogMetadata:  @local::sbnd_file_catalog_mc
-                ParticleInventoryService: @local::standard_particleinventoryservice
-                BackTrackerService:  @local::standard_backtrackerservice
+  TFileService: { fileName:"pfpValidationHists.root" }
+  @table::sbnd_services
+  FileCatalogMetadata:  @local::sbnd_file_catalog_mc
+  ParticleInventoryService: @local::standard_particleinventoryservice
+  BackTrackerService:  @local::standard_backtrackerservice
 }
-
 
 source:
 {
-module_type: RootInput
-               maxEvents:  -1        # Number of events to create
-
+  module_type: RootInput
+  maxEvents:  -1        # Number of events to create
 }
 
 physics:
 {
-analyzers:
+  analyzers:
   {
-pfpvalidation:
-    {
-#module_type: ShowerdEdx
-module_type: PFPValidation
-               GenieGenModuleLabel:  "generator"
-               PFParticleLabel:      "pandora"
-    }
+    pfpvalidation: @local::sbnd_pfpvalidation
   }
 
-ana: [ pfpvalidation ]
-       end_paths: [ ana ]
-
+  ana: [ pfpvalidation ]
+  end_paths: [ ana ]
 }
-
-

@@ -25,6 +25,4 @@ physics:
 
  ana: [ dEdx ]
  end_paths: [ ana ]
-
 }
-

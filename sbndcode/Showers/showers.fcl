@@ -3,15 +3,24 @@ sbnd_pfpslicevalidation:
 {
     module_type: PFPSliceValidation
     GenieGenModuleLabel:  "generator"
-    PFParticleLabel:      "pandora"
+    PFParticleLabels:     ["pandora"]
+    ClusterLabel:         "pandora"
+    HitLabel:             "linecluster"
+}
+sbnd_pfpvalidation:
+{
+    module_type: PFPValidation
+    GenieGenModuleLabel:  "generator"
+    PFParticleLabels:     ["pandora"]
     ClusterLabel:         "pandora"
     HitLabel:             "linecluster"
 }
 
 sbnd_truthdedx:
 {
-  module_type: ShowerRecombination
+  module_type: ShowerdEdx
   GenieGenModuleLabel:      "generator"
   LArGeantModuleLabel:      "largeant"
 }
+
 END_PROLOG
