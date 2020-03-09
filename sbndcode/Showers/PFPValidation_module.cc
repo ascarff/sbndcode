@@ -95,13 +95,14 @@ class ana::PFPValidation : public art::EDAnalyzer {
 
     // Fill the tree once per particle
     int truePdg, numTrueHits;
-    float trueEnergy, trueDepositedEnergy;
+    float trueEnergy, trueMomentum, trueDepositedEnergy;
+    std::string trueProcess;
     std::map<std::string, int> recoPdg, recoHits, recoPFPs;
     std::map<std::string, float> hitPurity, energyPurity, hitComp, energyComp;
 
     std::string pfpModuleLabel;
     int pfpPdg, pfpTruePdg, pfpNumHits;
-    float pfpTrueEnergy, pfpTrueDepositedEnergy;
+    float pfpTrueEnergy, pfpTrueMomentum, pfpTrueDepositedEnergy;
     float pfpHitPurity, pfpHitComp, pfpEnergyPurity, pfpEnergyComp;
 };
 
@@ -122,7 +123,9 @@ void ana::PFPValidation::beginJob() {
   trueTree->Branch("truePdg", &truePdg);
   trueTree->Branch("numTrueHits", &numTrueHits);
   trueTree->Branch("trueEnergy", &trueEnergy);
+  trueTree->Branch("trueMomentum", &trueMomentum);
   trueTree->Branch("trueDepositedEnergy", &trueDepositedEnergy);
+  trueTree->Branch("trueProcess", &trueProcess);
 
   initTree(trueTree, "recoPdg", recoPdg, fPFParticleLabels);
   initTree(trueTree, "recoHits", recoHits, fPFParticleLabels);
@@ -137,6 +140,7 @@ void ana::PFPValidation::beginJob() {
   pfpTree->Branch("pfpTruePdg", &pfpTruePdg);
   pfpTree->Branch("pfpNumHits", &pfpNumHits);
   pfpTree->Branch("pfpTrueEnergy", &pfpTrueEnergy);
+  pfpTree->Branch("pfpTrueMomentum", &pfpTrueMomentum);
   pfpTree->Branch("pfpTrueDepositedEnergy", &pfpTrueDepositedEnergy);
   pfpTree->Branch("pfpHitPurity", &pfpHitPurity);
   pfpTree->Branch("pfpHitComp", &pfpHitComp);
@@ -270,6 +274,11 @@ void ana::PFPValidation::analyze(art::Event const& evt)
 
       std::pair<int, double> trueId = ShowerUtils::TrueParticleIDFromTrueChain(truePrimaries,
           pfpHits, 2);
+      if (trueId.first==-99999){
+        pfpTree->Fill();
+        clearPFPTree();
+        continue;
+      }
 
       std::map<int, int> pfpTrueHitsMap = GetTruePrimaryHits(trueParticles, truePrimaries, pfpHits);
       std::map<int, float> pfpTrueEnergyMap = GetTruePrimaryEnergies(trueParticles, truePrimaries, pfpHits);
@@ -281,6 +290,7 @@ void ana::PFPValidation::analyze(art::Event const& evt)
       pfpTruePdg = trueParticle->PdgCode();
       pfpNumHits = pfpHits.size();
       pfpTrueEnergy = trueParticle->E();
+      pfpTrueMomentum = trueParticle->P();
 
       int pfpHitsTrueHits = pfpTrueHitsMap.at(trueId.first);
       float pfpHitsTrueEnergy = pfpTrueEnergyMap.at(trueId.first);
@@ -311,8 +321,10 @@ void ana::PFPValidation::analyze(art::Event const& evt)
     const simb::MCParticle* trueParticle = trueParticles.at(trueId);
     truePdg = trueParticle->PdgCode();
     numTrueHits = truePrimaryHits.at(trueId);
-    trueEnergy = trueParticle->E();
+    trueEnergy = (trueParticle->P()*trueParticle->P())/(2*trueParticle->Mass());
+    trueMomentum = trueParticle->P();
     trueDepositedEnergy = truePrimaryEnergies.at(trueId);
+    trueProcess = trueParticle->Process();
 
 
     for (auto const fPFParticleLabel: fPFParticleLabels){
@@ -428,6 +440,7 @@ void ana::PFPValidation::clearPFPTree(){
   pfpPdg = -999;
   pfpTruePdg = -999;
   pfpTrueEnergy = -999;
+  pfpTrueMomentum = -999;
   pfpTrueDepositedEnergy = -999;
   pfpNumHits = -999;
   pfpHitPurity = -999;
@@ -440,7 +453,9 @@ void ana::PFPValidation::clearTrueTree(){
   truePdg = -999;
   numTrueHits = -999;
   trueEnergy = -999;
+  trueMomentum = -999;
   trueDepositedEnergy = -999;
+  trueProcess = "";
   for (auto const& fPFParticleLabel: fPFParticleLabels){
     recoPdg[fPFParticleLabel] = -999;
     recoHits[fPFParticleLabel] = -999;
