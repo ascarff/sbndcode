@@ -72,6 +72,12 @@ class ana::PFPValidation : public art::EDAnalyzer {
     std::map<int, float> GetTruePrimaryEnergies(
         std::map<int,const simb::MCParticle*>& trueParticles,
         std::map<int,std::vector<int> >& truePrimaries,
+        std::vector<art::Ptr<sim::SimChannel> > simchannels);
+
+
+    std::map<int, float> GetTruePrimaryHitEnergies(
+        std::map<int,const simb::MCParticle*>& trueParticles,
+        std::map<int,std::vector<int> >& truePrimaries,
         std::vector< art::Ptr< recob::Hit> >& allHits);
 
     float GetTotalEnergyInHits(std::vector<art::Ptr<recob::Hit> > hits);
@@ -83,7 +89,7 @@ class ana::PFPValidation : public art::EDAnalyzer {
 
   private:
 
-    std::string fHitLabel, fGenieGenModuleLabel;
+    std::string fHitLabel, fGenieGenModuleLabel, fLArGeantModuleLabel;
     std::vector<std::string> fPFParticleLabels;
     art::ServiceHandle<art::TFileService> tfs;
     art::ServiceHandle<cheat::BackTrackerService> bt_serv;
@@ -95,9 +101,9 @@ class ana::PFPValidation : public art::EDAnalyzer {
 
     // Fill the tree once per particle
     int truePdg, numTrueHits;
-    float trueEnergy, trueMomentum, trueDepositedEnergy;
+    float trueEnergy, trueMomentum, trueDepositedEnergy, trueDepositedEnergyInHits;
     std::string trueProcess;
-    std::map<std::string, int> recoPdg, recoHits, recoPFPs;
+    std::map<std::string, int> recoPdg, recoHits, recoPFPs, recoPFPTracks, recoPFPShowers;
     std::map<std::string, float> hitPurity, energyPurity, hitComp, energyComp;
 
     std::string pfpModuleLabel;
@@ -113,6 +119,7 @@ ana::PFPValidation::PFPValidation(fhicl::ParameterSet const& pset)
   fHitLabel            = pset.get<std::string>("HitLabel");
   fGenieGenModuleLabel = pset.get<std::string>("GenieGenModuleLabel");
   fPFParticleLabels    = pset.get<std::vector<std::string> >("PFParticleLabels");
+  fLArGeantModuleLabel   = pset.get<std::string>("LArGeantModuleLabel");
 }
 
 void ana::PFPValidation::beginJob() {
@@ -125,11 +132,14 @@ void ana::PFPValidation::beginJob() {
   trueTree->Branch("trueEnergy", &trueEnergy);
   trueTree->Branch("trueMomentum", &trueMomentum);
   trueTree->Branch("trueDepositedEnergy", &trueDepositedEnergy);
+  trueTree->Branch("trueDepositedEnergyInHits", &trueDepositedEnergyInHits);
   trueTree->Branch("trueProcess", &trueProcess);
 
   initTree(trueTree, "recoPdg", recoPdg, fPFParticleLabels);
   initTree(trueTree, "recoHits", recoHits, fPFParticleLabels);
   initTree(trueTree, "recoPFPs", recoPFPs, fPFParticleLabels);
+  initTree(trueTree, "recoPFPTracks", recoPFPTracks, fPFParticleLabels);
+  initTree(trueTree, "recoPFPShowers", recoPFPShowers, fPFParticleLabels);
   initTree(trueTree, "hitPurity", hitPurity, fPFParticleLabels);
   initTree(trueTree, "hitComp", hitComp, fPFParticleLabels);
   initTree(trueTree, "energyPurity", energyPurity, fPFParticleLabels);
@@ -180,6 +190,7 @@ void ana::PFPValidation::analyze(art::Event const& evt)
   evt.getManyByType(hitHandles);
   std::vector<art::Handle<std::vector<recob::Cluster> > > clusterHandles;
   evt.getManyByType(clusterHandles);
+  art::Handle<std::vector<sim::SimChannel> > simChannelHandle;
 
   // Set the handles
   art::Handle<std::vector<recob::Hit> > hitHandle;
@@ -191,10 +202,16 @@ void ana::PFPValidation::analyze(art::Event const& evt)
   if(evt.getByLabel(fHitLabel,hitHandle))
   {art::fill_ptr_vector(allHits, hitHandle);}
 
+  std::vector<art::Ptr<sim::SimChannel> > simChannels;
+  if(evt.getByLabel(fLArGeantModuleLabel,simChannelHandle))
+  {art::fill_ptr_vector(simChannels, simChannelHandle);}
+
   // Get map of true primary particle to number of reco hits / energy in reco hits
   std::map<int, int> truePrimaryHits = GetTruePrimaryHits(trueParticles, truePrimaries, allHits);
   std::map<int, float> truePrimaryEnergies = GetTruePrimaryEnergies(trueParticles, truePrimaries,
-      allHits);
+      simChannels);
+  std::map<int, float> truePrimaryHitEnergies = GetTruePrimaryHitEnergies(trueParticles,
+      truePrimaries, allHits);
 
   std::map<std::string, std::map<long unsigned int, art::Ptr<recob::PFParticle> > > pfpMap;
   std::map<std::string, std::map<long unsigned int, int>  > pfpTrueParticleMap, pfpHitMap;
@@ -213,14 +230,14 @@ void ana::PFPValidation::analyze(art::Event const& evt)
         evt.get(fmpfc.at(fmpfcIter).front().id(),clusterHandle);
         if (!clusterHandle.isValid()) {
           std::cout<<"Cluster handle not valid"<<std::endl;
-          return;
+          return; // TODO: change to continue
         }
         break;
       }
     }
     if (!clusterHandle.isValid()) {
       std::cout<<"Cluster handle not valid"<<std::endl;
-      return;
+      return; // TODO: change to continue
     }
 
     art::FindManyP<recob::Hit> fmch(clusterHandle, evt, fPFParticleLabel);
@@ -250,13 +267,13 @@ void ana::PFPValidation::analyze(art::Event const& evt)
     // std::map<long unsigned int, float > pfpScoreMap;
     std::vector<art::Ptr<recob::PFParticle> > pfpNeutrinoVec;
     for (auto const& pfp: pfps){
-      long unsigned int pfpID = pfp->Self();
-      pfpMap[fPFParticleLabel][pfpID] = pfp;
-      // const std::vector< art::Ptr<larpandoraobj::PFParticleMetadata> > pfpMetaVec = fmpfpmd.at(pfpID);
+      long unsigned int pfpId = pfp->Self();
+      pfpMap[fPFParticleLabel][pfpId] = pfp;
+      // const std::vector< art::Ptr<larpandoraobj::PFParticleMetadata> > pfpMetaVec = fmpfpmd.at(pfpId);
       // for (auto const pfpMeta: pfpMetaVec)
       // {
       //   larpandoraobj::PFParticleMetadata::PropertiesMap propertiesMap = pfpMeta->GetPropertiesMap();
-      //   pfpScoreMap[pfpID] = propertiesMap.at("NuScore");
+      //   pfpScoreMap[pfpId] = propertiesMap.at("NuScore");
       // }
     }
 
@@ -281,7 +298,7 @@ void ana::PFPValidation::analyze(art::Event const& evt)
       }
 
       std::map<int, int> pfpTrueHitsMap = GetTruePrimaryHits(trueParticles, truePrimaries, pfpHits);
-      std::map<int, float> pfpTrueEnergyMap = GetTruePrimaryEnergies(trueParticles, truePrimaries, pfpHits);
+      std::map<int, float> pfpTrueEnergyMap = GetTruePrimaryHitEnergies(trueParticles, truePrimaries, pfpHits);
 
       const simb::MCParticle* trueParticle = trueParticles.at(trueId.first);
 
@@ -299,9 +316,9 @@ void ana::PFPValidation::analyze(art::Event const& evt)
       pfpHitPurity = (float)pfpHitsTrueHits / pfpHits.size();
       pfpHitComp = (float)pfpHitsTrueHits / truePrimaryHits.at(trueId.first);
       pfpEnergyPurity = pfpHitsTrueEnergy / pfpHitsTotalEnergy;
-      pfpEnergyComp= pfpHitsTrueEnergy / truePrimaryEnergies.at(trueId.first);
+      pfpEnergyComp= pfpHitsTrueEnergy / truePrimaryHitEnergies.at(trueId.first);
       // Energy is in all planes, hence divide deposited energy by 3
-      pfpTrueDepositedEnergy = truePrimaryEnergies.at(trueId.first)/3;
+      pfpTrueDepositedEnergy = truePrimaryHitEnergies.at(trueId.first)/3;
 
       pfpTree->Fill();
 
@@ -318,32 +335,46 @@ void ana::PFPValidation::analyze(art::Event const& evt)
 
   for (auto const& [trueId, trueDaughters]: truePrimaries){
 
+    clearTrueTree();
+
+    numTrueHits = truePrimaryHits.at(trueId);
+    if (!numTrueHits)
+      continue;
+
     const simb::MCParticle* trueParticle = trueParticles.at(trueId);
     truePdg = trueParticle->PdgCode();
-    numTrueHits = truePrimaryHits.at(trueId);
     trueEnergy = (trueParticle->P()*trueParticle->P())/(2*trueParticle->Mass());
     trueMomentum = trueParticle->P();
-    trueDepositedEnergy = truePrimaryEnergies.at(trueId);
+    trueDepositedEnergy = truePrimaryEnergies.at(trueId)/3;
+    trueDepositedEnergyInHits = truePrimaryHitEnergies.at(trueId)/3;
     trueProcess = trueParticle->Process();
 
 
     for (auto const fPFParticleLabel: fPFParticleLabels){
       std::vector<long unsigned int> pfpMatches;
-      for (auto const& [pfpId, pfpMatch]: pfpTrueParticleMap[fPFParticleLabel]){
-        if (trueId==pfpMatch){
+      unsigned int pfpTracks(0), pfpShowers(0);
+      for (auto const& [pfpId, trueMatch]: pfpTrueParticleMap[fPFParticleLabel]){
+        if (trueId==trueMatch){
           pfpMatches.push_back(pfpId);
+          if (pfpMap[fPFParticleLabel].at(pfpId)->PdgCode()==11)
+            ++pfpShowers;
+          if (pfpMap[fPFParticleLabel].at(pfpId)->PdgCode()==13)
+            ++pfpTracks;
         }
       }
-      recoPFPs[fPFParticleLabel] = pfpMatches.size();
+      recoPFPs[fPFParticleLabel] = pfpTracks + pfpShowers;
+      recoPFPTracks[fPFParticleLabel] = pfpTracks;
+      recoPFPShowers[fPFParticleLabel] = pfpShowers;
 
       if (pfpMatches.size()>0){
         int bestMatchPFP = -999;
         float bestComp = -999;
         // Find the "Best Match" as the pfp with the highest completeness
-        for (auto const& [pfpId, hitComp]: pfpHitCompMap [fPFParticleLabel]){
-          if (hitComp>bestComp){
-            bestMatchPFP = pfpId;
-            bestComp = hitComp;
+        for (auto const& pfpMatch: pfpMatches){
+          float hitCompleteness = pfpHitCompMap[fPFParticleLabel].at(pfpMatch);
+          if (hitCompleteness>bestComp){
+            bestComp = hitCompleteness;
+            bestMatchPFP = pfpMatch;
           }
         }
         recoPdg[fPFParticleLabel] = pfpMap[fPFParticleLabel].at(bestMatchPFP)->PdgCode();
@@ -358,7 +389,7 @@ void ana::PFPValidation::analyze(art::Event const& evt)
     // if (numTrueHits>0)
     trueTree->Fill();
 
-    clearTrueTree();
+    //TODO: Add Nubmer of PFP tracks/showers
   }
 
   // std::cout<<"\n"<<std::endl;
@@ -395,13 +426,16 @@ std::map<int, int> ana::PFPValidation::GetTruePrimaryHits(
 std::map<int, float> ana::PFPValidation::GetTruePrimaryEnergies(
     std::map<int,const simb::MCParticle*>& trueParticles,
     std::map<int,std::vector<int> >& truePrimaries,
-    std::vector< art::Ptr< recob::Hit> >& allHits){
+    std::vector<art::Ptr<sim::SimChannel> > simChannels){
 
   std::map<int, float> trueParticleEnergies;
-  for (const auto& hit: allHits){
-    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(hit);
-    for (const auto& ide: trackIDEs) {
-      trueParticleEnergies[TMath::Abs(ide.trackID)] += ide.energy;
+
+  for (const auto& simChannel: simChannels){
+    auto tdcideMap = simChannel->TDCIDEMap();
+    for (const auto& [tdc, ideVec]: tdcideMap){
+      for (const auto& ide: ideVec){
+        trueParticleEnergies[TMath::Abs(ide.trackID)] += ide.energy;
+      }
     }
   }
   std::map<int, float> truePrimaryEnergies;
@@ -411,6 +445,27 @@ std::map<int, float> ana::PFPValidation::GetTruePrimaryEnergies(
     }
   }
   return truePrimaryEnergies;
+}
+
+std::map<int, float> ana::PFPValidation::GetTruePrimaryHitEnergies(
+    std::map<int,const simb::MCParticle*>& trueParticles,
+    std::map<int,std::vector<int> >& truePrimaries,
+    std::vector< art::Ptr< recob::Hit> >& allHits){
+
+  std::map<int, float> trueParticleEnergies;
+  for (const auto& hit: allHits){
+    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(hit);
+    for (const auto& ide: trackIDEs) {
+      trueParticleEnergies[TMath::Abs(ide.trackID)] += ide.energy;
+    }
+  }
+  std::map<int, float> truePrimaryHitEnergies;
+  for (const auto& truePrimary: truePrimaries){
+    for (const auto& trueDaughter: truePrimary.second){
+      truePrimaryHitEnergies[truePrimary.first] += trueParticleEnergies[trueDaughter];
+    }
+  }
+  return truePrimaryHitEnergies;
 }
 
 float ana::PFPValidation::GetTotalEnergyInHits(std::vector<art::Ptr<recob::Hit> >  hits){
@@ -455,8 +510,12 @@ void ana::PFPValidation::clearTrueTree(){
   trueEnergy = -999;
   trueMomentum = -999;
   trueDepositedEnergy = -999;
+  trueDepositedEnergyInHits = -999;
   trueProcess = "";
   for (auto const& fPFParticleLabel: fPFParticleLabels){
+    recoPFPs[fPFParticleLabel] = -999;
+    recoPFPTracks[fPFParticleLabel] = -999;
+    recoPFPShowers[fPFParticleLabel] = -999;
     recoPdg[fPFParticleLabel] = -999;
     recoHits[fPFParticleLabel] = -999;
     hitPurity[fPFParticleLabel] = -999;

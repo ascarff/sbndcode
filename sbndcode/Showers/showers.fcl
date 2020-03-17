@@ -11,6 +11,7 @@ sbnd_pfpvalidation:
 {
     module_type: PFPValidation
     GenieGenModuleLabel:  "generator"
+    LArGeantModuleLabel:      "largeant"
     PFParticleLabels:     ["pandora"]
     ClusterLabel:         "pandora"
     HitLabel:             "linecluster"
