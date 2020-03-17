@@ -62,9 +62,9 @@ namespace lightana{
                 _index_to_opch_v.reserve(opch_v.size());
                 for(auto const& v : opch_v) {
                     auto iter = std::find(opch_to_use.begin(), opch_to_use.end(), v);
-                    // auto iter = opch_to_use.find(v);
                     if (iter != opch_to_use.end()) {
                         _index_to_opch_v.push_back(v);
+                        std::cout << "Going to use ch " << v << std::endl;
                     }
                 }
             }else{

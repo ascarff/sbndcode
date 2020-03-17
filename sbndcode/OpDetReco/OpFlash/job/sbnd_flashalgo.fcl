@@ -2,19 +2,19 @@ BEGIN_PROLOG
 
 SimpleFlashStandard:
 {
-  PEThreshold:       2 #20
-  MinPECoinc:        2 #6
+  PEThreshold:       20
+  MinPECoinc:        6
   MinMultCoinc:      3
   IntegralTime:      8.
   PreSample:         0.1
   VetoSize:          8.
-  TimeResolution:    0.03
+  TimeResolution:    0.01
   HitVetoRangeStart: []
   HitVetoRangeEnd:   []
   OpChannelRange:    [0,359]
   TPC:               0
   #PD:                ["pmt", "barepmt", "xarapucaT1", "xarapuca", "xarapucaT2"]
-  PD:                ["pmt", "barepmt"]
+  PD:                ["pmt"]
   DebugMode:         true
 }
 

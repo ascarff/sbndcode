@@ -44,8 +44,9 @@
 #include "TH1D.h"
 #include "TRandom3.h"
 #include "TF1.h"
+#include "TTree.h"
 
-#include "sbndPDMapAlg.h" 
+#include "sbndcode/OpDetSim/sbndPDMapAlg.h" 
 
 namespace opdet{
 
@@ -93,7 +94,18 @@ namespace opdet{
     bool findPeak(std::vector<double>& waveform, size_t& time, double& Area, double rms, double& amplitude, std::string type);
     void denoise(std::vector<double>& waveform, std::vector<double>& outwaveform);
     bool TV1D_denoise(std::vector<double>& waveform, std::vector<double>& outwaveform, const double lambda);
+    void Reset();
     //std::stringstream histname;
+
+    TTree* _tree;
+    int _run, _subrun, _event;
+    int _opch;
+    double _time_stamp;
+    double _baseline;
+    double _sampling;
+    std::vector<double> _waveform_init;
+    std::vector<double> _waveform_baseline_sub;
+    std::vector<double> _peakfinder_time_bin, _peakfinder_time, _peakfinder_area, _peakfinder_amplitude;
   };
 
   opHitFinderSBND::opHitFinderSBND(fhicl::ParameterSet const & p)
@@ -117,13 +129,35 @@ namespace opdet{
 
     // Call appropriate produces<>() functions here.
     produces<std::vector<recob::OpHit>>();
-  }
+
+    art::ServiceHandle<art::TFileService> fs;
+    _tree = fs->make<TTree>("tree","");
+    _tree->Branch("run",&_run,"run/I");
+    _tree->Branch("subrun",&_subrun,"subrun/I");
+    _tree->Branch("event",&_event,"event/I");
+    _tree->Branch("opch",&_opch,"opch/I");
+    _tree->Branch("sampling",&_sampling,"sampling/D");
+    _tree->Branch("time_stamp",&_time_stamp,"time_stamp/D");
+    _tree->Branch("baseline",&_baseline,"baseline/D");
+    _tree->Branch("waveform_init","std::vector<double>",&_waveform_init);
+    _tree->Branch("waveform_baseline_sub","std::vector<double>",&_waveform_baseline_sub);
+    _tree->Branch("peakfinder_time_bin","std::vector<double>",&_peakfinder_time_bin);
+    _tree->Branch("peakfinder_time","std::vector<double>",&_peakfinder_time);
+    _tree->Branch("peakfinder_area","std::vector<double>",&_peakfinder_area);
+    _tree->Branch("peakfinder_amplitude","std::vector<double>",&_peakfinder_amplitude);
+  }   
+
 
   void opHitFinderSBND::produce(art::Event & e)
   {
     // Implementation of required member function here.
     fEvNumber = e.id().event();
     std::cout << "Event #" << fEvNumber << std::endl;
+
+    _run    = e.id().run();
+    _subrun = e.id().subRun();
+    _event  = e.id().event();
+    _sampling = fSampling;
 
     std::unique_ptr< std::vector< recob::OpHit > > pulseVecPtr(std::make_unique< std::vector< recob::OpHit > > ());
     fwaveform.reserve(30000); // TODO: no hardcoded value
@@ -144,6 +178,7 @@ namespace opdet{
     unsigned short frame=1;
     //int histogram_number = 0;
     for(auto const& wvf_P : wvfList){
+      Reset();
       auto const& wvf = *wvf_P;
       if (wvf.size() == 0 ) {
         std::cout << "Empty waveform, continue." << std::endl;
@@ -152,11 +187,16 @@ namespace opdet{
 
       fChNumber = wvf.ChannelNumber();
       fwaveform.resize(wvf.size());
+      _waveform_init.resize(wvf.size());
+      _time_stamp = wvf.TimeStamp();
+      _opch = wvf.ChannelNumber();
       for(unsigned int i=0;i<wvf.size();i++){
         fwaveform[i]=wvf[i];
+        _waveform_init[i] = wvf[i];
       }
 
       subtractBaseline(fwaveform, map.pdName(fChNumber), rms);
+      for (auto v : fwaveform) _waveform_baseline_sub.push_back(v);
 
       if(fUseDenoising == 1){
         if((map.pdName(fChNumber)=="pmt") || (map.pdName(fChNumber)== "barepmt")){
@@ -178,6 +218,11 @@ namespace opdet{
       while(findPeak(fwaveform, timebin, Area, rms, amplitude, map.pdName(fChNumber))){
         time = wvf.TimeStamp() + (double)timebin/fSampling;
 
+        _peakfinder_time_bin.push_back(timebin);
+        _peakfinder_time.push_back(time);
+        _peakfinder_area.push_back(Area);
+        _peakfinder_amplitude.push_back(amplitude);
+
         if(map.pdName(fChNumber)=="pmt" || map.pdName(fChNumber) == "barepmt"){
           phelec=Area/fArea1pePMT;
         }
@@ -195,9 +240,15 @@ namespace opdet{
 
         i++;
         //including hit info: OpChannel, PeakTime, PeakTimeAbs, Frame, Width, Area, PeakHeight, PE, FastToTotal
+        if (fChNumber == 491 && time > 0 && time < 10) {
+          std::cout << "Found ophit for ch 491 with PE " << phelec << " -- (fSampling is " << fSampling << std::endl;
+        }
         recob::OpHit opHit(fChNumber, time, time, frame, FWHM, Area, amplitude, phelec, fasttotal);
         pulseVecPtr->emplace_back(opHit);
       } // while findPeak()
+      if (fChNumber == 491) {
+          _tree->Fill();
+        }
       //     histogram_number += 1;
       // fwaveform.clear();
     } // for(auto const& wvf : (*wvfHandle)){
@@ -223,6 +274,8 @@ namespace opdet{
     rms = sqrt(rms/cnt-baseline*baseline);
     rms = rms/sqrt(cnt-1);
 
+    _baseline = baseline;
+
     if(pdtype=="pmt" || pdtype == "barepmt"){
       for(unsigned int i=0; i<waveform.size(); i++) waveform[i]=fPulsePolarityPMT*(waveform[i]-baseline);
     }
@@ -245,7 +298,7 @@ namespace opdet{
     double max;
     size_t time_end, bin, binmax = distance(waveform.begin(),max_element(waveform.begin(), waveform.end()));
     int threshold;
-    Area=0;
+    Area=0;    
 
     if(type=="pmt" || type == "barepmt"){
       threshold=fThresholdPMT;
@@ -282,8 +335,16 @@ namespace opdet{
         aux = waveform[bin];
     }
     time = bin+1; //for rise time
-    for(unsigned int j=time; j<=time_end; j++) Area += waveform[j];
+    for(unsigned int j=time; j<=time_end; j++) {
+      Area += waveform[j];
+      if (fChNumber == 491) std::cout << "$$$ waveform at j = " << j << " ==>" << waveform[j] << std::endl;
+    }
+    if (fChNumber == 491) std::cout << "$$$ Area = " << Area << std::endl;
+    if (fChNumber == 491) std::cout << "$$$ binmax = " << binmax << std::endl;
     Area = Area/fSampling;
+    if (fChNumber == 491) std::cout << "$$$ Area/fSampling = " << Area << std::endl;
+    if (fChNumber == 491) std::cout << std::endl;
+
 
     bin = time;
     aux = waveform[time];  
@@ -296,6 +357,8 @@ namespace opdet{
     }
     //std::cout << time << " " << time_end << " " << (time_end - time);
     time=binmax; //returning the peak time
+    if (fChNumber == 491 && time == 808) std::cout << "$$$############################## binmax = " << binmax << std::endl;
+
     return true;		
   }
 
@@ -374,5 +437,22 @@ namespace opdet{
       }
     } // for (;;)
   } // void opHitFinderSBND::TV1D_denoise()
+
+  void opHitFinderSBND::Reset() {
+    _run = -9999;
+    _subrun = -9999;
+    _event = -9999;
+    _opch = -9999;
+    _time_stamp = -9999;
+    _baseline = -9999;
+    _sampling = -9999;
+    _waveform_init.clear();
+    _waveform_baseline_sub.clear();
+    _peakfinder_time_bin.clear();
+    _peakfinder_time.clear();
+    _peakfinder_area.clear();
+    _peakfinder_amplitude.clear();
+  }
+
 
 } // namespace opdet

@@ -55,8 +55,13 @@ namespace opdet{
       
       pulsesize=(int)((6*sigma2+fParams.TransitTime)*fSampling);
       wsp.resize(pulsesize);
+      std::cout << "pulsesize is " << pulsesize << std::endl;
+      std::cout << "sigma1 is " << sigma1 << std::endl;
+      std::cout << "sigma2 is " << sigma2 << std::endl;
+      std::cout << "fSampling is " << fSampling << std::endl;
       for(int i=0; i<pulsesize; i++){
-	wsp[i]=(Pulse1PE(static_cast< double >(i)/fSampling));
+        wsp[i]=(Pulse1PE(static_cast< double >(i)/fSampling));
+        std::cout << "wsp at " << i << ", " << (double) (i/fSampling) << " is " << wsp[i] << std::endl;
       }
     }
   } // end constructor
@@ -105,11 +110,11 @@ namespace opdet{
     size_t max=0;
 
     if(time_bin<wave.size()){
-	min=time_bin;
-	max=time_bin+pulsesize < wave.size() ? time_bin+pulsesize : wave.size();
-	for(size_t i = min; i< max; i++){
-	  wave[i]+= wsp[i-min];	
-	}	
+      min=time_bin;
+      max=time_bin+pulsesize < wave.size() ? time_bin+pulsesize : wave.size();
+      for(size_t i = min; i< max; i++){
+        wave[i]+= wsp[i-min];	
+      }	
     }
   }
 
@@ -145,6 +150,7 @@ namespace opdet{
 
   void DigiPMTSBNDAlg::CreatePDWaveformLite(sim::SimPhotonsLite const& litesimphotons, double t_min, std::vector<double>& wave, int ch, std::string pdtype, std::map<int, sim::SimPhotonsLite> auxmap){
     
+    double marco_counter = 0;
     double ttsTime=0;
     std::map< int, int > const& photonMap = litesimphotons.DetectedPhotons;
     for (auto const& mapMember: photonMap){ //including reflected light for all PMT channels
@@ -153,6 +159,9 @@ namespace opdet{
    	 if(CLHEP::RandFlat::shoot(fEngine, 1.0)<(fQERefl)){
            if(fParams.TTS>0.0) ttsTime = Transittimespread(fParams.TTS); //implementing transit time spread
  	   AddSPE((fParams.TransitTime+ttsTime+mapMember.first-t_min)*fSampling,wave); }
+          double time = (fParams.TransitTime+ttsTime+mapMember.first-t_min)*fSampling/1000;
+           if(ch == 491) std::cout << "reflected light time: " << time << std::endl;
+        if(ch == 491 && time > -1 && time < 10) marco_counter++;
       }
     }
     if(pdtype=="pmt"){ //To add direct light for TPB coated PMTs
@@ -168,6 +177,9 @@ namespace opdet{
            if(fParams.TTS>0.0) ttsTime = Transittimespread(fParams.TTS); //implementing transit time spread
            ttpb = timeTPB->GetRandom(); //for including TPB emission time
            AddSPE((fParams.TransitTime+ttsTime+mapMember2.first+ttpb-t_min)*fSampling,wave);
+           double time = (fParams.TransitTime+ttsTime+mapMember2.first+ttpb-t_min)*fSampling/1000;
+           if(ch == 491) std::cout << "direct light time: " << time << std::endl;
+          if(ch == 491 && time > -1 && time < 10) marco_counter++;
           }
         }
       }
@@ -176,6 +188,7 @@ namespace opdet{
     if(fParams.PMTBaselineRMS>0.0) AddLineNoise(wave);
     if(fParams.PMTDarkNoiseRate > 0.0) AddDarkNoise(wave);
     CreateSaturation(wave);
+    if(ch == 491) std::cout << "MARCO For ch 491 we counted pes " << marco_counter << std::endl;
   }
 
 

@@ -87,13 +87,14 @@ namespace opdet{
 
     // make sure hits look good
     if(!ophit_h.isValid()) {
-      std::cerr<<"\033[93m[ERROR]\033[00m ... could not locate OpHit!"<<std::endl;
+      std::cerr<<"\033[93m[ERROR]\033[00m ... could not locate OpHit!"<<std::endl; 
       throw std::exception();
     }
 
     ::lightana::LiteOpHitArray_t ophits;
     double trigger_time=1.1e20;
     for(auto const& oph : *ophit_h) {
+      // if (oph.OpChannel() == 491 && oph.PeakTime()>0 && oph.PeakTime()<10) std::cout << "ophit for ch 491 with PE " << oph.PE() << ", area " << oph.Area() << std::endl;
       ::lightana::LiteOpHit_t loph;
       if(trigger_time > 1.e20) trigger_time = oph.PeakTimeAbs() - oph.PeakTime();
       loph.peak_time = oph.PeakTime();
@@ -114,7 +115,11 @@ namespace opdet{
                          (trigger_time + lflash.time) / 1600., lflash.channel_pe,
                          0, 0, 1, // this are just default values
                          Ycenter, Ywidth, Zcenter, Zwidth);
+      std::cout << "PE in opch 490: " << lflash.channel_pe[490] << std::endl;
+      // if (lflash.time > 0 && lflash.time < 10) std::cout << "PE in opch 491: " << lflash.channel_pe[491] << std::endl;
+      // if (lflash.time > 0 && lflash.time < 10) std::cout << "Total PE: " << flash.TotalPE() << std::endl;
       opflashes->emplace_back(std::move(flash));
+
 
       for(auto const& hitidx : lflash.asshit_idx) {
         const art::Ptr<recob::OpHit> hit_ptr(ophit_h, hitidx);

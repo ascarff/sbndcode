@@ -96,7 +96,6 @@ namespace lightana {
 
     for (auto name : pd_names) {
       auto ch_v = pds_map.getChannelsOfType(name);
-      std::cout << "For name " << name << " we have " << ch_v.size() << " channels." << std::endl;
       out_ch_v.insert(out_ch_v.end(), ch_v.begin(), ch_v.end());
     }
 

@@ -1,5 +1,3 @@
-add_subdirectory(FlashFinder)
-
 cet_enable_asserts()
 
 art_make(
