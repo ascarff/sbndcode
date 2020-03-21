@@ -18,7 +18,7 @@ sbnd_numurecotree:
   PidModuleLabel:      "pandoraPid"   # Particle ID producer module label
   CaloModuleLabel:     "pandoraCalo"   # Particle ID producer module label
   PandoraLabel:        "pandora"
-  Verbose:             false          # Print extra information about what's going on
+  Verbose:             true          # Print extra information about what's going on
   fitter:              @local::sbnd_mcsfitter
   SPTagAlg:            @local::sbnd_stoppingparticlecosmicidalg
 }
@@ -35,7 +35,7 @@ sbnd_pdstree:
   PdsModuleLabel:      "ophit"        # Simulation producer module label
   PandoraModuleLabel:  "pandora"        # Simulation producer module label
   SpModuleLabel:        "pandora"        # Simulation producer module label
-  Verbose:             false          # Print extra information about what's going on
+  Verbose:             true          # Print extra information about what's going on
   FlashAlg:            @local::sbnd_flashmatchalg
 }
 
@@ -48,7 +48,7 @@ sbnd_cosmictree:
   # The input parameters
   GenModuleLabel:      "generator"        # Generator producer module label
   SimModuleLabel:      "largeant"     # Simulation producer module label
-  Verbose:             false          # Print extra information about what's going on
+  Verbose:             true          # Print extra information about what's going on
 }
 
 sbnd_dirttree:
@@ -60,7 +60,7 @@ sbnd_dirttree:
   # The input parameters
   GenModuleLabel:      "generator"        # Generator producer module label
   SimModuleLabel:      "largeant"     # Simulation producer module label
-  Verbose:             false          # Print extra information about what's going on
+  Verbose:             true          # Print extra information about what's going on
 }
 
 sbnd_selectiontree: 
@@ -77,7 +77,7 @@ sbnd_selectiontree:
   PidModuleLabel:      "pandoraPid"     # TPC track producer module label
   CaloModuleLabel:     "pandoraCalo"    # Particle ID producer module label
   PandoraLabel:        "pandora"
-  Verbose:             false             # Print extra information about what's going on
+  Verbose:             true             # Print extra information about what's going on
   BeamTimeLimits:      @local::sbnd_beamtime
   CosIdAlg:            @local::standard_cosmicidalg
   fitter:              @local::sbnd_mcsfitter
@@ -98,7 +98,7 @@ sbnd_numucctree:
   PidModuleLabel:      "pandoraPid"     # TPC track producer module label
   CaloModuleLabel:     "pandoraCalo"    # Particle ID producer module label
   PandoraLabel:        "pandora"
-  Verbose:             false             # Print extra information about what's going on
+  Verbose:             true             # Print extra information about what's going on
   BeamTimeLimits:      @local::sbnd_beamtime
   CosIdAlg:            @local::standard_cosmicidalg
   fitter:              @local::sbnd_mcsfitter
