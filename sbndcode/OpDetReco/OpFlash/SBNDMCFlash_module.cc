@@ -28,7 +28,7 @@
 #include "lardata/DetectorInfoServices/DetectorClocksServiceStandard.h"
 #include "lardata/DetectorInfoServices/LArPropertiesService.h"
 
-#include "FlashFinderFMWKInterface.h"
+#include "sbndcode/OpDetReco/OpFlash/FlashFinder/FlashFinderFMWKInterface.h"
 #include "sbndcode/OpDetSim/sbndPDMapAlg.h"
 
 #include "TVector3.h"

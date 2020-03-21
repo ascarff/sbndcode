@@ -40,7 +40,7 @@
 #include "canvas/Utilities/Exception.h"
 
 #include "sbndcode/OpDetSim/sbndPDMapAlg.h" 
-#include "sbndcode/OpDetReco/OpFlash/FlashFinderFMWKInterface.h"
+#include "sbndcode/OpDetReco/OpFlash/FlashFinder/FlashFinderFMWKInterface.h"
 
 
 // ROOT includes

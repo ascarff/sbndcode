@@ -184,7 +184,6 @@ namespace opdet {
     if(fParams.PMTBaselineRMS > 0.0) AddLineNoise(wave);
     if(fParams.PMTDarkNoiseRate > 0.0) AddDarkNoise(wave);
     CreateSaturation(wave);
-    if(ch == 491) std::cout << "MARCO For ch 491 we counted pes " << marco_counter << std::endl;
   }
 
 

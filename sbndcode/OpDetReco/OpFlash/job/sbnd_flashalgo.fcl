@@ -13,8 +13,8 @@ SimpleFlashStandard:
   HitVetoRangeEnd:   []
   OpChannelRange:    [0,359]
   TPC:               0
-  #PD:                ["pmt", "barepmt", "xarapucaT1", "xarapuca", "xarapucaT2"]
-  PD:                ["pmt"]
+  #PD:                ["pmt_coated", "pmt_uncoated", "xarapuca", "xarapuca_vuv", "xarapuca_vis"]
+  PD:                ["pmt_coated"]
   DebugMode:         true
 }
 

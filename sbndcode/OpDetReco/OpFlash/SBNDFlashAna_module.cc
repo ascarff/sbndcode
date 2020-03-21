@@ -164,7 +164,7 @@ void SBNDFlashAna::analyze(art::Event const& e)
         _flash_ophit_width.push_back(ophit->Width());
         _flash_ophit_pe.push_back(ophit->PE());
         _flash_ophit_ch.push_back(ophit->OpChannel());
-        _flash_ophit_chname.push_back(_pds_map.pdName(ophit->OpChannel()));
+        _flash_ophit_chname.push_back(_pds_map.pdType(ophit->OpChannel()));
         
       }
 

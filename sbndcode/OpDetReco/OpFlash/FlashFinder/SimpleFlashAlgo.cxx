@@ -64,7 +64,7 @@ namespace lightana{
                     auto iter = std::find(opch_to_use.begin(), opch_to_use.end(), v);
                     if (iter != opch_to_use.end()) {
                         _index_to_opch_v.push_back(v);
-                        std::cout << "Going to use ch " << v << std::endl;
+                        // std::cout << "Going to use ch " << v << std::endl;
                     }
                 }
             }else{

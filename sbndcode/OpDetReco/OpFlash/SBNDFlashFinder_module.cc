@@ -22,9 +22,9 @@
 
 #include <memory>
 #include <string>
-#include "FlashFinderManager.h"
-#include "FlashFinderFMWKInterface.h"
-#include "PECalib.h"
+#include "sbndcode/OpDetReco/OpFlash/FlashFinder/FlashFinderManager.h"
+#include "sbndcode/OpDetReco/OpFlash/FlashFinder/FlashFinderFMWKInterface.h"
+#include "sbndcode/OpDetReco/OpFlash/FlashFinder/PECalib.h"
 
 namespace opdet{
 

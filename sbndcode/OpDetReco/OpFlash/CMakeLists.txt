@@ -33,7 +33,7 @@ art_make(
         ${ROOT_GDML}
         ${ROOT_BASIC_LIB_LIST}
     MODULE_LIBRARIES
-        sbndcode_OpDetReco_OpFlash
+        sbndcode_OpDetReco_OpFlash_FlashFinder
         sbndcode_OpDetSim
         sbnd_Geometry
         larcore_Geometry_Geometry_service
@@ -68,6 +68,6 @@ install_headers()
 install_fhicl()
 install_source()
 
-add_directory(job)
-add_directory(FlashFinder)
+add_subdirectory(job)
+add_subdirectory(FlashFinder)
 

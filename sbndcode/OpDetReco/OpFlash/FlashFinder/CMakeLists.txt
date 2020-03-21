@@ -33,7 +33,6 @@ art_make(
         ${ROOT_GDML}
         ${ROOT_BASIC_LIB_LIST}
     MODULE_LIBRARIES
-        sbndcode_OpDetReco_OpFlash
         sbndcode_OpDetSim
         sbnd_Geometry
         larcore_Geometry_Geometry_service
