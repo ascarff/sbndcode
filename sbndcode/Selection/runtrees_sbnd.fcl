@@ -63,6 +63,7 @@ physics:
     CosmicIdTree: @local::sbnd_cosmicidtree
     SelectionTree: @local::sbnd_selectiontree
     CosmicTree: @local::sbnd_cosmictree
+    NumuccTree: @local::sbnd_numucctree 
   }
 
   # Schedule job step(s) for execution by defining the analysis module for this job.
@@ -80,6 +81,7 @@ physics:
               , CosmicIdTree
               , SelectionTree 
               , CosmicTree
+              , NumuccTree
             ]
 
   # "end_paths" is a keyword and contains the modules that do not modify the art::Event;

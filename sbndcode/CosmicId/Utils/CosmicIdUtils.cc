@@ -38,8 +38,8 @@ namespace sbnd{
     std::vector<double> optimes_tpc1;
     for(auto const& ophit : (*pdsHandle)){
       // Only look at PMTs
-      std::string od = fChannelMap.pdName(ophit.OpChannel());
-      if( od != "pmt" ) continue;
+      std::string od = fChannelMap.pdType(ophit.OpChannel());
+      if( od != "pmt_coated" ) continue;
       // Work out what TPC detector is in odd = TPC1, even = TPC0
       if(ophit.OpChannel() % 2 == 0){ 
         optimes_tpc1.push_back(ophit.PeakTime());
@@ -128,8 +128,8 @@ namespace sbnd{
     int n_hits_tpc1 = 0;
     for(auto const& ophit : (*pdsHandle)){
       // Only look at PMTs
-      std::string od = fChannelMap.pdName(ophit.OpChannel());
-      if( od != "pmt" ) continue;
+      std::string od = fChannelMap.pdType(ophit.OpChannel());
+      if( od != "pmt_coated" ) continue;
       // Work out what TPC detector is in odd = TPC1, even = TPC0
       if(ophit.OpChannel() % 2 == 0){ 
         // Beam activity

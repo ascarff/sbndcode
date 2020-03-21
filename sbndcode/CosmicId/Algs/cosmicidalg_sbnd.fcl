@@ -20,6 +20,7 @@ standard_cosmicidalg:
     ApplyCrtHitCut:    true
     ApplyPandoraT0Cut: false
     ApplyFlashCut:     true
+    ApplyPandoraNuScoreCut: true
 
     UseTrackAngleVeto:    true
     MinSecondTrackLength: 5.
@@ -35,6 +36,7 @@ standard_cosmicidalg:
     PTTagAlg: @local::sbnd_pandorat0cosmicidalg
     GeoTagAlg: @local::sbnd_geometrycosmicidalg
     FlashAlg: @local::sbnd_flashmatchalg
+    PNTagAlg: @local::sbnd_pandoranuscorecosmicidalg
 
     BeamTimeLimits: @local::sbnd_beamtime
 }

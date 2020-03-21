@@ -121,7 +121,7 @@ std::pair<double, double> FlashMatchAlg::BiggestBeamFlash(std::vector<recob::OpH
     TH1F *ophittime = new TH1F("ophittime", "ophittime", nbins, fBeamFlashMin, fBeamFlashMax); // in us
     for(size_t i = 0; i < ophits.size(); i++){
 
-      if ( !fChannelMap.pdType(ophits[i].OpChannel(),"pmt")) continue;
+      if ( fChannelMap.pdType(ophits[i].OpChannel()) != "pmt_coated") continue;
 
       if ( (ophits[i].PeakTime() > fBeamFlashMin) && (ophits[i].PeakTime() < fBeamFlashMax) ) {
 	      ophittime->Fill(ophits[i].PeakTime(), ophits[i].PE());
@@ -148,7 +148,7 @@ std::vector<double> FlashMatchAlg::OpFlashes(std::vector<recob::OpHit> ophits){
   int nbins = 1./fTimeResolution * (fEventMax - fEventMin);
   TH1F *ophittimes = new TH1F("ophittime", "ophittime", nbins, fEventMin, fEventMax); // in us
   for(size_t i = 0; i < ophits.size(); i++){
-    if ( !fChannelMap.pdType(ophits[i].OpChannel(), "pmt")) continue;
+    if ( fChannelMap.pdType(ophits[i].OpChannel()) !=  "pmt_coated") continue;
 	  ophittimes->Fill(ophits[i].PeakTime(), ophits[i].PE());
   }
 
@@ -176,7 +176,7 @@ std::pair<std::vector<double>, std::vector<double>> FlashMatchAlg::OpFlashes(art
   std::vector<recob::OpHit> ophits_tpc1;
   for(auto const& ophit : (*pdsHandle)){
     // Only look at PMTs
-    if( fChannelMap.pdName(ophit.OpChannel()) != "pmt" ) continue;
+    if( fChannelMap.pdType(ophit.OpChannel()) != "pmt_coated" ) continue;
     // Work out what TPC detector is in
     double PMTxyz[3];
 	  fGeometryService->OpDetGeoFromOpChannel(ophit.OpChannel()).GetCenter(PMTxyz);
@@ -198,7 +198,7 @@ std::pair<bool, bool> FlashMatchAlg::BeamFlash(art::ValidHandle<std::vector<reco
   std::vector<recob::OpHit> ophits_tpc1;
   for(auto const& ophit : (*pdsHandle)){
     // Only look at PMTs
-    if( fChannelMap.pdName(ophit.OpChannel()) != "pmt" ) continue;
+    if( fChannelMap.pdType(ophit.OpChannel()) != "pmt_coated" ) continue;
     // Work out what TPC detector is in
     double PMTxyz[3];
 	  fGeometryService->OpDetGeoFromOpChannel(ophit.OpChannel()).GetCenter(PMTxyz);
@@ -222,7 +222,7 @@ std::pair<double, double> FlashMatchAlg::BeamPE(art::ValidHandle<std::vector<rec
   double npe_tpc0 = 0;
   double npe_tpc1 = 0;
   for(auto const& ophit : (*pdsHandle)){
-    if ( !fChannelMap.pdType(ophit.OpChannel(),"pmt")) continue;
+    if ( fChannelMap.pdType(ophit.OpChannel()) != "pmt_coated") continue;
     // Work out what TPC detector is in
     double PMTxyz[3];
 	  fGeometryService->OpDetGeoFromOpChannel(ophit.OpChannel()).GetCenter(PMTxyz);
@@ -259,7 +259,7 @@ std::vector<double> FlashMatchAlg::OpVariables(std::vector<recob::OpHit> ophits,
 	  if ((tpc==0 && PMTxyz[0]>0) || (tpc==1 && PMTxyz[0]<0) ) continue;
 
     // For TPB coated PMTs
-	  if ( fChannelMap.pdType(oph.OpChannel(),"pmt")){
+	  if ( fChannelMap.pdType(oph.OpChannel()) == "pmt_coated"){
 	    // Add up the position, weighting with PEs
       pe_tot  += oph.PE();
       variables[0] += oph.PE() * PMTxyz[1];
@@ -271,7 +271,7 @@ std::vector<double> FlashMatchAlg::OpVariables(std::vector<recob::OpHit> ophits,
 	    sum_Cz  += pow(oph.PE(),2.) * PMTxyz[2];
     }
     // For uncoated PMTs
-	  else if ( fChannelMap.pdType(oph.OpChannel(),"barepmt")){
+	  else if ( fChannelMap.pdType(oph.OpChannel()) == "pmt_uncoated"){
       unpe_tot += oph.PE();
       variables[0] += oph.PE() * PMTxyz[1];
       variables[1] += oph.PE() * PMTxyz[2];
@@ -382,7 +382,7 @@ double FlashMatchAlg::FlashScore(recob::PFParticle pfparticle, std::map< size_t,
   // Get interesting ophits
   std::vector<recob::OpHit> ophs;
   for(auto const& oph : (*pdsHandle)){
-    if ( fChannelMap.pdType(oph.OpChannel(),"pmt") || fChannelMap.pdType(oph.OpChannel(),"barepmt") ) {
+    if ( fChannelMap.pdType(oph.OpChannel()) == "pmt_coated" || fChannelMap.pdType(oph.OpChannel()) == "pmt_uncoated" ) {
       ophs.push_back(oph);
     }
   }

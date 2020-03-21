@@ -141,7 +141,7 @@ namespace sbnd {
     geo::GeometryCore const* fGeometryService;
     detinfo::DetectorProperties const* fDetectorProperties;
 
-    std::vector<std::string> opdets {"pmt", "barepmt"};
+    std::vector<std::string> opdets {"pmt_coated", "pmt_uncoated"};
     
     // Tree (One entry per primary muon)
     TTree *fParticleTree;
@@ -230,12 +230,14 @@ namespace sbnd {
     , fVerbose              (config().Verbose())
     , fFlashAlg             (config().FlashAlg())
   {
+  std::cout<<"construction\n";
 
   } // PdsTree()
 
 
   void PdsTree::beginJob()
   {
+  std::cout<<"begin job\n";
 
     fGeometryService = lar::providerFrom<geo::Geometry>();
     fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>();
@@ -382,11 +384,11 @@ namespace sbnd {
     //----------------------------------------------------------------------------------------------------------
     //                                        OPTICAL RECONSTRUCTION
     //----------------------------------------------------------------------------------------------------------
-
+/*
     // get flash time
     std::vector<recob::OpHit> ophs;
     for(auto const& oph : (*pdsHandle)){
-      if ( fChannelMap.pdType(oph.OpChannel(),"pmt") || fChannelMap.pdType(oph.OpChannel(),"barepmt") ) {
+      if ( fChannelMap.pdType(oph.OpChannel()) == "pmt_coated" || fChannelMap.pdType(oph.OpChannel()) == "pmt_uncoated" ) {
         ophs.push_back(oph);
       }
     }
@@ -404,8 +406,8 @@ namespace sbnd {
     std::vector<recob::OpHit> ophits_tpc1;
     for(auto const& ophit : (*pdsHandle)){
       // Only look at PMTs
-      std::string od = fChannelMap.pdName(ophit.OpChannel());
-      if( od != "pmt" ) continue;
+      std::string od = fChannelMap.pdType(ophit.OpChannel());
+      if( od != "pmt_coated" ) continue;
       // Work out what TPC detector is in odd = TPC1, even = TPC0
       double PMTxyz[3];
 	    fGeometryService->OpDetGeoFromOpChannel(ophit.OpChannel()).GetCenter(PMTxyz);
@@ -609,7 +611,7 @@ namespace sbnd {
       std::map<std::string, std::vector<double>> optimes;
       for(auto const& ophit : (*pdsHandle)){
         // Only look at PMTs
-        std::string od = fChannelMap.pdName(ophit.OpChannel());
+        std::string od = fChannelMap.pdType(ophit.OpChannel());
         if( std::find(opdets.begin(), opdets.end(), od) == opdets.end()) continue;
         if(ophit.PeakTime() < (time/1e3 - 5) || ophit.PeakTime() > (time/1e3 + 5)) continue;
         ave_time_diff[od] += ophit.PeakTime() - time/1e3;
@@ -668,7 +670,7 @@ namespace sbnd {
       if(vtx.X() > 0) nu_tpc1 = true;
 
     }
-
+*/
     fEventTree->Fill();
 
   } // PdsTree::analyze()

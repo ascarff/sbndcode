@@ -104,5 +104,11 @@ sbnd_flashmatchalg:
     FlashMatchCut: 20.
 }
 
+sbnd_pandoranuscorecosmicidalg:
+{
+    PandoraLabel:        "pandora"
+    TpcTrackModuleLabel: "pandoraTrack"
+    NuScoreCut:          0.4
+}
 
 END_PROLOG

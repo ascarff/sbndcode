@@ -6,8 +6,8 @@
 //// Based on OpDetDigitizerDUNE_module.cc
 //////////////////////////////////////////////////////////////////////////
 
-#ifndef DIGIPMTSBNDALG_H
-#define DIGIPMTSBNDALG_H
+#ifndef SBND_OPDETSIM_DIGIPMTSBNDALG_H
+#define SBND_OPDETSIM_DIGIPMTSBNDALG_H
 
 #include "fhiclcpp/types/Atom.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
@@ -38,9 +38,9 @@
 #include "TF1.h"
 #include "TH1D.h"
 
-namespace opdet{
+namespace opdet {
 
-  class DigiPMTSBNDAlg{
+  class DigiPMTSBNDAlg {
 
   public:
 
@@ -57,7 +57,9 @@ namespace opdet{
       double PMTSaturation; //in number of p.e.
       double QEDirect; //PMT quantum efficiency for direct (VUV) light
       double QERefl; //PMT quantum efficiency for reflected (TPB converted) light
-      int SinglePEmodel; //Model for single pe response =0 for ideal, =1 for test bench meas
+      // std::string TPBFile; //File containing timing emission structure for TPB
+      // std::string TestBenchPEFile; //File containing single PE profile from data
+      bool SinglePEmodel; //Model for single pe response, false for ideal, true for test bench meas
 
       detinfo::LArProperties const* larProp = nullptr; //< LarProperties service provider.
       detinfo::DetectorClocks const* timeService = nullptr; //< DetectorClocks service provider.
@@ -69,10 +71,13 @@ namespace opdet{
     //Default destructor
     ~DigiPMTSBNDAlg();
 
-    void ConstructWaveform(int ch, sim::SimPhotons const& simphotons, std::vector<short unsigned int>& waveform, std::string pdtype, std::map<int,sim::SimPhotons> auxmap, double start_time, unsigned n_sample);
-    void ConstructWaveformLite(int ch, sim::SimPhotonsLite const& litesimphotons, std::vector<short unsigned int>& waveform, std::string pdtype, std::map<int,sim::SimPhotonsLite> auxmap, double start_time, unsigned n_sample);
+    void ConstructWaveform(int ch, sim::SimPhotons const& simphotons, std::vector<short unsigned int>& waveform, std::string pdtype, std::map<int, sim::SimPhotons> auxmap, double start_time, unsigned n_sample);
+    void ConstructWaveformLite(int ch, sim::SimPhotonsLite const& litesimphotons, std::vector<short unsigned int>& waveform, std::string pdtype, std::map<int, sim::SimPhotonsLite> auxmap, double start_time, unsigned n_sample);
 
-    double Baseline() { return fParams.PMTBaseline; }
+    double Baseline()
+    {
+      return fParams.PMTBaseline;
+    }
 
   private:
 
@@ -94,18 +99,18 @@ namespace opdet{
     std::vector<double> wsp; //single photon pulse vector
     int pulsesize; //size of 1PE waveform
     TH1D* timeTPB; //histogram for getting the TPB emission time for coated PMTs
-    std::unordered_map< raw::Channel_t,std::vector<double> > fFullWaveforms;
+    std::unordered_map< raw::Channel_t, std::vector<double> > fFullWaveforms;
 
-    void CreatePDWaveform(sim::SimPhotons const& SimPhotons, double t_min, std::vector<double>& wave, int ch, std::string pdtype, std::map<int,sim::SimPhotons> auxmap);
+    void CreatePDWaveform(sim::SimPhotons const& SimPhotons, double t_min, std::vector<double>& wave, int ch, std::string pdtype, std::map<int, sim::SimPhotons> auxmap);
     void CreatePDWaveformLite(sim::SimPhotonsLite const& litesimphotons, double t_min, std::vector<double>& wave, int ch, std::string pdtype, std::map<int, sim::SimPhotonsLite> auxmap);
     void CreateSaturation(std::vector<double>& wave);//Including saturation effects
     void AddLineNoise(std::vector<double>& wave); //add noise to baseline
     void AddDarkNoise(std::vector<double>& wave); //add dark noise
-    double FindMinimumTime(sim::SimPhotons const&, int ch, std::string pdtype, std::map<int,sim::SimPhotons> auxmap);
+    double FindMinimumTime(sim::SimPhotons const&, int ch, std::string pdtype, std::map<int, sim::SimPhotons> auxmap);
     double FindMinimumTimeLite(sim::SimPhotonsLite const& litesimphotons, int ch, std::string pdtype, std::map<int, sim::SimPhotonsLite> auxmap);
   };//class DigiPMTSBNDAlg
 
-  class DigiPMTSBNDAlgMaker{
+  class DigiPMTSBNDAlgMaker {
 
   public:
     struct Config {
@@ -172,7 +177,7 @@ namespace opdet{
         Comment("PMT quantum efficiency for reflected (TPB emitted)light")
       };
 
-      fhicl::Atom<int> singlePEmodel {
+      fhicl::Atom<bool> singlePEmodel {
         Name("SinglePEmodel"),
         Comment("Model used for single PE response of PMT. =0 is ideal, =1 is testbench")
       };
@@ -185,7 +190,7 @@ namespace opdet{
       detinfo::LArProperties const& larProp,
       detinfo::DetectorClocks const& detClocks,
       CLHEP::HepRandomEngine* engine
-      ) const;
+    ) const;
 
   private:
     // Part of the configuration learned from configuration files.
@@ -194,4 +199,4 @@ namespace opdet{
 
 } //namespace
 
-#endif //DIGIPMTSBNDALG
+#endif //SBND_OPDETSIM_DIGIPMTSBNDALG
