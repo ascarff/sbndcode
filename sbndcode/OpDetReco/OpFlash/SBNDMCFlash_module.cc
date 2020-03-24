@@ -296,9 +296,6 @@ void SBNDMCFlash::produce(art::Event& e)
         float photon_time_elec = ts->G4ToElecTime(photon_time) - trig_time;
         float nuTime_elec = ts->G4ToElecTime(nuTime) - trig_time;
 
-        float photon_time_elec = photon_time;
-        float nuTime_elec = nuTime * 1e-3;
-
 
         
         // if (_debug) std::cout << " photon_time_elec " << photon_time_elec << " nuTime_elec " << nuTime_elec << std::endl;  

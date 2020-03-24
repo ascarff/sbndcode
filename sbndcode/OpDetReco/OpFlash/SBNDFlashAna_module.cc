@@ -138,11 +138,6 @@ void SBNDFlashAna::analyze(art::Event const& e)
     art::FindManyP<recob::OpHit> flashToOpHitAssns(flash_h, e, _ophit_label_v[l]);
 
     for (size_t i = 0; i < flash_h->size(); i++) {
-
-      _run    = e.id().run();
-      _subrun = e.id().subRun();
-      _event  = e.id().event();
-
       auto const& f = (*flash_h)[i];
       std::cout << "Flash " << i << ", time " << f.AbsTime() << std::endl;
       _tpc = _tpc_v[l];
@@ -184,11 +179,6 @@ void SBNDFlashAna::analyze(art::Event const& e)
       std::cout << "Invalid producer for MC recob::OpFlash: " << _mcflash_label_v[l] << ". Ignoring." << std::endl;
     }
     for (size_t i = 0; i < flash_h->size(); i++) {
-
-      _run    = e.id().run();
-      _subrun = e.id().subRun();
-      _event  = e.id().event();
-
       auto const& f = (*flash_h)[i];
       _tpc = _tpc_v[l];
       _flash_time = f.Time();
@@ -198,7 +188,6 @@ void SBNDFlashAna::analyze(art::Event const& e)
       _flash_yerr = f.YWidth();
       _flash_z = f.ZCenter();
       _flash_zerr = f.ZWidth();
-      
       _mcflash_tree->Fill();
     }
   }
