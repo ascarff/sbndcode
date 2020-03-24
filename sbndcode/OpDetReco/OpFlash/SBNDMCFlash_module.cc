@@ -30,7 +30,7 @@
 #include "lardata/DetectorInfoServices/LArPropertiesService.h"
 
 #include "sbndcode/OpDetReco/OpFlash/FlashFinder/FlashFinderFMWKInterface.h"
-#include "sbndcode/OpDetSim/sbndPDMapAlg.h"
+#include "sbndcode/OpDetSim/sbndPDMapAlg.hh"
 
 #include "TVector3.h"
 #include "TTree.h"
