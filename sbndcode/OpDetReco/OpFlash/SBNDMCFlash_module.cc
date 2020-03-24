@@ -25,6 +25,7 @@
 #include "lardataobj/RecoBase/OpFlash.h"
 #include "lardata/DetectorInfoServices/DetectorClocksService.h"
 #include "larcore/Geometry/Geometry.h"
+#include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
 #include "lardata/DetectorInfoServices/DetectorClocksServiceStandard.h"
 #include "lardata/DetectorInfoServices/LArPropertiesService.h"
 
@@ -58,6 +59,8 @@ public:
 
 private:
 
+  detinfo::DetectorProperties const* _det_prop;
+
   std::string _mctruth_label;
   std::string _trigger_label;
   std::string _simphot_label;
@@ -90,6 +93,8 @@ SBNDMCFlash::SBNDMCFlash(fhicl::ParameterSet const& p)
   : EDProducer{p}  // ,
   // More initializers here.
 {
+  _det_prop = lar::providerFrom<detinfo::DetectorPropertiesService>();
+
   _mctruth_label = p.get<std::string>("MCTruthProduct", "generator");
   _trigger_label = p.get<std::string>("TriggerProduct", "triggersim");
   _simphot_label = p.get<std::string>("SimPhotProduct", "largeant");  
@@ -201,7 +206,7 @@ void SBNDMCFlash::produce(art::Event& e)
 
   // auto const & evt_trigger = (*evt_trigger_h)[0];
   // auto const trig_time = evt_trigger.TriggerTime();
-  auto const trig_time = 0;
+  auto const trig_time = _det_prop->TriggerOffset();
   auto const * ts = lar::providerFrom<detinfo::DetectorClocksService>();
 
   if (_debug) std::cout << "trig_time: " << trig_time << std::endl;
@@ -288,9 +293,15 @@ void SBNDMCFlash::produce(art::Event& e)
 
         float photon_time = (pair.first + transit_time - start_window) / sampling;  
 
-        float photon_time_elec = ts->G4ToElecTime(photon_time) - trig_time;
-        float nuTime_elec = ts->G4ToElecTime(nuTime) - trig_time;
+        // float photon_time_elec = ts->G4ToElecTime(photon_time) - trig_time;
+        // float nuTime_elec = ts->G4ToElecTime(nuTime) - trig_time;
+        float photon_time_elec = photon_time;
+        float nuTime_elec = nuTime * 1e-3;
+
+
+        
         // if (_debug) std::cout << " photon_time_elec " << photon_time_elec << " nuTime_elec " << nuTime_elec << std::endl;  
+        // if (_debug) std::cout << " photon_time " << photon_time << " nuTime " << nuTime << std::endl;  
   
 
         if (photon_time_elec > nuTime_elec + 8 ) continue;
@@ -350,13 +361,21 @@ void SBNDMCFlash::produce(art::Event& e)
   double Ycenter, Zcenter, Ywidth, Zwidth;
   GetFlashLocation(pmt_v[0], Ycenter, Zcenter, Ywidth, Zwidth);
 
-  recob::OpFlash flash(ts->G4ToElecTime(nuTime) - trig_time,       // time w.r.t. trigger
+  recob::OpFlash flash(nuTime,                                     // time w.r.t. trigger
                        0,                                          // time width
-                       ts->G4ToElecTime(nuTime),                   // flash time in elec clock
+                       nuTime,                                     // flash time in elec clock
                        0.,                                         // frame (?)
                        pmt_v[0],                                   // pe per pmt
                        0, 0, 1,                                    // this are just default values
                        Ycenter, Ywidth, Zcenter, Zwidth);          // flash location
+
+  // recob::OpFlash flash(ts->G4ToElecTime(nuTime) - trig_time,       // time w.r.t. trigger
+  //                      0,                                          // time width
+  //                      ts->G4ToElecTime(nuTime),                   // flash time in elec clock
+  //                      0.,                                         // frame (?)
+  //                      pmt_v[0],                                   // pe per pmt
+  //                      0, 0, 1,                                    // this are just default values
+  //                      Ycenter, Ywidth, Zcenter, Zwidth);          // flash location
 
   std::cout << "[NeutrinoMCFlash] MC Flash Time: "  << flash.Time() << std::endl;
   std::cout << "[NeutrinoMCFlash] MC Flash PE:   "  << flash.TotalPE() << std::endl;

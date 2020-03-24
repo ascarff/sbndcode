@@ -9,7 +9,7 @@
 #include "sbnd_flashfinder.fcl"
 #include "sbnd_mcflash.fcl"
 #include "sbnd_flashana.fcl"
-
+ 
 process_name: FlashFinder
 
 services:
@@ -54,7 +54,7 @@ physics:
 {
   producers:
   {
-    opdaq:        @local::sbnd_opdetdigitizer
+    # opdaq:        @local::sbnd_opdetdigitizer
     ophit:        @local::sbnd_ophit_finder
     opflashtpc0:  @local::SBNDSimpleFlashTPC0
     opflashtpc1:  @local::SBNDSimpleFlashTPC1
@@ -72,7 +72,7 @@ physics:
   #define the producer and filter modules for this path, order matters, 
   #filters reject all following items.  see lines starting physics.producers below
   reco: [ 
-    opdaq,        
+    # opdaq,        
     ophit,
     opflashtpc0,
     opflashtpc1,
@@ -93,8 +93,4 @@ physics:
   # ie analyzers and output streams.  these all run simultaneously
   end_paths: [ana, stream1]  
 }
-
-# setup services parameters for 3 drift windows
-##include "3drift_services_sbnd.fcl"
-
 

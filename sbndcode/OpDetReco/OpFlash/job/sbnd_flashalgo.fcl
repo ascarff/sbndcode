@@ -15,7 +15,7 @@ SimpleFlashStandard:
   TPC:               0
   #PD:                ["pmt_coated", "pmt_uncoated", "xarapuca", "xarapuca_vuv", "xarapuca_vis"]
   PD:                ["pmt_coated"]
-  DebugMode:         true
+  DebugMode:         false
 }
 
 SimpleFlashTPC0: @local::SimpleFlashStandard

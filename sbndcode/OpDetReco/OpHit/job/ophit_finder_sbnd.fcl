@@ -9,7 +9,7 @@ sbnd_ophit_finder:
   InputModule:    "opdaq"
   InputLabels:    [""]
   ChannelMasks:   []                  # Will ignore channels in this list
-  PD:             ["pmt", "barepmt"]  # Will only use PDS in this list
+  PD:             ["pmt_coated", "pmt_uncoated"]  # Will only use PDS in this list
   HitThreshold:   0.2   # PE
   AreaToPE:       true  # Use area to calculate number of PEs
   SPEArea:        317.1 # If AreaToPE is true, this number is
