@@ -4,7 +4,7 @@
 //#include "FhiclLite/ConfigManager.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "larcore/Geometry/Geometry.h"
-#include "sbndcode/OpDetSim/sbndPDMapAlg.h"
+#include "sbndcode/OpDetSim/sbndPDMapAlg.hh"
 #include <stdlib.h>
 
 namespace lightana {
