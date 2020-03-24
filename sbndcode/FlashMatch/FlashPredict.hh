@@ -38,7 +38,7 @@
 #include "canvas/Persistency/Provenance/ProductID.h"
 #include "art/Persistency/Common/PtrMaker.h"
 #include "sbndcode/OpDetSim/OpT0FinderTypes.h"
-#include "sbndcode/OpDetSim/sbndPDMapAlg.hh"
+#include "sbndcode/OpDetSim/sbndPDMapAlg.h"
 #include "TTree.h"
 #include "TFile.h"
 #include "TGraph.h"

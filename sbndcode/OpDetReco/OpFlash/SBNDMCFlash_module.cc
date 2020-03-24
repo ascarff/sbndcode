@@ -30,7 +30,7 @@
 #include "lardata/DetectorInfoServices/LArPropertiesService.h"
 
 #include "sbndcode/OpDetReco/OpFlash/FlashFinder/FlashFinderFMWKInterface.h"
-#include "sbndcode/OpDetSim/sbndPDMapAlg.hh"
+#include "sbndcode/OpDetSim/sbndPDMapAlg.h"
 
 #include "TVector3.h"
 #include "TTree.h"
@@ -293,8 +293,9 @@ void SBNDMCFlash::produce(art::Event& e)
 
         float photon_time = (pair.first + transit_time - start_window) / sampling;  
 
-        // float photon_time_elec = ts->G4ToElecTime(photon_time) - trig_time;
-        // float nuTime_elec = ts->G4ToElecTime(nuTime) - trig_time;
+        float photon_time_elec = ts->G4ToElecTime(photon_time) - trig_time;
+        float nuTime_elec = ts->G4ToElecTime(nuTime) - trig_time;
+
         float photon_time_elec = photon_time;
         float nuTime_elec = nuTime * 1e-3;
 

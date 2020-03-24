@@ -43,7 +43,7 @@
 #include "TFile.h"
 #include "TTree.h"
 
-#include "sbndcode/OpDetSim/sbndPDMapAlg.hh"
+#include "sbndcode/OpDetSim/sbndPDMapAlg.h"
 
 namespace opdet {
 

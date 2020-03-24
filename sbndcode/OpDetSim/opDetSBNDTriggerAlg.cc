@@ -1,4 +1,4 @@
-#include "sbndcode/OpDetSim/opDetSBNDTriggerAlg.hh"
+#include "sbndcode/OpDetSim/opDetSBNDTriggerAlg.h"
 
 namespace opdet {
 
