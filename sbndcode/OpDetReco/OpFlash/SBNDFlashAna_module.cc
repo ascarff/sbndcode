@@ -128,6 +128,10 @@ void SBNDFlashAna::analyze(art::Event const& e)
   //   throw std::exception();
   // }
 
+  _run    = e.id().run();
+  _subrun = e.id().subRun();
+  _event  = e.id().event();
+  
   for (size_t l = 0; l < _flash_label_v.size(); l++) {
     art::Handle<std::vector<recob::OpFlash>> flash_h;
     e.getByLabel(_flash_label_v[l], flash_h);
