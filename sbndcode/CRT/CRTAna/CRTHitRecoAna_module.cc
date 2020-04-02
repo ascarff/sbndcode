@@ -200,7 +200,7 @@ namespace sbnd {
       hEffLengthReco[tagger]   = tfs->make<TH1D>(Form("EffLengthReco_%s", tagger.c_str()),  "",  20, 0,  450);
 
       hTrueRecoSipmDist[tagger] = tfs->make<TH2D>(Form("TrueRecoSipmDist_%s", tagger.c_str()), "", 30, -2, 13,   30, -2, 13);
-      hNpeAngle[tagger]         = tfs->make<TH2D>(Form("NpeAngle_%s", tagger.c_str()),         "", 30, 0,  180,  30, 0,  600);
+      hNpeAngle[tagger]         = tfs->make<TH2D>(Form("NpeAngle_%s", tagger.c_str()),         "", 30, 0,  90,  30, 0,  600);
       hNpeSipmDist[tagger]      = tfs->make<TH2D>(Form("NpeSipmDist_%s", tagger.c_str()),      "", 30, 0,  11.2, 30, 0,  600);
       hNpeStripDist[tagger]     = tfs->make<TH2D>(Form("NpeStripDist_%s", tagger.c_str()),     "", 30, 0,  450,  30, 0,  600);
     }

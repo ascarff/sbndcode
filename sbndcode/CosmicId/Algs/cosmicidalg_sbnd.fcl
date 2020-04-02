@@ -20,7 +20,7 @@ standard_cosmicidalg:
     ApplyCrtHitCut:    true
     ApplyPandoraT0Cut: false
     ApplyFlashCut:     true
-    ApplyPandoraNuScoreCut: true
+    ApplyPandoraNuScoreCut: false
 
     UseTrackAngleVeto:    true
     MinSecondTrackLength: 5.

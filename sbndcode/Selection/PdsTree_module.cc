@@ -230,14 +230,12 @@ namespace sbnd {
     , fVerbose              (config().Verbose())
     , fFlashAlg             (config().FlashAlg())
   {
-  std::cout<<"construction\n";
 
   } // PdsTree()
 
 
   void PdsTree::beginJob()
   {
-  std::cout<<"begin job\n";
 
     fGeometryService = lar::providerFrom<geo::Geometry>();
     fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>();
@@ -384,7 +382,7 @@ namespace sbnd {
     //----------------------------------------------------------------------------------------------------------
     //                                        OPTICAL RECONSTRUCTION
     //----------------------------------------------------------------------------------------------------------
-/*
+
     // get flash time
     std::vector<recob::OpHit> ophs;
     for(auto const& oph : (*pdsHandle)){
@@ -670,7 +668,7 @@ namespace sbnd {
       if(vtx.X() > 0) nu_tpc1 = true;
 
     }
-*/
+
     fEventTree->Fill();
 
   } // PdsTree::analyze()

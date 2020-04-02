@@ -101,7 +101,7 @@ sbnd_flashmatchalg:
     TimeResolution: 0.002 #[us]
     FlashThreshold: 0.1 #[PE]
     FlashTimeCorrection: -0.2 #[us]
-    FlashMatchCut: 20.
+    FlashMatchCut: 25.
 }
 
 sbnd_pandoranuscorecosmicidalg:

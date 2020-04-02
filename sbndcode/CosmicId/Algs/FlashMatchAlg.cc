@@ -44,7 +44,7 @@ void FlashMatchAlg::reconfigure(const Config& config){
   sp.find_file(fInputFile, fname);
   TFile *infile = new TFile(fname.c_str(), "READ");
 
-  TH1 *temphisto = (TH1*)infile->Get("rrp1");
+  TH1 *temphisto = (TH1*)infile->Get("rr_h1");
   rr_nbins = temphisto->GetNbinsX();
   if (rr_nbins<=0) {
     rr_nbins=1;
@@ -60,7 +60,7 @@ void FlashMatchAlg::reconfigure(const Config& config){
     }
   }
 
-  temphisto = (TH1*)infile->Get("dyp1");
+  temphisto = (TH1*)infile->Get("dy_h1");
   dy_nbins = temphisto->GetNbinsX();
   if (dy_nbins<=0) {
     dy_nbins=1;
@@ -76,7 +76,7 @@ void FlashMatchAlg::reconfigure(const Config& config){
     }
   }
   
-  temphisto = (TH1*)infile->Get("dzp1");
+  temphisto = (TH1*)infile->Get("dz_h1");
   dz_nbins = temphisto->GetNbinsX();
   if (dz_nbins<=0) {
     dz_nbins=1;
@@ -92,7 +92,7 @@ void FlashMatchAlg::reconfigure(const Config& config){
     }
   }
 
-  temphisto = (TH1*)infile->Get("pep1");
+  temphisto = (TH1*)infile->Get("pe_h1");
   pe_nbins = temphisto->GetNbinsX();
   if (pe_nbins<=0) {
     pe_nbins=1;
@@ -441,9 +441,9 @@ double FlashMatchAlg::FlashScore(recob::PFParticle pfparticle, std::map< size_t,
   nuvtx_y /= norm;
   nuvtx_z /= norm;
 
-  return FlashScore(nuvtx_x, nuvtx_y, nuvtx_z, opvars[pfp_tpc], 2., 2., 4., 0.);
+  return FlashScore(nuvtx_x, nuvtx_y, nuvtx_z, opvars[pfp_tpc], 2., 2., 4., 4.);
 
-  if(FlashScore(nuvtx_x, nuvtx_y, nuvtx_z, opvars[pfp_tpc], 2., 2., 4., 0.) > fFlashMatchCut) return false;
+  if(FlashScore(nuvtx_x, nuvtx_y, nuvtx_z, opvars[pfp_tpc], 2., 2., 4., 4.) > fFlashMatchCut) return false;
   return true;
   
 }
