@@ -1,6 +1,3 @@
-#include "services_sbnd.fcl"
-#include "backtrackerservice.fcl"
-#include "particleinventoryservice.fcl"
 #include "simulationservices_sbnd.fcl"
 #include "services_sbnd.fcl"
 #include "sam_sbnd.fcl"
@@ -9,7 +6,7 @@
 process_name: Ana
 services:
 {
-  TFileService: { fileName:"pfpValidationHists.root" }
+  TFileService: { fileName: "sceValidationHists.root" }
   @table::sbnd_services
   FileCatalogMetadata:  @local::sbnd_file_catalog_mc
   ParticleInventoryService: @local::standard_particleinventoryservice
@@ -20,15 +17,16 @@ source:
 {
   module_type: RootInput
   maxEvents:  -1        # Number of events to create
+
 }
 
 physics:
 {
   analyzers:
   {
-    pfpvalidation: @local::sbnd_pfpvalidation
+    sceVal: @local::sbnd_scevalidation
   }
 
-  ana: [ pfpvalidation ]
-  end_paths: [ ana ]
+ ana: [ sceVal ]
+ end_paths: [ ana ]
 }

@@ -9,6 +9,7 @@ art_make(
   lardataobj_RecoBase
   lardataobj_MCBase
   larreco_RecoAlg
+  larreco_RecoAlg_MCRecoUtils
   lardata_RecoObjects
   larpandora_LArPandoraInterface
   nusimdata_SimulationBase

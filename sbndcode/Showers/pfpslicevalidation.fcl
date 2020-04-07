@@ -6,6 +6,7 @@
 #include "sam_sbnd.fcl"
 #include "showers.fcl"
 
+process_name: Ana
 services:
 {
   TFileService: { fileName: "pfpSliceValidationHists.root" }

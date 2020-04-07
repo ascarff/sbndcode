@@ -9,7 +9,7 @@
 process_name: Ana
 services:
 {
-  TFileService: { fileName:"pfpValidationHists.root" }
+  TFileService: { fileName: "pfpSliceValidationHists.root" }
   @table::sbnd_services
   FileCatalogMetadata:  @local::sbnd_file_catalog_mc
   ParticleInventoryService: @local::standard_particleinventoryservice
@@ -26,9 +26,12 @@ physics:
 {
   analyzers:
   {
-    pfpvalidation: @local::sbnd_pfpvalidation
+    pfpValidation: @local::sbnd_pfpvalidation
+    pfpSliceValidation: @local::sbnd_pfpslicevalidation
+    sceVal: @local::sbnd_scevalidation
   }
 
-  ana: [ pfpvalidation ]
+  ana: [ pfpValidation, pfpSliceValidation, sceVal ]
   end_paths: [ ana ]
 }
+

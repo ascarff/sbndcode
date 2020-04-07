@@ -24,4 +24,20 @@ sbnd_truthdedx:
   LArGeantModuleLabel:      "largeant"
 }
 
+sbnd_scevalidation:
+{
+  module_type: SCEValidation
+  HitLabel:          "linecluster"
+  PFParticleLabels: ["pandora"]
+  TrackLabels:      ["pandoraTrack"]
+  T0Labels:         ["pandora", "crthitt0", "crttrackt0"]
+  CaloLabels:       ["pandoraCalo"]
+}
+
+sbnd_cheattzerotagger:
+{
+  module_type: CheatT0Tagger
+  PandoraLabel: "pandora"
+}
+
 END_PROLOG

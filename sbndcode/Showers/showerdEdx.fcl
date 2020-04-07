@@ -2,6 +2,7 @@
 #include "services_sbnd.fcl"
 #include "sam_sbnd.fcl"
 
+process_name: Ana
 services:
 {
   TFileService: { fileName: "showerdEdxHists.root" }
