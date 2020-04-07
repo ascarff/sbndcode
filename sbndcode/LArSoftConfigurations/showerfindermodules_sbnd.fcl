@@ -30,6 +30,7 @@ sbnd_showerenergyfinder:            @local::showerlinearenergy
 sbnd_shower3dtrackhitfinder:        @local::shower3Dtrackhitfinder
 sbnd_showerpmatrackfinder:          @local::showerpmatrackfinder
 sbnd_showerdedxfinder:              @local::showerstandardcalodedx
+sbnd_shower3Ddedxfinder:            @local::shower3Dstandardcalodedx
 sbnd_showerresidualtrackhitfinder:  @local::showerresidualtrackhitfinder
 sbnd_showerslidingstandardcalodedx: @local::showerslidingstandardcalodedx
 
@@ -41,25 +42,21 @@ sbnd_showerresidualtrackhitfinder.MaxAverageResidual: 0.38695
 sbnd_showerresidualtrackhitfinder.UseShowerDirection: false
 sbnd_showerresidualtrackhitfinder.ForwardHitsOnly: true
 
-sbnd_showerslidingstandardcalodedx.dEdxTrackLength: 3.1619
-sbnd_showerslidingstandardcalodedx.MinAngleToWire: 0.1745
-sbnd_showerslidingstandardcalodedx.MaxDist: 2.7277
-sbnd_showerslidingstandardcalodedx.CutStartPosition: true
-
-
-
 sbnd_showerstartpositioncheater: @local::showerstartpositioncheater
 sbnd_showerdirectioncheater:     @local::showerdirectioncheater
 sbnd_showertrackfindercheater:   @local::showertrackfindercheater
 
 sbnd_showerdedxfinder.CalorimetryAlg:  @local::sbnd_calorimetryalgmc
+sbnd_shower3Ddedxfinder.CalorimetryAlg:  @local::sbnd_calorimetryalgmc
+sbnd_showerslidingstandardcalodedx.CalorimetryAlg: @local::sbnd_calorimetryalgmc
 
 sbnd_tracs.ShowerFinderTools: [
   @local::sbnd_showerstartpositionfinder,
   @local::sbnd_showerdirectionfinder,
   @local::sbnd_showerenergyfinder,
-  @local::sbnd_showerresidualtrackhitfinder,
-  @local::sbnd_showerdedxfinder
+  @local::sbnd_shower3dtrackhitfinder,
+  @local::sbnd_showerpmatrackfinder,
+  @local::sbnd_showerslidingstandardcalodedx
 ]
 
 END_PROLOG
