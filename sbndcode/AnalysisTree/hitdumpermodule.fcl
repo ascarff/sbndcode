@@ -3,7 +3,7 @@ BEGIN_PROLOG
 hitdumper:
 {
     module_type:              "HitDumper"
-    HitsModuleLabel:          "fasthit"
+    HitsModuleLabel:          "gaushit"
     OpHitsModuleLabel:        "ophit"
     CRTHitModuleLabel:        "crthit"
     CRTStripModuleLabel:      "crt"

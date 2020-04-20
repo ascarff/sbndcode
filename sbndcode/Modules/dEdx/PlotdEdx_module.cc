@@ -101,9 +101,9 @@ ana::PlotdEdx::PlotdEdx(const fhicl::ParameterSet& pset)
 
 void ana::PlotdEdx::beginJob() {
   std::cout << "Beginning job!" << std::endl;
-  dEdxPlotP0 = tfs->make<TH1F>("dE/dx P0","",100,0.0,6);
-  dEdxPlotP1 = tfs->make<TH1F>("dE/dx P1","",100,0.0,6);
-  dEdxPlotP2 = tfs->make<TH1F>("dE/dx P2","",100,0.0,6);
+  dEdxPlotP0 = tfs->make<TH1F>("dEdx-P0","",100,0.0,6);
+  dEdxPlotP1 = tfs->make<TH1F>("dEdx-P1","",100,0.0,6);
+  dEdxPlotP2 = tfs->make<TH1F>("dEdx-P2","",100,0.0,6);
   //dEdxPlotT1P0 = tfs->make<TH1F>("dE/dx T1 P0","",100,0.0,6);
   //dEdxPlotT1P1 = tfs->make<TH1F>("dE/dx T1 P1","",100,0.0,6);
   //dEdxPlotT1P2 = tfs->make<TH1F>("dE/dx T1 P2","",100,0.0,6);
