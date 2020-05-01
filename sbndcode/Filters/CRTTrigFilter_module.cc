@@ -9,15 +9,9 @@
 #include <bitset>
 
 
-//  class CRTTrigFilter : public art::EDFilter(fhicl::ParameterSet const& p) {
- class CRTTrigFilter : public art::EDFilter {
-   public:
+class CRTTrigFilter : public art::EDFilter {
+public:
      explicit CRTTrigFilter(fhicl::ParameterSet const& p);
-     // FlashTimeFilter(FlashTimeFilter const&) = delete;
-     // FlashTimeFilter(FlashTimeFilter&&) = delete;
-     // FlashTimeFilter& operator=(FlashTimeFilter const&) = delete;
-     // FlashTimeFilter& operator=(FlashTimeFilter&&) = delete;
-
      //
     virtual ~CRTTrigFilter() { }
     virtual bool filter(art::Event& e) override;
@@ -26,7 +20,6 @@
   private:
 
 
-   art::ServiceHandle<art::TFileService> tfs;
 
    std::string fCRTStripModuleLabel;
    std::vector<int>    fmodlistUTopL;       
@@ -53,7 +46,8 @@
   CRTTrigFilter::CRTTrigFilter(fhicl::ParameterSet const& p): EDFilter{p} 
   {
 
-
+    //    art::ServiceHandle<art::TFileService> tfs;
+   
     // Create histograms
     hits = tfs->make<TH1F>("hits","hits",14,39.5,63.5);
     //    hits->GetXaxis()->SetTitle("Track Length (cm)");
