@@ -40,6 +40,8 @@
 #include "lardata/Utilities/LArFFT.h"
 #include "lardataobj/Utilities/sparse_vector.h"
 #include "lardata/Utilities/AssociationUtil.h"  //--Hec
+#include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
+#include "lardata/DetectorInfoServices/DetectorClocksService.h"
 
 #include "TComplex.h"
 #include "TFile.h"
@@ -86,9 +88,16 @@ namespace caldata {
     std::string  fSpillName;  ///< nominal spill is an empty string
                               ///< it is set by the DigitModuleLabel
                               ///< ex.:  "daq:preSpill" for prespill data
+    int         fSamplePrecision;
+    float       fFrontPorchFrac;
+    float       fBackPorchFrac;
 
     //void SubtractBaseline(std::vector<float>& holder, int fBaseSampleBins);
     void SubtractBaseline(std::vector<float>& holder);
+    
+    detinfo::DetectorClocks const* fDetectorClocks;
+    detinfo::DetectorProperties const* fDetectorProperties;
+
 
   protected: 
     
@@ -102,7 +111,13 @@ namespace caldata {
   {
     fSpillName="";
     this->reconfigure(pset);
-
+    fDetectorClocks = lar::providerFrom<detinfo::DetectorClocksService>();
+    fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>();
+    if( fFrontPorchFrac > 1. ) fFrontPorchFrac = 1.;
+    else if (fFrontPorchFrac < 0 ) fFrontPorchFrac = 0.;
+    if( fBackPorchFrac > 1. ) fBackPorchFrac = 1.;
+    else if (fBackPorchFrac < 0 ) fBackPorchFrac = 0.;
+      
     fROITool = art::make_tool<sbnd_tool::IROIFinder>(pset.get<fhicl::ParameterSet>("ROITool"));
 
     //--Hec if(fSpillName.size()<1) produces< std::vector<recob::Wire> >();
@@ -110,6 +125,7 @@ namespace caldata {
   
     produces< std::vector<recob::Wire> >(fSpillName);
     produces<art::Assns<raw::RawDigit, recob::Wire>>(fSpillName);
+    
   }
   //-------------------------------------------------
   CalWireSBND::~CalWireSBND()
@@ -124,6 +140,9 @@ namespace caldata {
     fBaseSampleBins   = p.get< int >        ("BaseSampleBins");
     fBaseVarCut       = p.get< int >        ("BaseVarCut");
     fDoBaselineSub    = p.get< bool >        ("DoBaselineSub");
+    fSamplePrecision  = p.get< int >        ("SamplePrecision",-1);
+    fFrontPorchFrac   = p.get< float >        ("FrontPorchFrac",1.);
+    fBackPorchFrac    = p.get< float >        ("BackPorchFrac",1.);
     
     fSpillName="";
     
@@ -178,6 +197,7 @@ namespace caldata {
     art::Ptr<raw::RawDigit> digitVec0(digitVecHandle, 0);
         
     unsigned int dataSize = digitVec0->Samples(); //size of raw data vectors
+
 
     if( (unsigned int)transformSize < dataSize){
       mf::LogWarning("CalWireSBND")<<"FFT size (" << transformSize << ") "
@@ -256,6 +276,25 @@ namespace caldata {
       //if(fBaseSampleBins) SubtractBaseline(holder, fBaseSampleBins);
       if(fDoBaselineSub) SubtractBaseline(holder);
 
+      // --------------------------------------------------
+      // limit precision by truncating digits to save disk space after compression (taken from LArIAT)
+      if( fSamplePrecision >= 0 ){
+        for(size_t iholder = 0; iholder < holder.size(); ++iholder) {
+          holder[iholder] = roundf( holder[iholder] * pow(10,fSamplePrecision) ) / pow(10,fSamplePrecision);
+        }
+      }
+
+      // --------------------------------------------------
+      // Now reduce the readout window size before searching for ROIs.
+      // We assume the MC we're feeding in was generated with 3 windows.
+      if( fFrontPorchFrac < 1. || fBackPorchFrac < 1. ) {
+        int driftWindowSize = 2500;
+        size_t fp_start  = driftWindowSize*(1.-fFrontPorchFrac);
+        size_t bp_end    = driftWindowSize*(2.+fBackPorchFrac);
+        if( fp_start > 0 ){ for(size_t i=0; i<fp_start; i++) holder[i] = 0;}
+        if( bp_end < dataSize ){ for(size_t i=bp_end; i<dataSize; i++) holder[i] = 0;}
+      }
+
       // Make a single ROI that spans the entire data size
       //RegionsOfInterest_t sparse_holder;
       //sparse_holder.add_range(0,holder.begin(),holder.end());
@@ -330,6 +369,7 @@ namespace caldata {
       }
       h1->Delete();
     }
+
   }
   
   
