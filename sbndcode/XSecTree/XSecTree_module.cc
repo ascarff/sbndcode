@@ -267,6 +267,8 @@ namespace sbnd {
     int true_int_type;
     unsigned int true_n_pipm;
     unsigned int true_n_pi0;
+    unsigned int true_n_phot;
+    unsigned int true_n_elec;
     unsigned int true_n_pr;
     double true_nu_energy;
     double true_lep_mom;
@@ -280,6 +282,44 @@ namespace sbnd {
     double true_delta_pt;
     double true_delta_alphat;
     double true_delta_phit;
+
+
+//added Electron and Photon variables to pushback
+  std::vector<double> Electron_momentum;
+  std::vector<std::string> Electron_process;
+  std::vector<double> Electron_px;
+  std::vector<double> Electron_py;
+  std::vector<double> Electron_pz;
+  std::vector<double> Electron_theta;
+  std::vector<double> Electron_phi;
+  std::vector<double> Electron_time;
+  std::vector<int> Electron_PDG;
+  std::vector<double> Electron_Vx;
+  std::vector<double> Electron_Vy;
+  std::vector<double> Electron_Vz;
+  std::vector<double> Electron_KE;
+  std::vector<double> Electron_trackid;
+  std::vector<int> Electron_Mother;
+  std::vector<double> pi0_KE;
+  std::vector<double> Photon_KE;
+  std::vector<int> Photon_PDG;
+
+  std::vector<double> fpairInvM;
+  std::vector<double> fpairE;
+  std::vector<double> fpairAngle;
+  std::vector<double> fsepAngle;
+  std::vector<double> fpairAsym;
+  std::vector<double> fKE_low; std::vector<double> fKE_high;
+
+/*
+//New variables added as doubles:
+  double fpairInvM;
+  double fpairE;
+  double fpairAngle;
+  double fsepAngle;
+  double fpairAsym;
+  float fKE_low;   float fKE_high;
+*/
 
     // XSec smearing + efficiency tree parameters
     bool smeareff_particles_contained;
@@ -378,6 +418,8 @@ namespace sbnd {
     fXSecTree->Branch("true_int_type", &true_int_type, "true_int_type/I");
     fXSecTree->Branch("true_n_pipm", &true_n_pipm, "true_n_pipm/i");
     fXSecTree->Branch("true_n_pi0", &true_n_pi0, "true_n_pi0/i");
+    fXSecTree->Branch("true_n_phot", &true_n_phot, "true_n_phot/i");
+    fXSecTree->Branch("true_n_elec", &true_n_elec, "true_n_elec/i");
     fXSecTree->Branch("true_n_pr", &true_n_pr, "true_n_pr/i");
     fXSecTree->Branch("true_nu_energy", &true_nu_energy, "true_nu_energy/D");
     fXSecTree->Branch("true_lep_mom", &true_lep_mom, "true_lep_mom/D");
@@ -391,6 +433,45 @@ namespace sbnd {
     fXSecTree->Branch("true_delta_pt", &true_delta_pt, "true_delta_pt/D");
     fXSecTree->Branch("true_delta_alphat", &true_delta_alphat, "true_delta_alphat/D");
     fXSecTree->Branch("true_delta_phit", &true_delta_phit, "true_delta_phit/D");
+
+
+  // Truth Level Things for Electrons and Photons
+  fXSecTree->Branch("Electron_momentum","std::vector<double>",&Electron_momentum);
+  fXSecTree->Branch("Electron_xmomentum","std::vector<double>",&Electron_px);
+  fXSecTree->Branch("Electron_ymomentum","std::vector<double>",&Electron_py);
+  fXSecTree->Branch("Electron_zmomentum","std::vector<double>",&Electron_pz);
+  fXSecTree->Branch("Electron_theta","std::vector<double>",&Electron_theta);
+  fXSecTree->Branch("Electron_phi","std::vector<double>",&Electron_phi);
+  fXSecTree->Branch("Electron_Mother","std::vector<int>",&Electron_Mother);
+  fXSecTree->Branch("Electron_PDG","std::vector<int>",&Electron_PDG);
+  fXSecTree->Branch("Electron_time","std::vector<double>",&Electron_time);
+  fXSecTree->Branch("Electron_Vx","std::vector<double>",&Electron_Vx);
+  fXSecTree->Branch("Electron_Vy","std::vector<double>",&Electron_Vy);
+  fXSecTree->Branch("Electron_Vz","std::vector<double>",&Electron_Vz);
+  fXSecTree->Branch("Electron_process","std::vector<std::string>",&Electron_process);
+  fXSecTree->Branch("Electron_KE","std::vector<double>",&Electron_KE);
+  fXSecTree->Branch("pi0_KE","std::vector<double>",&pi0_KE);
+  fXSecTree->Branch("Photon_PDG","std::vector<int>",&Photon_PDG);
+  fXSecTree->Branch("Photon_KE","std::vector<double>",&Photon_KE);
+
+/*
+//Tree Branches copied over from WireHitsAnalysis_module.cc to use in plotscript.cc
+	fXSecTree->Branch("pairInvM",&fpairInvM,"pairInvM/d");
+	fXSecTree->Branch("pairE",&fpairE,"pairE/d");
+	fXSecTree->Branch("pairAngle",&fpairAngle,"pairAngle/d");
+	fXSecTree->Branch("sepAngle",&fsepAngle,"sepAngle/d");
+	fXSecTree->Branch("pairAsym",&fpairAsym,"pairAsym/d");
+  fXSecTree->Branch("KE_low",&fKE_low,"KE_low/f");
+  fXSecTree->Branch("KE_high",&fKE_high,"KE_high/f");
+*/
+
+  fXSecTree->Branch("fpairInvM","std::vector<double>",&fpairInvM);
+  fXSecTree->Branch("fpairE","std::vector<double>",&fpairE);
+  fXSecTree->Branch("fpairAngle","std::vector<double>",&fpairAngle);
+  fXSecTree->Branch("fsepAngle","std::vector<double>",&fsepAngle);
+  fXSecTree->Branch("fpairAsym","std::vector<double>",&fpairAsym);
+  fXSecTree->Branch("fKE_low","std::vector<double>",&fKE_low);
+  fXSecTree->Branch("fKE_high","std::vector<double>",&fKE_high);
 
     // Smeared and efficiency applied kinematic variables
     fXSecTree->Branch("smeareff_particles_contained", &smeareff_particles_contained, "smeareff_particles_contained/O");
@@ -533,7 +614,6 @@ namespace sbnd {
 
       // Secondary particle stuff
       for(size_t j = 0; j < particles.size(); j++){
-
         if((int)j == lep_j) continue;
 
         // Only consider pi0, charged pi and protons
@@ -542,11 +622,145 @@ namespace sbnd {
         TVector3 start = particles.at(j)->Position().Vect();
         TVector3 end = particles.at(j)->EndPosition().Vect();
 
+//Initialise variables to 0, then will only fill it with a non 0 value when the correct conditions are met
+//  fpairInvM = 0; fpairE = 0; fpairAngle = 0; fsepAngle = 0 ; fpairAsym = 0;
+
         // Count particle numbers
         if(pdg == 111){ 
           true_n_pi0++;
           if(!fTPCGeo.IsContained(*particles.at(j))) true_particles_contained = false;
-        }
+	  int trackidpi0 = particles.at(j)->TrackId();
+
+	  std::cout<<"///////////////// Here is a lovely lil pi0 with Event ID "<<event.id().event()<<std::endl;
+
+	  std::cout << "*************** This lovely pi0 has " << particles.at(j)->NumberDaughters() << " daughters." <<std::endl;
+
+	  pi0_KE.push_back(particles.at(j)->E()-0.135);  //also need to store pi0 energy
+
+	 	 for(size_t k = 0; k < particles.size(); k++){
+
+	  	TVector3 start = particles.at(k)->Position().Vect();
+		TVector3 end = particles.at(k)->EndPosition().Vect();
+
+		std::cout << "&&&&&&&&&&&&&&&&&&& The track ID of the pi0 is: " << trackidpi0 << std::endl;
+
+		std::cout << "^^^^^^^^^^^^^^^^^^^ The PDG Code of the particles in the event is: " << particles.at(k)->PdgCode() << ", with Track ID = " << particles.at(k)->TrackId() << std::endl;
+
+//          for (auto particles.at(j) : particles.at(j)){ 
+		if (particles.at(k)->Mother()==trackidpi0 && particles.at(k)->PdgCode()==22){ //look for photons
+		
+		true_n_phot++;
+
+ 		std::cout<<"Run = "<<event.run()<<", SubRun = "<<event.subRun()<<", Event = "<<event.id().event()<<std::endl;
+
+        	int trackidphot = particles.at(k)->TrackId();
+ 		std::cout<<"Track ID of photon is:" << trackidphot << std::endl;
+
+		Photon_PDG.push_back(particles.at(k)->PdgCode());
+		Photon_KE.push_back(particles.at(k)->E());
+
+			for(size_t l = 0; l < particles.size(); l++){
+
+       			TVector3 start = particles.at(l)->Position().Vect();
+        		TVector3 end = particles.at(l)->EndPosition().Vect();
+
+//			for (auto particles.at(k) : particles.at(k)){
+//			   if ((particles.at(l)->Mother()==trackidphot) && (particles.at(l)->PdgCode()==11 || particles.at(l)->PdgCode()==-11)){
+
+			if ((particles.at(l)->Mother()==trackidphot) && (particles.at(l)->PdgCode()==11)){ //
+	
+			true_n_elec++;
+
+			Electron_process.push_back(particles.at(l)->Process());
+			Electron_momentum.push_back(particles.at(l)->P());
+			Electron_theta.push_back(particles.at(l)->Momentum().Theta());
+			Electron_phi.push_back(particles.at(l)->Momentum().Phi());
+			Electron_time.push_back(particles.at(l)->T());
+			Electron_Mother.push_back(particles.at(l)->Mother());
+			Electron_PDG.push_back(particles.at(l)->PdgCode());
+			Electron_px.push_back(particles.at(l)->Px());
+			Electron_py.push_back(particles.at(l)->Py());
+			Electron_pz.push_back(particles.at(l)->Pz());
+			Electron_Vx.push_back(particles.at(l)->Vx()); 
+			Electron_Vy.push_back(particles.at(l)->Vy()); 
+			Electron_Vz.push_back(particles.at(l)->Vz()); 
+			Electron_KE.push_back(particles.at(l)->E()-0.000511);
+			int Electron_trackID = particles.at(l)->TrackId();
+
+
+				for(size_t m = 0; m < particles.size(); m++){ 
+
+					if (((particles.at(m)->Mother()==trackidphot) && (particles.at(m)->PdgCode()==-11) && (particles.at(m)->TrackId()!=Electron_trackID))){
+
+					double dotProd = particles.at(l)->Px()*particles.at(m)->Px() + particles.at(l)->Py()*particles.at(m)->Py() + particles.at(l)->Pz()*particles.at(m)->Pz();
+
+					std::vector<double> Ptot = {(particles.at(l)->Px() + particles.at(m)->Px()), (particles.at(l)->Py() + particles.at(m)->Py()), (particles.at(l)->Pz() + particles.at(m)->Pz())};
+
+					fsepAngle.push_back(acos(dotProd/(particles.at(l)->P()*particles.at(m)->P())));
+
+					fpairE.push_back((particles.at(l)->E()-0.000511) + (particles.at(m)->E()-0.000511));
+
+        				double pairE_temp = ((particles.at(l)->E()-0.000511) + (particles.at(m)->E()-0.000511));
+        				double diff = ((particles.at(l)->E()-0.000511) - (particles.at(m)->E()-0.000511));
+
+					fpairAngle.push_back(atan(pow(pow(Ptot[0],2) + pow(Ptot[1],2),0.5)/Ptot[2]));
+
+					fpairInvM.push_back(pow(pow(pairE_temp + 0.001022,2) - pow(Ptot[0],2)-pow(Ptot[1],2)-pow(Ptot[2],2),0.5));
+
+        if ((particles.at(l)->E()-0.000511)>(particles.at(m)->E()-0.000511)) {
+		fKE_low.push_back((particles.at(m)->E()-0.000511));
+		fKE_high.push_back((particles.at(l)->E()-0.000511));
+		} //else determines which electron is more energetic
+        else {fKE_low.push_back((particles.at(l)->E()-0.000511));
+		fKE_high.push_back((particles.at(m)->E()-0.000511));}
+
+		fpairAsym.push_back(abs(diff)/pairE_temp);
+
+							}  //end of loop for positrons
+
+						}  //end of loop through partcles within event again*2
+
+					}  //end of loop looking for electrons
+
+				} // end of looping through particles within event again*1
+//			}
+        		} //end of loop looking for photons
+
+/*
+	if (Electron_process.size()==2) {
+
+	// calculate invariant mass by accessing the variables using Electron_px[0] and Electron_py[1] 
+	
+        double dotProd = Electron_px[0]*Electron_px[1] + Electron_py[0]*Electron_py[1] + Electron_pz[0]*Electron_pz[1];
+
+        std::vector<double> Ptot = {(Electron_px[0] + Electron_px[1]), (Electron_py[0] + Electron_py[1]), (Electron_pz[0] + Electron_pz[1])}; 
+
+	fsepAngle = acos(dotProd/(Electron_momentum[0]*Electron_momentum[1]));
+        fpairE = (Electron_KE[0]) + (Electron_KE[1]);
+
+//        double pairE_temp = (Electron_KE[0]-0.000511) + (Electron_KE[1]-0.000511);
+ 
+	fpairAngle = atan(pow(pow(Ptot[0],2) + pow(Ptot[1],2),0.5)/Ptot[2]);
+	fpairInvM = pow(pow(fpairE + 0.001022,2) - pow(Ptot[0],2)-pow(Ptot[1],2)-pow(Ptot[2],2),0.5);
+
+
+        if ((Electron_KE[0])>(Electron_KE[1])) {
+		(fKE_low = Electron_KE[1]);
+		(fKE_high = Electron_KE[0]);
+		} //else determines which electron is more energetic
+        else {(fKE_low = Electron_KE[0]); (fKE_high = Electron_KE[1]);}
+
+		fpairAsym = abs(Electron_KE[1] - Electron_KE[0])/(Electron_KE[1] + Electron_KE[0]);
+
+			} //end if Electron_process.size()==2
+*/
+
+		} // end of looking for particles with pdg==22 and mother id = trackidpi0
+//	}
+	} // end of loop through particles within event
+//} //end of loop for pi0
+
+
         if(pdg == 211){ 
           true_n_pipm++;
           if(!fTPCGeo.IsContained(*particles.at(j))) true_particles_contained = false;
@@ -819,6 +1033,7 @@ namespace sbnd {
                             <<"-->true_lep_theta:          "<<true_lep_theta<<"\n"
                             <<"->true_particles_contained: "<<true_particles_contained<<"\n"
                             <<"->true_n_pi0:               "<<true_n_pi0<<"\n"
+			    <<"->true_n_phot:    	   "<<true_n_phot<<"\n"
                             <<"->true_n_pipm:              "<<true_n_pipm<<"\n"
                             <<"-->true_pipm1_mom:          "<<true_pipm1_mom<<"\n"
                             <<"-->true_pipm1_theta:        "<<true_pipm1_theta<<"\n"
@@ -854,6 +1069,18 @@ namespace sbnd {
 
 
       fXSecTree->Fill();
+
+ std::cout << "Variables are being filled here." << std::endl; 
+
+    // clear vectors
+    Electron_process.clear(); Electron_momentum.clear();
+    Electron_px.clear(); Electron_py.clear(); Electron_pz.clear();
+    Electron_theta.clear(); Electron_phi.clear();
+    Electron_time.clear(); Electron_Mother.clear();Electron_PDG.clear();
+    Electron_Vx.clear(); Electron_Vy.clear(); Electron_Vz.clear();
+    Electron_KE.clear(); Photon_PDG.clear(); Photon_KE.clear(); pi0_KE.clear();
+
+	fpairInvM.clear(); fpairE.clear(); fpairAngle.clear(); fsepAngle.clear(); fpairAsym.clear(); fKE_low.clear(); fKE_high.clear();
     }
 
   } // XSecTree::analyze()
@@ -881,6 +1108,7 @@ namespace sbnd {
     true_int_type            = -99999;
     true_n_pipm              = 0;
     true_n_pi0               = 0;
+    true_n_phot		     = 0;
     true_n_pr                = 0;
     true_nu_energy           = -99999;
     true_lep_mom             = -99999;
@@ -948,13 +1176,15 @@ namespace sbnd {
     // Loop over all of the particles
     for(size_t j = 0; j < particles.size(); j++){
       // Only consider stable final states particles
-      if(particles.at(j)->StatusCode() != 1) continue;
-      // Only want primary particles
-      if(particles.at(j)->Mother() != 0) continue;
+//      if(particles.at(j)->StatusCode() != 1) continue;
+ 
+     // Only want primary particles
+//      if(particles.at(j)->Mother() != 0) continue;
+//commented out as don't just want primary products -> also want decay products
 
       // Only consider electrons, muons, pi0, charged pi and protons TODO for now...
       int pdg = std::abs(particles.at(j)->PdgCode());
-      if(!(pdg == 11 || pdg == 13 || pdg == 111 || pdg == 211 || pdg == 2212)) continue;
+      if(!(pdg == 11 || pdg == -11 || pdg == 22 || pdg == 13 || pdg == 111 || pdg == 211 || pdg == 2212)) continue;
       interesting.push_back(particles.at(j));
     }
 
@@ -1176,8 +1406,11 @@ namespace sbnd {
     }
 
     return cc_selected;
-
   }
+
+//  out->cd();
+//  fXSecTree->Write();
+//  out->Close();
 
   DEFINE_ART_MODULE(XSecTree)
 } // namespace sbnd
