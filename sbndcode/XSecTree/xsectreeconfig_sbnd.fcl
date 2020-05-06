@@ -36,4 +36,9 @@ sbnd_xsectree:
       ProtonPidEff: 0.85 # PID efficiency for protons [%]
 }
 
+
+sbnd_xsectreecosmic:  @local::sbnd_xsectree
+sbnd_xsectreecosmic.module_type:  "sbndcode/XSecTree/XSecTreeCosmic"
+
+
 END_PROLOG
