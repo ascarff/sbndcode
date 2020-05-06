@@ -2059,7 +2059,9 @@ sbnd::AnalysisTree::AnalysisTree(fhicl::ParameterSet const& pset) :
       << "fTrackModuleLabel.size() = "<<fTrackModuleLabel.size()<<" does not match "
       << "fSaveHierarchyInfo.size() = "<<fSaveHierarchyInfo.size();
   }
+
 } // sbnd::AnalysisTree::AnalysisTree()
+
 
 //-------------------------------------------------
 sbnd::AnalysisTree::~AnalysisTree()
@@ -2997,7 +2999,7 @@ void sbnd::AnalysisTree::analyze(const art::Event& evt)
     }// end (fSaveGenieInfo)  
 
       //GEANT particles information
-      if (fSaveGeantInfo){ 
+      if (fSaveGeantInfo){
         const sim::ParticleList& plist = pi_serv->ParticleList();
         
         std::string pri("primary");
@@ -3022,14 +3024,13 @@ void sbnd::AnalysisTree::analyze(const art::Event& evt)
 
           TVector3 mcstart, mcend;
           double plen = length(*pPart, mcstart, mcend);
-	  std::cout << "plen=" << plen << std::endl;
-
+	  MF_LOG_DEBUG("AnalysisTree") << "plen=" << plen;
 
           bool isActive = plen != 0;
-	  std::cout << "isActive=" << isActive << std::endl;
+	  MF_LOG_DEBUG("AnalysisTree") << "isActive=" << isActive;
           if (plen) {
 	    active++;
-	    std::cout << "active=" << active << std::endl;
+	    MF_LOG_DEBUG("AnalysisTree") << "active=" << active;
 	  }
 
           if (iPart < fData->GetMaxGEANTparticles()) {
@@ -3041,7 +3042,7 @@ void sbnd::AnalysisTree::analyze(const art::Event& evt)
             fData->pdg[iPart]=pPart->PdgCode();
             fData->status[iPart] = pPart->StatusCode();
             fData->Eng[iPart]=pPart->E();
-	          fData->EndE[iPart]=pPart->EndE();
+	    fData->EndE[iPart]=pPart->EndE();
             fData->Mass[iPart]=pPart->Mass();
             fData->Px[iPart]=pPart->Px();
             fData->Py[iPart]=pPart->Py();

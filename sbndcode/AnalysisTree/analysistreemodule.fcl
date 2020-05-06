@@ -31,8 +31,8 @@ sbnd_analysistree:
  SaveHierarchyInfo:        [ false ]
  SaveShowerHierarchyInfo:  false
  SaveCaloCosmics:          false
- isCosmics:		             false
- G4MinE:                   0.01
+ isCosmics:		   false
+ G4minE:                   0.01
 }
 
 END_PROLOG
