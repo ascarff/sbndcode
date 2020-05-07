@@ -23,12 +23,13 @@ sbnd_calwire:
 {
  module_type:        "CalWireSBND"
  DigitModuleLabel:   "daq"
- PostsampleBins:       0
+ PostSampleBins:       0
  BaseSampleBins:      50  # set > 0 for baseline subtraction. Value should be
                           # modulo the data size (3200 for uB)
- DoBaselineSub:       true			  
+ DoBaselineSub:       true
+ BaselinSubMethod:    "histogram" # "histogram" or "interpolate"
 
- SamplePrecision:     1
+ SamplePrecision:     -1
  FrontPorchFrac:      1.
  BackPorchFrac:       1.
  
