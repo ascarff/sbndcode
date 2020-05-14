@@ -42,10 +42,11 @@ bool CrtTrackCosmicIdAlg::CrtTrackCosmicId(recob::Track track, std::vector<crt::
   if(crtTracks.at(crtID).complete) return true;
 
   // If it matches a track through just the top planes make sure it is outside of the beam time
-  double crtTime = ((double)(int)crtTracks.at(crtID).ts1_ns) * 1e-3; // [us]
-  if(crtTime < fBeamTimeMin || crtTime > fBeamTimeMax) return true;
+  //double crtTime = ((double)(int)crtTracks.at(crtID).ts1_ns) * 1e-3; // [us]
+  //if(crtTime < fBeamTimeMin || crtTime > fBeamTimeMax) return true;
 
-  return false;
+  //return false;
+  return true;
 
 }
  

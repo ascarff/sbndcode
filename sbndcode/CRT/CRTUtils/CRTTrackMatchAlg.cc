@@ -30,8 +30,10 @@ void CRTTrackMatchAlg::reconfigure(const Config& config){
 
   fMaxAngleDiff = config.MaxAngleDiff();
   fMaxDistance = config.MaxDistance();
+  fMaxScore = config.MaxScore();
   fTPCTrackLabel = config.TPCTrackLabel();
   fMinimizeAngle = config.MinimizeAngle();
+  fMinimizeDCA = config.MinimizeDCA();
 
   return;
 
@@ -95,9 +97,13 @@ double CRTTrackMatchAlg::T0FromCRTTracks(recob::Track tpcTrack, std::vector<art:
     closest = ClosestCRTTrackByAngle(tpcTrack, hits, crtTracks);
     if(closest.second == -99999 || closest.second > fMaxAngleDiff) return -99999;
   }
-  else{ 
+  else if(fMinimizeDCA){ 
     closest = ClosestCRTTrackByDCA(tpcTrack, hits, crtTracks);
     if(closest.second == -99999 || closest.second > fMaxDistance) return -99999;
+  }
+  else{
+    closest = ClosestCRTTrackByScore(tpcTrack, hits, crtTracks);
+    if(closest.second == -99999 || closest.second > fMaxScore) return -99999;
   }
 
   double crtTime = ((double)(int)closest.first.ts1_ns) * 1e-3; // [us]
@@ -121,9 +127,13 @@ int CRTTrackMatchAlg::GetMatchedCRTTrackId(recob::Track tpcTrack, std::vector<ar
     closest = ClosestCRTTrackByAngle(tpcTrack, hits, crtTracks);
     if(closest.second == -99999 || closest.second > fMaxAngleDiff) return -99999;
   }
-  else{ 
+  else if(fMinimizeDCA){ 
     closest = ClosestCRTTrackByDCA(tpcTrack, hits, crtTracks);
     if(closest.second == -99999 || closest.second > fMaxDistance) return -99999;
+  }
+  else{
+    closest = ClosestCRTTrackByScore(tpcTrack, hits, crtTracks);
+    if(closest.second == -99999 || closest.second > fMaxScore) return -99999;
   }
 
   int crt_i = 0;
@@ -254,6 +264,46 @@ std::pair<crt::CRTTrack, double> CRTTrackMatchAlg::ClosestCRTTrackByDCA(recob::T
       if(angle > minAngle) continue;
     }
     candidates.push_back(std::make_pair(possTrack, DCA));
+  }
+
+  std::sort(candidates.begin(), candidates.end(), [](auto& left, auto& right){
+            return left.second < right.second;});
+
+  if(candidates.size() > 0){
+    return candidates[0];
+  }
+  crt::CRTTrack track;
+  return std::make_pair(track, -99999);
+
+}
+
+
+std::pair<crt::CRTTrack, double> CRTTrackMatchAlg::ClosestCRTTrackByScore(recob::Track tpcTrack, std::vector<crt::CRTTrack> crtTracks, const art::Event& event) {
+  auto tpcTrackHandle = event.getValidHandle<std::vector<recob::Track>>(fTPCTrackLabel);
+  art::FindManyP<recob::Hit> findManyHits(tpcTrackHandle, event, fTPCTrackLabel);
+  std::vector<art::Ptr<recob::Hit>> hits = findManyHits.at(tpcTrack.ID());
+  return ClosestCRTTrackByScore(tpcTrack, hits, crtTracks); 
+}
+
+// Find the closest matching crt track by average DCA between tracks within angle and DCA limits
+std::pair<crt::CRTTrack, double> CRTTrackMatchAlg::ClosestCRTTrackByScore(recob::Track tpcTrack, std::vector<art::Ptr<recob::Hit>> hits, std::vector<crt::CRTTrack> crtTracks){
+
+  // Get the drift direction (0 for stitched tracks)
+  int driftDirection = TPCGeoUtil::DriftDirectionFromHits(fGeometryService, hits);
+
+  std::vector<crt::CRTTrack> possTracks = AllPossibleCRTTracks(tpcTrack, hits, crtTracks);
+
+  std::vector<std::pair<crt::CRTTrack, double>> candidates;
+  for(auto const& possTrack : possTracks){
+
+    double crtTime = ((double)(int)possTrack.ts1_ns) * 1e-3; // [us]
+    double shift = driftDirection * crtTime * fDetectorProperties->DriftVelocity();
+
+    double DCA = AveDCABetweenTracks(tpcTrack, possTrack, shift);
+    double angle = AngleBetweenTracks(tpcTrack, possTrack);
+    double score = DCA + 4*180/TMath::Pi()*angle;
+
+    candidates.push_back(std::make_pair(possTrack, score));
   }
 
   std::sort(candidates.begin(), candidates.end(), [](auto& left, auto& right){

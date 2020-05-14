@@ -284,11 +284,11 @@ namespace sbnd {
       // Is hit matched to that track
       if(closest.second != -99999){
         int hitTrueID = fCrtBackTrack.TrueIdFromTotalEnergy(event, closest.first);
-        if(hitTrueID == trackTrueID && hitTrueID != -99999){
+        if(std::abs(hitTrueID) == std::abs(trackTrueID) && hitTrueID != -99999){
           hMatchDCA[closest.first.tagger]->Fill(closest.second);
           hMatchDCA["All"]->Fill(closest.second);
         }
-        else{
+        else if(hitTrueID != -99999){
           hNoMatchDCA[closest.first.tagger]->Fill(closest.second);
           hNoMatchDCA["All"]->Fill(closest.second);
         }
